@@ -1,0 +1,807 @@
+{
+  "metadata": {
+    "class_name": "MetMuseum",
+    "metadata_path": "envs\\metadata\\MetMuseum_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-04T02:24:24.030560",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "MetMuseum",
+    "description": "Provides access to The Metropolitan Museum of Art's collection data, including department listings, object search, and detailed object information.",
+    "tools": [
+      {
+        "name": "list_departments",
+        "description": "Retrieve a list of all valid curatorial departments at The Metropolitan Museum of Art.",
+        "input_schema": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "departments": {
+              "type": "array",
+              "description": "List of all curatorial departments at The Met.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "departmentId": {
+                    "type": "string",
+                    "description": "The unique identifier of the department at The Met."
+                  },
+                  "displayName": {
+                    "type": "string",
+                    "description": "The human-readable name of the department."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "search_museum_objects",
+        "description": "Search for objects in The Metropolitan Museum of Art's collection based on a query term, with optional filters for title-specific search and department.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "q": {
+              "type": "string",
+              "description": "The search term to query against the museum's collection (e.g., 'sunflowers', 'Van Gogh')."
+            },
+            "title": {
+              "type": "boolean",
+              "description": "When true, restricts the search to match only against the object's title field."
+            },
+            "departmentId": {
+              "type": "string",
+              "description": "The unique identifier of the department at The Met to filter search results."
+            }
+          },
+          "required": [
+            "q"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "type": "integer",
+              "description": "The total number of objects matching the search criteria."
+            },
+            "objectIds": {
+              "type": "array",
+              "description": "List of object IDs matching the search criteria, which can be used with get_museum_object to retrieve full details.",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_museum_object",
+        "description": "Retrieve detailed information about a specific object in The Metropolitan Museum of Art's collection, including metadata and Open Access image URL if available.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "objectId": {
+              "type": "string",
+              "description": "The unique identifier of the museum object to retrieve."
+            }
+          },
+          "required": [
+            "objectId"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "objectId": {
+              "type": "string",
+              "description": "The unique identifier of the museum object."
+            },
+            "title": {
+              "type": "string",
+              "description": "The title or name of the artwork or object."
+            },
+            "artist": {
+              "type": "string",
+              "description": "The name of the artist or creator of the object."
+            },
+            "artistBio": {
+              "type": "string",
+              "description": "Biographical information about the artist, including nationality and life dates."
+            },
+            "department": {
+              "type": "string",
+              "description": "The curatorial department at The Met responsible for the object."
+            },
+            "creditLine": {
+              "type": "string",
+              "description": "The credit line acknowledging how the object was acquired by the museum."
+            },
+            "medium": {
+              "type": "string",
+              "description": "The materials and techniques used to create the object (e.g., 'Oil on canvas')."
+            },
+            "dimensions": {
+              "type": "string",
+              "description": "The physical dimensions of the object, typically in both metric and imperial units."
+            },
+            "primaryImageUrl": {
+              "type": "string",
+              "description": "URL to the primary image of the object, available under Open Access policy."
+            },
+            "tags": {
+              "type": "array",
+              "description": "Subject tags associated with the object for categorization and discovery.",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n\n# Section 1: Schema\nclass Department(BaseModel):\n    \"\"\"Represents a curatorial department at The Met.\"\"\"\n    departmentId: str = Field(..., description=\"The unique identifier of the department at The Met.\")\n    displayName: str = Field(..., description=\"The human-readable name of the department.\")\n\n\nclass MuseumObject(BaseModel):\n    \"\"\"Represents an object in The Metropolitan Museum of Art's collection.\"\"\"\n    objectId: str = Field(..., description=\"The unique identifier of the museum object.\")\n    title: str = Field(default=\"\", description=\"The title or name of the artwork or object.\")\n    artist: str = Field(default=\"\", description=\"The name of the artist or creator of the object.\")\n    artistBio: str = Field(default=\"\", description=\"Biographical information about the artist, including nationality and life dates.\")\n    department: str = Field(default=\"\", description=\"The curatorial department at The Met responsible for the object.\")\n    creditLine: str = Field(default=\"\", description=\"The credit line acknowledging how the object was acquired by the museum.\")\n    medium: str = Field(default=\"\", description=\"The materials and techniques used to create the object.\")\n    dimensions: str = Field(default=\"\", description=\"The physical dimensions of the object.\")\n    primaryImageUrl: str = Field(default=\"\", description=\"URL to the primary image of the object, available under Open Access policy.\")\n    tags: List[str] = Field(default_factory=list, description=\"Subject tags associated with the object for categorization and discovery.\")\n\n\nclass MetMuseumScenario(BaseModel):\n    \"\"\"Main scenario model for The Metropolitan Museum of Art collection data.\"\"\"\n    departments: List[Department] = Field(default_factory=lambda: [\n        {\"departmentId\": \"1\", \"displayName\": \"American Decorative Arts\"},\n        {\"departmentId\": \"3\", \"displayName\": \"Ancient Near Eastern Art\"},\n        {\"departmentId\": \"4\", \"displayName\": \"Arms and Armor\"},\n        {\"departmentId\": \"5\", \"displayName\": \"Arts of Africa, Oceania, and the Americas\"},\n        {\"departmentId\": \"6\", \"displayName\": \"Asian Art\"},\n        {\"departmentId\": \"7\", \"displayName\": \"The Cloisters\"},\n        {\"departmentId\": \"8\", \"displayName\": \"The Costume Institute\"},\n        {\"departmentId\": \"9\", \"displayName\": \"Drawings and Prints\"},\n        {\"departmentId\": \"10\", \"displayName\": \"Egyptian Art\"},\n        {\"departmentId\": \"11\", \"displayName\": \"European Paintings\"},\n        {\"departmentId\": \"12\", \"displayName\": \"European Sculpture and Decorative Arts\"},\n        {\"departmentId\": \"13\", \"displayName\": \"Greek and Roman Art\"},\n        {\"departmentId\": \"14\", \"displayName\": \"Islamic Art\"},\n        {\"departmentId\": \"15\", \"displayName\": \"The Robert Lehman Collection\"},\n        {\"departmentId\": \"16\", \"displayName\": \"The Libraries\"},\n        {\"departmentId\": \"17\", \"displayName\": \"Medieval Art\"},\n        {\"departmentId\": \"18\", \"displayName\": \"Musical Instruments\"},\n        {\"departmentId\": \"19\", \"displayName\": \"Photographs\"},\n        {\"departmentId\": \"21\", \"displayName\": \"Modern and Contemporary Art\"}\n    ], description=\"List of all curatorial departments at The Met.\")\n    \n    objects: Dict[str, MuseumObject] = Field(default_factory=lambda: {\n        \"436535\": {\"objectId\": \"436535\", \"title\": \"Sunflowers\", \"artist\": \"Vincent van Gogh\", \"artistBio\": \"Dutch, Zundert 1853–1890 Auvers-sur-Oise\", \"department\": \"European Paintings\", \"creditLine\": \"Rogers Fund, 1949\", \"medium\": \"Oil on canvas\", \"dimensions\": \"36 1/4 x 28 3/4 in. (92.1 x 73 cm)\", \"primaryImageUrl\": \"https://images.metmuseum.org/CRDImages/ep/original/DP229743.jpg\", \"tags\": [\"Flowers\", \"Sunflowers\", \"Still Life\"]},\n        \"437133\": {\"objectId\": \"437133\", \"title\": \"Wheat Field with Cypresses\", \"artist\": \"Vincent van Gogh\", \"artistBio\": \"Dutch, Zundert 1853–1890 Auvers-sur-Oise\", \"department\": \"European Paintings\", \"creditLine\": \"Purchase, The Annenberg Foundation Gift, 1993\", \"medium\": \"Oil on canvas\", \"dimensions\": \"28 7/8 x 36 3/4 in. (73.2 x 93.4 cm)\", \"primaryImageUrl\": \"https://images.metmuseum.org/CRDImages/ep/original/DT1567.jpg\", \"tags\": [\"Landscapes\", \"Wheat\", \"Cypresses\", \"Sky\"]},\n        \"436524\": {\"objectId\": \"436524\", \"title\": \"Self-Portrait with a Straw Hat\", \"artist\": \"Vincent van Gogh\", \"artistBio\": \"Dutch, Zundert 1853–1890 Auvers-sur-Oise\", \"department\": \"European Paintings\", \"creditLine\": \"Bequest of Miss Adelaide Milton de Groot (1876-1967), 1967\", \"medium\": \"Oil on canvas\", \"dimensions\": \"16 x 12 1/2 in. (40.6 x 31.8 cm)\", \"primaryImageUrl\": \"https://images.metmuseum.org/CRDImages/ep/original/DT1502_cropped2.jpg\", \"tags\": [\"Portraits\", \"Self-Portrait\", \"Hats\"]},\n        \"438417\": {\"objectId\": \"438417\", \"title\": \"Water Lilies\", \"artist\": \"Claude Monet\", \"artistBio\": \"French, Paris 1840–1926 Giverny\", \"department\": \"European Paintings\", \"creditLine\": \"H. O. Havemeyer Collection, Bequest of Mrs. H. O. Havemeyer, 1929\", \"medium\": \"Oil on canvas\", \"dimensions\": \"51 1/4 x 79 in. (130.2 x 200.7 cm)\", \"primaryImageUrl\": \"https://images.metmuseum.org/CRDImages/ep/original/DT833.jpg\", \"tags\": [\"Flowers\", \"Water Lilies\", \"Ponds\", \"Gardens\"]},\n        \"437984\": {\"objectId\": \"437984\", \"title\": \"Bridge over a Pond of Water Lilies\", \"artist\": \"Claude Monet\", \"artistBio\": \"French, Paris 1840–1926 Giverny\", \"department\": \"European Paintings\", \"creditLine\": \"H. O. Havemeyer Collection, Bequest of Mrs. H. O. Havemeyer, 1929\", \"medium\": \"Oil on canvas\", \"dimensions\": \"36 1/2 x 29 in. (92.7 x 73.7 cm)\", \"primaryImageUrl\": \"https://images.metmuseum.org/CRDImages/ep/original/DT847.jpg\", \"tags\": [\"Bridges\", \"Water Lilies\", \"Gardens\", \"Ponds\"]},\n        \"459106\": {\"objectId\": \"459106\", \"title\": \"The Dance Class\", \"artist\": \"Edgar Degas\", \"artistBio\": \"French, Paris 1834–1917 Paris\", \"department\": \"European Paintings\", \"creditLine\": \"Bequest of Mrs. Harry Payne Bingham, 1986\", \"medium\": \"Oil on canvas\", \"dimensions\": \"32 3/4 x 30 1/4 in. (83.2 x 76.8 cm)\", \"primaryImageUrl\": \"https://images.metmuseum.org/CRDImages/ep/original/DT2360.jpg\", \"tags\": [\"Dance\", \"Ballet\", \"Dancers\", \"Interiors\"]},\n        \"435882\": {\"objectId\": \"435882\", \"title\": \"Washington Crossing the Delaware\", \"artist\": \"Emanuel Leutze\", \"artistBio\": \"American, Schwäbisch Gmünd 1816–1868 Washington, D.C.\", \"department\": \"American Paintings and Sculpture\", \"creditLine\": \"Gift of John Stewart Kennedy, 1897\", \"medium\": \"Oil on canvas\", \"dimensions\": \"149 x 255 in. (378.5 x 647.7 cm)\", \"primaryImageUrl\": \"https://images.metmuseum.org/CRDImages/ap/original/DT73.jpg\", \"tags\": [\"History\", \"George Washington\", \"American Revolution\", \"Boats\"]},\n        \"10467\": {\"objectId\": \"10467\", \"title\": \"Armor of Emperor Ferdinand I\", \"artist\": \"Kunz Lochner\", \"artistBio\": \"German, Nuremberg, active 1510–1567\", \"department\": \"Arms and Armor\", \"creditLine\": \"Gift of William H. Riggs, 1913\", \"medium\": \"Steel, gold, leather, textile\", \"dimensions\": \"H. 67 in. (170.2 cm); Wt. 52 lb. 6 oz. (23.77 kg)\", \"primaryImageUrl\": \"https://images.metmuseum.org/CRDImages/aa/original/DT773.jpg\", \"tags\": [\"Armor\", \"Medieval\", \"Emperor\", \"Military\"]},\n        \"544896\": {\"objectId\": \"544896\", \"title\": \"Temple of Dendur\", \"artist\": \"\", \"artistBio\": \"\", \"department\": \"Egyptian Art\", \"creditLine\": \"Given to the United States by Egypt in 1965, awarded to The Metropolitan Museum of Art in 1967, and installed in The Sackler Wing in 1978\", \"medium\": \"Aeolian sandstone\", \"dimensions\": \"Temple proper: H. 6.4 m (21 ft.); W. 6.4 m (21 ft.); D. 12.5 m (41 ft.)\", \"primaryImageUrl\": \"https://images.metmuseum.org/CRDImages/eg/original/DP116357.jpg\", \"tags\": [\"Temple\", \"Egypt\", \"Ancient\", \"Architecture\"]},\n        \"45434\": {\"objectId\": \"45434\", \"title\": \"Statue of a kouros (youth)\", \"artist\": \"\", \"artistBio\": \"\", \"department\": \"Greek and Roman Art\", \"creditLine\": \"Fletcher Fund, 1932\", \"medium\": \"Naxian marble\", \"dimensions\": \"H. 76 3/8 in. (194 cm)\", \"primaryImageUrl\": \"https://images.metmuseum.org/CRDImages/gr/original/DP132634.jpg\", \"tags\": [\"Sculpture\", \"Greek\", \"Youth\", \"Marble\"]},\n        \"503940\": {\"objectId\": \"503940\", \"title\": \"The Great Wave off Kanagawa\", \"artist\": \"Katsushika Hokusai\", \"artistBio\": \"Japanese, Tokyo (Edo) 1760–1849 Tokyo (Edo)\", \"department\": \"Asian Art\", \"creditLine\": \"H. O. Havemeyer Collection, Bequest of Mrs. H. O. Havemeyer, 1929\", \"medium\": \"Polychrome woodblock print; ink and color on paper\", \"dimensions\": \"10 1/8 x 14 15/16 in. (25.7 x 37.9 cm)\", \"primaryImageUrl\": \"https://images.metmuseum.org/CRDImages/as/original/DP141063.jpg\", \"tags\": [\"Waves\", \"Japan\", \"Mount Fuji\", \"Boats\", \"Sea\"]},\n        \"267838\": {\"objectId\": \"267838\", \"title\": \"Madame X (Madame Pierre Gautreau)\", \"artist\": \"John Singer Sargent\", \"artistBio\": \"American, Florence 1856–1925 London\", \"department\": \"American Paintings and Sculpture\", \"creditLine\": \"Arthur Hoppock Hearn Fund, 1916\", \"medium\": \"Oil on canvas\", \"dimensions\": \"82 1/8 x 43 1/4 in. (208.6 x 109.9 cm)\", \"primaryImageUrl\": \"https://images.metmuseum.org/CRDImages/ap/original/DT1576.jpg\", \"tags\": [\"Portraits\", \"Women\", \"Fashion\", \"Evening Dress\"]},\n        \"436105\": {\"objectId\": \"436105\", \"title\": \"The Starry Night\", \"artist\": \"Vincent van Gogh\", \"artistBio\": \"Dutch, Zundert 1853–1890 Auvers-sur-Oise\", \"department\": \"European Paintings\", \"creditLine\": \"Acquired through the Lillie P. Bliss Bequest, 1941\", \"medium\": \"Oil on canvas\", \"dimensions\": \"29 x 36 1/4 in. (73.7 x 92.1 cm)\", \"primaryImageUrl\": \"https://images.metmuseum.org/CRDImages/ep/original/DP346474.jpg\", \"tags\": [\"Night Sky\", \"Stars\", \"Village\", \"Cypress\"]},\n        \"248907\": {\"objectId\": \"248907\", \"title\": \"Mihrab (Prayer Niche)\", \"artist\": \"\", \"artistBio\": \"\", \"department\": \"Islamic Art\", \"creditLine\": \"Harris Brisbane Dick Fund, 1939\", \"medium\": \"Mosaic of polychrome-glazed cut tiles on stonite body; set into mortar\", \"dimensions\": \"H. 135 1/16 in. (343.1 cm)\", \"primaryImageUrl\": \"https://images.metmuseum.org/CRDImages/is/original/DP170390.jpg\", \"tags\": [\"Islamic\", \"Architecture\", \"Mosque\", \"Tiles\"]},\n        \"193804\": {\"objectId\": \"193804\", \"title\": \"Guitar\", \"artist\": \"Antonio de Torres Jurado\", \"artistBio\": \"Spanish, 1817–1892\", \"department\": \"Musical Instruments\", \"creditLine\": \"Gift of Joseph W. Drexel, 1889\", \"medium\": \"Spruce, rosewood, ebony, bone\", \"dimensions\": \"H. 38 1/4 in. (97.2 cm)\", \"primaryImageUrl\": \"https://images.metmuseum.org/CRDImages/mi/original/DP302641.jpg\", \"tags\": [\"Guitar\", \"Music\", \"Instrument\", \"Spanish\"]}\n    }, description=\"Collection of museum objects indexed by objectId.\")\n\n\nScenario_Schema = [Department, MuseumObject, MetMuseumScenario]\n\n\n# Section 2: Class\nclass MetMuseumAPI:\n    def __init__(self):\n        \"\"\"Initialize Met Museum API with empty state.\"\"\"\n        self.departments: List[Department] = []\n        self.objects: Dict[str, MuseumObject] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = MetMuseumScenario(**scenario)\n        self.departments = [Department(**d) if isinstance(d, dict) else d for d in model.departments]\n        self.objects = {k: MuseumObject(**v) if isinstance(v, dict) else v for k, v in model.objects.items()}\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"departments\": [d.model_dump() for d in self.departments],\n            \"objects\": {k: v.model_dump() for k, v in self.objects.items()}\n        }\n\n    def list_departments(self) -> dict:\n        \"\"\"Retrieve a list of all valid curatorial departments at The Met.\"\"\"\n        return {\n            \"departments\": [\n                {\"departmentId\": d.departmentId, \"displayName\": d.displayName}\n                for d in self.departments\n            ]\n        }\n\n    def search_museum_objects(self, q: str, title: Optional[bool] = None, departmentId: Optional[str] = None) -> dict:\n        \"\"\"Search for objects in the museum's collection based on query and filters.\"\"\"\n        matching_ids = []\n        query_lower = q.lower()\n        \n        for obj_id, obj in self.objects.items():\n            # Filter by department if specified\n            if departmentId is not None:\n                dept_match = False\n                for dept in self.departments:\n                    if dept.departmentId == departmentId and dept.displayName == obj.department:\n                        dept_match = True\n                        break\n                if not dept_match:\n                    # Also check if department name contains the department display name\n                    dept_names = [d.displayName for d in self.departments if d.departmentId == departmentId]\n                    if not any(dn == obj.department for dn in dept_names):\n                        continue\n            \n            # Search logic\n            if title:\n                # Search only in title\n                if query_lower in obj.title.lower():\n                    matching_ids.append(obj_id)\n            else:\n                # Search in title, artist, tags, medium, department\n                searchable_text = \" \".join([\n                    obj.title,\n                    obj.artist,\n                    obj.artistBio,\n                    obj.department,\n                    obj.medium,\n                    \" \".join(obj.tags)\n                ]).lower()\n                if query_lower in searchable_text:\n                    matching_ids.append(obj_id)\n        \n        return {\n            \"total\": len(matching_ids),\n            \"objectIds\": matching_ids\n        }\n\n    def get_museum_object(self, objectId: str) -> dict:\n        \"\"\"Retrieve detailed information about a specific object.\"\"\"\n        obj = self.objects[objectId]\n        return {\n            \"objectId\": obj.objectId,\n            \"title\": obj.title,\n            \"artist\": obj.artist,\n            \"artistBio\": obj.artistBio,\n            \"department\": obj.department,\n            \"creditLine\": obj.creditLine,\n            \"medium\": obj.medium,\n            \"dimensions\": obj.dimensions,\n            \"primaryImageUrl\": obj.primaryImageUrl,\n            \"tags\": obj.tags\n        }\n\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"MetMuseum\")\napi = MetMuseumAPI()\n\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Met Museum API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching MetMuseumScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Met Museum state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef list_departments() -> dict:\n    \"\"\"\n    Retrieve a list of all valid curatorial departments at The Metropolitan Museum of Art.\n    \n    Args:\n        None\n    \n    Returns:\n        departments (list): List of all curatorial departments at The Met, each containing departmentId (str) and displayName (str).\n    \"\"\"\n    try:\n        return api.list_departments()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef search_museum_objects(q: str, title: Optional[bool] = None, departmentId: Optional[str] = None) -> dict:\n    \"\"\"\n    Search for objects in The Metropolitan Museum of Art's collection based on a query term, with optional filters for title-specific search and department.\n    \n    Args:\n        q (str): The search term to query against the museum's collection (e.g., 'sunflowers', 'Van Gogh').\n        title (bool): [Optional] When true, restricts the search to match only against the object's title field.\n        departmentId (str): [Optional] The unique identifier of the department at The Met to filter search results.\n    \n    Returns:\n        total (int): The total number of objects matching the search criteria.\n        objectIds (list): List of object IDs matching the search criteria, which can be used with get_museum_object to retrieve full details.\n    \"\"\"\n    try:\n        if not q or not isinstance(q, str):\n            raise ValueError(\"Search query 'q' must be a non-empty string\")\n        if title is not None and not isinstance(title, bool):\n            raise ValueError(\"Parameter 'title' must be a boolean\")\n        if departmentId is not None and not isinstance(departmentId, str):\n            raise ValueError(\"Parameter 'departmentId' must be a string\")\n        return api.search_museum_objects(q, title, departmentId)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef get_museum_object(objectId: str) -> dict:\n    \"\"\"\n    Retrieve detailed information about a specific object in The Metropolitan Museum of Art's collection, including metadata and Open Access image URL if available.\n    \n    Args:\n        objectId (str): The unique identifier of the museum object to retrieve.\n    \n    Returns:\n        objectId (str): The unique identifier of the museum object.\n        title (str): The title or name of the artwork or object.\n        artist (str): The name of the artist or creator of the object.\n        artistBio (str): Biographical information about the artist, including nationality and life dates.\n        department (str): The curatorial department at The Met responsible for the object.\n        creditLine (str): The credit line acknowledging how the object was acquired by the museum.\n        medium (str): The materials and techniques used to create the object (e.g., 'Oil on canvas').\n        dimensions (str): The physical dimensions of the object, typically in both metric and imperial units.\n        primaryImageUrl (str): URL to the primary image of the object, available under Open Access policy.\n        tags (list): Subject tags associated with the object for categorization and discovery.\n    \"\"\"\n    try:\n        if not objectId or not isinstance(objectId, str):\n            raise ValueError(\"Parameter 'objectId' must be a non-empty string\")\n        if objectId not in api.objects:\n            raise ValueError(f\"Object with ID '{objectId}' not found\")\n        return api.get_museum_object(objectId)\n    except Exception as e:\n        raise e\n\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-04T02:24:24.030560",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with minimal departments and one museum object",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "departments": [
+          {
+            "departmentId": "1",
+            "displayName": "American Decorative Arts"
+          },
+          {
+            "departmentId": "11",
+            "displayName": "European Paintings"
+          }
+        ],
+        "objects": {
+          "436535": {
+            "objectId": "436535",
+            "title": "Sunflowers",
+            "artist": "Vincent van Gogh",
+            "artistBio": "Dutch, Zundert 1853–1890 Auvers-sur-Oise",
+            "department": "European Paintings",
+            "creditLine": "Rogers Fund, 1949",
+            "medium": "Oil on canvas",
+            "dimensions": "36 1/4 x 28 3/4 in. (92.1 x 73 cm)",
+            "primaryImageUrl": "https://images.metmuseum.org/CRDImages/ep/original/DP229743.jpg",
+            "tags": [
+              "Flowers",
+              "Sunflowers",
+              "Still Life"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Scenario with various departments and diverse objects including ancient art",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "departments": [
+          {
+            "departmentId": "1",
+            "displayName": "American Decorative Arts"
+          },
+          {
+            "departmentId": "4",
+            "displayName": "Arms and Armor"
+          },
+          {
+            "departmentId": "10",
+            "displayName": "Egyptian Art"
+          },
+          {
+            "departmentId": "11",
+            "displayName": "European Paintings"
+          },
+          {
+            "departmentId": "13",
+            "displayName": "Greek and Roman Art"
+          },
+          {
+            "departmentId": "19",
+            "displayName": "Photographs"
+          }
+        ],
+        "objects": {
+          "10467": {
+            "objectId": "10467",
+            "title": "Armor of Emperor Ferdinand I",
+            "artist": "Kunz Lochner",
+            "artistBio": "German, Nuremberg, active 1510–1567",
+            "department": "Arms and Armor",
+            "creditLine": "Gift of William H. Riggs, 1913",
+            "medium": "Steel, gold, leather, textile",
+            "dimensions": "H. 67 in. (170.2 cm); Wt. 52 lb. 6 oz. (23.77 kg)",
+            "primaryImageUrl": "https://images.metmuseum.org/CRDImages/aa/original/DT773.jpg",
+            "tags": [
+              "Armor",
+              "Medieval",
+              "Emperor",
+              "Military"
+            ]
+          },
+          "544896": {
+            "objectId": "544896",
+            "title": "Temple of Dendur",
+            "artist": "",
+            "artistBio": "",
+            "department": "Egyptian Art",
+            "creditLine": "Given to the United States by Egypt in 1965, awarded to The Metropolitan Museum of Art in 1967, and installed in The Sackler Wing in 1978",
+            "medium": "Aeolian sandstone",
+            "dimensions": "Temple proper: H. 6.4 m (21 ft.); W. 6.4 m (21 ft.); D. 12.5 m (41 ft.)",
+            "primaryImageUrl": "https://images.metmuseum.org/CRDImages/eg/original/DP116357.jpg",
+            "tags": [
+              "Temple",
+              "Egypt",
+              "Ancient",
+              "Architecture"
+            ]
+          },
+          "45434": {
+            "objectId": "45434",
+            "title": "Statue of a kouros (youth)",
+            "artist": "",
+            "artistBio": "",
+            "department": "Greek and Roman Art",
+            "creditLine": "Fletcher Fund, 1932",
+            "medium": "Naxian marble",
+            "dimensions": "H. 76 3/8 in. (194 cm)",
+            "primaryImageUrl": "https://images.metmuseum.org/CRDImages/gr/original/DP132634.jpg",
+            "tags": [
+              "Sculpture",
+              "Greek",
+              "Youth",
+              "Marble"
+            ]
+          },
+          "267838": {
+            "objectId": "267838",
+            "title": "Madame X (Madame Pierre Gautreau)",
+            "artist": "John Singer Sargent",
+            "artistBio": "American, Florence 1856–1925 London",
+            "department": "American Paintings and Sculpture",
+            "creditLine": "Arthur Hoppock Hearn Fund, 1916",
+            "medium": "Oil on canvas",
+            "dimensions": "82 1/8 x 43 1/4 in. (208.6 x 109.9 cm)",
+            "primaryImageUrl": "https://images.metmuseum.org/CRDImages/ap/original/DT1576.jpg",
+            "tags": [
+              "Portraits",
+              "Women",
+              "Fashion",
+              "Evening Dress"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich scenario with comprehensive departments and diverse collection spanning multiple cultures and eras",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "departments": [
+          {
+            "departmentId": "1",
+            "displayName": "American Decorative Arts"
+          },
+          {
+            "departmentId": "3",
+            "displayName": "Ancient Near Eastern Art"
+          },
+          {
+            "departmentId": "4",
+            "displayName": "Arms and Armor"
+          },
+          {
+            "departmentId": "5",
+            "displayName": "Arts of Africa, Oceania, and the Americas"
+          },
+          {
+            "departmentId": "6",
+            "displayName": "Asian Art"
+          },
+          {
+            "departmentId": "8",
+            "displayName": "The Costume Institute"
+          },
+          {
+            "departmentId": "9",
+            "displayName": "Drawings and Prints"
+          },
+          {
+            "departmentId": "10",
+            "displayName": "Egyptian Art"
+          },
+          {
+            "departmentId": "11",
+            "displayName": "European Paintings"
+          },
+          {
+            "departmentId": "12",
+            "displayName": "European Sculpture and Decorative Arts"
+          },
+          {
+            "departmentId": "13",
+            "displayName": "Greek and Roman Art"
+          },
+          {
+            "departmentId": "14",
+            "displayName": "Islamic Art"
+          },
+          {
+            "departmentId": "18",
+            "displayName": "Musical Instruments"
+          },
+          {
+            "departmentId": "19",
+            "displayName": "Photographs"
+          },
+          {
+            "departmentId": "21",
+            "displayName": "Modern and Contemporary Art"
+          }
+        ],
+        "objects": {
+          "436535": {
+            "objectId": "436535",
+            "title": "Sunflowers",
+            "artist": "Vincent van Gogh",
+            "artistBio": "Dutch, Zundert 1853–1890 Auvers-sur-Oise",
+            "department": "European Paintings",
+            "creditLine": "Rogers Fund, 1949",
+            "medium": "Oil on canvas",
+            "dimensions": "36 1/4 x 28 3/4 in. (92.1 x 73 cm)",
+            "primaryImageUrl": "https://images.metmuseum.org/CRDImages/ep/original/DP229743.jpg",
+            "tags": [
+              "Flowers",
+              "Sunflowers",
+              "Still Life",
+              "Post-Impressionism",
+              "Dutch Art"
+            ]
+          },
+          "503940": {
+            "objectId": "503940",
+            "title": "The Great Wave off Kanagawa",
+            "artist": "Katsushika Hokusai",
+            "artistBio": "Japanese, Tokyo (Edo) 1760–1849 Tokyo (Edo)",
+            "department": "Asian Art",
+            "creditLine": "H. O. Havemeyer Collection, Bequest of Mrs. H. O. Havemeyer, 1929",
+            "medium": "Polychrome woodblock print; ink and color on paper",
+            "dimensions": "10 1/8 x 14 15/16 in. (25.7 x 37.9 cm)",
+            "primaryImageUrl": "https://images.metmuseum.org/CRDImages/as/original/DP141063.jpg",
+            "tags": [
+              "Waves",
+              "Japan",
+              "Mount Fuji",
+              "Boats",
+              "Sea",
+              "Ukiyo-e"
+            ]
+          },
+          "248907": {
+            "objectId": "248907",
+            "title": "Mihrab (Prayer Niche)",
+            "artist": "",
+            "artistBio": "",
+            "department": "Islamic Art",
+            "creditLine": "Harris Brisbane Dick Fund, 1939",
+            "medium": "Mosaic of polychrome-glazed cut tiles on stonite body; set into mortar",
+            "dimensions": "H. 135 1/16 in. (343.1 cm)",
+            "primaryImageUrl": "https://images.metmuseum.org/CRDImages/is/original/DP170390.jpg",
+            "tags": [
+              "Islamic",
+              "Architecture",
+              "Mosque",
+              "Tiles",
+              "Religious"
+            ]
+          },
+          "193804": {
+            "objectId": "193804",
+            "title": "Guitar",
+            "artist": "Antonio de Torres Jurado",
+            "artistBio": "Spanish, 1817–1892",
+            "department": "Musical Instruments",
+            "creditLine": "Gift of Joseph W. Drexel, 1889",
+            "medium": "Spruce, rosewood, ebony, bone",
+            "dimensions": "H. 38 1/4 in. (97.2 cm)",
+            "primaryImageUrl": "https://images.metmuseum.org/CRDImages/mi/original/DP302641.jpg",
+            "tags": [
+              "Guitar",
+              "Music",
+              "Instrument",
+              "Spanish",
+              "String Instrument"
+            ]
+          },
+          "459106": {
+            "objectId": "459106",
+            "title": "The Dance Class",
+            "artist": "Edgar Degas",
+            "artistBio": "French, Paris 1834–1917 Paris",
+            "department": "European Paintings",
+            "creditLine": "Bequest of Mrs. Harry Payne Bingham, 1986",
+            "medium": "Oil on canvas",
+            "dimensions": "32 3/4 x 30 1/4 in. (83.2 x 76.8 cm)",
+            "primaryImageUrl": "https://images.metmuseum.org/CRDImages/ep/original/DT2360.jpg",
+            "tags": [
+              "Dance",
+              "Ballet",
+              "Dancers",
+              "Interiors",
+              "French Impressionism"
+            ]
+          },
+          "436105": {
+            "objectId": "436105",
+            "title": "The Starry Night",
+            "artist": "Vincent van Gogh",
+            "artistBio": "Dutch, Zundert 1853–1890 Auvers-sur-Oise",
+            "department": "European Paintings",
+            "creditLine": "Acquired through the Lillie P. Bliss Bequest, 1941",
+            "medium": "Oil on canvas",
+            "dimensions": "29 x 36 1/4 in. (73.7 x 92.1 cm)",
+            "primaryImageUrl": "https://images.metmuseum.org/CRDImages/ep/original/DP346474.jpg",
+            "tags": [
+              "Night Sky",
+              "Stars",
+              "Village",
+              "Cypress",
+              "Post-Impressionism"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Edge case scenario testing empty collections and minimal data",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "departments": [],
+        "objects": {}
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_departments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_museum_objects",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_museum_object",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 16.681161880493164
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_departments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_museum_objects",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_museum_object",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 33.62449932098389
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_departments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_museum_objects",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_museum_object",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 84.26094007492065
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_departments",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "search_museum_objects",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_museum_object",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 23.789823532104492
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_departments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_museum_objects",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_museum_object",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 16.681161880493164
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_departments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_museum_objects",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_museum_object",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 33.62449932098389
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_departments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_museum_objects",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_museum_object",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 84.26094007492065
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_departments",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "search_museum_objects",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_museum_object",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 23.789823532104492
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/MetMuseum.py"
+  }
+}

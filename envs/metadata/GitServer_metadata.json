@@ -1,0 +1,529 @@
+{
+  "class_name": "GitServer",
+  "description": "A Git version control server providing tools for repository management, including status inspection, commit history, branching, staging, and remote synchronization operations.",
+  "tools": [
+    {
+      "name": "git_status",
+      "description": "Show the working tree status of a Git repository, displaying tracked, untracked, and modified files.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "repo_path": {
+            "type": "string",
+            "description": "The absolute or relative filesystem path to the Git repository."
+          }
+        },
+        "required": [
+          "repo_path"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status_output": {
+            "type": "string",
+            "description": "The current status of the working directory, including staged, unstaged, and untracked files."
+          }
+        }
+      }
+    },
+    {
+      "name": "git_log",
+      "description": "Show the commit logs of a Git repository with optional filtering by count and timestamp range.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "repo_path": {
+            "type": "string",
+            "description": "The absolute or relative filesystem path to the Git repository."
+          },
+          "max_count": {
+            "type": "integer",
+            "description": "Maximum number of commits to retrieve. Defaults to 10."
+          },
+          "start_timestamp": {
+            "type": "string",
+            "description": "Start timestamp for filtering commits. Accepts ISO 8601 format (e.g., '2024-01-01T00:00:00Z') or relative expressions (e.g., '2 weeks ago')."
+          },
+          "end_timestamp": {
+            "type": "string",
+            "description": "End timestamp for filtering commits. Accepts ISO 8601 format (e.g., '2024-01-01T00:00:00Z') or relative expressions (e.g., 'yesterday')."
+          }
+        },
+        "required": [
+          "repo_path"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "commits": {
+            "type": "array",
+            "description": "List of commit entries matching the specified criteria.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "hash": {
+                  "type": "string",
+                  "description": "The full SHA-1 hash uniquely identifying the commit."
+                },
+                "author": {
+                  "type": "string",
+                  "description": "The name and email of the commit author."
+                },
+                "date": {
+                  "type": "string",
+                  "description": "The timestamp when the commit was created."
+                },
+                "message": {
+                  "type": "string",
+                  "description": "The commit message describing the changes."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "git_branch",
+      "description": "List Git branches in a repository with optional filtering by commit containment.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "repo_path": {
+            "type": "string",
+            "description": "The absolute or relative filesystem path to the Git repository."
+          },
+          "branch_type": {
+            "type": "string",
+            "description": "Type of branches to list. Must be one of: 'local' (local branches only), 'remote' (remote-tracking branches only), or 'all' (both local and remote)."
+          },
+          "contains": {
+            "type": "string",
+            "description": "Filter to only show branches that contain the specified commit SHA."
+          },
+          "not_contains": {
+            "type": "string",
+            "description": "Filter to only show branches that do NOT contain the specified commit SHA."
+          }
+        },
+        "required": [
+          "repo_path",
+          "branch_type"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "branches": {
+            "type": "array",
+            "description": "List of branches matching the specified criteria.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The name of the branch."
+                },
+                "is_current": {
+                  "type": "boolean",
+                  "description": "Whether this branch is currently checked out."
+                },
+                "sha": {
+                  "type": "string",
+                  "description": "The SHA-1 hash of the commit the branch points to."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "git_show",
+      "description": "Show the contents and metadata of a specific commit or revision.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "repo_path": {
+            "type": "string",
+            "description": "The absolute or relative filesystem path to the Git repository."
+          },
+          "revision": {
+            "type": "string",
+            "description": "The revision to display. Can be a commit hash, branch name, tag, or any valid Git revision reference."
+          },
+          "context_lines": {
+            "type": "integer",
+            "description": "Number of surrounding context lines to include in the diff output. Defaults to 10."
+          }
+        },
+        "required": [
+          "repo_path",
+          "revision"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "commit_content": {
+            "type": "string",
+            "description": "The full contents of the specified commit, including metadata and diff."
+          }
+        }
+      }
+    },
+    {
+      "name": "git_diff_unstaged",
+      "description": "Show changes in the working directory that have not yet been staged for commit.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "repo_path": {
+            "type": "string",
+            "description": "The absolute or relative filesystem path to the Git repository."
+          },
+          "context_lines": {
+            "type": "integer",
+            "description": "Number of surrounding context lines to include in the diff output. Defaults to 3."
+          }
+        },
+        "required": [
+          "repo_path"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "diff_output": {
+            "type": "string",
+            "description": "The unified diff output showing unstaged changes in the working directory."
+          }
+        }
+      }
+    },
+    {
+      "name": "git_diff_staged",
+      "description": "Show changes that are currently staged and ready to be committed.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "repo_path": {
+            "type": "string",
+            "description": "The absolute or relative filesystem path to the Git repository."
+          },
+          "context_lines": {
+            "type": "integer",
+            "description": "Number of surrounding context lines to include in the diff output. Defaults to 3."
+          }
+        },
+        "required": [
+          "repo_path"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "diff_output": {
+            "type": "string",
+            "description": "The unified diff output showing staged changes ready for commit."
+          }
+        }
+      }
+    },
+    {
+      "name": "git_diff",
+      "description": "Show differences between the current working state and a target branch or commit.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "repo_path": {
+            "type": "string",
+            "description": "The absolute or relative filesystem path to the Git repository."
+          },
+          "target": {
+            "type": "string",
+            "description": "The target branch name or commit hash to compare against. Defaults to 'main'."
+          },
+          "context_lines": {
+            "type": "integer",
+            "description": "Number of surrounding context lines to include in the diff output. Defaults to 3."
+          }
+        },
+        "required": [
+          "repo_path"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "diff_output": {
+            "type": "string",
+            "description": "The unified diff output comparing the current state with the specified target."
+          }
+        }
+      }
+    },
+    {
+      "name": "git_add",
+      "description": "Add file contents to the staging area in preparation for commit.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "repo_path": {
+            "type": "string",
+            "description": "The absolute or relative filesystem path to the Git repository."
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of file paths (relative to repository root) to stage for commit."
+          }
+        },
+        "required": [
+          "repo_path",
+          "files"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "staged_files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of file paths that were successfully staged."
+          }
+        }
+      }
+    },
+    {
+      "name": "git_commit",
+      "description": "Record staged changes to the repository with a commit message.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "repo_path": {
+            "type": "string",
+            "description": "The absolute or relative filesystem path to the Git repository."
+          },
+          "message": {
+            "type": "string",
+            "description": "The commit message describing the changes being recorded."
+          }
+        },
+        "required": [
+          "repo_path",
+          "message"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "commit_hash": {
+            "type": "string",
+            "description": "The SHA-1 hash of the newly created commit."
+          },
+          "message": {
+            "type": "string",
+            "description": "The commit message that was recorded."
+          }
+        }
+      }
+    },
+    {
+      "name": "git_reset",
+      "description": "Unstage all currently staged changes, moving them back to the working directory.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "repo_path": {
+            "type": "string",
+            "description": "The absolute or relative filesystem path to the Git repository."
+          }
+        },
+        "required": [
+          "repo_path"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "The result status of the reset operation."
+          }
+        }
+      }
+    },
+    {
+      "name": "git_create_branch",
+      "description": "Create a new branch in the repository, optionally from a specified base branch.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "repo_path": {
+            "type": "string",
+            "description": "The absolute or relative filesystem path to the Git repository."
+          },
+          "branch_name": {
+            "type": "string",
+            "description": "The name for the new branch to be created."
+          },
+          "base_branch": {
+            "type": "string",
+            "description": "The existing branch or commit to use as the starting point. Defaults to the current HEAD if not specified."
+          }
+        },
+        "required": [
+          "repo_path",
+          "branch_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "branch_name": {
+            "type": "string",
+            "description": "The name of the newly created branch."
+          },
+          "base_branch": {
+            "type": "string",
+            "description": "The branch or commit the new branch was created from."
+          }
+        }
+      }
+    },
+    {
+      "name": "git_checkout",
+      "description": "Switch the working directory to a different branch.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "repo_path": {
+            "type": "string",
+            "description": "The absolute or relative filesystem path to the Git repository."
+          },
+          "branch_name": {
+            "type": "string",
+            "description": "The name of the branch to switch to."
+          }
+        },
+        "required": [
+          "repo_path",
+          "branch_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "current_branch": {
+            "type": "string",
+            "description": "The name of the branch that is now checked out."
+          }
+        }
+      }
+    },
+    {
+      "name": "git_push",
+      "description": "Push local commits to a remote repository.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "repo_path": {
+            "type": "string",
+            "description": "The absolute or relative filesystem path to the Git repository."
+          },
+          "remote": {
+            "type": "string",
+            "description": "The name of the remote repository to push to. Defaults to 'origin'."
+          },
+          "branch": {
+            "type": "string",
+            "description": "The branch to push. Defaults to the currently checked out branch if not specified."
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Whether to force push, overwriting remote history. Use with caution. Defaults to false."
+          }
+        },
+        "required": [
+          "repo_path"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "The result status of the push operation."
+          },
+          "remote": {
+            "type": "string",
+            "description": "The name of the remote repository that was pushed to."
+          },
+          "branch": {
+            "type": "string",
+            "description": "The name of the branch that was pushed."
+          }
+        }
+      }
+    },
+    {
+      "name": "git_pull",
+      "description": "Fetch and integrate changes from a remote repository into the current branch.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "repo_path": {
+            "type": "string",
+            "description": "The absolute or relative filesystem path to the Git repository."
+          },
+          "remote": {
+            "type": "string",
+            "description": "The name of the remote repository to pull from. Defaults to 'origin'."
+          },
+          "branch": {
+            "type": "string",
+            "description": "The remote branch to pull. Defaults to the tracking branch of the current branch if not specified."
+          },
+          "rebase": {
+            "type": "boolean",
+            "description": "Whether to rebase local commits on top of fetched commits instead of merging. Defaults to false."
+          }
+        },
+        "required": [
+          "repo_path"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "The result status of the pull operation."
+          },
+          "remote": {
+            "type": "string",
+            "description": "The name of the remote repository that was pulled from."
+          },
+          "branch": {
+            "type": "string",
+            "description": "The name of the branch that was pulled."
+          },
+          "updated_files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of file paths that were updated by the pull operation."
+          }
+        }
+      }
+    }
+  ]
+}

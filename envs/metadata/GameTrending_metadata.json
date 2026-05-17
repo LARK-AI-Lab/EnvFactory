@@ -1,0 +1,316 @@
+{
+  "class_name": "GameTrending",
+  "description": "Live game-discovery server that surfaces real-time trending titles, free promotions, and player statistics from Steam and Epic Games Store.",
+  "tools": [
+    {
+      "name": "get_steam_trending_games",
+      "description": "Fetch currently trending Steam titles ranked by real-time sales, player activity, and community buzz.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of trending games to return (1-10). Defaults to 5."
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "games": {
+            "type": "array",
+            "description": "List of trending Steam games sorted by current momentum.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "app_id": {
+                  "type": "integer",
+                  "description": "The unique Steam application identifier for this game."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The official title of the game."
+                },
+                "current_players": {
+                  "type": "integer",
+                  "description": "Live concurrent player count on Steam."
+                },
+                "price": {
+                  "type": "object",
+                  "description": "Current pricing and discount information.",
+                  "properties": {
+                    "amount": {
+                      "type": "number",
+                      "description": "Present sale price in the store’s default currency."
+                    },
+                    "discount_percent": {
+                      "type": "integer",
+                      "description": "Active discount percentage (0 if none)."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_steam_most_played",
+      "description": "Retrieve real-time top Steam games ordered by current concurrent player count.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of most-played games to return (1-10). Defaults to 5."
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "games": {
+            "type": "array",
+            "description": "List of Steam games ranked by live player population.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "app_id": {
+                  "type": "integer",
+                  "description": "The unique Steam application identifier for this game."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The official title of the game."
+                },
+                "current_players": {
+                  "type": "integer",
+                  "description": "Live concurrent player count on Steam."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_epic_free_games",
+      "description": "List currently free and upcoming free titles on the Epic Games Store.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "include_upcoming": {
+            "type": "boolean",
+            "description": "When true, also returns games that will become free soon. Defaults to true."
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "current_games": {
+            "type": "array",
+            "description": "Games that are free to claim right now.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "app_id": {
+                  "type": "integer",
+                  "description": "The unique Epic application identifier for this game."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The official title of the game."
+                }
+              }
+            }
+          },
+          "upcoming_games": {
+            "type": "array",
+            "description": "Games scheduled to be free in the near future (only present when include_upcoming is true).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "app_id": {
+                  "type": "integer",
+                  "description": "The unique Epic application identifier for this game."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The official title of the game."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_epic_trending_games",
+      "description": "Fetch trending titles on Epic Games Store driven by sales and community engagement.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of trending games to return (1-10). Defaults to 5."
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "games": {
+            "type": "array",
+            "description": "List of trending Epic games sorted by current momentum.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "app_id": {
+                  "type": "integer",
+                  "description": "The unique Epic application identifier for this game."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The official title of the game."
+                },
+                "current_players": {
+                  "type": "integer",
+                  "description": "Live concurrent player count on Epic."
+                },
+                "price": {
+                  "type": "object",
+                  "description": "Current pricing and discount information.",
+                  "properties": {
+                    "amount": {
+                      "type": "number",
+                      "description": "Present sale price in the store’s default currency."
+                    },
+                    "discount_percent": {
+                      "type": "integer",
+                      "description": "Active discount percentage (0 if none)."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_app_id",
+      "description": "Search for a game’s application identifier across Steam and Epic by title.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "game_name": {
+            "type": "string",
+            "description": "The title of the game to look up."
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "steam",
+              "epic"
+            ],
+            "description": "Optional filter to restrict search to a single store."
+          }
+        },
+        "required": [
+          "game_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "matches": {
+            "type": "array",
+            "description": "Candidate games whose names match the query.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "app_id": {
+                  "type": "integer",
+                  "description": "The unique application identifier for this game."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The official title of the game."
+                },
+                "platform": {
+                  "type": "string",
+                  "description": "Store platform hosting this title: steam or epic."
+                },
+                "store_url": {
+                  "type": "string",
+                  "description": "Direct link to the game’s page on the store."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_game_details",
+      "description": "Retrieve rich metadata for a specific game using its application identifier.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "app_id": {
+            "type": "integer",
+            "description": "The unique application identifier for this game."
+          }
+        },
+        "required": [
+          "app_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "app_id": {
+            "type": "integer",
+            "description": "The unique application identifier for this game."
+          },
+          "name": {
+            "type": "string",
+            "description": "The official title of the game."
+          },
+          "description": {
+            "type": "string",
+            "description": "Full textual description or synopsis of the game."
+          },
+          "price": {
+            "type": "object",
+            "description": "Current pricing and discount information.",
+            "properties": {
+              "amount": {
+                "type": "number",
+                "description": "Present sale price in the store’s default currency."
+              },
+              "discount_percent": {
+                "type": "integer",
+                "description": "Active discount percentage (0 if none)."
+              }
+            }
+          },
+          "store_url": {
+            "type": "string",
+            "description": "Direct link to the game’s page on the store."
+          },
+          "rating": {
+            "type": "number",
+            "description": "Aggregate user rating on the store (scale 0-100)."
+          },
+          "platform": {
+            "type": "string",
+            "description": "Store platform hosting this title: steam or epic."
+          }
+        }
+      }
+    }
+  ]
+}

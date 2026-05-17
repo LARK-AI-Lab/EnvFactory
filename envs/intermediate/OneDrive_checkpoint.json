@@ -1,0 +1,1041 @@
+{
+  "metadata": {
+    "class_name": "OneDrive",
+    "metadata_path": "envs\\metadata\\OneDrive_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-03-05T19:59:38.510367",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "OneDrive",
+    "description": "Microsoft OneDrive cloud storage integration for file upload, download, management, and sharing operations.",
+    "tools": [
+      {
+        "name": "upload_file",
+        "description": "Upload a file to OneDrive storage.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The name of the file to be uploaded, including file extension."
+            },
+            "content": {
+              "type": "string",
+              "description": "The file content encoded as bytes."
+            },
+            "parent_id": {
+              "type": "string",
+              "description": "The unique identifier of the parent folder where the file will be stored. Defaults to root folder if not specified."
+            }
+          },
+          "required": [
+            "name",
+            "content"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier of the uploaded item in OneDrive."
+            },
+            "name": {
+              "type": "string",
+              "description": "The name of the uploaded file."
+            },
+            "size": {
+              "type": "integer",
+              "description": "The size of the file in bytes."
+            },
+            "webUrl": {
+              "type": "string",
+              "description": "The URL to access the file in the OneDrive web interface."
+            },
+            "downloadUrl": {
+              "type": "string",
+              "description": "The direct download URL for the file content."
+            },
+            "createdDateTime": {
+              "type": "string",
+              "description": "The timestamp when the file was created, in ISO 8601 format."
+            },
+            "lastModifiedDateTime": {
+              "type": "string",
+              "description": "The timestamp when the file was last modified, in ISO 8601 format."
+            }
+          }
+        }
+      },
+      {
+        "name": "upload_large_file",
+        "description": "Upload a large file to OneDrive using resumable upload sessions for reliable transfer of large content.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The name of the file to be uploaded, including file extension."
+            },
+            "content": {
+              "type": "string",
+              "description": "The file content encoded as bytes."
+            },
+            "parent_id": {
+              "type": "string",
+              "description": "The unique identifier of the parent folder where the file will be stored. Defaults to root folder if not specified."
+            },
+            "chunk_size": {
+              "type": "integer",
+              "description": "The size of each upload chunk in bytes. Defaults to 5MB (5242880 bytes) for optimal performance."
+            }
+          },
+          "required": [
+            "name",
+            "content"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier of the uploaded item in OneDrive."
+            },
+            "name": {
+              "type": "string",
+              "description": "The name of the uploaded file."
+            },
+            "size": {
+              "type": "integer",
+              "description": "The size of the file in bytes."
+            },
+            "webUrl": {
+              "type": "string",
+              "description": "The URL to access the file in the OneDrive web interface."
+            },
+            "upload_session_id": {
+              "type": "string",
+              "description": "The identifier of the upload session used for the resumable upload."
+            }
+          }
+        }
+      },
+      {
+        "name": "download_file",
+        "description": "Download a file's content from OneDrive storage.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "item_id": {
+              "type": "string",
+              "description": "The unique identifier of the item in OneDrive to download."
+            }
+          },
+          "required": [
+            "item_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "description": "The downloaded file content as bytes."
+            },
+            "name": {
+              "type": "string",
+              "description": "The name of the downloaded file."
+            },
+            "size": {
+              "type": "integer",
+              "description": "The size of the file in bytes."
+            },
+            "content_type": {
+              "type": "string",
+              "description": "The MIME type of the file content (e.g., application/pdf, image/png)."
+            }
+          }
+        }
+      },
+      {
+        "name": "list_children",
+        "description": "List all files and folders contained within a OneDrive directory.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "item_id": {
+              "type": "string",
+              "description": "The unique identifier of the folder in OneDrive to list. Defaults to root folder if not specified."
+            },
+            "top": {
+              "type": "integer",
+              "description": "The maximum number of items to return in the response. Defaults to 200."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "array",
+              "description": "The list of child items (files and folders) in the directory.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The unique identifier of the item in OneDrive."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The name of the item."
+                  },
+                  "size": {
+                    "type": "integer",
+                    "description": "The size of the file in bytes."
+                  },
+                  "folder": {
+                    "type": "object",
+                    "description": "Metadata indicating this item is a folder. Present only if the item is a folder."
+                  },
+                  "file": {
+                    "type": "object",
+                    "description": "Metadata indicating this item is a file. Present only if the item is a file."
+                  },
+                  "webUrl": {
+                    "type": "string",
+                    "description": "The URL to access the item in the OneDrive web interface."
+                  },
+                  "createdDateTime": {
+                    "type": "string",
+                    "description": "The timestamp when the item was created, in ISO 8601 format."
+                  },
+                  "lastModifiedDateTime": {
+                    "type": "string",
+                    "description": "The timestamp when the item was last modified, in ISO 8601 format."
+                  }
+                }
+              }
+            },
+            "@odata.nextLink": {
+              "type": "string",
+              "description": "The URL to retrieve the next page of results if pagination is required."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_item",
+        "description": "Retrieve metadata for a specific file or folder in OneDrive.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "item_id": {
+              "type": "string",
+              "description": "The unique identifier of the item in OneDrive to retrieve."
+            }
+          },
+          "required": [
+            "item_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier of the item in OneDrive."
+            },
+            "name": {
+              "type": "string",
+              "description": "The name of the item."
+            },
+            "size": {
+              "type": "integer",
+              "description": "The size of the file in bytes."
+            },
+            "webUrl": {
+              "type": "string",
+              "description": "The URL to access the item in the OneDrive web interface."
+            },
+            "downloadUrl": {
+              "type": "string",
+              "description": "The temporary direct download URL for the file content, valid for a limited time."
+            },
+            "createdDateTime": {
+              "type": "string",
+              "description": "The timestamp when the item was created, in ISO 8601 format."
+            },
+            "lastModifiedDateTime": {
+              "type": "string",
+              "description": "The timestamp when the item was last modified, in ISO 8601 format."
+            },
+            "parentReference": {
+              "type": "object",
+              "description": "Reference information about the parent folder containing this item."
+            }
+          }
+        }
+      },
+      {
+        "name": "create_share_link",
+        "description": "Generate a sharing link to grant access to a OneDrive item.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "item_id": {
+              "type": "string",
+              "description": "The unique identifier of the item in OneDrive to share."
+            },
+            "type": {
+              "type": "string",
+              "description": "The type of sharing link to create: 'view' for read-only access, 'edit' for read-write access, or 'embed' for embeddable content. Defaults to 'view'."
+            },
+            "scope": {
+              "type": "string",
+              "description": "The scope of the sharing link: 'anonymous' allows anyone with the link to access, 'organization' restricts access to users within the organization. Defaults to 'anonymous'."
+            }
+          },
+          "required": [
+            "item_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier of the sharing permission."
+            },
+            "roles": {
+              "type": "array",
+              "description": "The list of permission roles granted by this sharing link.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "link": {
+              "type": "object",
+              "description": "The sharing link details.",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "The type of the sharing link (view, edit, or embed)."
+                },
+                "scope": {
+                  "type": "string",
+                  "description": "The scope of the sharing link (anonymous or organization)."
+                },
+                "webUrl": {
+                  "type": "string",
+                  "description": "The shareable URL that can be distributed to grant access to the item."
+                },
+                "webHtml": {
+                  "type": "string",
+                  "description": "The HTML embed code for the item. Present only when link type is 'embed'."
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass FileItem(BaseModel):\n    \"\"\"Represents a file in OneDrive.\"\"\"\n    id: str = Field(..., description=\"Unique identifier\")\n    name: str = Field(..., description=\"File name\")\n    content: str = Field(..., description=\"File content as bytes\")\n    size: int = Field(..., ge=0, description=\"File size in bytes\")\n    content_type: str = Field(default=\"application/octet-stream\", description=\"MIME type\")\n    parent_id: Optional[str] = Field(default=None, description=\"Parent folder ID\")\n    webUrl: str = Field(..., description=\"Web URL\")\n    downloadUrl: str = Field(..., description=\"Download URL\")\n    createdDateTime: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"Creation timestamp\")\n    lastModifiedDateTime: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"Last modified timestamp\")\n\nclass FolderItem(BaseModel):\n    \"\"\"Represents a folder in OneDrive.\"\"\"\n    id: str = Field(..., description=\"Unique identifier\")\n    name: str = Field(..., description=\"Folder name\")\n    parent_id: Optional[str] = Field(default=None, description=\"Parent folder ID\")\n    webUrl: str = Field(..., description=\"Web URL\")\n    createdDateTime: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"Creation timestamp\")\n    lastModifiedDateTime: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"Last modified timestamp\")\n\nclass ShareLink(BaseModel):\n    \"\"\"Represents a sharing link.\"\"\"\n    id: str = Field(..., description=\"Permission ID\")\n    item_id: str = Field(..., description=\"Item ID\")\n    roles: List[str] = Field(..., description=\"Permission roles\")\n    link_type: str = Field(..., description=\"Link type\")\n    scope: str = Field(..., description=\"Link scope\")\n    webUrl: str = Field(..., description=\"Shareable URL\")\n    webHtml: Optional[str] = Field(default=None, description=\"HTML embed code\")\n\nclass OneDriveScenario(BaseModel):\n    \"\"\"Main scenario model for OneDrive.\"\"\"\n    files: Dict[str, FileItem] = Field(default={}, description=\"Files storage\")\n    folders: Dict[str, FolderItem] = Field(default={}, description=\"Folders storage\")\n    share_links: Dict[str, ShareLink] = Field(default={}, description=\"Share links storage\")\n    current_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"Current timestamp\")\n\nScenario_Schema = [FileItem, FolderItem, ShareLink, OneDriveScenario]\n\n# Section 2: Class\nclass OneDriveAPI:\n    def __init__(self):\n        \"\"\"Initialize OneDrive API with empty state.\"\"\"\n        self.files: Dict[str, FileItem] = {}\n        self.folders: Dict[str, FolderItem] = {}\n        self.share_links: Dict[str, ShareLink] = {}\n        self.current_time: str = \"\"\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = OneDriveScenario(**scenario)\n        self.files = model.files\n        self.folders = model.folders\n        self.share_links = model.share_links\n        self.current_time = model.current_time\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"files\": {fid: f.model_dump() for fid, f in self.files.items()},\n            \"folders\": {fid: f.model_dump() for fid, f in self.folders.items()},\n            \"share_links\": {sid: s.model_dump() for sid, s in self.share_links.items()},\n            \"current_time\": self.current_time\n        }\n\n    def upload_file(self, name: str, content: str, parent_id: Optional[str]) -> dict:\n        \"\"\"Upload a file to OneDrive.\"\"\"\n        file_id = f\"file_{len(self.files) + 1}\"\n        size = len(content)\n        file_item = FileItem(\n            id=file_id,\n            name=name,\n            content=content,\n            size=size,\n            parent_id=parent_id,\n            webUrl=f\"https://onedrive.live.com/?id={file_id}\",\n            downloadUrl=f\"https://onedrive.live.com/download?id={file_id}\",\n            createdDateTime=self.current_time,\n            lastModifiedDateTime=self.current_time\n        )\n        self.files[file_id] = file_item\n        return {\n            \"id\": file_id,\n            \"name\": name,\n            \"size\": size,\n            \"webUrl\": file_item.webUrl,\n            \"downloadUrl\": file_item.downloadUrl,\n            \"createdDateTime\": self.current_time,\n            \"lastModifiedDateTime\": self.current_time\n        }\n\n    def upload_large_file(self, name: str, content: str, parent_id: Optional[str], chunk_size: Optional[int]) -> dict:\n        \"\"\"Upload a large file using resumable upload.\"\"\"\n        file_id = f\"file_{len(self.files) + 1}\"\n        session_id = f\"session_{file_id}\"\n        size = len(content)\n        file_item = FileItem(\n            id=file_id,\n            name=name,\n            content=content,\n            size=size,\n            parent_id=parent_id,\n            webUrl=f\"https://onedrive.live.com/?id={file_id}\",\n            downloadUrl=f\"https://onedrive.live.com/download?id={file_id}\",\n            createdDateTime=self.current_time,\n            lastModifiedDateTime=self.current_time\n        )\n        self.files[file_id] = file_item\n        return {\n            \"id\": file_id,\n            \"name\": name,\n            \"size\": size,\n            \"webUrl\": file_item.webUrl,\n            \"upload_session_id\": session_id\n        }\n\n    def download_file(self, item_id: str) -> dict:\n        \"\"\"Download a file's content.\"\"\"\n        file_item = self.files[item_id]\n        return {\n            \"content\": file_item.content,\n            \"name\": file_item.name,\n            \"size\": file_item.size,\n            \"content_type\": file_item.content_type\n        }\n\n    def list_children(self, item_id: Optional[str], top: Optional[int]) -> dict:\n        \"\"\"List files and folders in a directory.\"\"\"\n        parent_id = item_id\n        children = []\n        \n        for fid, folder in self.folders.items():\n            if folder.parent_id == parent_id:\n                children.append({\n                    \"id\": folder.id,\n                    \"name\": folder.name,\n                    \"size\": 0,\n                    \"folder\": {},\n                    \"webUrl\": folder.webUrl,\n                    \"createdDateTime\": folder.createdDateTime,\n                    \"lastModifiedDateTime\": folder.lastModifiedDateTime\n                })\n        \n        for fid, file_item in self.files.items():\n            if file_item.parent_id == parent_id:\n                children.append({\n                    \"id\": file_item.id,\n                    \"name\": file_item.name,\n                    \"size\": file_item.size,\n                    \"file\": {},\n                    \"webUrl\": file_item.webUrl,\n                    \"createdDateTime\": file_item.createdDateTime,\n                    \"lastModifiedDateTime\": file_item.lastModifiedDateTime\n                })\n        \n        limit = top if top else 200\n        return {\"value\": children[:limit]}\n\n    def get_item(self, item_id: str) -> dict:\n        \"\"\"Retrieve metadata for a file or folder.\"\"\"\n        if item_id in self.files:\n            file_item = self.files[item_id]\n            return {\n                \"id\": file_item.id,\n                \"name\": file_item.name,\n                \"size\": file_item.size,\n                \"webUrl\": file_item.webUrl,\n                \"downloadUrl\": file_item.downloadUrl,\n                \"createdDateTime\": file_item.createdDateTime,\n                \"lastModifiedDateTime\": file_item.lastModifiedDateTime,\n                \"parentReference\": {\"id\": file_item.parent_id} if file_item.parent_id else {}\n            }\n        else:\n            folder = self.folders[item_id]\n            return {\n                \"id\": folder.id,\n                \"name\": folder.name,\n                \"size\": 0,\n                \"webUrl\": folder.webUrl,\n                \"downloadUrl\": \"\",\n                \"createdDateTime\": folder.createdDateTime,\n                \"lastModifiedDateTime\": folder.lastModifiedDateTime,\n                \"parentReference\": {\"id\": folder.parent_id} if folder.parent_id else {}\n            }\n\n    def create_share_link(self, item_id: str, link_type: Optional[str], scope: Optional[str]) -> dict:\n        \"\"\"Generate a sharing link for an item.\"\"\"\n        share_id = f\"share_{len(self.share_links) + 1}\"\n        link_type = link_type if link_type else \"view\"\n        scope = scope if scope else \"anonymous\"\n        roles = [\"read\"] if link_type == \"view\" else [\"write\"]\n        \n        share_link = ShareLink(\n            id=share_id,\n            item_id=item_id,\n            roles=roles,\n            link_type=link_type,\n            scope=scope,\n            webUrl=f\"https://onedrive.live.com/share/{share_id}\",\n            webHtml=f\"<iframe src='https://onedrive.live.com/embed/{share_id}'></iframe>\" if link_type == \"embed\" else None\n        )\n        self.share_links[share_id] = share_link\n        \n        result = {\n            \"id\": share_id,\n            \"roles\": roles,\n            \"link\": {\n                \"type\": link_type,\n                \"scope\": scope,\n                \"webUrl\": share_link.webUrl\n            }\n        }\n        if share_link.webHtml:\n            result[\"link\"][\"webHtml\"] = share_link.webHtml\n        return result\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"OneDrive\")\napi = OneDriveAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the OneDrive API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching OneDriveScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current OneDrive state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef upload_file(name: str, content: str, parent_id: str = None) -> dict:\n    \"\"\"\n    Upload a file to OneDrive storage.\n\n    Args:\n        name (str): The name of the file to be uploaded, including file extension.\n        content (str): The file content encoded as bytes.\n        parent_id (str) [Optional]: The unique identifier of the parent folder.\n\n    Returns:\n        id (str): The unique identifier of the uploaded item.\n        name (str): The name of the uploaded file.\n        size (int): The size of the file in bytes.\n        webUrl (str): The URL to access the file in the OneDrive web interface.\n        downloadUrl (str): The direct download URL for the file content.\n        createdDateTime (str): The timestamp when the file was created.\n        lastModifiedDateTime (str): The timestamp when the file was last modified.\n    \"\"\"\n    try:\n        if not name or not isinstance(name, str):\n            raise ValueError(\"Name must be a non-empty string\")\n        if not content or not isinstance(content, str):\n            raise ValueError(\"Content must be a non-empty string\")\n        return api.upload_file(name, content, parent_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef upload_large_file(name: str, content: str, parent_id: str = None, chunk_size: int = None) -> dict:\n    \"\"\"\n    Upload a large file to OneDrive using resumable upload sessions.\n\n    Args:\n        name (str): The name of the file to be uploaded, including file extension.\n        content (str): The file content encoded as bytes.\n        parent_id (str) [Optional]: The unique identifier of the parent folder.\n        chunk_size (int) [Optional]: The size of each upload chunk in bytes.\n\n    Returns:\n        id (str): The unique identifier of the uploaded item.\n        name (str): The name of the uploaded file.\n        size (int): The size of the file in bytes.\n        webUrl (str): The URL to access the file in the OneDrive web interface.\n        upload_session_id (str): The identifier of the upload session.\n    \"\"\"\n    try:\n        if not name or not isinstance(name, str):\n            raise ValueError(\"Name must be a non-empty string\")\n        if not content or not isinstance(content, str):\n            raise ValueError(\"Content must be a non-empty string\")\n        return api.upload_large_file(name, content, parent_id, chunk_size)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef download_file(item_id: str) -> dict:\n    \"\"\"\n    Download a file's content from OneDrive storage.\n\n    Args:\n        item_id (str): The unique identifier of the item in OneDrive to download.\n\n    Returns:\n        content (str): The downloaded file content as bytes.\n        name (str): The name of the downloaded file.\n        size (int): The size of the file in bytes.\n        content_type (str): The MIME type of the file content.\n    \"\"\"\n    try:\n        if not item_id or not isinstance(item_id, str):\n            raise ValueError(\"Item ID must be a non-empty string\")\n        if item_id not in api.files:\n            raise ValueError(f\"File {item_id} not found\")\n        return api.download_file(item_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef list_children(item_id: str = None, top: int = None) -> dict:\n    \"\"\"\n    List all files and folders contained within a OneDrive directory.\n\n    Args:\n        item_id (str) [Optional]: The unique identifier of the folder to list.\n        top (int) [Optional]: The maximum number of items to return.\n\n    Returns:\n        value (list): The list of child items (files and folders) in the directory.\n        @odata.nextLink (str) [Optional]: The URL to retrieve the next page of results.\n    \"\"\"\n    try:\n        return api.list_children(item_id, top)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_item(item_id: str) -> dict:\n    \"\"\"\n    Retrieve metadata for a specific file or folder in OneDrive.\n\n    Args:\n        item_id (str): The unique identifier of the item in OneDrive to retrieve.\n\n    Returns:\n        id (str): The unique identifier of the item.\n        name (str): The name of the item.\n        size (int): The size of the file in bytes.\n        webUrl (str): The URL to access the item in the OneDrive web interface.\n        downloadUrl (str): The temporary direct download URL for the file content.\n        createdDateTime (str): The timestamp when the item was created.\n        lastModifiedDateTime (str): The timestamp when the item was last modified.\n        parentReference (dict): Reference information about the parent folder.\n    \"\"\"\n    try:\n        if not item_id or not isinstance(item_id, str):\n            raise ValueError(\"Item ID must be a non-empty string\")\n        if item_id not in api.files and item_id not in api.folders:\n            raise ValueError(f\"Item {item_id} not found\")\n        return api.get_item(item_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef create_share_link(item_id: str, type: str = None, scope: str = None) -> dict:\n    \"\"\"\n    Generate a sharing link to grant access to a OneDrive item.\n\n    Args:\n        item_id (str): The unique identifier of the item in OneDrive to share.\n        type (str) [Optional]: The type of sharing link to create (view, edit, or embed).\n        scope (str) [Optional]: The scope of the sharing link (anonymous or organization).\n\n    Returns:\n        id (str): The unique identifier of the sharing permission.\n        roles (list): The list of permission roles granted by this sharing link.\n        link (dict): The sharing link details containing type, scope, webUrl, and optionally webHtml.\n    \"\"\"\n    try:\n        if not item_id or not isinstance(item_id, str):\n            raise ValueError(\"Item ID must be a non-empty string\")\n        if item_id not in api.files and item_id not in api.folders:\n            raise ValueError(f\"Item {item_id} not found\")\n        return api.create_share_link(item_id, type, scope)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-03-05T19:59:38.510367",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic OneDrive with one file in root folder",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "files": {
+          "file_001": {
+            "id": "file_001",
+            "name": "document.txt",
+            "content": "Hello World",
+            "size": 11,
+            "content_type": "text/plain",
+            "parent_id": null,
+            "webUrl": "https://onedrive.live.com/file_001",
+            "downloadUrl": "https://onedrive.live.com/download/file_001",
+            "createdDateTime": "2026-03-01T10:00:00",
+            "lastModifiedDateTime": "2026-03-01T10:00:00"
+          }
+        },
+        "folders": {},
+        "share_links": {},
+        "current_time": "2026-03-05T11:54:57"
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "OneDrive with nested folders, multiple files, and one share link",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "files": {
+          "file_001": {
+            "id": "file_001",
+            "name": "report.pdf",
+            "content": "PDF content bytes",
+            "size": 2048,
+            "content_type": "application/pdf",
+            "parent_id": "folder_001",
+            "webUrl": "https://onedrive.live.com/file_001",
+            "downloadUrl": "https://onedrive.live.com/download/file_001",
+            "createdDateTime": "2026-02-15T09:30:00",
+            "lastModifiedDateTime": "2026-03-01T14:20:00"
+          },
+          "file_002": {
+            "id": "file_002",
+            "name": "image.jpg",
+            "content": "JPEG binary data",
+            "size": 512000,
+            "content_type": "image/jpeg",
+            "parent_id": "folder_002",
+            "webUrl": "https://onedrive.live.com/file_002",
+            "downloadUrl": "https://onedrive.live.com/download/file_002",
+            "createdDateTime": "2026-03-03T16:45:00",
+            "lastModifiedDateTime": "2026-03-03T16:45:00"
+          },
+          "file_003": {
+            "id": "file_003",
+            "name": "notes.txt",
+            "content": "Meeting notes",
+            "size": 128,
+            "content_type": "text/plain",
+            "parent_id": null,
+            "webUrl": "https://onedrive.live.com/file_003",
+            "downloadUrl": "https://onedrive.live.com/download/file_003",
+            "createdDateTime": "2026-03-05T08:00:00",
+            "lastModifiedDateTime": "2026-03-05T11:30:00"
+          }
+        },
+        "folders": {
+          "folder_001": {
+            "id": "folder_001",
+            "name": "Documents",
+            "parent_id": null,
+            "webUrl": "https://onedrive.live.com/folder_001",
+            "createdDateTime": "2026-02-10T12:00:00",
+            "lastModifiedDateTime": "2026-03-01T14:20:00"
+          },
+          "folder_002": {
+            "id": "folder_002",
+            "name": "Photos",
+            "parent_id": "folder_001",
+            "webUrl": "https://onedrive.live.com/folder_002",
+            "createdDateTime": "2026-02-20T10:15:00",
+            "lastModifiedDateTime": "2026-03-03T16:45:00"
+          }
+        },
+        "share_links": {
+          "share_001": {
+            "id": "share_001",
+            "item_id": "file_001",
+            "roles": [
+              "read"
+            ],
+            "link_type": "view",
+            "scope": "anonymous",
+            "webUrl": "https://onedrive.live.com/share/file_001",
+            "webHtml": "<iframe src='https://onedrive.live.com/embed/file_001'></iframe>"
+          }
+        },
+        "current_time": "2026-03-05T11:54:57"
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich OneDrive structure with multiple nested folders, diverse file types, and multiple share links",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "files": {
+          "file_001": {
+            "id": "file_001",
+            "name": "presentation.pptx",
+            "content": "PowerPoint binary",
+            "size": 4096000,
+            "content_type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "parent_id": "folder_001",
+            "webUrl": "https://onedrive.live.com/file_001",
+            "downloadUrl": "https://onedrive.live.com/download/file_001",
+            "createdDateTime": "2026-01-15T09:00:00",
+            "lastModifiedDateTime": "2026-03-04T17:30:00"
+          },
+          "file_002": {
+            "id": "file_002",
+            "name": "budget.xlsx",
+            "content": "Excel binary",
+            "size": 1024000,
+            "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "parent_id": "folder_002",
+            "webUrl": "https://onedrive.live.com/file_002",
+            "downloadUrl": "https://onedrive.live.com/download/file_002",
+            "createdDateTime": "2026-02-01T11:20:00",
+            "lastModifiedDateTime": "2026-03-05T09:15:00"
+          },
+          "file_003": {
+            "id": "file_003",
+            "name": "contract.docx",
+            "content": "Word document binary",
+            "size": 512000,
+            "content_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "parent_id": "folder_003",
+            "webUrl": "https://onedrive.live.com/file_003",
+            "downloadUrl": "https://onedrive.live.com/download/file_003",
+            "createdDateTime": "2026-02-28T14:00:00",
+            "lastModifiedDateTime": "2026-03-02T16:45:00"
+          },
+          "file_004": {
+            "id": "file_004",
+            "name": "video.mp4",
+            "content": "Video binary data",
+            "size": 10485760,
+            "content_type": "video/mp4",
+            "parent_id": "folder_004",
+            "webUrl": "https://onedrive.live.com/file_004",
+            "downloadUrl": "https://onedrive.live.com/download/file_004",
+            "createdDateTime": "2026-03-01T20:30:00",
+            "lastModifiedDateTime": "2026-03-01T20:30:00"
+          },
+          "file_005": {
+            "id": "file_005",
+            "name": "archive.zip",
+            "content": "Compressed archive",
+            "size": 2048000,
+            "content_type": "application/zip",
+            "parent_id": null,
+            "webUrl": "https://onedrive.live.com/file_005",
+            "downloadUrl": "https://onedrive.live.com/download/file_005",
+            "createdDateTime": "2026-03-05T07:00:00",
+            "lastModifiedDateTime": "2026-03-05T07:00:00"
+          }
+        },
+        "folders": {
+          "folder_001": {
+            "id": "folder_001",
+            "name": "Work",
+            "parent_id": null,
+            "webUrl": "https://onedrive.live.com/folder_001",
+            "createdDateTime": "2026-01-10T08:00:00",
+            "lastModifiedDateTime": "2026-03-04T17:30:00"
+          },
+          "folder_002": {
+            "id": "folder_002",
+            "name": "Finance",
+            "parent_id": "folder_001",
+            "webUrl": "https://onedrive.live.com/folder_002",
+            "createdDateTime": "2026-01-20T10:00:00",
+            "lastModifiedDateTime": "2026-03-05T09:15:00"
+          },
+          "folder_003": {
+            "id": "folder_003",
+            "name": "Legal",
+            "parent_id": "folder_001",
+            "webUrl": "https://onedrive.live.com/folder_003",
+            "createdDateTime": "2026-02-15T13:30:00",
+            "lastModifiedDateTime": "2026-03-02T16:45:00"
+          },
+          "folder_004": {
+            "id": "folder_004",
+            "name": "Media",
+            "parent_id": null,
+            "webUrl": "https://onedrive.live.com/folder_004",
+            "createdDateTime": "2026-03-01T19:00:00",
+            "lastModifiedDateTime": "2026-03-01T20:30:00"
+          }
+        },
+        "share_links": {
+          "share_001": {
+            "id": "share_001",
+            "item_id": "file_001",
+            "roles": [
+              "read",
+              "write"
+            ],
+            "link_type": "edit",
+            "scope": "organization",
+            "webUrl": "https://onedrive.live.com/share/file_001",
+            "webHtml": null
+          },
+          "share_002": {
+            "id": "share_002",
+            "item_id": "folder_001",
+            "roles": [
+              "read"
+            ],
+            "link_type": "view",
+            "scope": "anonymous",
+            "webUrl": "https://onedrive.live.com/share/folder_001",
+            "webHtml": "<iframe src='https://onedrive.live.com/embed/folder_001'></iframe>"
+          },
+          "share_003": {
+            "id": "share_003",
+            "item_id": "file_004",
+            "roles": [
+              "read"
+            ],
+            "link_type": "embed",
+            "scope": "anonymous",
+            "webUrl": "https://onedrive.live.com/share/file_004",
+            "webHtml": "<iframe src='https://onedrive.live.com/embed/file_004' width='640' height='360'></iframe>"
+          }
+        },
+        "current_time": "2026-03-05T11:54:57"
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty OneDrive with no files or folders (edge case)",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "files": {},
+        "folders": {},
+        "share_links": {},
+        "current_time": "2026-03-05T11:54:57"
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "download_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "upload_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "upload_large_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_share_link",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "upload_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "upload_large_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "download_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_share_link",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "upload_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "upload_large_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "download_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_share_link",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "upload_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "upload_large_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "download_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_share_link",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "download_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "upload_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "upload_large_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_share_link",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "upload_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "upload_large_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "download_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_share_link",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "upload_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "upload_large_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "download_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_share_link",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "upload_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "upload_large_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "download_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_share_link",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/OneDrive.py"
+  }
+}

@@ -1,0 +1,275 @@
+{
+  "class_name": "PubMedServer",
+  "description": "A comprehensive MCP server for querying and retrieving biomedical literature metadata from the PubMed database.",
+  "tools": [
+    {
+      "name": "search_pubmed_key_words",
+      "description": "Search PubMed articles by free-text keywords and optionally sort the results.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "key_words": {
+            "type": "string",
+            "description": "Keyword query string used to search PubMed article titles, abstracts, and MeSH terms."
+          },
+          "max_results": {
+            "type": "integer",
+            "description": "Maximum number of articles to return (default 10).",
+            "default": 10
+          },
+          "sort": {
+            "type": "string",
+            "description": "Sort mode: \"relevance\", \"pub_date\", or \"journal\" (optional).",
+            "enum": [
+              "relevance",
+              "pub_date",
+              "journal"
+            ]
+          }
+        },
+        "required": [
+          "key_words"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The original keyword query string submitted to PubMed."
+          },
+          "count": {
+            "type": "integer",
+            "description": "Total number of matching articles found in PubMed."
+          },
+          "articles": {
+            "type": "array",
+            "description": "List of matching articles with basic bibliographic metadata.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pmid": {
+                  "type": "string",
+                  "description": "The unique PubMed identifier (PMID) of the article."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "Title of the PubMed article."
+                },
+                "authors": {
+                  "type": "array",
+                  "description": "List of author names associated with the article.",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "journal": {
+                  "type": "string",
+                  "description": "Name or abbreviation of the journal in which the article was published."
+                },
+                "pub_date": {
+                  "type": "string",
+                  "description": "Publication date in YYYY-MM-DD or YYYY-MM format."
+                },
+                "abstract": {
+                  "type": "string",
+                  "description": "Abstract text summarizing the article content."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_pubmed_article",
+      "description": "Retrieve detailed metadata, abstract, and identifiers for a single PubMed article by its PMID.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "pmid": {
+            "type": "string",
+            "description": "The unique PubMed identifier (PMID) of the article to retrieve."
+          }
+        },
+        "required": [
+          "pmid"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "pmid": {
+            "type": "string",
+            "description": "The unique PubMed identifier (PMID) of the article."
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the PubMed article."
+          },
+          "authors": {
+            "type": "array",
+            "description": "List of author names associated with the article.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "journal": {
+            "type": "string",
+            "description": "Name or abbreviation of the journal in which the article was published."
+          },
+          "publication_types": {
+            "type": "array",
+            "description": "MeSH publication types assigned to the article (e.g., Journal Article, Review).",
+            "items": {
+              "type": "string"
+            }
+          },
+          "mesh_terms": {
+            "type": "array",
+            "description": "Medical Subject Headings (MeSH) terms indexing the article content.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "abstract": {
+            "type": "string",
+            "description": "Abstract text summarizing the article content."
+          },
+          "doi": {
+            "type": "string",
+            "description": "Digital Object Identifier (DOI) for the article when available."
+          }
+        }
+      }
+    },
+    {
+      "name": "fetch_pubmed_articles",
+      "description": "Batch retrieve multiple PubMed articles by their PMIDs in a single call.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "pmids": {
+            "type": "array",
+            "description": "List of PubMed identifiers (PMIDs) to retrieve.",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "pmids"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "articles": {
+            "type": "array",
+            "description": "List of successfully retrieved article objects containing metadata and abstracts.",
+            "items": {
+              "type": "object"
+            }
+          },
+          "missing_pmids": {
+            "type": "array",
+            "description": "List of PMIDs that could not be found in PubMed.",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "search_pubmed_by_author",
+      "description": "Search PubMed for articles authored by a specific researcher.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "author": {
+            "type": "string",
+            "description": "Author name query (last name, first initial, or full name)."
+          },
+          "max_results": {
+            "type": "integer",
+            "description": "Maximum number of articles to return (default 10).",
+            "default": 10
+          }
+        },
+        "required": [
+          "author"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "author": {
+            "type": "string",
+            "description": "The author name query string used for the search."
+          },
+          "articles": {
+            "type": "array",
+            "description": "List of articles attributed to the specified author.",
+            "items": {
+              "type": "object"
+            }
+          },
+          "count": {
+            "type": "integer",
+            "description": "Total number of articles found for the author."
+          }
+        }
+      }
+    },
+    {
+      "name": "search_pubmed_by_journal",
+      "description": "Search PubMed for articles published in a specific journal, optionally filtered by year.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "journal": {
+            "type": "string",
+            "description": "Journal title or standard abbreviation to search."
+          },
+          "year": {
+            "type": "integer",
+            "description": "Optional publication year filter (e.g., 2023)."
+          },
+          "max_results": {
+            "type": "integer",
+            "description": "Maximum number of articles to return (default 10).",
+            "default": 10
+          }
+        },
+        "required": [
+          "journal"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "journal": {
+            "type": "string",
+            "description": "The journal title or abbreviation used for the search."
+          },
+          "year": {
+            "type": "integer",
+            "description": "The publication year filter applied, if any."
+          },
+          "articles": {
+            "type": "array",
+            "description": "List of articles published in the specified journal (and year).",
+            "items": {
+              "type": "object"
+            }
+          },
+          "count": {
+            "type": "integer",
+            "description": "Total number of articles found for the journal (and year)."
+          }
+        }
+      }
+    }
+  ]
+}

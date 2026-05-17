@@ -1,0 +1,734 @@
+{
+  "metadata": {
+    "class_name": "HowToCook",
+    "metadata_path": "envs\\metadata\\HowToCook_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-03T01:46:45.302064",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "HowToCook",
+    "description": "A cooking assistant that provides detailed recipes, category browsing, personalized meal recommendations, and random dish suggestions based on the number of diners.",
+    "tools": [
+      {
+        "name": "get_recipe_details",
+        "description": "Retrieve full details for a specific recipe by its unique identifier.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "recipe_id": {
+              "type": "string",
+              "description": "The unique identifier of the recipe whose details are to be fetched."
+            }
+          },
+          "required": [
+            "recipe_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "recipe_id": {
+              "type": "string",
+              "description": "The unique identifier of the recipe."
+            },
+            "name": {
+              "type": "string",
+              "description": "The display name of the recipe."
+            },
+            "description": {
+              "type": "string",
+              "description": "A short summary describing the dish."
+            },
+            "category": {
+              "type": "string",
+              "description": "The category to which the recipe belongs (e.g., 水产, 早餐, 荤菜, 主食)."
+            },
+            "ingredients": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "description": "List of ingredient objects required for the recipe."
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Ordered list of cooking instructions."
+            },
+            "tips": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Helpful cooking tips or variations for the recipe."
+            }
+          }
+        }
+      },
+      {
+        "name": "list_all_categories",
+        "description": "List all available categories of recipes.",
+        "input_schema": {
+          "type": "object",
+          "properties": {}
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "categories": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of all category names available in the recipe collection."
+            }
+          }
+        }
+      },
+      {
+        "name": "list_recipes_by_category",
+        "description": "List all recipes belonging to a specific category.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "string",
+              "description": "The category name (e.g., 水产, 早餐, 荤菜, 主食) to filter recipes; omit to retrieve all recipes."
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "recipes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "recipe_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the recipe."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The display name of the recipe."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "A short summary describing the dish."
+                  }
+                }
+              },
+              "description": "List of recipes matching the specified category."
+            }
+          }
+        }
+      },
+      {
+        "name": "recommend_meal",
+        "description": "Generate a personalized meal recipe based on the number of diners, preferred category, and ingredients to avoid.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "people_count": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10,
+              "description": "The number of people to cook for (range 1-10)."
+            },
+            "category": {
+              "type": "string",
+              "description": "The preferred category name (e.g., 水产, 早餐, 荤菜, 主食) to narrow recommendations; omit for any category."
+            },
+            "avoid_items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of ingredient names to exclude from the recommended recipe."
+            }
+          },
+          "required": [
+            "people_count"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "recipe_id": {
+              "type": "string",
+              "description": "The unique identifier of the recommended recipe."
+            },
+            "name": {
+              "type": "string",
+              "description": "The display name of the recommended recipe."
+            },
+            "description": {
+              "type": "string",
+              "description": "A short summary describing the dish."
+            },
+            "category": {
+              "type": "string",
+              "description": "The category to which the recipe belongs (e.g., 水产, 早餐, 荤菜, 主食)."
+            },
+            "ingredients": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "description": "List of ingredient objects required for the recipe."
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Ordered list of cooking instructions."
+            },
+            "tips": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Helpful cooking tips or variations for the recipe."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_random_dish_recommendation",
+        "description": "Get a random combination of dishes suitable for the specified number of diners.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "people_count": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10,
+              "description": "The number of people to dine (range 1-10)."
+            }
+          },
+          "required": [
+            "people_count"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "recipe_id": {
+              "type": "string",
+              "description": "The unique identifier of the recommended recipe."
+            },
+            "name": {
+              "type": "string",
+              "description": "The display name of the recommended recipe."
+            },
+            "description": {
+              "type": "string",
+              "description": "A short summary describing the dish."
+            },
+            "category": {
+              "type": "string",
+              "description": "The category to which the recipe belongs (e.g., 水产, 早餐, 荤菜, 主食)."
+            },
+            "ingredients": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "description": "List of ingredient objects required for the recipe."
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Ordered list of cooking instructions."
+            },
+            "tips": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Helpful cooking tips or variations for the recipe."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\nimport random\n\n# Section 1: Schema\nclass Ingredient(BaseModel):\n    \"\"\"Represents a recipe ingredient.\"\"\"\n    name: str = Field(..., description=\"Name of the ingredient\")\n    amount: str = Field(..., description=\"Quantity of the ingredient\")\n\nclass Recipe(BaseModel):\n    \"\"\"Represents a complete recipe.\"\"\"\n    recipe_id: str = Field(..., description=\"Unique identifier for the recipe\")\n    name: str = Field(..., description=\"Display name of the recipe\")\n    description: str = Field(..., description=\"Short summary describing the dish\")\n    category: str = Field(..., description=\"Category of the recipe\")\n    ingredients: List[Ingredient] = Field(default=[], description=\"List of ingredients required\")\n    steps: List[str] = Field(default=[], description=\"Ordered cooking instructions\")\n    tips: List[str] = Field(default=[], description=\"Helpful cooking tips\")\n\nclass CookingScenario(BaseModel):\n    \"\"\"Main scenario model for cooking assistant.\"\"\"\n    recipes: Dict[str, Recipe] = Field(default={}, description=\"All available recipes\")\n    categories: List[str] = Field(default=[], description=\"Available recipe categories\")\n    random_seed: Optional[int] = Field(default=None, description=\"Random seed for reproducible recommendations\")\n    \nScenario_Schema = [Ingredient, Recipe, CookingScenario]\n\n# Section 2: Class\nclass HowToCookAPI:\n    def __init__(self):\n        \"\"\"Initialize cooking API with empty state.\"\"\"\n        self.recipes: Dict[str, Recipe] = {}\n        self.categories: List[str] = []\n        self.random_seed: Optional[int] = None\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = CookingScenario(**scenario)\n        self.recipes = model.recipes\n        self.categories = model.categories\n        self.random_seed = model.random_seed\n        if self.random_seed is not None:\n            random.seed(self.random_seed)\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"recipes\": {recipe_id: recipe.dict() for recipe_id, recipe in self.recipes.items()},\n            \"categories\": self.categories,\n            \"random_seed\": self.random_seed\n        }\n\n    def get_recipe_details(self, recipe_id: str) -> dict:\n        \"\"\"Retrieve full details for a specific recipe.\"\"\"\n        recipe = self.recipes[recipe_id]\n        return {\n            \"recipe_id\": recipe.recipe_id,\n            \"name\": recipe.name,\n            \"description\": recipe.description,\n            \"category\": recipe.category,\n            \"ingredients\": [ingredient.dict() for ingredient in recipe.ingredients],\n            \"steps\": recipe.steps,\n            \"tips\": recipe.tips\n        }\n\n    def list_all_categories(self) -> dict:\n        \"\"\"List all available recipe categories.\"\"\"\n        return {\"categories\": self.categories}\n\n    def list_recipes_by_category(self, category: Optional[str] = None) -> dict:\n        \"\"\"List recipes filtered by category.\"\"\"\n        filtered_recipes = []\n        \n        if category:\n            recipes = [recipe for recipe in self.recipes.values() if recipe.category == category]\n        else:\n            recipes = list(self.recipes.values())\n            \n        for recipe in recipes:\n            filtered_recipes.append({\n                \"recipe_id\": recipe.recipe_id,\n                \"name\": recipe.name,\n                \"description\": recipe.description\n            })\n            \n        return {\"recipes\": filtered_recipes}\n\n    def recommend_meal(self, people_count: int, category: Optional[str] = None, avoid_items: Optional[List[str]] = None) -> dict:\n        \"\"\"Generate personalized meal recommendation.\"\"\"\n        if avoid_items is None:\n            avoid_items = []\n            \n        candidates = []\n        for recipe in self.recipes.values():\n            if category and recipe.category != category:\n                continue\n                \n            # Check if recipe contains avoided ingredients\n            recipe_ingredients = [ing.name.lower() for ing in recipe.ingredients]\n            has_avoided = any(avoid_item.lower() in \" \".join(recipe_ingredients) for avoid_item in avoid_items)\n            \n            if not has_avoided:\n                candidates.append(recipe)\n                \n        if not candidates:\n            # Return any recipe if no matches found\n            candidates = list(self.recipes.values())\n            \n        selected = random.choice(candidates)\n        \n        return {\n            \"recipe_id\": selected.recipe_id,\n            \"name\": selected.name,\n            \"description\": selected.description,\n            \"category\": selected.category,\n            \"ingredients\": [ing.dict() for ing in selected.ingredients],\n            \"steps\": selected.steps,\n            \"tips\": selected.tips\n        }\n\n    def get_random_dish_recommendation(self, people_count: int) -> dict:\n        \"\"\"Get random dish recommendation.\"\"\"\n        selected = random.choice(list(self.recipes.values()))\n        \n        return {\n            \"recipe_id\": selected.recipe_id,\n            \"name\": selected.name,\n            \"description\": selected.description,\n            \"category\": selected.category,\n            \"ingredients\": [ing.dict() for ing in selected.ingredients],\n            \"steps\": selected.steps,\n            \"tips\": selected.tips\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"HowToCook\")\napi = HowToCookAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the cooking API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching CookingScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current cooking state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_recipe_details(recipe_id: str) -> dict:\n    \"\"\"\n    Retrieve full details for a specific recipe by its unique identifier.\n    \n    Args:\n        recipe_id (str): The unique identifier of the recipe.\n    \n    Returns:\n        recipe_id (str): The unique identifier of the recipe.\n        name (str): The display name of the recipe.\n        description (str): A short summary describing the dish.\n        category (str): The category to which the recipe belongs.\n        ingredients (list): List of ingredient objects required for the recipe.\n        steps (list): Ordered list of cooking instructions.\n        tips (list): Helpful cooking tips or variations.\n    \"\"\"\n    try:\n        if not recipe_id or not isinstance(recipe_id, str):\n            raise ValueError(\"Recipe ID must be a non-empty string\")\n        if recipe_id not in api.recipes:\n            raise ValueError(f\"Recipe {recipe_id} not found\")\n        return api.get_recipe_details(recipe_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef list_all_categories() -> dict:\n    \"\"\"\n    List all available categories of recipes.\n    \n    Returns:\n        categories (list): List of all category names available.\n    \"\"\"\n    try:\n        return api.list_all_categories()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef list_recipes_by_category(category: Optional[str] = None) -> dict:\n    \"\"\"\n    List all recipes belonging to a specific category.\n    \n    Args:\n        category (str) [Optional]: The category name to filter recipes.\n    \n    Returns:\n        recipes (list): List of recipes matching the specified category.\n    \"\"\"\n    try:\n        if category is not None and not isinstance(category, str):\n            raise ValueError(\"Category must be a string if provided\")\n        return api.list_recipes_by_category(category)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef recommend_meal(people_count: int, category: Optional[str] = None, avoid_items: Optional[List[str]] = None) -> dict:\n    \"\"\"\n    Generate personalized meal recommendation based on preferences.\n    \n    Args:\n        people_count (int): The number of people to cook for (range 1-10).\n        category (str) [Optional]: Preferred category to narrow recommendations.\n        avoid_items (list) [Optional]: List of ingredient names to exclude.\n    \n    Returns:\n        recipe_id (str): The unique identifier of the recommended recipe.\n        name (str): The display name of the recipe.\n        description (str): A short summary describing the dish.\n        category (str): The category of the recipe.\n        ingredients (list): List of ingredient objects required.\n        steps (list): Ordered list of cooking instructions.\n        tips (list): Helpful cooking tips or variations.\n    \"\"\"\n    try:\n        if not isinstance(people_count, int):\n            raise ValueError(\"People count must be an integer\")\n        if people_count < 1 or people_count > 10:\n            raise ValueError(\"People count must be between 1 and 10\")\n        if avoid_items is not None and not isinstance(avoid_items, list):\n            raise ValueError(\"Avoid items must be a list if provided\")\n        return api.recommend_meal(people_count, category, avoid_items)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_random_dish_recommendation(people_count: int) -> dict:\n    \"\"\"\n    Get a random dish recommendation suitable for the number of diners.\n    \n    Args:\n        people_count (int): The number of people to dine (range 1-10).\n    \n    Returns:\n        recipe_id (str): The unique identifier of the recommended recipe.\n        name (str): The display name of the recipe.\n        description (str): A short summary describing the dish.\n        category (str): The category of the recipe.\n        ingredients (list): List of ingredient objects required.\n        steps (list): Ordered list of cooking instructions.\n        tips (list): Helpful cooking tips or variations.\n    \"\"\"\n    try:\n        if not isinstance(people_count, int):\n            raise ValueError(\"People count must be an integer\")\n        if people_count < 1 or people_count > 10:\n            raise ValueError(\"People count must be between 1 and 10\")\n        return api.get_random_dish_recommendation(people_count)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-03T01:46:45.302064",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with one simple recipe",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "recipes": {
+          "pasta_001": {
+            "recipe_id": "pasta_001",
+            "name": "Simple Pasta",
+            "description": "Basic pasta with tomato sauce",
+            "category": "Italian",
+            "ingredients": [
+              {
+                "name": "pasta",
+                "amount": "200g"
+              },
+              {
+                "name": "tomato sauce",
+                "amount": "1 cup"
+              }
+            ],
+            "steps": [
+              "Boil water and cook pasta according to package instructions",
+              "Heat tomato sauce in a separate pan",
+              "Drain pasta and mix with sauce"
+            ],
+            "tips": [
+              "Add a pinch of salt to the pasta water"
+            ]
+          }
+        },
+        "categories": [
+          "Italian",
+          "Breakfast",
+          "Dessert"
+        ],
+        "random_seed": 42
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple recipes across different categories with varied complexity",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "recipes": {
+          "omelette_001": {
+            "recipe_id": "omelette_001",
+            "name": "French Omelette",
+            "description": "Classic French-style omelette",
+            "category": "Breakfast",
+            "ingredients": [
+              {
+                "name": "eggs",
+                "amount": "3 large"
+              },
+              {
+                "name": "butter",
+                "amount": "1 tbsp"
+              },
+              {
+                "name": "salt",
+                "amount": "1/4 tsp"
+              }
+            ],
+            "steps": [
+              "Beat eggs with salt until frothy",
+              "Heat butter in non-stick pan over medium heat",
+              "Pour eggs into pan and cook without stirring for 1 minute",
+              "Fold omelette in half and serve immediately"
+            ],
+            "tips": [
+              "Use room temperature eggs for better texture",
+              "Don't overcook - eggs should be slightly runny"
+            ]
+          },
+          "brownies_001": {
+            "recipe_id": "brownies_001",
+            "name": "Fudgy Brownies",
+            "description": "Rich chocolate brownies with fudgy center",
+            "category": "Dessert",
+            "ingredients": [
+              {
+                "name": "dark chocolate",
+                "amount": "200g"
+              },
+              {
+                "name": "butter",
+                "amount": "150g"
+              },
+              {
+                "name": "sugar",
+                "amount": "1 cup"
+              },
+              {
+                "name": "flour",
+                "amount": "3/4 cup"
+              }
+            ],
+            "steps": [
+              "Melt chocolate and butter together",
+              "Mix in sugar and eggs",
+              "Fold in flour gently",
+              "Bake at 180°C for 25 minutes"
+            ],
+            "tips": [
+              "Don't overmix the batter",
+              "Let cool completely before cutting"
+            ]
+          }
+        },
+        "categories": [
+          "Breakfast",
+          "Dessert",
+          "Italian",
+          "Asian"
+        ],
+        "random_seed": 123
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Comprehensive recipe collection with multiple categories and detailed recipes",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "recipes": {
+          "risotto_001": {
+            "recipe_id": "risotto_001",
+            "name": "Mushroom Risotto",
+            "description": "Creamy Italian rice dish with mushrooms",
+            "category": "Italian",
+            "ingredients": [
+              {
+                "name": "arborio rice",
+                "amount": "1.5 cups"
+              },
+              {
+                "name": "mushrooms",
+                "amount": "300g"
+              },
+              {
+                "name": "vegetable broth",
+                "amount": "4 cups"
+              },
+              {
+                "name": "parmesan cheese",
+                "amount": "1/2 cup grated"
+              }
+            ],
+            "steps": [
+              "Sauté mushrooms in olive oil until browned",
+              "Add rice and toast for 1 minute",
+              "Add broth gradually, stirring constantly",
+              "Cook until rice is al dente",
+              "Stir in parmesan cheese and serve"
+            ],
+            "tips": [
+              "Keep broth warm before adding",
+              "Stir constantly for creamy texture"
+            ]
+          },
+          "smoothie_001": {
+            "recipe_id": "smoothie_001",
+            "name": "Berry Smoothie",
+            "description": "Healthy breakfast smoothie with mixed berries",
+            "category": "Breakfast",
+            "ingredients": [
+              {
+                "name": "mixed berries",
+                "amount": "1 cup"
+              },
+              {
+                "name": "banana",
+                "amount": "1 medium"
+              },
+              {
+                "name": "yogurt",
+                "amount": "1/2 cup"
+              },
+              {
+                "name": "honey",
+                "amount": "1 tbsp"
+              }
+            ],
+            "steps": [
+              "Add all ingredients to blender",
+              "Blend until smooth",
+              "Serve immediately"
+            ],
+            "tips": [
+              "Use frozen berries for thicker smoothie",
+              "Add ice cubes if needed"
+            ]
+          },
+          "curry_001": {
+            "recipe_id": "curry_001",
+            "name": "Chicken Curry",
+            "description": "Spicy Indian-style chicken curry",
+            "category": "Asian",
+            "ingredients": [
+              {
+                "name": "chicken breast",
+                "amount": "500g"
+              },
+              {
+                "name": "onion",
+                "amount": "1 large"
+              },
+              {
+                "name": "curry powder",
+                "amount": "2 tbsp"
+              },
+              {
+                "name": "coconut milk",
+                "amount": "1 can"
+              }
+            ],
+            "steps": [
+              "Sauté onions until translucent",
+              "Add chicken and brown on all sides",
+              "Add curry powder and cook for 1 minute",
+              "Pour in coconut milk and simmer for 20 minutes"
+            ],
+            "tips": [
+              "Marinate chicken for better flavor",
+              "Adjust spice level to taste"
+            ]
+          }
+        },
+        "categories": [
+          "Italian",
+          "Breakfast",
+          "Dessert",
+          "Asian",
+          "Mexican",
+          "Mediterranean"
+        ],
+        "random_seed": 789
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty recipe collection with only categories defined",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "recipes": {},
+        "categories": [
+          "Italian",
+          "Breakfast",
+          "Dessert"
+        ],
+        "random_seed": 999
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 1,
+      "failed_scenarios": 3,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Validation Exception",
+              "error_details": "litellm.APIError: APIError: DeepseekException - Unable to get json response - Expecting value: line 1 column 1 (char 0), Original Response: ",
+              "root_cause": "Scenario validation failed: litellm.APIError: APIError: DeepseekException - Unable to get json response - Expecting value: line 1 column 1 (char 0), Original Response: "
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "simple",
+          "execution_time": 79.79820013046265
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Validation Exception",
+              "error_details": "litellm.APIError: APIError: DeepseekException - Unable to get json response - Expecting value: line 1 column 1 (char 0), Original Response: ",
+              "root_cause": "Scenario validation failed: litellm.APIError: APIError: DeepseekException - Unable to get json response - Expecting value: line 1 column 1 (char 0), Original Response: "
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "medium",
+          "execution_time": 79.79268741607666
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Validation Exception",
+              "error_details": "litellm.APIError: APIError: DeepseekException - Unable to get json response - Expecting value: line 1 column 1 (char 0), Original Response: ",
+              "root_cause": "Scenario validation failed: litellm.APIError: APIError: DeepseekException - Unable to get json response - Expecting value: line 1 column 1 (char 0), Original Response: "
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "complex",
+          "execution_time": 79.7866804599762
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_all_categories",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_recipes_by_category",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_recipe_details",
+                "passed": true,
+                "error": "Recipe recipe_001 not found"
+              },
+              {
+                "tool_name": "recommend_meal",
+                "passed": true,
+                "error": "Cannot choose from an empty sequence"
+              },
+              {
+                "tool_name": "get_random_dish_recommendation",
+                "passed": true,
+                "error": "Cannot choose from an empty sequence"
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 89.61147570610046
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 1,
+      "failed_scenarios": 3,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Validation Exception",
+              "error_details": "litellm.APIError: APIError: DeepseekException - Unable to get json response - Expecting value: line 1 column 1 (char 0), Original Response: ",
+              "root_cause": "Scenario validation failed: litellm.APIError: APIError: DeepseekException - Unable to get json response - Expecting value: line 1 column 1 (char 0), Original Response: "
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "simple",
+          "execution_time": 79.79820013046265
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Validation Exception",
+              "error_details": "litellm.APIError: APIError: DeepseekException - Unable to get json response - Expecting value: line 1 column 1 (char 0), Original Response: ",
+              "root_cause": "Scenario validation failed: litellm.APIError: APIError: DeepseekException - Unable to get json response - Expecting value: line 1 column 1 (char 0), Original Response: "
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "medium",
+          "execution_time": 79.79268741607666
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Validation Exception",
+              "error_details": "litellm.APIError: APIError: DeepseekException - Unable to get json response - Expecting value: line 1 column 1 (char 0), Original Response: ",
+              "root_cause": "Scenario validation failed: litellm.APIError: APIError: DeepseekException - Unable to get json response - Expecting value: line 1 column 1 (char 0), Original Response: "
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "complex",
+          "execution_time": 79.7866804599762
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_all_categories",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_recipes_by_category",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_recipe_details",
+                "passed": true,
+                "error": "Recipe recipe_001 not found"
+              },
+              {
+                "tool_name": "recommend_meal",
+                "passed": true,
+                "error": "Cannot choose from an empty sequence"
+              },
+              {
+                "tool_name": "get_random_dish_recommendation",
+                "passed": true,
+                "error": "Cannot choose from an empty sequence"
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 89.61147570610046
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/HowToCook.py"
+  }
+}

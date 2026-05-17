@@ -1,0 +1,1886 @@
+{
+  "metadata": {
+    "class_name": "WuWa",
+    "metadata_path": "envs\\metadata\\WuWa_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-03T22:34:27.102798",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "WuWa",
+    "description": "A server for querying Wuthering Waves (鸣潮) game data from KooZone, including character builds, echo information, and character profiles.",
+    "tools": [
+      {
+        "name": "get_character_info",
+        "description": "Query in-game character information from KooZone, including recommended equipment, builds, and gameplay strategies.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "character_name": {
+              "type": "string",
+              "description": "The Chinese name of the character to query for in-game information."
+            }
+          },
+          "required": [
+            "character_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "character_info": {
+              "type": "string",
+              "description": "JSON-formatted string containing in-game character information such as equipment recommendations, build guides, and gameplay strategies. Returns an error message if the character is not found or data retrieval failed."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_echo_info",
+        "description": "Query echo set information from KooZone, providing details about echo attributes and effects.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "echo_name": {
+              "type": "string",
+              "description": "The Chinese name of the echo set to query."
+            }
+          },
+          "required": [
+            "echo_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "echo_info": {
+              "type": "string",
+              "description": "JSON-formatted string containing echo set information including attributes and effects. Returns an error message if the echo is not found or data retrieval failed."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_character_profile",
+        "description": "Query out-of-game character profile information from KooZone, including voice actor, background story, and character design details. This differs from get_character_info which provides in-game build recommendations.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "character_name": {
+              "type": "string",
+              "description": "The Chinese name of the character to query for profile information."
+            }
+          },
+          "required": [
+            "character_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "character_profile": {
+              "type": "string",
+              "description": "JSON-formatted string containing out-of-game character profile information such as voice actor details, background story, lore, and character design notes. Returns an error message if the character is not found or data retrieval failed."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass CharacterBuild(BaseModel):\n    \"\"\"Represents a character build configuration.\"\"\"\n    weapon: str = Field(..., description=\"Recommended weapon\")\n    echo_set: str = Field(..., description=\"Recommended echo set\")\n    main_stats: List[str] = Field(..., description=\"Main stat priorities\")\n    sub_stats: List[str] = Field(..., description=\"Sub stat priorities\")\n    talent_priority: List[str] = Field(..., description=\"Talent upgrade priority\")\n\nclass CharacterInfo(BaseModel):\n    \"\"\"Represents in-game character information.\"\"\"\n    name: str = Field(..., description=\"Character name\")\n    rarity: int = Field(..., ge=4, le=5, description=\"Character rarity (4 or 5)\")\n    element: str = Field(..., description=\"Element type\")\n    weapon_type: str = Field(..., description=\"Weapon type\")\n    build_recommendations: CharacterBuild = Field(..., description=\"Build recommendations\")\n    team_compositions: List[List[str]] = Field(..., description=\"Recommended team compositions\")\n    gameplay_tips: List[str] = Field(..., description=\"Gameplay strategies and tips\")\n\nclass EchoInfo(BaseModel):\n    \"\"\"Represents echo set information.\"\"\"\n    name: str = Field(..., description=\"Echo set name\")\n    cost: int = Field(..., ge=1, le=4, description=\"Echo cost (1-4)\")\n    attributes: Dict[str, float] = Field(..., description=\"Echo attributes\")\n    set_effect: str = Field(..., description=\"Set effect description\")\n    recommended_for: List[str] = Field(..., description=\"Characters this echo is recommended for\")\n\nclass CharacterProfile(BaseModel):\n    \"\"\"Represents out-of-game character profile information.\"\"\"\n    name: str = Field(..., description=\"Character name\")\n    voice_actor: str = Field(..., description=\"Voice actor name\")\n    background_story: str = Field(..., description=\"Character background and lore\")\n    personality: str = Field(..., description=\"Character personality description\")\n    design_notes: str = Field(..., description=\"Character design notes\")\n    release_date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Character release date\")\n\nclass WuWaScenario(BaseModel):\n    \"\"\"Main scenario model for Wuthering Waves game data.\"\"\"\n    characterDatabase: Dict[str, CharacterInfo] = Field(default={\n        \"漂泊者\": CharacterInfo(\n            name=\"漂泊者\",\n            rarity=5,\n            element=\"光谱\",\n            weapon_type=\"迅刃\",\n            build_recommendations=CharacterBuild(\n                weapon=\"千古洑流\",\n                echo_set=\"沉日劫明\",\n                main_stats=[\"暴击率\", \"暴击伤害\", \"攻击力%\"],\n                sub_stats=[\"暴击率\", \"暴击伤害\", \"攻击力%\", \"共鸣效率\"],\n                talent_priority=[\"共鸣回路\", \"共鸣技能\", \"常态攻击\", \"共鸣解放\"]\n            ),\n            team_compositions=[[\"漂泊者\", \"维里奈\", \"白芷\"], [\"漂泊者\", \"散华\", \"白莲\"]],\n            gameplay_tips=[\"利用共鸣回路进行快速连击\", \"保持高共鸣效率以频繁释放技能\"]\n        ),\n        \"维里奈\": CharacterInfo(\n            name=\"维里奈\",\n            rarity=5,\n            element=\"衍射\",\n            weapon_type=\"音感仪\",\n            build_recommendations=CharacterBuild(\n                weapon=\"漪澜浮录\",\n                echo_set=\"隐世回音\",\n                main_stats=[\"攻击力%\", \"暴击率\", \"暴击伤害\"],\n                sub_stats=[\"攻击力%\", \"暴击率\", \"暴击伤害\", \"共鸣效率\"],\n                talent_priority=[\"共鸣回路\", \"共鸣技能\", \"共鸣解放\", \"常态攻击\"]\n            ),\n            team_compositions=[[\"维里奈\", \"漂泊者\", \"白芷\"], [\"维里奈\", \"卡卡罗\", \"白莲\"]],\n            gameplay_tips=[\"优先叠加光合能量\", \"在适当时机使用重击触发额外伤害\"]\n        ),\n        \"白芷\": CharacterInfo(\n            name=\"白芷\",\n            rarity=4,\n            element=\"冷凝\",\n            weapon_type=\"音感仪\",\n            build_recommendations=CharacterBuild(\n                weapon=\"鸣动仪-25\",\n                echo_set=\"彻响之壁\",\n                main_stats=[\"攻击力%\", \"暴击率\", \"暴击伤害\"],\n                sub_stats=[\"攻击力%\", \"暴击率\", \"暴击伤害\", \"共鸣效率\"],\n                talent_priority=[\"共鸣技能\", \"共鸣回路\", \"常态攻击\", \"共鸣解放\"]\n            ),\n            team_compositions=[[\"白芷\", \"漂泊者\", \"维里奈\"], [\"白芷\", \"卡卡罗\", \"桃祈\"]],\n            gameplay_tips=[\"利用延奏技能为队友提供伤害加成\", \"保持共鸣回路层数\"]\n        )\n    }, description=\"Character information database\")\n    \n    echoDatabase: Dict[str, EchoInfo] = Field(default={\n        \"沉日劫明\": EchoInfo(\n            name=\"沉日劫明\",\n            cost=4,\n            attributes={\"攻击力%\": 30.0, \"暴击率\": 15.0},\n            set_effect=\"2件套: 湮灭伤害+10% 5件套: 使用普攻或重击时湮灭伤害+7.5%，可叠加4层\",\n            recommended_for=[\"漂泊者\", \"丹瑾\", \"散华\"]\n        ),\n        \"隐世回音\": EchoInfo(\n            name=\"隐世回音\",\n            cost=4,\n            attributes={\"攻击力%\": 30.0, \"暴击伤害\": 20.0},\n            set_effect=\"2件套: 攻击力+10% 5件套: 装备者不为后台角色时攻击力+15%\",\n            recommended_for=[\"维里奈\", \"安可\", \"吟霖\"]\n        ),\n        \"彻响之壁\": EchoInfo(\n            name=\"彻响之壁\",\n            cost=3,\n            attributes={\"防御力%\": 20.0, \"生命值%\": 20.0},\n            set_effect=\"2件套: 防御力+15% 5件套: 受到攻击时防御力+15%，持续5秒\",\n            recommended_for=[\"白芷\", \"桃祈\", \"渊武\"]\n        ),\n        \"不绝余音\": EchoInfo(\n            name=\"不绝余音\",\n            cost=4,\n            attributes={\"攻击力%\": 30.0, \"共鸣效率\": 20.0},\n            set_effect=\"2件套: 攻击力+10% 5件套: 在场时自身攻击力每1.5秒+5%，最多叠加6层\",\n            recommended_for=[\"卡卡罗\", \"凌阳\", \"炽霞\"]\n        ),\n        \"啸谷长风\": EchoInfo(\n            name=\"啸谷长风\",\n            cost=4,\n            attributes={\"气动伤害\": 30.0, \"暴击率\": 15.0},\n            set_effect=\"2件套: 气动伤害+10% 5件套: 使用变奏技能时气动伤害+30%，持续15秒\",\n            recommended_for=[\"秧秧\", \"秋水\", \"莫特斐\"]\n        )\n    }, description=\"Echo set information database\")\n    \n    characterProfileDatabase: Dict[str, CharacterProfile] = Field(default={\n        \"漂泊者\": CharacterProfile(\n            name=\"漂泊者\",\n            voice_actor=\"???\",\n            background_story=\"从世界之外漂流而来的旅人，拥有穿越不同世界的能力。\",\n            personality=\"冷静、理性，但内心充满对未知世界的好奇\",\n            design_notes=\"主角设计简洁大方，体现其来自世界之外的特殊身份\",\n            release_date=\"2024-05-23\"\n        ),\n        \"维里奈\": CharacterProfile(\n            name=\"维里奈\",\n            voice_actor=\"张昱\",\n            background_story=\"新联邦植物育种员，拥有与植物沟通的能力，致力于培育新的植物品种。\",\n            personality=\"温柔、善良，对植物有着深厚的感情\",\n            design_notes=\"设计融合了植物元素，服装和技能都体现自然主题\",\n            release_date=\"2024-05-23\"\n        ),\n        \"白芷\": CharacterProfile(\n            name=\"白芷\",\n            voice_actor=\"张琦\",\n            background_story=\"华胥研究院的研究员，专注于共鸣能力的研究，拥有出色的医疗共鸣能力。\",\n            personality=\"冷静、专业，在研究中追求完美\",\n            design_notes=\"白大褂和医疗元素体现其研究员身份\",\n            release_date=\"2024-05-23\"\n        )\n    }, description=\"Character profile database\")\n\nScenario_Schema = [CharacterBuild, CharacterInfo, EchoInfo, CharacterProfile, WuWaScenario]\n\n# Section 2: Class\nclass WuWaAPI:\n    def __init__(self):\n        \"\"\"Initialize WuWa API with empty state.\"\"\"\n        self.characterDatabase: Dict[str, CharacterInfo] = {}\n        self.echoDatabase: Dict[str, EchoInfo] = {}\n        self.characterProfileDatabase: Dict[str, CharacterProfile] = {}\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = WuWaScenario(**scenario)\n        self.characterDatabase = model.characterDatabase\n        self.echoDatabase = model.echoDatabase\n        self.characterProfileDatabase = model.characterProfileDatabase\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"characterDatabase\": {name: char.dict() for name, char in self.characterDatabase.items()},\n            \"echoDatabase\": {name: echo.dict() for name, echo in self.echoDatabase.items()},\n            \"characterProfileDatabase\": {name: profile.dict() for name, profile in self.characterProfileDatabase.items()}\n        }\n\n    def get_character_info(self, character_name: str) -> dict:\n        \"\"\"Query in-game character information.\"\"\"\n        if character_name in self.characterDatabase:\n            return {\"character_info\": self.characterDatabase[character_name].json()}\n        else:\n            return {\"character_info\": '{\"error\": \"Character not found\"}'}\n\n    def get_echo_info(self, echo_name: str) -> dict:\n        \"\"\"Query echo set information.\"\"\"\n        if echo_name in self.echoDatabase:\n            return {\"echo_info\": self.echoDatabase[echo_name].json()}\n        else:\n            return {\"echo_info\": '{\"error\": \"Echo not found\"}'}\n\n    def get_character_profile(self, character_name: str) -> dict:\n        \"\"\"Query out-of-game character profile information.\"\"\"\n        if character_name in self.characterProfileDatabase:\n            return {\"character_profile\": self.characterProfileDatabase[character_name].json()}\n        else:\n            return {\"character_profile\": '{\"error\": \"Character profile not found\"}'}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"WuWa\")\napi = WuWaAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"Load scenario data into the WuWa API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching WuWaScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"Save current WuWa state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_character_info(character_name: str) -> dict:\n    \"\"\"Query in-game character information from KooZone.\n    \n    Args:\n        character_name (str): The Chinese name of the character to query for in-game information.\n    \n    Returns:\n        character_info (str): JSON-formatted string containing in-game character information.\n    \"\"\"\n    try:\n        if not character_name or not isinstance(character_name, str):\n            raise ValueError(\"Character name must be a non-empty string\")\n        return api.get_character_info(character_name)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_echo_info(echo_name: str) -> dict:\n    \"\"\"Query echo set information from KooZone.\n    \n    Args:\n        echo_name (str): The Chinese name of the echo set to query.\n    \n    Returns:\n        echo_info (str): JSON-formatted string containing echo set information.\n    \"\"\"\n    try:\n        if not echo_name or not isinstance(echo_name, str):\n            raise ValueError(\"Echo name must be a non-empty string\")\n        return api.get_echo_info(echo_name)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_character_profile(character_name: str) -> dict:\n    \"\"\"Query out-of-game character profile information from KooZone.\n    \n    Args:\n        character_name (str): The Chinese name of the character to query for profile information.\n    \n    Returns:\n        character_profile (str): JSON-formatted string containing out-of-game character profile information.\n    \"\"\"\n    try:\n        if not character_name or not isinstance(character_name, str):\n            raise ValueError(\"Character name must be a non-empty string\")\n        return api.get_character_profile(character_name)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-03T22:34:27.102798",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Minimal database with single character, echo, and profile - tests basic tool functionality",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "characterDatabase": {
+          "今汐": {
+            "name": "今汐",
+            "rarity": 5,
+            "element": "冷凝",
+            "weapon_type": "迅刃",
+            "build_recommendations": {
+              "weapon": "时和岁稔",
+              "echo_set": "凝夜白霜",
+              "main_stats": [
+                "暴击率",
+                "暴击伤害"
+              ],
+              "sub_stats": [
+                "暴击率",
+                "暴击伤害"
+              ],
+              "talent_priority": [
+                "共鸣解放",
+                "共鸣技能"
+              ]
+            },
+            "team_compositions": [
+              [
+                "今汐",
+                "白芷",
+                "维里奈"
+              ]
+            ],
+            "gameplay_tips": [
+              "利用冷凝元素冻结敌人"
+            ]
+          }
+        },
+        "echoDatabase": {
+          "凝夜白霜": {
+            "name": "凝夜白霜",
+            "cost": 4,
+            "attributes": {
+              "冷凝伤害": 30.0
+            },
+            "set_effect": "2件套: 冷凝伤害+10%",
+            "recommended_for": [
+              "今汐"
+            ]
+          }
+        },
+        "characterProfileDatabase": {
+          "今汐": {
+            "name": "今汐",
+            "voice_actor": "未知",
+            "background_story": "神秘的冷凝元素使用者",
+            "personality": "冷静沉着",
+            "design_notes": "冰雪主题设计",
+            "release_date": "2024-06-15"
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Moderate database with 4 characters including different rarities and elements, tests typical use cases and edge cases like midnight release",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "characterDatabase": {
+          "卡卡罗": {
+            "name": "卡卡罗",
+            "rarity": 5,
+            "element": "导电",
+            "weapon_type": "臂铠",
+            "build_recommendations": {
+              "weapon": "掣傀之手",
+              "echo_set": "不绝余音",
+              "main_stats": [
+                "攻击力%",
+                "暴击率",
+                "暴击伤害"
+              ],
+              "sub_stats": [
+                "攻击力%",
+                "暴击率",
+                "暴击伤害",
+                "共鸣效率"
+              ],
+              "talent_priority": [
+                "共鸣解放",
+                "共鸣回路",
+                "共鸣技能",
+                "常态攻击"
+              ]
+            },
+            "team_compositions": [
+              [
+                "卡卡罗",
+                "维里奈",
+                "白莲"
+              ],
+              [
+                "卡卡罗",
+                "白芷",
+                "桃祈"
+              ]
+            ],
+            "gameplay_tips": [
+              "利用重击触发导电反应",
+              "保持高攻击频率叠加buff"
+            ]
+          },
+          "秧秧": {
+            "name": "秧秧",
+            "rarity": 4,
+            "element": "气动",
+            "weapon_type": "音感仪",
+            "build_recommendations": {
+              "weapon": "鸣动仪-21",
+              "echo_set": "啸谷长风",
+              "main_stats": [
+                "气动伤害",
+                "暴击率"
+              ],
+              "sub_stats": [
+                "气动伤害",
+                "暴击率",
+                "攻击力%"
+              ],
+              "talent_priority": [
+                "共鸣技能",
+                "共鸣回路",
+                "共鸣解放"
+              ]
+            },
+            "team_compositions": [
+              [
+                "秧秧",
+                "莫特斐",
+                "白芷"
+              ]
+            ],
+            "gameplay_tips": [
+              "使用变奏技能触发气动增伤",
+              "配合队友进行元素反应"
+            ]
+          },
+          "散华": {
+            "name": "散华",
+            "rarity": 5,
+            "element": "湮灭",
+            "weapon_type": "迅刃",
+            "build_recommendations": {
+              "weapon": "苍鳞千嶂",
+              "echo_set": "沉日劫明",
+              "main_stats": [
+                "暴击率",
+                "暴击伤害",
+                "攻击力%"
+              ],
+              "sub_stats": [
+                "暴击率",
+                "暴击伤害",
+                "攻击力%"
+              ],
+              "talent_priority": [
+                "共鸣回路",
+                "共鸣解放",
+                "共鸣技能",
+                "常态攻击"
+              ]
+            },
+            "team_compositions": [
+              [
+                "散华",
+                "漂泊者",
+                "白莲"
+              ],
+              [
+                "散华",
+                "丹瑾",
+                "桃祈"
+              ]
+            ],
+            "gameplay_tips": [
+              "叠加普攻层数提升湮灭伤害",
+              "合理使用共鸣解放打爆发"
+            ]
+          },
+          "桃祈": {
+            "name": "桃祈",
+            "rarity": 4,
+            "element": "冷凝",
+            "weapon_type": "音感仪",
+            "build_recommendations": {
+              "weapon": "鸣动仪-25",
+              "echo_set": "彻响之壁",
+              "main_stats": [
+                "生命值%",
+                "防御力%"
+              ],
+              "sub_stats": [
+                "生命值%",
+                "防御力%",
+                "共鸣效率"
+              ],
+              "talent_priority": [
+                "共鸣技能",
+                "共鸣解放",
+                "共鸣回路"
+              ]
+            },
+            "team_compositions": [
+              [
+                "桃祈",
+                "卡卡罗",
+                "白芷"
+              ]
+            ],
+            "gameplay_tips": [
+              "提供护盾保护队友",
+              "利用防御力提升治疗量"
+            ]
+          }
+        },
+        "echoDatabase": {
+          "沉日劫明": {
+            "name": "沉日劫明",
+            "cost": 4,
+            "attributes": {
+              "攻击力%": 30.0,
+              "暴击率": 15.0
+            },
+            "set_effect": "2件套: 湮灭伤害+10% 5件套: 使用普攻或重击时湮灭伤害+7.5%，可叠加4层",
+            "recommended_for": [
+              "漂泊者",
+              "丹瑾",
+              "散华"
+            ]
+          },
+          "啸谷长风": {
+            "name": "啸谷长风",
+            "cost": 4,
+            "attributes": {
+              "气动伤害": 30.0,
+              "暴击率": 15.0
+            },
+            "set_effect": "2件套: 气动伤害+10% 5件套: 使用变奏技能时气动伤害+30%，持续15秒",
+            "recommended_for": [
+              "秧秧",
+              "秋水",
+              "莫特斐"
+            ]
+          },
+          "不绝余音": {
+            "name": "不绝余音",
+            "cost": 4,
+            "attributes": {
+              "攻击力%": 30.0,
+              "共鸣效率": 20.0
+            },
+            "set_effect": "2件套: 攻击力+10% 5件套: 在场时自身攻击力每1.5秒+5%，最多叠加6层",
+            "recommended_for": [
+              "卡卡罗",
+              "凌阳",
+              "炽霞"
+            ]
+          }
+        },
+        "characterProfileDatabase": {
+          "卡卡罗": {
+            "name": "卡卡罗",
+            "voice_actor": "刘北辰",
+            "background_story": "来自边境的战士，拥有强大的导电能力，曾是雇佣兵团的队长。",
+            "personality": "豪爽、直率，重视承诺和友情",
+            "design_notes": "重装战士风格，体现力量感",
+            "release_date": "2024-06-01"
+          },
+          "秧秧": {
+            "name": "秧秧",
+            "voice_actor": "小N",
+            "background_story": "活泼可爱的少女，擅长使用气动元素进行辅助和控制。",
+            "personality": "开朗、乐观，喜欢帮助他人",
+            "design_notes": "轻盈灵动的设计风格",
+            "release_date": "2024-05-23"
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich database with 6 characters, 5 echo sets, and complete profiles - tests scalability and complex team compositions",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "characterDatabase": {
+          "漂泊者": {
+            "name": "漂泊者",
+            "rarity": 5,
+            "element": "光谱",
+            "weapon_type": "迅刃",
+            "build_recommendations": {
+              "weapon": "千古洑流",
+              "echo_set": "沉日劫明",
+              "main_stats": [
+                "暴击率",
+                "暴击伤害",
+                "攻击力%",
+                "共鸣效率"
+              ],
+              "sub_stats": [
+                "暴击率",
+                "暴击伤害",
+                "攻击力%",
+                "共鸣效率",
+                "攻击力"
+              ],
+              "talent_priority": [
+                "共鸣回路",
+                "共鸣技能",
+                "常态攻击",
+                "共鸣解放"
+              ]
+            },
+            "team_compositions": [
+              [
+                "漂泊者",
+                "维里奈",
+                "白芷"
+              ],
+              [
+                "漂泊者",
+                "散华",
+                "白莲"
+              ],
+              [
+                "漂泊者",
+                "卡卡罗",
+                "桃祈"
+              ]
+            ],
+            "gameplay_tips": [
+              "利用共鸣回路进行快速连击",
+              "保持高共鸣效率以频繁释放技能",
+              "配合队友元素反应打出高额伤害",
+              "注意技能循环和能量管理"
+            ]
+          },
+          "维里奈": {
+            "name": "维里奈",
+            "rarity": 5,
+            "element": "衍射",
+            "weapon_type": "音感仪",
+            "build_recommendations": {
+              "weapon": "漪澜浮录",
+              "echo_set": "隐世回音",
+              "main_stats": [
+                "攻击力%",
+                "暴击率",
+                "暴击伤害",
+                "衍射伤害"
+              ],
+              "sub_stats": [
+                "攻击力%",
+                "暴击率",
+                "暴击伤害",
+                "共鸣效率",
+                "攻击力"
+              ],
+              "talent_priority": [
+                "共鸣回路",
+                "共鸣技能",
+                "共鸣解放",
+                "常态攻击"
+              ]
+            },
+            "team_compositions": [
+              [
+                "维里奈",
+                "漂泊者",
+                "白芷"
+              ],
+              [
+                "维里奈",
+                "卡卡罗",
+                "白莲"
+              ],
+              [
+                "维里奈",
+                "散华",
+                "桃祈"
+              ]
+            ],
+            "gameplay_tips": [
+              "优先叠加光合能量",
+              "在适当时机使用重击触发额外伤害",
+              "保持在场时间以维持攻击力加成",
+              "配合队友进行元素反应"
+            ]
+          },
+          "凌阳": {
+            "name": "凌阳",
+            "rarity": 5,
+            "element": "焚烧",
+            "weapon_type": "臂铠",
+            "build_recommendations": {
+              "weapon": "赫奕重明",
+              "echo_set": "不绝余音",
+              "main_stats": [
+                "攻击力%",
+                "暴击率",
+                "暴击伤害",
+                "焚烧伤害"
+              ],
+              "sub_stats": [
+                "攻击力%",
+                "暴击率",
+                "暴击伤害",
+                "共鸣效率"
+              ],
+              "talent_priority": [
+                "共鸣解放",
+                "共鸣回路",
+                "共鸣技能",
+                "常态攻击"
+              ]
+            },
+            "team_compositions": [
+              [
+                "凌阳",
+                "炽霞",
+                "白芷"
+              ],
+              [
+                "凌阳",
+                "维里奈",
+                "桃祈"
+              ]
+            ],
+            "gameplay_tips": [
+              "利用在场时间叠加攻击力buff",
+              "合理使用共鸣解放打爆发伤害",
+              "配合焚烧元素进行持续输出"
+            ]
+          },
+          "安可": {
+            "name": "安可",
+            "rarity": 5,
+            "element": "焚烧",
+            "weapon_type": "音感仪",
+            "build_recommendations": {
+              "weapon": "掣傀之手",
+              "echo_set": "隐世回音",
+              "main_stats": [
+                "攻击力%",
+                "暴击率",
+                "暴击伤害"
+              ],
+              "sub_stats": [
+                "攻击力%",
+                "暴击率",
+                "暴击伤害",
+                "共鸣效率"
+              ],
+              "talent_priority": [
+                "共鸣技能",
+                "共鸣回路",
+                "共鸣解放",
+                "常态攻击"
+              ]
+            },
+            "team_compositions": [
+              [
+                "安可",
+                "凌阳",
+                "白芷"
+              ],
+              [
+                "安可",
+                "维里奈",
+                "白莲"
+              ]
+            ],
+            "gameplay_tips": [
+              "保持在场状态获得攻击力加成",
+              "利用技能进行快速输出",
+              "注意能量循环"
+            ]
+          },
+          "莫特斐": {
+            "name": "莫特斐",
+            "rarity": 4,
+            "element": "气动",
+            "weapon_type": "迅刃",
+            "build_recommendations": {
+              "weapon": "异响空灵",
+              "echo_set": "啸谷长风",
+              "main_stats": [
+                "气动伤害",
+                "暴击率",
+                "暴击伤害"
+              ],
+              "sub_stats": [
+                "气动伤害",
+                "暴击率",
+                "暴击伤害",
+                "攻击力%"
+              ],
+              "talent_priority": [
+                "共鸣技能",
+                "共鸣回路",
+                "共鸣解放",
+                "常态攻击"
+              ]
+            },
+            "team_compositions": [
+              [
+                "莫特斐",
+                "秧秧",
+                "白芷"
+              ],
+              [
+                "莫特斐",
+                "秋水",
+                "桃祈"
+              ]
+            ],
+            "gameplay_tips": [
+              "使用变奏技能触发气动增伤",
+              "配合队友进行元素扩散",
+              "保持技能循环"
+            ]
+          },
+          "丹瑾": {
+            "name": "丹瑾",
+            "rarity": 5,
+            "element": "湮灭",
+            "weapon_type": "长刃",
+            "build_recommendations": {
+              "weapon": "裁春",
+              "echo_set": "沉日劫明",
+              "main_stats": [
+                "暴击率",
+                "暴击伤害",
+                "攻击力%",
+                "湮灭伤害"
+              ],
+              "sub_stats": [
+                "暴击率",
+                "暴击伤害",
+                "攻击力%",
+                "共鸣效率"
+              ],
+              "talent_priority": [
+                "共鸣回路",
+                "共鸣解放",
+                "共鸣技能",
+                "常态攻击"
+              ]
+            },
+            "team_compositions": [
+              [
+                "丹瑾",
+                "散华",
+                "白莲"
+              ],
+              [
+                "丹瑾",
+                "漂泊者",
+                "桃祈"
+              ]
+            ],
+            "gameplay_tips": [
+              "叠加普攻层数提升湮灭伤害",
+              "合理使用共鸣解放打爆发",
+              "保持高暴击率和暴击伤害",
+              "注意技能循环和能量管理"
+            ]
+          }
+        },
+        "echoDatabase": {
+          "沉日劫明": {
+            "name": "沉日劫明",
+            "cost": 4,
+            "attributes": {
+              "攻击力%": 30.0,
+              "暴击率": 15.0
+            },
+            "set_effect": "2件套: 湮灭伤害+10% 5件套: 使用普攻或重击时湮灭伤害+7.5%，可叠加4层",
+            "recommended_for": [
+              "漂泊者",
+              "丹瑾",
+              "散华"
+            ]
+          },
+          "隐世回音": {
+            "name": "隐世回音",
+            "cost": 4,
+            "attributes": {
+              "攻击力%": 30.0,
+              "暴击伤害": 20.0
+            },
+            "set_effect": "2件套: 攻击力+10% 5件套: 装备者不为后台角色时攻击力+15%",
+            "recommended_for": [
+              "维里奈",
+              "安可",
+              "吟霖"
+            ]
+          },
+          "彻响之壁": {
+            "name": "彻响之壁",
+            "cost": 3,
+            "attributes": {
+              "防御力%": 20.0,
+              "生命值%": 20.0
+            },
+            "set_effect": "2件套: 防御力+15% 5件套: 受到攻击时防御力+15%，持续5秒",
+            "recommended_for": [
+              "白芷",
+              "桃祈",
+              "渊武"
+            ]
+          },
+          "不绝余音": {
+            "name": "不绝余音",
+            "cost": 4,
+            "attributes": {
+              "攻击力%": 30.0,
+              "共鸣效率": 20.0
+            },
+            "set_effect": "2件套: 攻击力+10% 5件套: 在场时自身攻击力每1.5秒+5%，最多叠加6层",
+            "recommended_for": [
+              "卡卡罗",
+              "凌阳",
+              "炽霞"
+            ]
+          },
+          "啸谷长风": {
+            "name": "啸谷长风",
+            "cost": 4,
+            "attributes": {
+              "气动伤害": 30.0,
+              "暴击率": 15.0
+            },
+            "set_effect": "2件套: 气动伤害+10% 5件套: 使用变奏技能时气动伤害+30%，持续15秒",
+            "recommended_for": [
+              "秧秧",
+              "秋水",
+              "莫特斐"
+            ]
+          }
+        },
+        "characterProfileDatabase": {
+          "漂泊者": {
+            "name": "漂泊者",
+            "voice_actor": "鹿喑",
+            "background_story": "从世界之外漂流而来的旅人，拥有穿越不同世界的能力。在索拉里斯-3醒来后，开始了新的冒险旅程。",
+            "personality": "冷静、理性，但内心充满对未知世界的好奇。面对困难时展现出坚韧不拔的意志。",
+            "design_notes": "主角设计简洁大方，体现其来自世界之外的特殊身份。服装融合了多个世界的元素。",
+            "release_date": "2024-05-23"
+          },
+          "维里奈": {
+            "name": "维里奈",
+            "voice_actor": "张昱",
+            "background_story": "新联邦植物育种员，拥有与植物沟通的能力，致力于培育新的植物品种以改善人类生存环境。",
+            "personality": "温柔、善良，对植物有着深厚的感情。在工作中展现出专业和耐心。",
+            "design_notes": "设计融合了植物元素，服装和技能都体现自然主题。色彩以绿色和白色为主。",
+            "release_date": "2024-05-23"
+          },
+          "凌阳": {
+            "name": "凌阳",
+            "voice_actor": "赵路",
+            "background_story": "今州城的守护者，拥有强大的焚烧元素能力。曾经历过重大变故，但依然坚守职责。",
+            "personality": "正直、勇敢，有强烈的责任感。对待朋友真诚，对待敌人毫不留情。",
+            "design_notes": "设计体现东方武侠风格，融合了火焰元素。服装华丽而不失实用性。",
+            "release_date": "2024-06-28"
+          },
+          "安可": {
+            "name": "安可",
+            "voice_actor": "宴宁",
+            "background_story": "天真烂漫的少女，拥有强大的焚烧元素能力。虽然年幼，但在战斗中展现出惊人的力量。",
+            "personality": "活泼、可爱，充满童真。喜欢交朋友，对世界充满好奇。",
+            "design_notes": "设计以可爱风格为主，融合了火焰和玩偶元素。色彩鲜艳活泼。",
+            "release_date": "2024-05-23"
+          },
+          "莫特斐": {
+            "name": "莫特斐",
+            "voice_actor": "李诗萌",
+            "background_story": "神秘的气动元素使用者，擅长利用风元素进行快速移动和攻击。",
+            "personality": "独立、自信，有些神秘。不太喜欢与人交流，但内心善良。",
+            "design_notes": "设计体现轻盈灵动的特点，服装以蓝色和白色为主。",
+            "release_date": "2024-07-15"
+          },
+          "丹瑾": {
+            "name": "丹瑾",
+            "voice_actor": "秦紫翼",
+            "background_story": "今州城的剑术大师，拥有精湛的剑术和强大的湮灭元素能力。",
+            "personality": "沉稳、内敛，追求剑道的极致。对待弟子严格但关怀备至。",
+            "design_notes": "设计体现东方剑客风格，服装简洁优雅。武器为传统长刃。",
+            "release_date": "2024-08-15"
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty databases to test edge case handling - should pass with empty collections",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "characterDatabase": {},
+        "echoDatabase": {},
+        "characterProfileDatabase": {}
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_character_info",
+                "test_cases": [
+                  {
+                    "description": "Valid case - existing character",
+                    "input": {
+                      "character_name": "今汐"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned character info with all expected fields (name, rarity, element, weapon_type, build_recommendations, team_compositions, gameplay_tips)",
+                    "error": null
+                  },
+                  {
+                    "description": "Boundary case - non-existent character",
+                    "input": {
+                      "character_name": "不存在的角色"
+                    },
+                    "passed": true,
+                    "output": "Correctly returned error message: 'Character not found'",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - empty string",
+                    "input": {
+                      "character_name": ""
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Character name must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_echo_info",
+                "test_cases": [
+                  {
+                    "description": "Valid case - existing echo",
+                    "input": {
+                      "echo_name": "凝夜白霜"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned echo info with all expected fields (name, cost, attributes, set_effect, recommended_for)",
+                    "error": null
+                  },
+                  {
+                    "description": "Boundary case - non-existent echo",
+                    "input": {
+                      "echo_name": "不存在的声骸"
+                    },
+                    "passed": true,
+                    "output": "Correctly returned error message: 'Echo not found'",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - empty string",
+                    "input": {
+                      "echo_name": ""
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Echo name must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_character_profile",
+                "test_cases": [
+                  {
+                    "description": "Valid case - existing character profile",
+                    "input": {
+                      "character_name": "今汐"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned character profile with all expected fields (name, voice_actor, background_story, personality, design_notes, release_date)",
+                    "error": null
+                  },
+                  {
+                    "description": "Boundary case - non-existent character profile",
+                    "input": {
+                      "character_name": "不存在的角色"
+                    },
+                    "passed": true,
+                    "output": "Correctly returned error message: 'Character profile not found'",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - empty string",
+                    "input": {
+                      "character_name": ""
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Character name must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All three databases (characterDatabase, echoDatabase, characterProfileDatabase) are preserved with correct data structure and values."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 55.43268632888794
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_character_info",
+                "test_cases": [
+                  {
+                    "input": {
+                      "character_name": "卡卡罗"
+                    },
+                    "passed": true,
+                    "description": "Valid case - Query existing character 卡卡罗",
+                    "output": "Successfully returned complete character info with all build recommendations, team compositions, and gameplay tips"
+                  },
+                  {
+                    "input": {
+                      "character_name": "秧秧"
+                    },
+                    "passed": true,
+                    "description": "Valid case - Query existing character 秧秧",
+                    "output": "Successfully returned complete character info for 4-star character"
+                  },
+                  {
+                    "input": {
+                      "character_name": "散华"
+                    },
+                    "passed": true,
+                    "description": "Valid case - Query existing character 散华",
+                    "output": "Successfully returned complete character info with weapon type 迅刃"
+                  },
+                  {
+                    "input": {
+                      "character_name": "不存在的角色"
+                    },
+                    "passed": true,
+                    "description": "Error case - Query non-existent character",
+                    "output": "Correctly returned error message: {\"error\": \"Character not found\"}"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_echo_info",
+                "test_cases": [
+                  {
+                    "input": {
+                      "echo_name": "沉日劫明"
+                    },
+                    "passed": true,
+                    "description": "Valid case - Query existing echo set 沉日劫明",
+                    "output": "Successfully returned echo info with cost, attributes, set effects, and recommended characters"
+                  },
+                  {
+                    "input": {
+                      "echo_name": "啸谷长风"
+                    },
+                    "passed": true,
+                    "description": "Valid case - Query existing echo set 啸谷长风",
+                    "output": "Successfully returned echo info for Aero damage set"
+                  },
+                  {
+                    "input": {
+                      "echo_name": "不绝余音"
+                    },
+                    "passed": true,
+                    "description": "Valid case - Query existing echo set 不绝余音",
+                    "output": "Successfully returned echo info with ATK% and resonance efficiency attributes"
+                  },
+                  {
+                    "input": {
+                      "echo_name": "不存在的声骸"
+                    },
+                    "passed": true,
+                    "description": "Error case - Query non-existent echo",
+                    "output": "Correctly returned error message: {\"error\": \"Echo not found\"}"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_character_profile",
+                "test_cases": [
+                  {
+                    "input": {
+                      "character_name": "卡卡罗"
+                    },
+                    "passed": true,
+                    "description": "Valid case - Query existing character profile 卡卡罗",
+                    "output": "Successfully returned profile with voice actor, background story, personality, design notes, and release date"
+                  },
+                  {
+                    "input": {
+                      "character_name": "秧秧"
+                    },
+                    "passed": true,
+                    "description": "Valid case - Query existing character profile 秧秧",
+                    "output": "Successfully returned complete profile information"
+                  },
+                  {
+                    "input": {
+                      "character_name": "散华"
+                    },
+                    "passed": true,
+                    "description": "Boundary case - Query character without profile",
+                    "output": "Correctly returned error message: {\"error\": \"Character profile not found\"} (散华 exists in characterDatabase but not in characterProfileDatabase)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario perfectly matches the original loaded scenario. All three databases (characterDatabase, echoDatabase, characterProfileDatabase) are preserved with complete data integrity."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 69.86083006858826
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_character_info",
+                "test_cases": [
+                  {
+                    "test_case": "Valid character - 漂泊者",
+                    "input": {
+                      "character_name": "漂泊者"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved character info with all expected fields (name, rarity, element, weapon_type, build_recommendations, team_compositions, gameplay_tips)",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid character - 维里奈",
+                    "input": {
+                      "character_name": "维里奈"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved character info with衍射 element and 音感仪 weapon type",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid character - 丹瑾",
+                    "input": {
+                      "character_name": "丹瑾"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved character info with湮灭 element and 长刃 weapon type",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Error case - Non-existent character",
+                    "input": {
+                      "character_name": "不存在的角色"
+                    },
+                    "passed": true,
+                    "output": "Correctly returned error message: {\"error\": \"Character not found\"}",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_echo_info",
+                "test_cases": [
+                  {
+                    "test_case": "Valid echo - 沉日劫明",
+                    "input": {
+                      "echo_name": "沉日劫明"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved echo info with cost=4, attributes, set_effect, and recommended_for list",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid echo - 隐世回音",
+                    "input": {
+                      "echo_name": "隐世回音"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved echo info with攻击力% and 暴击伤害 attributes",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Error case - Non-existent echo",
+                    "input": {
+                      "echo_name": "不存在的声骸"
+                    },
+                    "passed": true,
+                    "output": "Correctly returned error message: {\"error\": \"Echo not found\"}",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_character_profile",
+                "test_cases": [
+                  {
+                    "test_case": "Valid profile - 漂泊者",
+                    "input": {
+                      "character_name": "漂泊者"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved profile with voice_actor=鹿喑, background_story, personality, design_notes, release_date=2024-05-23",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid profile - 凌阳",
+                    "input": {
+                      "character_name": "凌阳"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved profile with voice_actor=赵路, release_date=2024-06-28",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Error case - Non-existent profile",
+                    "input": {
+                      "character_name": "不存在的角色"
+                    },
+                    "passed": true,
+                    "output": "Correctly returned error message: {\"error\": \"Character profile not found\"}",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All three databases (characterDatabase, echoDatabase, characterProfileDatabase) are preserved with complete data integrity. All 6 characters, 5 echo sets, and 6 character profiles are intact with all nested fields preserved."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 87.6306643486023
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_character_info",
+                "test_cases": [
+                  {
+                    "input": {
+                      "character_name": "今汐"
+                    },
+                    "passed": true,
+                    "output": {
+                      "character_info": "{\"error\": \"Character not found\"}"
+                    },
+                    "note": "Valid input - returns 'not found' as expected with empty database"
+                  },
+                  {
+                    "input": {
+                      "character_name": ""
+                    },
+                    "passed": true,
+                    "output": "Validation error: Character name must be a non-empty string",
+                    "note": "Error case - correctly rejects empty string"
+                  },
+                  {
+                    "input": {
+                      "character_name": "测试角色"
+                    },
+                    "passed": true,
+                    "output": {
+                      "character_info": "{\"error\": \"Character not found\"}"
+                    },
+                    "note": "Valid input - returns 'not found' as expected with empty database"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_echo_info",
+                "test_cases": [
+                  {
+                    "input": {
+                      "echo_name": "沉日劫"
+                    },
+                    "passed": true,
+                    "output": {
+                      "echo_info": "{\"error\": \"Echo not found\"}"
+                    },
+                    "note": "Valid input - returns 'not found' as expected with empty database"
+                  },
+                  {
+                    "input": {
+                      "echo_name": ""
+                    },
+                    "passed": true,
+                    "output": "Validation error: Echo name must be a non-empty string",
+                    "note": "Error case - correctly rejects empty string"
+                  },
+                  {
+                    "input": {
+                      "echo_name": "测试声骸"
+                    },
+                    "passed": true,
+                    "output": {
+                      "echo_info": "{\"error\": \"Echo not found\"}"
+                    },
+                    "note": "Valid input - returns 'not found' as expected with empty database"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_character_profile",
+                "test_cases": [
+                  {
+                    "input": {
+                      "character_name": "今汐"
+                    },
+                    "passed": true,
+                    "output": {
+                      "character_profile": "{\"error\": \"Character profile not found\"}"
+                    },
+                    "note": "Valid input - returns 'not found' as expected with empty database"
+                  },
+                  {
+                    "input": {
+                      "character_name": ""
+                    },
+                    "passed": true,
+                    "output": "Validation error: Character name must be a non-empty string",
+                    "note": "Error case - correctly rejects empty string"
+                  },
+                  {
+                    "input": {
+                      "character_name": "测试角色档案"
+                    },
+                    "passed": true,
+                    "output": {
+                      "character_profile": "{\"error\": \"Character profile not found\"}"
+                    },
+                    "note": "Valid input - returns 'not found' as expected with empty database"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "saved_scenario": {
+                "characterDatabase": {},
+                "echoDatabase": {},
+                "characterProfileDatabase": {}
+              },
+              "comparison": "Saved scenario matches original scenario exactly",
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 62.08827304840088
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_character_info",
+                "test_cases": [
+                  {
+                    "description": "Valid case - existing character",
+                    "input": {
+                      "character_name": "今汐"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned character info with all expected fields (name, rarity, element, weapon_type, build_recommendations, team_compositions, gameplay_tips)",
+                    "error": null
+                  },
+                  {
+                    "description": "Boundary case - non-existent character",
+                    "input": {
+                      "character_name": "不存在的角色"
+                    },
+                    "passed": true,
+                    "output": "Correctly returned error message: 'Character not found'",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - empty string",
+                    "input": {
+                      "character_name": ""
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Character name must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_echo_info",
+                "test_cases": [
+                  {
+                    "description": "Valid case - existing echo",
+                    "input": {
+                      "echo_name": "凝夜白霜"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned echo info with all expected fields (name, cost, attributes, set_effect, recommended_for)",
+                    "error": null
+                  },
+                  {
+                    "description": "Boundary case - non-existent echo",
+                    "input": {
+                      "echo_name": "不存在的声骸"
+                    },
+                    "passed": true,
+                    "output": "Correctly returned error message: 'Echo not found'",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - empty string",
+                    "input": {
+                      "echo_name": ""
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Echo name must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_character_profile",
+                "test_cases": [
+                  {
+                    "description": "Valid case - existing character profile",
+                    "input": {
+                      "character_name": "今汐"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned character profile with all expected fields (name, voice_actor, background_story, personality, design_notes, release_date)",
+                    "error": null
+                  },
+                  {
+                    "description": "Boundary case - non-existent character profile",
+                    "input": {
+                      "character_name": "不存在的角色"
+                    },
+                    "passed": true,
+                    "output": "Correctly returned error message: 'Character profile not found'",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - empty string",
+                    "input": {
+                      "character_name": ""
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Character name must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All three databases (characterDatabase, echoDatabase, characterProfileDatabase) are preserved with correct data structure and values."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 55.43268632888794
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_character_info",
+                "test_cases": [
+                  {
+                    "input": {
+                      "character_name": "卡卡罗"
+                    },
+                    "passed": true,
+                    "description": "Valid case - Query existing character 卡卡罗",
+                    "output": "Successfully returned complete character info with all build recommendations, team compositions, and gameplay tips"
+                  },
+                  {
+                    "input": {
+                      "character_name": "秧秧"
+                    },
+                    "passed": true,
+                    "description": "Valid case - Query existing character 秧秧",
+                    "output": "Successfully returned complete character info for 4-star character"
+                  },
+                  {
+                    "input": {
+                      "character_name": "散华"
+                    },
+                    "passed": true,
+                    "description": "Valid case - Query existing character 散华",
+                    "output": "Successfully returned complete character info with weapon type 迅刃"
+                  },
+                  {
+                    "input": {
+                      "character_name": "不存在的角色"
+                    },
+                    "passed": true,
+                    "description": "Error case - Query non-existent character",
+                    "output": "Correctly returned error message: {\"error\": \"Character not found\"}"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_echo_info",
+                "test_cases": [
+                  {
+                    "input": {
+                      "echo_name": "沉日劫明"
+                    },
+                    "passed": true,
+                    "description": "Valid case - Query existing echo set 沉日劫明",
+                    "output": "Successfully returned echo info with cost, attributes, set effects, and recommended characters"
+                  },
+                  {
+                    "input": {
+                      "echo_name": "啸谷长风"
+                    },
+                    "passed": true,
+                    "description": "Valid case - Query existing echo set 啸谷长风",
+                    "output": "Successfully returned echo info for Aero damage set"
+                  },
+                  {
+                    "input": {
+                      "echo_name": "不绝余音"
+                    },
+                    "passed": true,
+                    "description": "Valid case - Query existing echo set 不绝余音",
+                    "output": "Successfully returned echo info with ATK% and resonance efficiency attributes"
+                  },
+                  {
+                    "input": {
+                      "echo_name": "不存在的声骸"
+                    },
+                    "passed": true,
+                    "description": "Error case - Query non-existent echo",
+                    "output": "Correctly returned error message: {\"error\": \"Echo not found\"}"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_character_profile",
+                "test_cases": [
+                  {
+                    "input": {
+                      "character_name": "卡卡罗"
+                    },
+                    "passed": true,
+                    "description": "Valid case - Query existing character profile 卡卡罗",
+                    "output": "Successfully returned profile with voice actor, background story, personality, design notes, and release date"
+                  },
+                  {
+                    "input": {
+                      "character_name": "秧秧"
+                    },
+                    "passed": true,
+                    "description": "Valid case - Query existing character profile 秧秧",
+                    "output": "Successfully returned complete profile information"
+                  },
+                  {
+                    "input": {
+                      "character_name": "散华"
+                    },
+                    "passed": true,
+                    "description": "Boundary case - Query character without profile",
+                    "output": "Correctly returned error message: {\"error\": \"Character profile not found\"} (散华 exists in characterDatabase but not in characterProfileDatabase)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario perfectly matches the original loaded scenario. All three databases (characterDatabase, echoDatabase, characterProfileDatabase) are preserved with complete data integrity."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 69.86083006858826
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_character_info",
+                "test_cases": [
+                  {
+                    "test_case": "Valid character - 漂泊者",
+                    "input": {
+                      "character_name": "漂泊者"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved character info with all expected fields (name, rarity, element, weapon_type, build_recommendations, team_compositions, gameplay_tips)",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid character - 维里奈",
+                    "input": {
+                      "character_name": "维里奈"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved character info with衍射 element and 音感仪 weapon type",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid character - 丹瑾",
+                    "input": {
+                      "character_name": "丹瑾"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved character info with湮灭 element and 长刃 weapon type",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Error case - Non-existent character",
+                    "input": {
+                      "character_name": "不存在的角色"
+                    },
+                    "passed": true,
+                    "output": "Correctly returned error message: {\"error\": \"Character not found\"}",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_echo_info",
+                "test_cases": [
+                  {
+                    "test_case": "Valid echo - 沉日劫明",
+                    "input": {
+                      "echo_name": "沉日劫明"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved echo info with cost=4, attributes, set_effect, and recommended_for list",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid echo - 隐世回音",
+                    "input": {
+                      "echo_name": "隐世回音"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved echo info with攻击力% and 暴击伤害 attributes",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Error case - Non-existent echo",
+                    "input": {
+                      "echo_name": "不存在的声骸"
+                    },
+                    "passed": true,
+                    "output": "Correctly returned error message: {\"error\": \"Echo not found\"}",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_character_profile",
+                "test_cases": [
+                  {
+                    "test_case": "Valid profile - 漂泊者",
+                    "input": {
+                      "character_name": "漂泊者"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved profile with voice_actor=鹿喑, background_story, personality, design_notes, release_date=2024-05-23",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid profile - 凌阳",
+                    "input": {
+                      "character_name": "凌阳"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved profile with voice_actor=赵路, release_date=2024-06-28",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Error case - Non-existent profile",
+                    "input": {
+                      "character_name": "不存在的角色"
+                    },
+                    "passed": true,
+                    "output": "Correctly returned error message: {\"error\": \"Character profile not found\"}",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All three databases (characterDatabase, echoDatabase, characterProfileDatabase) are preserved with complete data integrity. All 6 characters, 5 echo sets, and 6 character profiles are intact with all nested fields preserved."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 87.6306643486023
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_character_info",
+                "test_cases": [
+                  {
+                    "input": {
+                      "character_name": "今汐"
+                    },
+                    "passed": true,
+                    "output": {
+                      "character_info": "{\"error\": \"Character not found\"}"
+                    },
+                    "note": "Valid input - returns 'not found' as expected with empty database"
+                  },
+                  {
+                    "input": {
+                      "character_name": ""
+                    },
+                    "passed": true,
+                    "output": "Validation error: Character name must be a non-empty string",
+                    "note": "Error case - correctly rejects empty string"
+                  },
+                  {
+                    "input": {
+                      "character_name": "测试角色"
+                    },
+                    "passed": true,
+                    "output": {
+                      "character_info": "{\"error\": \"Character not found\"}"
+                    },
+                    "note": "Valid input - returns 'not found' as expected with empty database"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_echo_info",
+                "test_cases": [
+                  {
+                    "input": {
+                      "echo_name": "沉日劫"
+                    },
+                    "passed": true,
+                    "output": {
+                      "echo_info": "{\"error\": \"Echo not found\"}"
+                    },
+                    "note": "Valid input - returns 'not found' as expected with empty database"
+                  },
+                  {
+                    "input": {
+                      "echo_name": ""
+                    },
+                    "passed": true,
+                    "output": "Validation error: Echo name must be a non-empty string",
+                    "note": "Error case - correctly rejects empty string"
+                  },
+                  {
+                    "input": {
+                      "echo_name": "测试声骸"
+                    },
+                    "passed": true,
+                    "output": {
+                      "echo_info": "{\"error\": \"Echo not found\"}"
+                    },
+                    "note": "Valid input - returns 'not found' as expected with empty database"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_character_profile",
+                "test_cases": [
+                  {
+                    "input": {
+                      "character_name": "今汐"
+                    },
+                    "passed": true,
+                    "output": {
+                      "character_profile": "{\"error\": \"Character profile not found\"}"
+                    },
+                    "note": "Valid input - returns 'not found' as expected with empty database"
+                  },
+                  {
+                    "input": {
+                      "character_name": ""
+                    },
+                    "passed": true,
+                    "output": "Validation error: Character name must be a non-empty string",
+                    "note": "Error case - correctly rejects empty string"
+                  },
+                  {
+                    "input": {
+                      "character_name": "测试角色档案"
+                    },
+                    "passed": true,
+                    "output": {
+                      "character_profile": "{\"error\": \"Character profile not found\"}"
+                    },
+                    "note": "Valid input - returns 'not found' as expected with empty database"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "saved_scenario": {
+                "characterDatabase": {},
+                "echoDatabase": {},
+                "characterProfileDatabase": {}
+              },
+              "comparison": "Saved scenario matches original scenario exactly",
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 62.08827304840088
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/WuWa.py"
+  }
+}

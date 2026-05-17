@@ -1,0 +1,1624 @@
+{
+  "metadata": {
+    "class_name": "MusicAnalysis",
+    "metadata_path": "envs\\metadata\\MusicAnalysis_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-03T21:27:47.809411",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "MusicAnalysis",
+    "description": "A server for analyzing audio files, providing capabilities for loading audio, extracting features (chroma, MFCC), estimating tempo, and tracking beats.",
+    "tools": [
+      {
+        "name": "download_from_url",
+        "description": "Download an audio file from a remote URL and save it locally for subsequent analysis.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "description": "The URL of the audio file to download. Must point to a file ending with .mp3 or .wav extension."
+            }
+          },
+          "required": [
+            "url"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "file_path": {
+              "type": "string",
+              "description": "The local file system path where the downloaded audio file has been saved."
+            }
+          }
+        }
+      },
+      {
+        "name": "load_audio_segment",
+        "description": "Load an audio file and extract its time series data for use in subsequent analysis functions.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "file_path": {
+              "type": "string",
+              "description": "The path to the audio file to load. Can be a local file path or a path returned from download functions."
+            },
+            "offset": {
+              "type": "number",
+              "description": "The time offset in seconds from which to start reading the audio file. Defaults to 0.0 (start of file)."
+            },
+            "duration": {
+              "type": "number",
+              "description": "The maximum duration in seconds to load from the audio file. If not specified, loads the entire file from the offset."
+            }
+          },
+          "required": [
+            "file_path"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "audio_time_series_path": {
+              "type": "string",
+              "description": "The path to a CSV file containing the extracted audio time series data, used as input for analysis functions."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_duration",
+        "description": "Calculate the total duration of a loaded audio time series.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "audio_time_series_path": {
+              "type": "string",
+              "description": "The path to a CSV file containing audio time series data, as returned by the load_audio_segment function."
+            }
+          },
+          "required": [
+            "audio_time_series_path"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "duration_seconds": {
+              "type": "number",
+              "description": "The total duration of the audio time series in seconds."
+            }
+          }
+        }
+      },
+      {
+        "name": "estimate_tempo",
+        "description": "Estimate the tempo (beats per minute) of an audio time series using autocorrelation-based analysis.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "audio_time_series_path": {
+              "type": "string",
+              "description": "The path to a CSV file containing audio time series data, as returned by the load_audio_segment function."
+            },
+            "hop_length": {
+              "type": "integer",
+              "description": "The number of audio samples between successive analysis frames. Defaults to 512."
+            },
+            "start_bpm": {
+              "type": "number",
+              "description": "The initial tempo estimate in BPM used as a prior for tempo detection. Defaults to 120."
+            },
+            "std_bpm": {
+              "type": "number",
+              "description": "The standard deviation of the tempo distribution prior, controlling how tightly the estimate is constrained. Defaults to 1.0."
+            },
+            "ac_size": {
+              "type": "number",
+              "description": "The size of the autocorrelation window in seconds used for tempo estimation. Defaults to 8.0."
+            },
+            "max_tempo": {
+              "type": "number",
+              "description": "The maximum tempo in BPM that the algorithm will consider detecting. Defaults to 320.0."
+            }
+          },
+          "required": [
+            "audio_time_series_path"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "tempo_bpm": {
+              "type": "number",
+              "description": "The estimated tempo of the audio in beats per minute (BPM)."
+            }
+          }
+        }
+      },
+      {
+        "name": "chroma_cqt",
+        "description": "Compute the chroma CQT (Constant-Q Transform chromagram) feature, representing the pitch class content of the audio over time.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "audio_time_series_path": {
+              "type": "string",
+              "description": "The path to a CSV file containing audio time series data, as returned by the load_audio_segment function."
+            },
+            "hop_length": {
+              "type": "integer",
+              "description": "The number of audio samples between successive analysis frames. Defaults to 512."
+            },
+            "fmin": {
+              "type": "number",
+              "description": "The minimum frequency in Hz for the chroma feature extraction. If not specified, uses a default based on the audio sample rate."
+            },
+            "n_chroma": {
+              "type": "integer",
+              "description": "The number of chroma bins to compute. Defaults to 12, corresponding to the 12 notes of the chromatic scale."
+            },
+            "n_octaves": {
+              "type": "integer",
+              "description": "The number of octaves to include in the chroma feature computation. Defaults to 7."
+            }
+          },
+          "required": [
+            "audio_time_series_path"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "chroma_cqt_path": {
+              "type": "string",
+              "description": "The path to a CSV file containing the chroma CQT data with columns: note (pitch class), time (in seconds), and amplitude (energy)."
+            }
+          }
+        }
+      },
+      {
+        "name": "mfcc",
+        "description": "Compute MFCC (Mel-frequency cepstral coefficients) features, representing the spectral envelope and timbral characteristics of the audio.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "audio_time_series_path": {
+              "type": "string",
+              "description": "The path to a CSV file containing audio time series data, as returned by the load_audio_segment function."
+            }
+          },
+          "required": [
+            "audio_time_series_path"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "mfcc_path": {
+              "type": "string",
+              "description": "The path to a CSV file containing the computed MFCC coefficients over time."
+            }
+          }
+        }
+      },
+      {
+        "name": "beat_track",
+        "description": "Detect beat locations and estimate tempo from an audio time series using dynamic programming beat tracking.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "audio_time_series_path": {
+              "type": "string",
+              "description": "The path to a CSV file containing audio time series data, as returned by the load_audio_segment function."
+            },
+            "hop_length": {
+              "type": "integer",
+              "description": "The number of audio samples between successive analysis frames. Defaults to 512."
+            },
+            "start_bpm": {
+              "type": "number",
+              "description": "The initial tempo estimate in BPM used as a prior for beat tracking. Defaults to 120."
+            },
+            "tightness": {
+              "type": "integer",
+              "description": "The tightness parameter controlling how strictly beats must follow the tempo estimate. Higher values enforce stricter tempo adherence. Defaults to 100."
+            },
+            "units": {
+              "type": "string",
+              "description": "The units for reporting beat locations. Valid values are 'frames' (analysis frame indices), 'samples' (audio sample indices), or 'time' (seconds). Defaults to 'frames'."
+            }
+          },
+          "required": [
+            "audio_time_series_path"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "tempo": {
+              "type": "number",
+              "description": "The estimated tempo of the audio in beats per minute (BPM)."
+            },
+            "beats": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "A list of detected beat locations expressed in the specified units (frames, samples, or time in seconds)."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\nimport os\nimport uuid\nimport math\n\n# Section 1: Schema\nclass AudioTimeSeries(BaseModel):\n    \"\"\"Represents audio time series data.\"\"\"\n    id: str = Field(..., description=\"Unique identifier for the audio time series\")\n    file_path: str = Field(..., description=\"Original file path\")\n    sample_rate: int = Field(default=22050, ge=1, description=\"Sample rate in Hz\")\n    samples: List[float] = Field(default_factory=list, description=\"Audio samples\")\n    duration: float = Field(default=0.0, ge=0, description=\"Duration in seconds\")\n\nclass DownloadedFile(BaseModel):\n    \"\"\"Represents a downloaded audio file.\"\"\"\n    url: str = Field(..., description=\"Source URL\")\n    file_path: str = Field(..., description=\"Local file path\")\n\nclass ChromaData(BaseModel):\n    \"\"\"Represents chroma CQT data.\"\"\"\n    id: str = Field(..., description=\"Unique identifier\")\n    audio_id: str = Field(..., description=\"Reference to audio time series\")\n    data: List[Dict[str, Any]] = Field(default_factory=list, description=\"Chroma data rows\")\n\nclass MFCCData(BaseModel):\n    \"\"\"Represents MFCC data.\"\"\"\n    id: str = Field(..., description=\"Unique identifier\")\n    audio_id: str = Field(..., description=\"Reference to audio time series\")\n    coefficients: List[List[float]] = Field(default_factory=list, description=\"MFCC coefficients\")\n\nclass MusicAnalysisScenario(BaseModel):\n    \"\"\"Main scenario model for music analysis.\"\"\"\n    downloaded_files: Dict[str, DownloadedFile] = Field(default_factory=dict, description=\"Downloaded audio files by path\")\n    audio_time_series: Dict[str, AudioTimeSeries] = Field(default_factory=dict, description=\"Loaded audio time series by path\")\n    chroma_data: Dict[str, ChromaData] = Field(default_factory=dict, description=\"Computed chroma data by path\")\n    mfcc_data: Dict[str, MFCCData] = Field(default_factory=dict, description=\"Computed MFCC data by path\")\n    download_directory: str = Field(default=\"./downloads\", description=\"Directory for downloaded files\")\n    output_directory: str = Field(default=\"./output\", description=\"Directory for output CSV files\")\n    default_sample_rate: int = Field(default=22050, ge=1, description=\"Default sample rate for audio loading\")\n    note_names: List[str] = Field(default_factory=lambda: [\"C\", \"C#\", \"D\", \"D#\", \"E\", \"F\", \"F#\", \"G\", \"G#\", \"A\", \"A#\", \"B\"], description=\"Chromatic scale note names\")\n\nScenario_Schema = [AudioTimeSeries, DownloadedFile, ChromaData, MFCCData, MusicAnalysisScenario]\n\n# Section 2: Class\nclass MusicAnalysisAPI:\n    def __init__(self):\n        \"\"\"Initialize music analysis API with empty state.\"\"\"\n        self.downloaded_files: Dict[str, DownloadedFile] = {}\n        self.audio_time_series: Dict[str, AudioTimeSeries] = {}\n        self.chroma_data: Dict[str, ChromaData] = {}\n        self.mfcc_data: Dict[str, MFCCData] = {}\n        self.download_directory: str = \"./downloads\"\n        self.output_directory: str = \"./output\"\n        self.default_sample_rate: int = 22050\n        self.note_names: List[str] = [\"C\", \"C#\", \"D\", \"D#\", \"E\", \"F\", \"F#\", \"G\", \"G#\", \"A\", \"A#\", \"B\"]\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = MusicAnalysisScenario(**scenario)\n        self.downloaded_files = {k: DownloadedFile(**v) if isinstance(v, dict) else v for k, v in model.downloaded_files.items()}\n        self.audio_time_series = {k: AudioTimeSeries(**v) if isinstance(v, dict) else v for k, v in model.audio_time_series.items()}\n        self.chroma_data = {k: ChromaData(**v) if isinstance(v, dict) else v for k, v in model.chroma_data.items()}\n        self.mfcc_data = {k: MFCCData(**v) if isinstance(v, dict) else v for k, v in model.mfcc_data.items()}\n        self.download_directory = model.download_directory\n        self.output_directory = model.output_directory\n        self.default_sample_rate = model.default_sample_rate\n        self.note_names = model.note_names\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"downloaded_files\": {k: v.model_dump() for k, v in self.downloaded_files.items()},\n            \"audio_time_series\": {k: v.model_dump() for k, v in self.audio_time_series.items()},\n            \"chroma_data\": {k: v.model_dump() for k, v in self.chroma_data.items()},\n            \"mfcc_data\": {k: v.model_dump() for k, v in self.mfcc_data.items()},\n            \"download_directory\": self.download_directory,\n            \"output_directory\": self.output_directory,\n            \"default_sample_rate\": self.default_sample_rate,\n            \"note_names\": self.note_names\n        }\n\n    def download_from_url(self, url: str) -> dict:\n        \"\"\"Download an audio file from a remote URL and save it locally.\"\"\"\n        filename = url.split(\"/\")[-1].split(\"?\")[0]\n        if not filename:\n            filename = f\"audio_{uuid.uuid4().hex[:8]}\"\n        \n        if not (filename.endswith(\".mp3\") or filename.endswith(\".wav\")):\n            if \".mp3\" in url.lower():\n                filename += \".mp3\"\n            else:\n                filename += \".wav\"\n        \n        file_path = os.path.join(self.download_directory, filename)\n        \n        downloaded = DownloadedFile(url=url, file_path=file_path)\n        self.downloaded_files[file_path] = downloaded\n        \n        return {\"file_path\": file_path}\n\n    def load_audio_segment(self, file_path: str, offset: Optional[float] = None, duration: Optional[float] = None) -> dict:\n        \"\"\"Load an audio file and extract its time series data.\"\"\"\n        if offset is None:\n            offset = 0.0\n        \n        audio_id = uuid.uuid4().hex\n        \n        base_duration = 180.0\n        if duration is not None:\n            actual_duration = min(duration, base_duration - offset)\n        else:\n            actual_duration = base_duration - offset\n        \n        if actual_duration < 0:\n            actual_duration = 0.0\n        \n        num_samples = int(actual_duration * self.default_sample_rate)\n        samples = []\n        for i in range(min(num_samples, 1000)):\n            t = (offset + i / self.default_sample_rate)\n            sample = math.sin(2 * math.pi * 440 * t) * 0.5\n            samples.append(sample)\n        \n        audio_ts = AudioTimeSeries(\n            id=audio_id,\n            file_path=file_path,\n            sample_rate=self.default_sample_rate,\n            samples=samples,\n            duration=actual_duration\n        )\n        \n        csv_filename = f\"audio_ts_{audio_id}.csv\"\n        audio_time_series_path = os.path.join(self.output_directory, csv_filename)\n        \n        self.audio_time_series[audio_time_series_path] = audio_ts\n        \n        return {\"audio_time_series_path\": audio_time_series_path}\n\n    def get_duration(self, audio_time_series_path: str) -> dict:\n        \"\"\"Calculate the total duration of a loaded audio time series.\"\"\"\n        audio_ts = self.audio_time_series[audio_time_series_path]\n        return {\"duration_seconds\": audio_ts.duration}\n\n    def estimate_tempo(self, audio_time_series_path: str, hop_length: Optional[int] = None,\n                       start_bpm: Optional[float] = None, std_bpm: Optional[float] = None,\n                       ac_size: Optional[float] = None, max_tempo: Optional[float] = None) -> dict:\n        \"\"\"Estimate the tempo (beats per minute) of an audio time series.\"\"\"\n        if hop_length is None:\n            hop_length = 512\n        if start_bpm is None:\n            start_bpm = 120.0\n        if std_bpm is None:\n            std_bpm = 1.0\n        if ac_size is None:\n            ac_size = 8.0\n        if max_tempo is None:\n            max_tempo = 320.0\n        \n        audio_ts = self.audio_time_series[audio_time_series_path]\n        \n        duration = audio_ts.duration\n        if duration > 0:\n            estimated_beats = duration / 60.0 * start_bpm\n            tempo_variation = (len(audio_ts.samples) % 40) - 20\n            tempo_bpm = start_bpm + tempo_variation * std_bpm\n            tempo_bpm = max(30.0, min(tempo_bpm, max_tempo))\n        else:\n            tempo_bpm = start_bpm\n        \n        return {\"tempo_bpm\": round(tempo_bpm, 2)}\n\n    def chroma_cqt(self, audio_time_series_path: str, hop_length: Optional[int] = None,\n                   fmin: Optional[float] = None, n_chroma: Optional[int] = None,\n                   n_octaves: Optional[int] = None) -> dict:\n        \"\"\"Compute the chroma CQT feature.\"\"\"\n        if hop_length is None:\n            hop_length = 512\n        if n_chroma is None:\n            n_chroma = 12\n        if n_octaves is None:\n            n_octaves = 7\n        \n        audio_ts = self.audio_time_series[audio_time_series_path]\n        \n        chroma_id = uuid.uuid4().hex\n        data = []\n        \n        num_frames = max(1, int(audio_ts.duration * audio_ts.sample_rate / hop_length))\n        num_frames = min(num_frames, 100)\n        \n        for frame_idx in range(num_frames):\n            time_sec = frame_idx * hop_length / audio_ts.sample_rate\n            for note_idx in range(min(n_chroma, len(self.note_names))):\n                amplitude = abs(math.sin(frame_idx * 0.1 + note_idx * 0.5)) * 0.8 + 0.1\n                data.append({\n                    \"note\": self.note_names[note_idx],\n                    \"time\": round(time_sec, 4),\n                    \"amplitude\": round(amplitude, 4)\n                })\n        \n        chroma = ChromaData(\n            id=chroma_id,\n            audio_id=audio_ts.id,\n            data=data\n        )\n        \n        csv_filename = f\"chroma_cqt_{chroma_id}.csv\"\n        chroma_cqt_path = os.path.join(self.output_directory, csv_filename)\n        \n        self.chroma_data[chroma_cqt_path] = chroma\n        \n        return {\"chroma_cqt_path\": chroma_cqt_path}\n\n    def mfcc(self, audio_time_series_path: str) -> dict:\n        \"\"\"Compute MFCC features.\"\"\"\n        audio_ts = self.audio_time_series[audio_time_series_path]\n        \n        mfcc_id = uuid.uuid4().hex\n        n_mfcc = 13\n        hop_length = 512\n        \n        num_frames = max(1, int(audio_ts.duration * audio_ts.sample_rate / hop_length))\n        num_frames = min(num_frames, 100)\n        \n        coefficients = []\n        for frame_idx in range(num_frames):\n            frame_coeffs = []\n            for coeff_idx in range(n_mfcc):\n                value = math.cos(frame_idx * 0.05 + coeff_idx * 0.3) * (10.0 / (coeff_idx + 1))\n                frame_coeffs.append(round(value, 4))\n            coefficients.append(frame_coeffs)\n        \n        mfcc_data = MFCCData(\n            id=mfcc_id,\n            audio_id=audio_ts.id,\n            coefficients=coefficients\n        )\n        \n        csv_filename = f\"mfcc_{mfcc_id}.csv\"\n        mfcc_path = os.path.join(self.output_directory, csv_filename)\n        \n        self.mfcc_data[mfcc_path] = mfcc_data\n        \n        return {\"mfcc_path\": mfcc_path}\n\n    def beat_track(self, audio_time_series_path: str, hop_length: Optional[int] = None,\n                   start_bpm: Optional[float] = None, tightness: Optional[int] = None,\n                   units: Optional[str] = None) -> dict:\n        \"\"\"Detect beat locations and estimate tempo.\"\"\"\n        if hop_length is None:\n            hop_length = 512\n        if start_bpm is None:\n            start_bpm = 120.0\n        if tightness is None:\n            tightness = 100\n        if units is None:\n            units = \"frames\"\n        \n        audio_ts = self.audio_time_series[audio_time_series_path]\n        \n        duration = audio_ts.duration\n        tempo_variation = (len(audio_ts.samples) % 40) - 20\n        tempo = start_bpm + tempo_variation * (100 / tightness)\n        tempo = max(30.0, min(tempo, 320.0))\n        \n        beat_interval_seconds = 60.0 / tempo\n        num_beats = int(duration / beat_interval_seconds) if duration > 0 else 0\n        \n        beats = []\n        for i in range(num_beats):\n            beat_time = i * beat_interval_seconds\n            \n            if units == \"time\":\n                beats.append(round(beat_time, 4))\n            elif units == \"samples\":\n                beat_sample = int(beat_time * audio_ts.sample_rate)\n                beats.append(beat_sample)\n            else:\n                beat_frame = int(beat_time * audio_ts.sample_rate / hop_length)\n                beats.append(beat_frame)\n        \n        return {\n            \"tempo\": round(tempo, 2),\n            \"beats\": beats\n        }\n\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"MusicAnalysis\")\napi = MusicAnalysisAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the music analysis API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching MusicAnalysisScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current music analysis state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef download_from_url(url: str) -> dict:\n    \"\"\"\n    Download an audio file from a remote URL and save it locally for subsequent analysis.\n    \n    Args:\n        url (str): The URL of the audio file to download. Must point to a file ending with .mp3 or .wav extension.\n    \n    Returns:\n        file_path (str): The local file system path where the downloaded audio file has been saved.\n    \"\"\"\n    try:\n        if not url or not isinstance(url, str):\n            raise ValueError(\"URL must be a non-empty string\")\n        if not (url.lower().endswith(\".mp3\") or url.lower().endswith(\".wav\") or \".mp3\" in url.lower() or \".wav\" in url.lower()):\n            raise ValueError(\"URL must point to an audio file with .mp3 or .wav extension\")\n        return api.download_from_url(url)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef load_audio_segment(file_path: str, offset: Optional[float] = None, duration: Optional[float] = None) -> dict:\n    \"\"\"\n    Load an audio file and extract its time series data for use in subsequent analysis functions.\n    \n    Args:\n        file_path (str): The path to the audio file to load. Can be a local file path or a path returned from download functions.\n        offset (float): [Optional] The time offset in seconds from which to start reading the audio file. Defaults to 0.0 (start of file).\n        duration (float): [Optional] The maximum duration in seconds to load from the audio file. If not specified, loads the entire file from the offset.\n    \n    Returns:\n        audio_time_series_path (str): The path to a CSV file containing the extracted audio time series data, used as input for analysis functions.\n    \"\"\"\n    try:\n        if not file_path or not isinstance(file_path, str):\n            raise ValueError(\"File path must be a non-empty string\")\n        if offset is not None and offset < 0:\n            raise ValueError(\"Offset must be non-negative\")\n        if duration is not None and duration <= 0:\n            raise ValueError(\"Duration must be positive\")\n        return api.load_audio_segment(file_path, offset, duration)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_duration(audio_time_series_path: str) -> dict:\n    \"\"\"\n    Calculate the total duration of a loaded audio time series.\n    \n    Args:\n        audio_time_series_path (str): The path to a CSV file containing audio time series data, as returned by the load_audio_segment function.\n    \n    Returns:\n        duration_seconds (float): The total duration of the audio time series in seconds.\n    \"\"\"\n    try:\n        if not audio_time_series_path or not isinstance(audio_time_series_path, str):\n            raise ValueError(\"Audio time series path must be a non-empty string\")\n        if audio_time_series_path not in api.audio_time_series:\n            raise ValueError(f\"Audio time series not found: {audio_time_series_path}\")\n        return api.get_duration(audio_time_series_path)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef estimate_tempo(audio_time_series_path: str, hop_length: Optional[int] = None,\n                   start_bpm: Optional[float] = None, std_bpm: Optional[float] = None,\n                   ac_size: Optional[float] = None, max_tempo: Optional[float] = None) -> dict:\n    \"\"\"\n    Estimate the tempo (beats per minute) of an audio time series using autocorrelation-based analysis.\n    \n    Args:\n        audio_time_series_path (str): The path to a CSV file containing audio time series data, as returned by the load_audio_segment function.\n        hop_length (int): [Optional] The number of audio samples between successive analysis frames. Defaults to 512.\n        start_bpm (float): [Optional] The initial tempo estimate in BPM used as a prior for tempo detection. Defaults to 120.\n        std_bpm (float): [Optional] The standard deviation of the tempo distribution prior, controlling how tightly the estimate is constrained. Defaults to 1.0.\n        ac_size (float): [Optional] The size of the autocorrelation window in seconds used for tempo estimation. Defaults to 8.0.\n        max_tempo (float): [Optional] The maximum tempo in BPM that the algorithm will consider detecting. Defaults to 320.0.\n    \n    Returns:\n        tempo_bpm (float): The estimated tempo of the audio in beats per minute (BPM).\n    \"\"\"\n    try:\n        if not audio_time_series_path or not isinstance(audio_time_series_path, str):\n            raise ValueError(\"Audio time series path must be a non-empty string\")\n        if audio_time_series_path not in api.audio_time_series:\n            raise ValueError(f\"Audio time series not found: {audio_time_series_path}\")\n        if hop_length is not None and hop_length <= 0:\n            raise ValueError(\"Hop length must be positive\")\n        if start_bpm is not None and start_bpm <= 0:\n            raise ValueError(\"Start BPM must be positive\")\n        if max_tempo is not None and max_tempo <= 0:\n            raise ValueError(\"Max tempo must be positive\")\n        return api.estimate_tempo(audio_time_series_path, hop_length, start_bpm, std_bpm, ac_size, max_tempo)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef chroma_cqt(audio_time_series_path: str, hop_length: Optional[int] = None,\n               fmin: Optional[float] = None, n_chroma: Optional[int] = None,\n               n_octaves: Optional[int] = None) -> dict:\n    \"\"\"\n    Compute the chroma CQT (Constant-Q Transform chromagram) feature, representing the pitch class content of the audio over time.\n    \n    Args:\n        audio_time_series_path (str): The path to a CSV file containing audio time series data, as returned by the load_audio_segment function.\n        hop_length (int): [Optional] The number of audio samples between successive analysis frames. Defaults to 512.\n        fmin (float): [Optional] The minimum frequency in Hz for the chroma feature extraction. If not specified, uses a default based on the audio sample rate.\n        n_chroma (int): [Optional] The number of chroma bins to compute. Defaults to 12, corresponding to the 12 notes of the chromatic scale.\n        n_octaves (int): [Optional] The number of octaves to include in the chroma feature computation. Defaults to 7.\n    \n    Returns:\n        chroma_cqt_path (str): The path to a CSV file containing the chroma CQT data with columns: note (pitch class), time (in seconds), and amplitude (energy).\n    \"\"\"\n    try:\n        if not audio_time_series_path or not isinstance(audio_time_series_path, str):\n            raise ValueError(\"Audio time series path must be a non-empty string\")\n        if audio_time_series_path not in api.audio_time_series:\n            raise ValueError(f\"Audio time series not found: {audio_time_series_path}\")\n        if hop_length is not None and hop_length <= 0:\n            raise ValueError(\"Hop length must be positive\")\n        if n_chroma is not None and n_chroma <= 0:\n            raise ValueError(\"Number of chroma bins must be positive\")\n        if n_octaves is not None and n_octaves <= 0:\n            raise ValueError(\"Number of octaves must be positive\")\n        return api.chroma_cqt(audio_time_series_path, hop_length, fmin, n_chroma, n_octaves)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef mfcc(audio_time_series_path: str) -> dict:\n    \"\"\"\n    Compute MFCC (Mel-frequency cepstral coefficients) features, representing the spectral envelope and timbral characteristics of the audio.\n    \n    Args:\n        audio_time_series_path (str): The path to a CSV file containing audio time series data, as returned by the load_audio_segment function.\n    \n    Returns:\n        mfcc_path (str): The path to a CSV file containing the computed MFCC coefficients over time.\n    \"\"\"\n    try:\n        if not audio_time_series_path or not isinstance(audio_time_series_path, str):\n            raise ValueError(\"Audio time series path must be a non-empty string\")\n        if audio_time_series_path not in api.audio_time_series:\n            raise ValueError(f\"Audio time series not found: {audio_time_series_path}\")\n        return api.mfcc(audio_time_series_path)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef beat_track(audio_time_series_path: str, hop_length: Optional[int] = None,\n               start_bpm: Optional[float] = None, tightness: Optional[int] = None,\n               units: Optional[str] = None) -> dict:\n    \"\"\"\n    Detect beat locations and estimate tempo from an audio time series using dynamic programming beat tracking.\n    \n    Args:\n        audio_time_series_path (str): The path to a CSV file containing audio time series data, as returned by the load_audio_segment function.\n        hop_length (int): [Optional] The number of audio samples between successive analysis frames. Defaults to 512.\n        start_bpm (float): [Optional] The initial tempo estimate in BPM used as a prior for beat tracking. Defaults to 120.\n        tightness (int): [Optional] The tightness parameter controlling how strictly beats must follow the tempo estimate. Higher values enforce stricter tempo adherence. Defaults to 100.\n        units (str): [Optional] The units for reporting beat locations. Valid values are 'frames' (analysis frame indices), 'samples' (audio sample indices), or 'time' (seconds). Defaults to 'frames'.\n    \n    Returns:\n        tempo (float): The estimated tempo of the audio in beats per minute (BPM).\n        beats (list): A list of detected beat locations expressed in the specified units (frames, samples, or time in seconds).\n    \"\"\"\n    try:\n        if not audio_time_series_path or not isinstance(audio_time_series_path, str):\n            raise ValueError(\"Audio time series path must be a non-empty string\")\n        if audio_time_series_path not in api.audio_time_series:\n            raise ValueError(f\"Audio time series not found: {audio_time_series_path}\")\n        if hop_length is not None and hop_length <= 0:\n            raise ValueError(\"Hop length must be positive\")\n        if start_bpm is not None and start_bpm <= 0:\n            raise ValueError(\"Start BPM must be positive\")\n        if tightness is not None and tightness <= 0:\n            raise ValueError(\"Tightness must be positive\")\n        if units is not None and units not in [\"frames\", \"samples\", \"time\"]:\n            raise ValueError(\"Units must be one of: 'frames', 'samples', 'time'\")\n        return api.beat_track(audio_time_series_path, hop_length, start_bpm, tightness, units)\n    except Exception as e:\n        raise e\n\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-03T21:27:47.809411",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with one downloaded file and loaded audio time series",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "downloaded_files": {
+          "song1.mp3": {
+            "url": "https://example.com/audio/song1.mp3",
+            "file_path": "./downloads/song1.mp3"
+          }
+        },
+        "audio_time_series": {
+          "song1.mp3": {
+            "id": "audio_001",
+            "file_path": "./downloads/song1.mp3",
+            "sample_rate": 22050,
+            "samples": [
+              0.0,
+              0.1,
+              0.2,
+              -0.1,
+              -0.2,
+              0.0
+            ],
+            "duration": 3.5
+          }
+        },
+        "chroma_data": {},
+        "mfcc_data": {},
+        "download_directory": "./downloads",
+        "output_directory": "./output",
+        "default_sample_rate": 22050,
+        "note_names": [
+          "C",
+          "C#",
+          "D",
+          "D#",
+          "E",
+          "F",
+          "F#",
+          "G",
+          "G#",
+          "A",
+          "A#",
+          "B"
+        ]
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple audio files with chroma and MFCC analysis computed",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "downloaded_files": {
+          "track1.wav": {
+            "url": "https://music-library.com/tracks/track1.wav",
+            "file_path": "./downloads/track1.wav"
+          },
+          "track2.mp3": {
+            "url": "https://music-library.com/tracks/track2.mp3",
+            "file_path": "./downloads/track2.mp3"
+          },
+          "ambient.flac": {
+            "url": "https://soundcloud.com/ambient.flac",
+            "file_path": "./downloads/ambient.flac"
+          }
+        },
+        "audio_time_series": {
+          "track1.wav": {
+            "id": "audio_001",
+            "file_path": "./downloads/track1.wav",
+            "sample_rate": 44100,
+            "samples": [
+              0.0,
+              0.15,
+              0.3,
+              0.25,
+              0.1,
+              -0.05,
+              -0.2,
+              -0.15,
+              0.0
+            ],
+            "duration": 180.5
+          },
+          "track2.mp3": {
+            "id": "audio_002",
+            "file_path": "./downloads/track2.mp3",
+            "sample_rate": 22050,
+            "samples": [
+              0.0,
+              -0.1,
+              -0.2,
+              -0.15,
+              0.0,
+              0.1,
+              0.2,
+              0.15
+            ],
+            "duration": 240.0
+          }
+        },
+        "chroma_data": {
+          "track1.wav": {
+            "id": "chroma_001",
+            "audio_id": "audio_001",
+            "data": [
+              {
+                "time": 0.0,
+                "C": 0.8,
+                "D": 0.2,
+                "E": 0.1
+              },
+              {
+                "time": 0.5,
+                "C": 0.6,
+                "D": 0.4,
+                "E": 0.3
+              }
+            ]
+          }
+        },
+        "mfcc_data": {
+          "track2.mp3": {
+            "id": "mfcc_001",
+            "audio_id": "audio_002",
+            "coefficients": [
+              [
+                1.2,
+                -0.5,
+                0.3,
+                0.1,
+                -0.2
+              ],
+              [
+                1.1,
+                -0.4,
+                0.35,
+                0.15,
+                -0.18
+              ],
+              [
+                1.3,
+                -0.6,
+                0.28,
+                0.08,
+                -0.22
+              ]
+            ]
+          }
+        },
+        "download_directory": "./downloads",
+        "output_directory": "./output",
+        "default_sample_rate": 22050,
+        "note_names": [
+          "C",
+          "C#",
+          "D",
+          "D#",
+          "E",
+          "F",
+          "F#",
+          "G",
+          "G#",
+          "A",
+          "A#",
+          "B"
+        ]
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Complete music analysis pipeline with multiple files, full chroma and MFCC data, custom sample rates",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "downloaded_files": {
+          "classical.wav": {
+            "url": "https://archive.org/classical/beethoven.wav",
+            "file_path": "./music_data/classical.wav"
+          },
+          "jazz.mp3": {
+            "url": "https://freemusicarchive.org/jazz/miles.mp3",
+            "file_path": "./music_data/jazz.mp3"
+          },
+          "rock.flac": {
+            "url": "https://bandcamp.com/rock/guitar.flac",
+            "file_path": "./music_data/rock.flac"
+          },
+          "electronic.ogg": {
+            "url": "https://soundcloud.com/electronic/synth.ogg",
+            "file_path": "./music_data/electronic.ogg"
+          }
+        },
+        "audio_time_series": {
+          "classical.wav": {
+            "id": "audio_classical_001",
+            "file_path": "./music_data/classical.wav",
+            "sample_rate": 48000,
+            "samples": [
+              0.0,
+              0.05,
+              0.1,
+              0.15,
+              0.2,
+              0.18,
+              0.12,
+              0.05,
+              -0.02,
+              -0.1
+            ],
+            "duration": 320.75
+          },
+          "jazz.mp3": {
+            "id": "audio_jazz_002",
+            "file_path": "./music_data/jazz.mp3",
+            "sample_rate": 44100,
+            "samples": [
+              0.0,
+              -0.08,
+              -0.15,
+              -0.1,
+              0.0,
+              0.12,
+              0.2,
+              0.15,
+              0.08
+            ],
+            "duration": 285.3
+          },
+          "rock.flac": {
+            "id": "audio_rock_003",
+            "file_path": "./music_data/rock.flac",
+            "sample_rate": 44100,
+            "samples": [
+              0.0,
+              0.3,
+              0.5,
+              0.4,
+              0.2,
+              -0.1,
+              -0.3,
+              -0.4,
+              -0.2,
+              0.0
+            ],
+            "duration": 195.0
+          },
+          "electronic.ogg": {
+            "id": "audio_electronic_004",
+            "file_path": "./music_data/electronic.ogg",
+            "sample_rate": 22050,
+            "samples": [
+              0.0,
+              0.1,
+              0.2,
+              0.3,
+              0.25,
+              0.15,
+              0.05,
+              -0.05,
+              -0.1
+            ],
+            "duration": 420.5
+          }
+        },
+        "chroma_data": {
+          "classical.wav": {
+            "id": "chroma_classical_001",
+            "audio_id": "audio_classical_001",
+            "data": [
+              {
+                "time": 0.0,
+                "C": 0.9,
+                "E": 0.7,
+                "G": 0.8,
+                "A": 0.2
+              },
+              {
+                "time": 1.0,
+                "C": 0.85,
+                "E": 0.75,
+                "G": 0.82,
+                "A": 0.25
+              },
+              {
+                "time": 2.0,
+                "D": 0.88,
+                "F#": 0.72,
+                "A": 0.85,
+                "B": 0.3
+              }
+            ]
+          },
+          "jazz.mp3": {
+            "id": "chroma_jazz_002",
+            "audio_id": "audio_jazz_002",
+            "data": [
+              {
+                "time": 0.0,
+                "C": 0.6,
+                "D#": 0.5,
+                "G": 0.7,
+                "A#": 0.6
+              },
+              {
+                "time": 1.5,
+                "C": 0.65,
+                "D#": 0.55,
+                "G": 0.68,
+                "A#": 0.62
+              }
+            ]
+          },
+          "rock.flac": {
+            "id": "chroma_rock_003",
+            "audio_id": "audio_rock_003",
+            "data": [
+              {
+                "time": 0.0,
+                "E": 0.95,
+                "G#": 0.8,
+                "B": 0.9
+              },
+              {
+                "time": 0.8,
+                "A": 0.92,
+                "C#": 0.78,
+                "E": 0.88
+              }
+            ]
+          }
+        },
+        "mfcc_data": {
+          "classical.wav": {
+            "id": "mfcc_classical_001",
+            "audio_id": "audio_classical_001",
+            "coefficients": [
+              [
+                2.1,
+                -0.8,
+                0.5,
+                0.3,
+                -0.1,
+                0.2,
+                -0.15,
+                0.1,
+                0.05,
+                -0.05
+              ],
+              [
+                2.0,
+                -0.75,
+                0.52,
+                0.32,
+                -0.12,
+                0.18,
+                -0.14,
+                0.11,
+                0.06,
+                -0.04
+              ],
+              [
+                2.15,
+                -0.82,
+                0.48,
+                0.28,
+                -0.08,
+                0.22,
+                -0.16,
+                0.09,
+                0.04,
+                -0.06
+              ]
+            ]
+          },
+          "jazz.mp3": {
+            "id": "mfcc_jazz_002",
+            "audio_id": "audio_jazz_002",
+            "coefficients": [
+              [
+                1.8,
+                -0.6,
+                0.4,
+                0.25,
+                -0.15,
+                0.3,
+                -0.2,
+                0.12,
+                0.08,
+                -0.1
+              ],
+              [
+                1.85,
+                -0.65,
+                0.38,
+                0.27,
+                -0.13,
+                0.28,
+                -0.18,
+                0.14,
+                0.09,
+                -0.11
+              ]
+            ]
+          },
+          "electronic.ogg": {
+            "id": "mfcc_electronic_004",
+            "audio_id": "audio_electronic_004",
+            "coefficients": [
+              [
+                1.5,
+                -0.4,
+                0.6,
+                0.35,
+                -0.2,
+                0.25,
+                -0.1,
+                0.15,
+                0.1,
+                -0.08
+              ],
+              [
+                1.55,
+                -0.42,
+                0.58,
+                0.33,
+                -0.18,
+                0.27,
+                -0.12,
+                0.13,
+                0.11,
+                -0.09
+              ],
+              [
+                1.48,
+                -0.38,
+                0.62,
+                0.37,
+                -0.22,
+                0.23,
+                -0.08,
+                0.17,
+                0.09,
+                -0.07
+              ]
+            ]
+          }
+        },
+        "download_directory": "./music_data",
+        "output_directory": "./analysis_results",
+        "default_sample_rate": 44100,
+        "note_names": [
+          "C",
+          "C#",
+          "D",
+          "D#",
+          "E",
+          "F",
+          "F#",
+          "G",
+          "G#",
+          "A",
+          "A#",
+          "B"
+        ]
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty scenario with no audio files - tests initialization and empty state handling",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "downloaded_files": {},
+        "audio_time_series": {},
+        "chroma_data": {},
+        "mfcc_data": {},
+        "download_directory": "./downloads",
+        "output_directory": "./output",
+        "default_sample_rate": 22050,
+        "note_names": [
+          "C",
+          "C#",
+          "D",
+          "D#",
+          "E",
+          "F",
+          "F#",
+          "G",
+          "G#",
+          "A",
+          "A#",
+          "B"
+        ]
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "download_from_url",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "load_audio_segment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_duration",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_tempo",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "chroma_cqt",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "mfcc",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "beat_track",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 74.59071636199951
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "download_from_url",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "load_audio_segment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_duration",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_tempo",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "chroma_cqt",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "mfcc",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "beat_track",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 102.05734992027283
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "download_from_url",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid MP3 URL",
+                    "input": {
+                      "url": "https://example.com/test_audio.mp3"
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid WAV URL",
+                    "input": {
+                      "url": "https://example.com/test_audio.wav"
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Invalid file extension (error case)",
+                    "input": {
+                      "url": "https://example.com/invalid.txt"
+                    },
+                    "expected": "validation_error",
+                    "actual": "validation_error",
+                    "error": "URL must point to an audio file with .mp3 or .wav extension"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "load_audio_segment",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Load audio without offset/duration",
+                    "input": {
+                      "file_path": "./music_data/classical.wav"
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Load audio with offset and duration",
+                    "input": {
+                      "file_path": "./music_data/jazz.mp3",
+                      "offset": 10.0,
+                      "duration": 30.0
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Invalid negative offset (error case)",
+                    "input": {
+                      "file_path": "./music_data/rock.flac",
+                      "offset": -5.0
+                    },
+                    "expected": "validation_error",
+                    "actual": "validation_error",
+                    "error": "Offset must be non-negative"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_duration",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Get duration of loaded audio",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_700fc05ee2a1483daa0b5eef8a260ec4.csv"
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "result": {
+                      "duration_seconds": 180.0
+                    },
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "estimate_tempo",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Estimate tempo with default parameters",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_700fc05ee2a1483daa0b5eef8a260ec4.csv"
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "result": {
+                      "tempo_bpm": 100.0
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Estimate tempo with custom parameters",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_a46b74b2502e4e2f8cb502df205f640f.csv",
+                      "hop_length": 1024,
+                      "start_bpm": 140.0,
+                      "max_tempo": 200.0
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "result": {
+                      "tempo_bpm": 120.0
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Invalid negative hop_length (error case)",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_700fc05ee2a1483daa0b5eef8a260ec4.csv",
+                      "hop_length": -100
+                    },
+                    "expected": "validation_error",
+                    "actual": "validation_error",
+                    "error": "Hop length must be positive"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "chroma_cqt",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Compute chroma with default parameters",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_700fc05ee2a1483daa0b5eef8a260ec4.csv"
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Compute chroma with custom parameters",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_a46b74b2502e4e2f8cb502df205f640f.csv",
+                      "hop_length": 2048,
+                      "n_chroma": 12,
+                      "n_octaves": 5
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "mfcc",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Compute MFCC features",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_700fc05ee2a1483daa0b5eef8a260ec4.csv"
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "beat_track",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Beat tracking with default parameters",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_700fc05ee2a1483daa0b5eef8a260ec4.csv"
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "result": {
+                      "tempo": 100.0,
+                      "beats_count": 290
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Beat tracking with custom parameters and time units",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_a46b74b2502e4e2f8cb502df205f640f.csv",
+                      "hop_length": 512,
+                      "start_bpm": 130.0,
+                      "tightness": 200,
+                      "units": "time"
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "result": {
+                      "tempo": 120.0,
+                      "beats_count": 60
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Invalid units parameter (error case)",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_700fc05ee2a1483daa0b5eef8a260ec4.csv",
+                      "units": "invalid_unit"
+                    },
+                    "expected": "validation_error",
+                    "actual": "validation_error",
+                    "error": "Units must be one of: 'frames', 'samples', 'time'"
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Scenario saved successfully. State includes original data plus 2 new downloaded files, 2 new audio time series, 2 new chroma data entries, and 1 new MFCC data entry from tool executions."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 119.22165966033936
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "download_from_url",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "load_audio_segment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_duration",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_tempo",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "chroma_cqt",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "mfcc",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "beat_track",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 89.2001600265503
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "download_from_url",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "load_audio_segment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_duration",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_tempo",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "chroma_cqt",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "mfcc",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "beat_track",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 74.59071636199951
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "download_from_url",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "load_audio_segment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_duration",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_tempo",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "chroma_cqt",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "mfcc",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "beat_track",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 102.05734992027283
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "download_from_url",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid MP3 URL",
+                    "input": {
+                      "url": "https://example.com/test_audio.mp3"
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid WAV URL",
+                    "input": {
+                      "url": "https://example.com/test_audio.wav"
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Invalid file extension (error case)",
+                    "input": {
+                      "url": "https://example.com/invalid.txt"
+                    },
+                    "expected": "validation_error",
+                    "actual": "validation_error",
+                    "error": "URL must point to an audio file with .mp3 or .wav extension"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "load_audio_segment",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Load audio without offset/duration",
+                    "input": {
+                      "file_path": "./music_data/classical.wav"
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Load audio with offset and duration",
+                    "input": {
+                      "file_path": "./music_data/jazz.mp3",
+                      "offset": 10.0,
+                      "duration": 30.0
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Invalid negative offset (error case)",
+                    "input": {
+                      "file_path": "./music_data/rock.flac",
+                      "offset": -5.0
+                    },
+                    "expected": "validation_error",
+                    "actual": "validation_error",
+                    "error": "Offset must be non-negative"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_duration",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Get duration of loaded audio",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_700fc05ee2a1483daa0b5eef8a260ec4.csv"
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "result": {
+                      "duration_seconds": 180.0
+                    },
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "estimate_tempo",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Estimate tempo with default parameters",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_700fc05ee2a1483daa0b5eef8a260ec4.csv"
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "result": {
+                      "tempo_bpm": 100.0
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Estimate tempo with custom parameters",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_a46b74b2502e4e2f8cb502df205f640f.csv",
+                      "hop_length": 1024,
+                      "start_bpm": 140.0,
+                      "max_tempo": 200.0
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "result": {
+                      "tempo_bpm": 120.0
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Invalid negative hop_length (error case)",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_700fc05ee2a1483daa0b5eef8a260ec4.csv",
+                      "hop_length": -100
+                    },
+                    "expected": "validation_error",
+                    "actual": "validation_error",
+                    "error": "Hop length must be positive"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "chroma_cqt",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Compute chroma with default parameters",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_700fc05ee2a1483daa0b5eef8a260ec4.csv"
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Compute chroma with custom parameters",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_a46b74b2502e4e2f8cb502df205f640f.csv",
+                      "hop_length": 2048,
+                      "n_chroma": 12,
+                      "n_octaves": 5
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "mfcc",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Compute MFCC features",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_700fc05ee2a1483daa0b5eef8a260ec4.csv"
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "beat_track",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Beat tracking with default parameters",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_700fc05ee2a1483daa0b5eef8a260ec4.csv"
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "result": {
+                      "tempo": 100.0,
+                      "beats_count": 290
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Beat tracking with custom parameters and time units",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_a46b74b2502e4e2f8cb502df205f640f.csv",
+                      "hop_length": 512,
+                      "start_bpm": 130.0,
+                      "tightness": 200,
+                      "units": "time"
+                    },
+                    "expected": "success",
+                    "actual": "success",
+                    "result": {
+                      "tempo": 120.0,
+                      "beats_count": 60
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Invalid units parameter (error case)",
+                    "input": {
+                      "audio_time_series_path": "./analysis_results\\audio_ts_700fc05ee2a1483daa0b5eef8a260ec4.csv",
+                      "units": "invalid_unit"
+                    },
+                    "expected": "validation_error",
+                    "actual": "validation_error",
+                    "error": "Units must be one of: 'frames', 'samples', 'time'"
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Scenario saved successfully. State includes original data plus 2 new downloaded files, 2 new audio time series, 2 new chroma data entries, and 1 new MFCC data entry from tool executions."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 119.22165966033936
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "download_from_url",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "load_audio_segment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_duration",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_tempo",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "chroma_cqt",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "mfcc",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "beat_track",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 89.2001600265503
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/MusicAnalysis.py"
+  }
+}

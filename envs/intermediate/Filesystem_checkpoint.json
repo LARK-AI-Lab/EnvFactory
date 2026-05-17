@@ -1,0 +1,2643 @@
+{
+  "metadata": {
+    "class_name": "Filesystem",
+    "metadata_path": "envs\\metadata\\Filesystem_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-04T00:14:11.242839",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "Filesystem",
+    "description": "A file system server providing comprehensive operations for reading, writing, editing, and managing files and directories, including metadata retrieval and recursive search capabilities.",
+    "tools": [
+      {
+        "name": "read_text_file",
+        "description": "Read the complete contents of a text file, with optional line filtering to retrieve only the first or last N lines.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "The absolute or relative file path to the text file to read."
+            },
+            "head": {
+              "type": "integer",
+              "description": "Optional number of lines to read from the beginning of the file."
+            },
+            "tail": {
+              "type": "integer",
+              "description": "Optional number of lines to read from the end of the file."
+            }
+          },
+          "required": [
+            "path"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "file_content": {
+              "type": "string",
+              "description": "The contents of the file decoded as UTF-8 text."
+            }
+          }
+        }
+      },
+      {
+        "name": "read_media_file",
+        "description": "Read a binary media file (image or audio) and return its contents as base64-encoded data with MIME type information.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "The absolute or relative file path to the media file to read."
+            }
+          },
+          "required": [
+            "path"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "string",
+              "description": "The base64-encoded binary content of the media file."
+            },
+            "mime_type": {
+              "type": "string",
+              "description": "The MIME type of the media file (e.g., 'image/png', 'audio/mp3')."
+            }
+          }
+        }
+      },
+      {
+        "name": "read_multiple_files",
+        "description": "Read multiple files simultaneously and return their contents or any errors encountered for each file.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "paths": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "A list of absolute or relative file paths to read."
+            }
+          },
+          "required": [
+            "paths"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "results": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "The file path that was read."
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "The contents of the file if successfully read."
+                  },
+                  "error": {
+                    "type": "string",
+                    "description": "Error message if the file could not be read."
+                  }
+                }
+              },
+              "description": "A list of results for each requested file, containing either content or an error message."
+            }
+          }
+        }
+      },
+      {
+        "name": "write_file",
+        "description": "Create a new file or overwrite an existing file with the specified content.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "The absolute or relative file path where the content will be written."
+            },
+            "content": {
+              "type": "string",
+              "description": "The text content to write to the file."
+            }
+          },
+          "required": [
+            "path",
+            "content"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "The file path where the content was written."
+            },
+            "success": {
+              "type": "string",
+              "description": "A message indicating the write operation completed successfully."
+            }
+          }
+        }
+      },
+      {
+        "name": "edit_file",
+        "description": "Make selective edits to a file using advanced pattern matching, with support for dry-run previews before applying changes.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "The absolute or relative file path to the file to edit."
+            },
+            "oldText": {
+              "type": "string",
+              "description": "Optional text pattern to search for within the file (can be a substring)."
+            },
+            "newText": {
+              "type": "string",
+              "description": "Optional replacement text to substitute for matched occurrences."
+            },
+            "dryRun": {
+              "type": "boolean",
+              "description": "If true, preview the changes without applying them to the file. Defaults to false."
+            }
+          },
+          "required": [
+            "path"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "diff": {
+              "type": "string",
+              "description": "A unified diff showing the changes made or to be made to the file."
+            },
+            "matches": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "line_number": {
+                    "type": "integer",
+                    "description": "The line number where the match was found."
+                  },
+                  "context": {
+                    "type": "string",
+                    "description": "The surrounding context of the matched text."
+                  }
+                }
+              },
+              "description": "A list of matches found, including line numbers and surrounding context."
+            },
+            "applied": {
+              "type": "boolean",
+              "description": "Indicates whether the changes were actually applied to the file."
+            }
+          }
+        }
+      },
+      {
+        "name": "create_directory",
+        "description": "Create a new directory at the specified path, or ensure the directory already exists.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "The absolute or relative path of the directory to create."
+            }
+          },
+          "required": [
+            "path"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "The path of the directory that was created or already existed."
+            },
+            "created": {
+              "type": "boolean",
+              "description": "True if a new directory was created, false if it already existed."
+            }
+          }
+        }
+      },
+      {
+        "name": "list_directory",
+        "description": "List the contents of a directory, returning each entry with its name, type, and size.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "The absolute or relative path of the directory to list."
+            }
+          },
+          "required": [
+            "path"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "entries": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name of the file or directory entry."
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "The type of entry: 'FILE' for files or 'DIR' for directories."
+                  },
+                  "size": {
+                    "type": "integer",
+                    "description": "The size of the entry in bytes."
+                  }
+                }
+              },
+              "description": "A list of directory entries with their names, types, and sizes."
+            }
+          }
+        }
+      },
+      {
+        "name": "move_file",
+        "description": "Move or rename a file or directory from a source path to a destination path.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "source": {
+              "type": "string",
+              "description": "The absolute or relative path of the source file or directory to move."
+            },
+            "destination": {
+              "type": "string",
+              "description": "The absolute or relative path of the destination location."
+            }
+          },
+          "required": [
+            "source",
+            "destination"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "source": {
+              "type": "string",
+              "description": "The original path of the moved file or directory."
+            },
+            "destination": {
+              "type": "string",
+              "description": "The new path of the moved file or directory."
+            },
+            "success": {
+              "type": "boolean",
+              "description": "Indicates whether the move operation completed successfully."
+            }
+          }
+        }
+      },
+      {
+        "name": "search_files",
+        "description": "Recursively search for files and directories matching a glob pattern, with optional exclusion patterns.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "The absolute or relative path of the starting directory for the search."
+            },
+            "pattern": {
+              "type": "string",
+              "description": "A glob-style pattern to match file and directory names (e.g., '*.txt', '**/*.py')."
+            },
+            "excludePatterns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Optional list of glob-style patterns to exclude from search results."
+            }
+          },
+          "required": [
+            "path",
+            "pattern"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "matches": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "A list of full paths to files and directories matching the search pattern."
+            }
+          }
+        }
+      },
+      {
+        "name": "directory_tree",
+        "description": "Generate a recursive JSON tree structure representing the contents of a directory and all its subdirectories.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "The absolute or relative path of the starting directory for the tree."
+            },
+            "excludePatterns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Optional list of glob-style patterns to exclude from the tree structure."
+            }
+          },
+          "required": [
+            "path"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "tree": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name of the file or directory."
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "The type of entry: 'file' or 'directory'."
+                  },
+                  "children": {
+                    "type": "array",
+                    "description": "Nested entries for directories; present only for directory type entries."
+                  }
+                }
+              },
+              "description": "A hierarchical tree structure representing the directory contents."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_file_info",
+        "description": "Retrieve detailed metadata about a file or directory, including size, timestamps, and permissions.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "The absolute or relative path of the file or directory to inspect."
+            }
+          },
+          "required": [
+            "path"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "The path of the inspected file or directory."
+            },
+            "type": {
+              "type": "string",
+              "description": "The type of entry: 'file' or 'directory'."
+            },
+            "size": {
+              "type": "integer",
+              "description": "The size of the file in bytes, or total size for directories."
+            },
+            "created_time": {
+              "type": "string",
+              "description": "The creation timestamp of the file or directory in ISO 8601 format."
+            },
+            "modified_time": {
+              "type": "string",
+              "description": "The last modification timestamp in ISO 8601 format."
+            },
+            "access_time": {
+              "type": "string",
+              "description": "The last access timestamp in ISO 8601 format."
+            },
+            "permissions": {
+              "type": "string",
+              "description": "The file system permissions in symbolic notation (e.g., 'rwxr-xr-x')."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\nimport os\nimport base64\nimport mimetypes\nimport glob\nimport json\nfrom datetime import datetime\n\n# Section 1: Schema\nclass FileEntry(BaseModel):\n    \"\"\"Represents a file or directory entry.\"\"\"\n    name: str = Field(..., description=\"Name of the file or directory\")\n    type: str = Field(..., description=\"Type: 'file' or 'directory'\")\n    size: int = Field(..., ge=0, description=\"Size in bytes\")\n\nclass FileInfo(BaseModel):\n    \"\"\"Detailed file metadata.\"\"\"\n    path: str = Field(..., description=\"Full path to file/directory\")\n    type: str = Field(..., description=\"Type: 'file' or 'directory'\")\n    size: int = Field(..., ge=0, description=\"Size in bytes\")\n    created_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"Creation timestamp ISO 8601\")\n    modified_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"Modification timestamp ISO 8601\")\n    access_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"Access timestamp ISO 8601\")\n    permissions: str = Field(..., description=\"File permissions in symbolic notation\")\n\nclass FileResult(BaseModel):\n    \"\"\"Result for individual file read operation.\"\"\"\n    path: str = Field(..., description=\"File path\")\n    content: Optional[str] = Field(default=None, description=\"File content if successful\")\n    error: Optional[str] = Field(default=None, description=\"Error message if failed\")\n\nclass TreeNode(BaseModel):\n    \"\"\"Node in directory tree structure.\"\"\"\n    name: str = Field(..., description=\"Name of file/directory\")\n    type: str = Field(..., description=\"Type: 'file' or 'directory'\")\n    children: Optional[List['TreeNode']] = Field(default=None, description=\"Nested entries for directories\")\n\nclass FilesystemScenario(BaseModel):\n    \"\"\"Main scenario model for filesystem operations.\"\"\"\n    allowed_extensions: List[str] = Field(default=[\".txt\", \".md\", \".py\", \".json\", \".csv\", \".xml\", \".html\", \".css\", \".js\", \".ts\"], description=\"Allowed file extensions for text operations\")\n    max_file_size: int = Field(default=10485760, ge=0, description=\"Maximum file size in bytes (10MB)\")\n    binary_extensions: List[str] = Field(default=[\".png\", \".jpg\", \".jpeg\", \".gif\", \".bmp\", \".ico\", \".mp3\", \".wav\", \".mp4\", \".avi\", \".pdf\", \".zip\"], description=\"Binary file extensions for media operations\")\n    exclude_patterns_default: List[str] = Field(default=[\"*.pyc\", \"__pycache__\", \".git\", \".DS_Store\", \"node_modules\"], description=\"Default exclusion patterns\")\n    mime_types_map: Dict[str, str] = Field(default={\n        \".txt\": \"text/plain\", \".md\": \"text/markdown\", \".py\": \"text/x-python\", \".json\": \"application/json\",\n        \".csv\": \"text/csv\", \".xml\": \"application/xml\", \".html\": \"text/html\", \".css\": \"text/css\",\n        \".js\": \"application/javascript\", \".ts\": \"application/typescript\", \".png\": \"image/png\",\n        \".jpg\": \"image/jpeg\", \".jpeg\": \"image/jpeg\", \".gif\": \"image/gif\", \".bmp\": \"image/bmp\",\n        \".ico\": \"image/x-icon\", \".mp3\": \"audio/mpeg\", \".wav\": \"audio/wav\", \".mp4\": \"video/mp4\",\n        \".avi\": \"video/x-msvideo\", \".pdf\": \"application/pdf\", \".zip\": \"application/zip\"\n    }, description=\"MIME type mapping by file extension\")\n\nScenario_Schema = [FileEntry, FileInfo, FileResult, TreeNode, FilesystemScenario]\n\n# Section 2: Class\nclass FilesystemAPI:\n    def __init__(self):\n        \"\"\"Initialize filesystem API with default settings.\"\"\"\n        self.allowed_extensions: List[str] = []\n        self.max_file_size: int = 0\n        self.binary_extensions: List[str] = []\n        self.exclude_patterns_default: List[str] = []\n        self.mime_types_map: Dict[str, str] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario configuration into the API instance.\"\"\"\n        model = FilesystemScenario(**scenario)\n        self.allowed_extensions = model.allowed_extensions\n        self.max_file_size = model.max_file_size\n        self.binary_extensions = model.binary_extensions\n        self.exclude_patterns_default = model.exclude_patterns_default\n        self.mime_types_map = model.mime_types_map\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current configuration as scenario dictionary.\"\"\"\n        return {\n            \"allowed_extensions\": self.allowed_extensions,\n            \"max_file_size\": self.max_file_size,\n            \"binary_extensions\": self.binary_extensions,\n            \"exclude_patterns_default\": self.exclude_patterns_default,\n            \"mime_types_map\": self.mime_types_map\n        }\n\n    def read_text_file(self, path: str, head: Optional[int] = None, tail: Optional[int] = None) -> dict:\n        \"\"\"Read text file content with optional line filtering.\"\"\"\n        with open(path, 'r', encoding='utf-8') as f:\n            lines = f.readlines()\n        \n        if head is not None:\n            lines = lines[:head]\n        elif tail is not None:\n            lines = lines[-tail:]\n        \n        return {\"file_content\": ''.join(lines)}\n\n    def read_media_file(self, path: str) -> dict:\n        \"\"\"Read binary media file and return base64 encoded data.\"\"\"\n        with open(path, 'rb') as f:\n            data = base64.b64encode(f.read()).decode('utf-8')\n        \n        mime_type = self._get_mime_type(path)\n        return {\"data\": data, \"mime_type\": mime_type}\n\n    def read_multiple_files(self, paths: List[str]) -> dict:\n        \"\"\"Read multiple files and return results with errors.\"\"\"\n        results = []\n        for path in paths:\n            try:\n                if self._is_binary_file(path):\n                    result = self.read_media_file(path)\n                    content = f\"[Binary file: {result['mime_type']}, {len(result['data'])} bytes]\"\n                else:\n                    result = self.read_text_file(path)\n                    content = result['file_content']\n                results.append({\"path\": path, \"content\": content, \"error\": None})\n            except Exception as e:\n                results.append({\"path\": path, \"content\": None, \"error\": str(e)})\n        return {\"results\": results}\n\n    def write_file(self, path: str, content: str) -> dict:\n        \"\"\"Create or overwrite file with specified content.\"\"\"\n        os.makedirs(os.path.dirname(path), exist_ok=True)\n        with open(path, 'w', encoding='utf-8') as f:\n            f.write(content)\n        return {\"path\": path, \"success\": \"File written successfully\"}\n\n    def edit_file(self, path: str, oldText: Optional[str] = None, newText: Optional[str] = None, dryRun: bool = False) -> dict:\n        \"\"\"Edit file with pattern matching and optional dry run.\"\"\"\n        with open(path, 'r', encoding='utf-8') as f:\n            content = f.read()\n        \n        original_content = content\n        matches = []\n        \n        if oldText is not None and newText is not None:\n            lines = content.split('\\n')\n            for i, line in enumerate(lines, 1):\n                if oldText in line:\n                    matches.append({\"line_number\": i, \"context\": line.strip()})\n            \n            if not dryRun:\n                content = content.replace(oldText, newText)\n        \n        if not dryRun and content != original_content:\n            with open(path, 'w', encoding='utf-8') as f:\n                f.write(content)\n        \n        import difflib\n        diff = '\\n'.join(difflib.unified_diff(\n            original_content.split('\\n'),\n            content.split('\\n'),\n            fromfile=path,\n            tofile=path,\n            lineterm=''\n        ))\n        \n        return {\"diff\": diff, \"matches\": matches, \"applied\": not dryRun and content != original_content}\n\n    def create_directory(self, path: str) -> dict:\n        \"\"\"Create directory or ensure it exists.\"\"\"\n        created = not os.path.exists(path)\n        os.makedirs(path, exist_ok=True)\n        return {\"path\": path, \"created\": created}\n\n    def list_directory(self, path: str) -> dict:\n        \"\"\"List directory contents with metadata.\"\"\"\n        entries = []\n        for name in os.listdir(path):\n            full_path = os.path.join(path, name)\n            stat = os.stat(full_path)\n            entry_type = \"DIR\" if os.path.isdir(full_path) else \"FILE\"\n            entries.append({\n                \"name\": name,\n                \"type\": entry_type,\n                \"size\": stat.st_size\n            })\n        return {\"entries\": entries}\n\n    def move_file(self, source: str, destination: str) -> dict:\n        \"\"\"Move or rename file/directory.\"\"\"\n        os.makedirs(os.path.dirname(destination), exist_ok=True)\n        os.rename(source, destination)\n        return {\"source\": source, \"destination\": destination, \"success\": True}\n\n    def search_files(self, path: str, pattern: str, excludePatterns: Optional[List[str]] = None) -> dict:\n        \"\"\"Search for files matching glob pattern with exclusions.\"\"\"\n        if excludePatterns is None:\n            excludePatterns = self.exclude_patterns_default\n        \n        matches = []\n        for root, dirs, files in os.walk(path):\n            for name in files + dirs:\n                full_path = os.path.join(root, name)\n                rel_path = os.path.relpath(full_path, path)\n                \n                if glob.fnmatch.fnmatch(rel_path, pattern):\n                    excluded = False\n                    for exclude_pattern in excludePatterns:\n                        if glob.fnmatch.fnmatch(rel_path, exclude_pattern):\n                            excluded = True\n                            break\n                    \n                    if not excluded:\n                        matches.append(full_path)\n        \n        return {\"matches\": matches}\n\n    def directory_tree(self, path: str, excludePatterns: Optional[List[str]] = None) -> dict:\n        \"\"\"Generate recursive directory tree structure.\"\"\"\n        if excludePatterns is None:\n            excludePatterns = self.exclude_patterns_default\n        \n        def build_tree(current_path: str) -> List[dict]:\n            tree = []\n            try:\n                for name in sorted(os.listdir(current_path)):\n                    full_path = os.path.join(current_path, name)\n                    rel_path = os.path.relpath(full_path, path)\n                    \n                    excluded = False\n                    for pattern in excludePatterns:\n                        if glob.fnmatch.fnmatch(rel_path, pattern):\n                            excluded = True\n                            break\n                    \n                    if excluded:\n                        continue\n                    \n                    if os.path.isdir(full_path):\n                        node = {\n                            \"name\": name,\n                            \"type\": \"directory\",\n                            \"children\": build_tree(full_path)\n                        }\n                    else:\n                        node = {\n                            \"name\": name,\n                            \"type\": \"file\"\n                        }\n                    tree.append(node)\n            except PermissionError:\n                pass\n            return tree\n        \n        return {\"tree\": build_tree(path)}\n\n    def get_file_info(self, path: str) -> dict:\n        \"\"\"Get detailed file/directory metadata.\"\"\"\n        stat = os.stat(path)\n        mode = stat.st_mode\n        permissions = self._get_permissions(mode)\n        \n        return {\n            \"path\": path,\n            \"type\": \"directory\" if os.path.isdir(path) else \"file\",\n            \"size\": stat.st_size,\n            \"created_time\": datetime.fromtimestamp(stat.st_ctime).isoformat(),\n            \"modified_time\": datetime.fromtimestamp(stat.st_mtime).isoformat(),\n            \"access_time\": datetime.fromtimestamp(stat.st_atime).isoformat(),\n            \"permissions\": permissions\n        }\n\n    def _get_mime_type(self, path: str) -> str:\n        \"\"\"Get MIME type for file path.\"\"\"\n        ext = os.path.splitext(path)[1].lower()\n        return self.mime_types_map.get(ext, \"application/octet-stream\")\n\n    def _is_binary_file(self, path: str) -> bool:\n        \"\"\"Check if file should be treated as binary.\"\"\"\n        ext = os.path.splitext(path)[1].lower()\n        return ext in self.binary_extensions\n\n    def _get_permissions(self, mode: int) -> str:\n        \"\"\"Convert file mode to symbolic permissions string.\"\"\"\n        perms = []\n        perms.append('r' if mode & 0o400 else '-')\n        perms.append('w' if mode & 0o200 else '-')\n        perms.append('x' if mode & 0o100 else '-')\n        perms.append('r' if mode & 0o040 else '-')\n        perms.append('w' if mode & 0o020 else '-')\n        perms.append('x' if mode & 0o010 else '-')\n        perms.append('r' if mode & 0o004 else '-')\n        perms.append('w' if mode & 0o002 else '-')\n        perms.append('x' if mode & 0o001 else '-')\n        return ''.join(perms)\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"FilesystemAPI\")\napi = FilesystemAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"Load filesystem configuration scenario.\n    \n    Args:\n        scenario (dict): Configuration dictionary matching FilesystemScenario schema.\n    \n    Returns:\n        success_message (str): Success confirmation.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"Save current filesystem configuration.\n    \n    Returns:\n        scenario (dict): Current configuration dictionary.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef read_text_file(path: str, head: Optional[int] = None, tail: Optional[int] = None) -> dict:\n    \"\"\"Read text file with optional line filtering.\n    \n    Args:\n        path (str): File path to read.\n        head (int): [Optional] Number of lines from start.\n        tail (int): [Optional] Number of lines from end.\n    \n    Returns:\n        file_content (str): File contents as text.\n    \"\"\"\n    try:\n        if not path or not isinstance(path, str):\n            raise ValueError(\"Path must be a non-empty string\")\n        if head is not None and (not isinstance(head, int) or head < 0):\n            raise ValueError(\"Head must be non-negative integer\")\n        if tail is not None and (not isinstance(tail, int) or tail < 0):\n            raise ValueError(\"Tail must be non-negative integer\")\n        return api.read_text_file(path, head, tail)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef read_media_file(path: str) -> dict:\n    \"\"\"Read binary media file as base64.\n    \n    Args:\n        path (str): Media file path.\n    \n    Returns:\n        data (str): Base64 encoded content.\n        mime_type (str): MIME type of file.\n    \"\"\"\n    try:\n        if not path or not isinstance(path, str):\n            raise ValueError(\"Path must be a non-empty string\")\n        return api.read_media_file(path)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef read_multiple_files(paths: List[str]) -> dict:\n    \"\"\"Read multiple files simultaneously.\n    \n    Args:\n        paths (list): List of file paths to read.\n    \n    Returns:\n        results (list): List of results with content or error for each file.\n    \"\"\"\n    try:\n        if not isinstance(paths, list):\n            raise ValueError(\"Paths must be a list\")\n        return api.read_multiple_files(paths)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef write_file(path: str, content: str) -> dict:\n    \"\"\"Write content to file.\n    \n    Args:\n        path (str): Destination file path.\n        content (str): Text content to write.\n    \n    Returns:\n        path (str): File path where written.\n        success (str): Success message.\n    \"\"\"\n    try:\n        if not path or not isinstance(path, str):\n            raise ValueError(\"Path must be a non-empty string\")\n        if content is None:\n            raise ValueError(\"Content cannot be None\")\n        return api.write_file(path, content)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef edit_file(path: str, oldText: Optional[str] = None, newText: Optional[str] = None, dryRun: bool = False) -> dict:\n    \"\"\"Edit file with pattern matching.\n    \n    Args:\n        path (str): File path to edit.\n        oldText (str): [Optional] Text pattern to search.\n        newText (str): [Optional] Replacement text.\n        dryRun (bool): [Optional] Preview changes without applying.\n    \n    Returns:\n        diff (str): Unified diff of changes.\n        matches (list): List of matches found.\n        applied (bool): Whether changes were applied.\n    \"\"\"\n    try:\n        if not path or not isinstance(path, str):\n            raise ValueError(\"Path must be a non-empty string\")\n        return api.edit_file(path, oldText, newText, dryRun)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef create_directory(path: str) -> dict:\n    \"\"\"Create directory.\n    \n    Args:\n        path (str): Directory path to create.\n    \n    Returns:\n        path (str): Created directory path.\n        created (bool): Whether new directory was created.\n    \"\"\"\n    try:\n        if not path or not isinstance(path, str):\n            raise ValueError(\"Path must be a non-empty string\")\n        return api.create_directory(path)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef list_directory(path: str) -> dict:\n    \"\"\"List directory contents.\n    \n    Args:\n        path (str): Directory path to list.\n    \n    Returns:\n        entries (list): List of directory entries with metadata.\n    \"\"\"\n    try:\n        if not path or not isinstance(path, str):\n            raise ValueError(\"Path must be a non-empty string\")\n        if not os.path.exists(path):\n            raise ValueError(f\"Directory {path} not found\")\n        return api.list_directory(path)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef move_file(source: str, destination: str) -> dict:\n    \"\"\"Move or rename file/directory.\n    \n    Args:\n        source (str): Source path.\n        destination (str): Destination path.\n    \n    Returns:\n        source (str): Original path.\n        destination (str): New path.\n        success (bool): Operation success status.\n    \"\"\"\n    try:\n        if not source or not isinstance(source, str):\n            raise ValueError(\"Source must be a non-empty string\")\n        if not destination or not isinstance(destination, str):\n            raise ValueError(\"Destination must be a non-empty string\")\n        if not os.path.exists(source):\n            raise ValueError(f\"Source {source} not found\")\n        return api.move_file(source, destination)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_files(path: str, pattern: str, excludePatterns: Optional[List[str]] = None) -> dict:\n    \"\"\"Search files with glob pattern.\n    \n    Args:\n        path (str): Search starting directory.\n        pattern (str): Glob pattern to match.\n        excludePatterns (list): [Optional] Patterns to exclude.\n    \n    Returns:\n        matches (list): List of matching file paths.\n    \"\"\"\n    try:\n        if not path or not isinstance(path, str):\n            raise ValueError(\"Path must be a non-empty string\")\n        if not pattern or not isinstance(pattern, str):\n            raise ValueError(\"Pattern must be a non-empty string\")\n        if not os.path.exists(path):\n            raise ValueError(f\"Directory {path} not found\")\n        return api.search_files(path, pattern, excludePatterns)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef directory_tree(path: str, excludePatterns: Optional[List[str]] = None) -> dict:\n    \"\"\"Generate directory tree structure.\n    \n    Args:\n        path (str): Root directory path.\n        excludePatterns (list): [Optional] Patterns to exclude.\n    \n    Returns:\n        tree (list): Hierarchical tree structure.\n    \"\"\"\n    try:\n        if not path or not isinstance(path, str):\n            raise ValueError(\"Path must be a non-empty string\")\n        if not os.path.exists(path):\n            raise ValueError(f\"Directory {path} not found\")\n        return api.directory_tree(path, excludePatterns)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_file_info(path: str) -> dict:\n    \"\"\"Get detailed file metadata.\n    \n    Args:\n        path (str): File/directory path.\n    \n    Returns:\n        path (str): Inspected path.\n        type (str): Entry type.\n        size (int): Size in bytes.\n        created_time (str): Creation timestamp.\n        modified_time (str): Modification timestamp.\n        access_time (str): Access timestamp.\n        permissions (str): File permissions.\n    \"\"\"\n    try:\n        if not path or not isinstance(path, str):\n            raise ValueError(\"Path must be a non-empty string\")\n        if not os.path.exists(path):\n            raise ValueError(f\"Path {path} not found\")\n        return api.get_file_info(path)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-04T00:14:11.242839",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic filesystem configuration with minimal allowed extensions and default settings",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "allowed_extensions": [
+          ".txt",
+          ".md"
+        ],
+        "max_file_size": 1048576,
+        "binary_extensions": [
+          ".png",
+          ".jpg"
+        ],
+        "exclude_patterns_default": [
+          "*.pyc",
+          ".git"
+        ],
+        "mime_types_map": {
+          ".txt": "text/plain",
+          ".md": "text/markdown",
+          ".png": "image/png",
+          ".jpg": "image/jpeg"
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Standard filesystem configuration with common file types and moderate restrictions",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "allowed_extensions": [
+          ".txt",
+          ".md",
+          ".py",
+          ".json",
+          ".csv",
+          ".html"
+        ],
+        "max_file_size": 5242880,
+        "binary_extensions": [
+          ".png",
+          ".jpg",
+          ".jpeg",
+          ".gif",
+          ".pdf",
+          ".zip"
+        ],
+        "exclude_patterns_default": [
+          "*.pyc",
+          "__pycache__",
+          ".git",
+          ".DS_Store",
+          "node_modules",
+          "*.log"
+        ],
+        "mime_types_map": {
+          ".txt": "text/plain",
+          ".md": "text/markdown",
+          ".py": "text/x-python",
+          ".json": "application/json",
+          ".csv": "text/csv",
+          ".html": "text/html",
+          ".png": "image/png",
+          ".jpg": "image/jpeg",
+          ".jpeg": "image/jpeg",
+          ".gif": "image/gif",
+          ".pdf": "application/pdf",
+          ".zip": "application/zip"
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Comprehensive filesystem configuration with extensive file type support, custom MIME types, and detailed exclusion patterns",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "allowed_extensions": [
+          ".txt",
+          ".md",
+          ".py",
+          ".json",
+          ".csv",
+          ".xml",
+          ".html",
+          ".css",
+          ".js",
+          ".ts",
+          ".yaml",
+          ".yml",
+          ".sh",
+          ".bat"
+        ],
+        "max_file_size": 10485760,
+        "binary_extensions": [
+          ".png",
+          ".jpg",
+          ".jpeg",
+          ".gif",
+          ".bmp",
+          ".ico",
+          ".svg",
+          ".mp3",
+          ".wav",
+          ".mp4",
+          ".avi",
+          ".mov",
+          ".pdf",
+          ".zip",
+          ".tar",
+          ".gz",
+          ".exe",
+          ".dll"
+        ],
+        "exclude_patterns_default": [
+          "*.pyc",
+          "__pycache__",
+          ".git",
+          ".gitignore",
+          ".DS_Store",
+          "node_modules",
+          "*.log",
+          "*.tmp",
+          ".env",
+          ".venv",
+          "venv",
+          "dist",
+          "build",
+          ".idea",
+          ".vscode",
+          "*.swp"
+        ],
+        "mime_types_map": {
+          ".txt": "text/plain",
+          ".md": "text/markdown",
+          ".py": "text/x-python",
+          ".json": "application/json",
+          ".csv": "text/csv",
+          ".xml": "application/xml",
+          ".html": "text/html",
+          ".css": "text/css",
+          ".js": "application/javascript",
+          ".ts": "application/typescript",
+          ".yaml": "application/x-yaml",
+          ".yml": "application/x-yaml",
+          ".sh": "application/x-sh",
+          ".bat": "application/x-bat",
+          ".png": "image/png",
+          ".jpg": "image/jpeg",
+          ".jpeg": "image/jpeg",
+          ".gif": "image/gif",
+          ".bmp": "image/bmp",
+          ".ico": "image/x-icon",
+          ".svg": "image/svg+xml",
+          ".mp3": "audio/mpeg",
+          ".wav": "audio/wav",
+          ".mp4": "video/mp4",
+          ".avi": "video/x-msvideo",
+          ".mov": "video/quicktime",
+          ".pdf": "application/pdf",
+          ".zip": "application/zip",
+          ".tar": "application/x-tar",
+          ".gz": "application/gzip",
+          ".exe": "application/x-msdownload",
+          ".dll": "application/x-msdownload"
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Edge case with empty allowed extensions, zero max file size, and minimal configuration to test boundary handling",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "allowed_extensions": [],
+        "max_file_size": 0,
+        "binary_extensions": [],
+        "exclude_patterns_default": [],
+        "mime_types_map": {}
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "read_text_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Read full file",
+                    "input": {
+                      "path": "/tmp/test_dir/sample.txt"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Read with head parameter",
+                    "input": {
+                      "path": "/tmp/test_dir/sample.txt",
+                      "head": 2
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Read with tail parameter",
+                    "input": {
+                      "path": "/tmp/test_dir/sample.txt",
+                      "tail": 2
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Empty path validation",
+                    "input": {
+                      "path": ""
+                    },
+                    "passed": true,
+                    "error": "Path must be a non-empty string (expected validation error)"
+                  },
+                  {
+                    "description": "Error case: Negative head parameter",
+                    "input": {
+                      "path": "/tmp/test_dir/sample.txt",
+                      "head": -5
+                    },
+                    "passed": true,
+                    "error": "Head must be non-negative integer (expected validation error)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "read_media_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Read binary file",
+                    "input": {
+                      "path": "/tmp/test_dir/test.png"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "read_multiple_files",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Read multiple files",
+                    "input": {
+                      "paths": [
+                        "/tmp/test_dir/sample.txt",
+                        "/tmp/test_dir/file2.txt"
+                      ]
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Invalid paths type",
+                    "input": {
+                      "paths": "not_a_list"
+                    },
+                    "passed": true,
+                    "error": "Input should be a valid list (expected validation error)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "write_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Write text file",
+                    "input": {
+                      "path": "/tmp/test_dir/sample.txt",
+                      "content": "Hello World\nLine 2\nLine 3\nLine 4\nLine 5"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Write another file",
+                    "input": {
+                      "path": "/tmp/test_dir/file2.txt",
+                      "content": "Second file content"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Write binary file",
+                    "input": {
+                      "path": "/tmp/test_dir/test.png",
+                      "content": "fake binary content"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "edit_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Dry run edit",
+                    "input": {
+                      "path": "/tmp/test_dir/sample.txt",
+                      "oldText": "World",
+                      "newText": "Universe",
+                      "dryRun": true
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Apply edit",
+                    "input": {
+                      "path": "/tmp/test_dir/sample.txt",
+                      "oldText": "World",
+                      "newText": "Universe",
+                      "dryRun": false
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_directory",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Create directory",
+                    "input": {
+                      "path": "/tmp/test_dir"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Empty path validation",
+                    "input": {
+                      "path": ""
+                    },
+                    "passed": true,
+                    "error": "Path must be a non-empty string (expected validation error)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_directory",
+                "test_cases": [
+                  {
+                    "description": "Valid case: List directory contents",
+                    "input": {
+                      "path": "/tmp/test_dir"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "move_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Rename file",
+                    "input": {
+                      "source": "/tmp/test_dir/file2.txt",
+                      "destination": "/tmp/test_dir/file2_renamed.txt"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_files",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Search with pattern",
+                    "input": {
+                      "path": "/tmp/test_dir",
+                      "pattern": "*.txt"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Search with exclude patterns",
+                    "input": {
+                      "path": "/tmp/test_dir",
+                      "pattern": "*.txt",
+                      "excludePatterns": [
+                        "*renamed*"
+                      ]
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "directory_tree",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Generate directory tree",
+                    "input": {
+                      "path": "/tmp/test_dir"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Tree with exclude patterns",
+                    "input": {
+                      "path": "/tmp/test_dir",
+                      "excludePatterns": [
+                        "*renamed*"
+                      ]
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_file_info",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get file metadata",
+                    "input": {
+                      "path": "/tmp/test_dir/sample.txt"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All configuration fields preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 107.2519223690033
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "read_text_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case - read full file",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test.txt"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - read with head parameter",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test.txt",
+                      "head": 2
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - read with tail parameter",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test.txt",
+                      "tail": 2
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - empty path",
+                    "input": {
+                      "path": ""
+                    },
+                    "passed": true,
+                    "error": "Path must be a non-empty string",
+                    "note": "Correctly rejected invalid input"
+                  },
+                  {
+                    "description": "Error case - negative head value",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test.txt",
+                      "head": -5
+                    },
+                    "passed": true,
+                    "error": "Head must be non-negative integer",
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "read_media_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case - read PNG file",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test_image.png"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "read_multiple_files",
+                "test_cases": [
+                  {
+                    "description": "Valid case - read single file",
+                    "input": {
+                      "paths": [
+                        "/tmp/test_dir_scenario_002/test_moved.txt"
+                      ]
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - invalid paths type",
+                    "input": {
+                      "paths": "not_a_list"
+                    },
+                    "passed": true,
+                    "error": "Input should be a valid list",
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "write_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case - write text file",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test.txt",
+                      "content": "Hello World\nThis is a test file\nLine 3\nLine 4\nLine 5"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - write PNG file",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test_image.png",
+                      "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "edit_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case - dry run edit",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test.txt",
+                      "oldText": "Hello World",
+                      "newText": "Hello Universe",
+                      "dryRun": true
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - actual edit",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test.txt",
+                      "oldText": "Hello World",
+                      "newText": "Hello Universe",
+                      "dryRun": false
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_directory",
+                "test_cases": [
+                  {
+                    "description": "Valid case - create new directory",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - empty path",
+                    "input": {
+                      "path": ""
+                    },
+                    "passed": true,
+                    "error": "Path must be a non-empty string",
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_directory",
+                "test_cases": [
+                  {
+                    "description": "Valid case - list directory contents",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "move_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case - move/rename file",
+                    "input": {
+                      "source": "/tmp/test_dir_scenario_002/test.txt",
+                      "destination": "/tmp/test_dir_scenario_002/test_moved.txt"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_files",
+                "test_cases": [
+                  {
+                    "description": "Valid case - search with glob pattern",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002",
+                      "pattern": "*.txt"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "directory_tree",
+                "test_cases": [
+                  {
+                    "description": "Valid case - generate directory tree",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002",
+                      "excludePatterns": [
+                        "*.log"
+                      ]
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_file_info",
+                "test_cases": [
+                  {
+                    "description": "Valid case - get file metadata",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test.txt"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "note": "Saved scenario matches original scenario exactly"
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 92.24037647247314
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "read_text_file",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Read entire file",
+                    "input": {
+                      "path": "/tmp/test_dir/test_file.txt"
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Read with head parameter",
+                    "input": {
+                      "path": "/tmp/test_dir/test_file.txt",
+                      "head": 3
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Read with tail parameter",
+                    "input": {
+                      "path": "/tmp/test_dir/test_file.txt",
+                      "tail": 2
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: negative head value",
+                    "input": {
+                      "path": "/tmp/test_dir/test_file.txt",
+                      "head": -5
+                    },
+                    "result": "expected_error",
+                    "error": "Head must be non-negative integer"
+                  },
+                  {
+                    "description": "Error case: empty path",
+                    "input": {
+                      "path": ""
+                    },
+                    "result": "expected_error",
+                    "error": "Path must be a non-empty string"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "read_media_file",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Read text file as media (base64)",
+                    "input": {
+                      "path": "/tmp/test_dir/test_file.txt"
+                    },
+                    "result": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "read_multiple_files",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Read single file",
+                    "input": {
+                      "paths": [
+                        "/tmp/test_dir/test_file.txt"
+                      ]
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Read multiple files including nonexistent",
+                    "input": {
+                      "paths": [
+                        "/tmp/test_dir/renamed_file.txt",
+                        "/tmp/test_dir/another_test.json",
+                        "/tmp/test_dir/nonexistent.txt"
+                      ]
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: invalid paths type",
+                    "input": {
+                      "paths": "not_a_list"
+                    },
+                    "result": "expected_error",
+                    "error": "Input should be a valid list"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "write_file",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Write text file",
+                    "input": {
+                      "path": "/tmp/test_dir/test_file.txt",
+                      "content": "Line 1\\nLine 2\\nLine 3\\nLine 4\\nLine 5\\nLine 6\\nLine 7\\nLine 8\\nLine 9\\nLine 10"
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Write JSON file",
+                    "input": {
+                      "path": "/tmp/test_dir/another_test.json",
+                      "content": "{\\\"key\\\": \\\"value\\\"}"
+                    },
+                    "result": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "edit_file",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Dry run edit",
+                    "input": {
+                      "path": "/tmp/test_dir/test_file.txt",
+                      "oldText": "Line 5",
+                      "newText": "Line Five",
+                      "dryRun": true
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Apply edit",
+                    "input": {
+                      "path": "/tmp/test_dir/test_file.txt",
+                      "oldText": "Line 5",
+                      "newText": "Line Five",
+                      "dryRun": false
+                    },
+                    "result": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "create_directory",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Create new directory",
+                    "input": {
+                      "path": "/tmp/test_dir"
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Create subdirectory",
+                    "input": {
+                      "path": "/tmp/test_dir/subdir"
+                    },
+                    "result": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "list_directory",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "List directory contents",
+                    "input": {
+                      "path": "/tmp/test_dir"
+                    },
+                    "result": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "move_file",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Rename file",
+                    "input": {
+                      "source": "/tmp/test_dir/test_file.txt",
+                      "destination": "/tmp/test_dir/renamed_file.txt"
+                    },
+                    "result": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "search_files",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Search with glob pattern",
+                    "input": {
+                      "path": "/tmp/test_dir",
+                      "pattern": "*.txt"
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Search with exclude patterns",
+                    "input": {
+                      "path": "/tmp/test_dir",
+                      "pattern": "*.*",
+                      "excludePatterns": [
+                        "*.json"
+                      ]
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: empty pattern",
+                    "input": {
+                      "path": "/tmp/test_dir",
+                      "pattern": ""
+                    },
+                    "result": "expected_error",
+                    "error": "Pattern must be a non-empty string"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "directory_tree",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Generate directory tree",
+                    "input": {
+                      "path": "/tmp/test_dir"
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Generate tree with exclude patterns",
+                    "input": {
+                      "path": "/tmp/test_dir",
+                      "excludePatterns": [
+                        "*.json"
+                      ]
+                    },
+                    "result": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_file_info",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Get file metadata",
+                    "input": {
+                      "path": "/tmp/test_dir/renamed_file.txt"
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: nonexistent file",
+                    "input": {
+                      "path": "/tmp/test_dir/nonexistent.txt"
+                    },
+                    "result": "expected_error",
+                    "error": "Path /tmp/test_dir/nonexistent.txt not found"
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 122.7379641532898
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "create_directory",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "write_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "read_text_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "read_text_file_with_head",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "read_text_file_with_tail",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_directory",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "read_multiple_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_file_info",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "edit_file_dry_run",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "edit_file_apply",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "directory_tree",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "move_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "read_media_file",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 57.334086179733276
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "read_text_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Read full file",
+                    "input": {
+                      "path": "/tmp/test_dir/sample.txt"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Read with head parameter",
+                    "input": {
+                      "path": "/tmp/test_dir/sample.txt",
+                      "head": 2
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Read with tail parameter",
+                    "input": {
+                      "path": "/tmp/test_dir/sample.txt",
+                      "tail": 2
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Empty path validation",
+                    "input": {
+                      "path": ""
+                    },
+                    "passed": true,
+                    "error": "Path must be a non-empty string (expected validation error)"
+                  },
+                  {
+                    "description": "Error case: Negative head parameter",
+                    "input": {
+                      "path": "/tmp/test_dir/sample.txt",
+                      "head": -5
+                    },
+                    "passed": true,
+                    "error": "Head must be non-negative integer (expected validation error)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "read_media_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Read binary file",
+                    "input": {
+                      "path": "/tmp/test_dir/test.png"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "read_multiple_files",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Read multiple files",
+                    "input": {
+                      "paths": [
+                        "/tmp/test_dir/sample.txt",
+                        "/tmp/test_dir/file2.txt"
+                      ]
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Invalid paths type",
+                    "input": {
+                      "paths": "not_a_list"
+                    },
+                    "passed": true,
+                    "error": "Input should be a valid list (expected validation error)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "write_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Write text file",
+                    "input": {
+                      "path": "/tmp/test_dir/sample.txt",
+                      "content": "Hello World\nLine 2\nLine 3\nLine 4\nLine 5"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Write another file",
+                    "input": {
+                      "path": "/tmp/test_dir/file2.txt",
+                      "content": "Second file content"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Write binary file",
+                    "input": {
+                      "path": "/tmp/test_dir/test.png",
+                      "content": "fake binary content"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "edit_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Dry run edit",
+                    "input": {
+                      "path": "/tmp/test_dir/sample.txt",
+                      "oldText": "World",
+                      "newText": "Universe",
+                      "dryRun": true
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Apply edit",
+                    "input": {
+                      "path": "/tmp/test_dir/sample.txt",
+                      "oldText": "World",
+                      "newText": "Universe",
+                      "dryRun": false
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_directory",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Create directory",
+                    "input": {
+                      "path": "/tmp/test_dir"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Empty path validation",
+                    "input": {
+                      "path": ""
+                    },
+                    "passed": true,
+                    "error": "Path must be a non-empty string (expected validation error)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_directory",
+                "test_cases": [
+                  {
+                    "description": "Valid case: List directory contents",
+                    "input": {
+                      "path": "/tmp/test_dir"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "move_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Rename file",
+                    "input": {
+                      "source": "/tmp/test_dir/file2.txt",
+                      "destination": "/tmp/test_dir/file2_renamed.txt"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_files",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Search with pattern",
+                    "input": {
+                      "path": "/tmp/test_dir",
+                      "pattern": "*.txt"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Search with exclude patterns",
+                    "input": {
+                      "path": "/tmp/test_dir",
+                      "pattern": "*.txt",
+                      "excludePatterns": [
+                        "*renamed*"
+                      ]
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "directory_tree",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Generate directory tree",
+                    "input": {
+                      "path": "/tmp/test_dir"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Tree with exclude patterns",
+                    "input": {
+                      "path": "/tmp/test_dir",
+                      "excludePatterns": [
+                        "*renamed*"
+                      ]
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_file_info",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get file metadata",
+                    "input": {
+                      "path": "/tmp/test_dir/sample.txt"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All configuration fields preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 107.2519223690033
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "read_text_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case - read full file",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test.txt"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - read with head parameter",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test.txt",
+                      "head": 2
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - read with tail parameter",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test.txt",
+                      "tail": 2
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - empty path",
+                    "input": {
+                      "path": ""
+                    },
+                    "passed": true,
+                    "error": "Path must be a non-empty string",
+                    "note": "Correctly rejected invalid input"
+                  },
+                  {
+                    "description": "Error case - negative head value",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test.txt",
+                      "head": -5
+                    },
+                    "passed": true,
+                    "error": "Head must be non-negative integer",
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "read_media_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case - read PNG file",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test_image.png"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "read_multiple_files",
+                "test_cases": [
+                  {
+                    "description": "Valid case - read single file",
+                    "input": {
+                      "paths": [
+                        "/tmp/test_dir_scenario_002/test_moved.txt"
+                      ]
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - invalid paths type",
+                    "input": {
+                      "paths": "not_a_list"
+                    },
+                    "passed": true,
+                    "error": "Input should be a valid list",
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "write_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case - write text file",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test.txt",
+                      "content": "Hello World\nThis is a test file\nLine 3\nLine 4\nLine 5"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - write PNG file",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test_image.png",
+                      "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "edit_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case - dry run edit",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test.txt",
+                      "oldText": "Hello World",
+                      "newText": "Hello Universe",
+                      "dryRun": true
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - actual edit",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test.txt",
+                      "oldText": "Hello World",
+                      "newText": "Hello Universe",
+                      "dryRun": false
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_directory",
+                "test_cases": [
+                  {
+                    "description": "Valid case - create new directory",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - empty path",
+                    "input": {
+                      "path": ""
+                    },
+                    "passed": true,
+                    "error": "Path must be a non-empty string",
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_directory",
+                "test_cases": [
+                  {
+                    "description": "Valid case - list directory contents",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "move_file",
+                "test_cases": [
+                  {
+                    "description": "Valid case - move/rename file",
+                    "input": {
+                      "source": "/tmp/test_dir_scenario_002/test.txt",
+                      "destination": "/tmp/test_dir_scenario_002/test_moved.txt"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_files",
+                "test_cases": [
+                  {
+                    "description": "Valid case - search with glob pattern",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002",
+                      "pattern": "*.txt"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "directory_tree",
+                "test_cases": [
+                  {
+                    "description": "Valid case - generate directory tree",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002",
+                      "excludePatterns": [
+                        "*.log"
+                      ]
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_file_info",
+                "test_cases": [
+                  {
+                    "description": "Valid case - get file metadata",
+                    "input": {
+                      "path": "/tmp/test_dir_scenario_002/test.txt"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "note": "Saved scenario matches original scenario exactly"
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 92.24037647247314
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "read_text_file",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Read entire file",
+                    "input": {
+                      "path": "/tmp/test_dir/test_file.txt"
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Read with head parameter",
+                    "input": {
+                      "path": "/tmp/test_dir/test_file.txt",
+                      "head": 3
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Read with tail parameter",
+                    "input": {
+                      "path": "/tmp/test_dir/test_file.txt",
+                      "tail": 2
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: negative head value",
+                    "input": {
+                      "path": "/tmp/test_dir/test_file.txt",
+                      "head": -5
+                    },
+                    "result": "expected_error",
+                    "error": "Head must be non-negative integer"
+                  },
+                  {
+                    "description": "Error case: empty path",
+                    "input": {
+                      "path": ""
+                    },
+                    "result": "expected_error",
+                    "error": "Path must be a non-empty string"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "read_media_file",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Read text file as media (base64)",
+                    "input": {
+                      "path": "/tmp/test_dir/test_file.txt"
+                    },
+                    "result": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "read_multiple_files",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Read single file",
+                    "input": {
+                      "paths": [
+                        "/tmp/test_dir/test_file.txt"
+                      ]
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Read multiple files including nonexistent",
+                    "input": {
+                      "paths": [
+                        "/tmp/test_dir/renamed_file.txt",
+                        "/tmp/test_dir/another_test.json",
+                        "/tmp/test_dir/nonexistent.txt"
+                      ]
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: invalid paths type",
+                    "input": {
+                      "paths": "not_a_list"
+                    },
+                    "result": "expected_error",
+                    "error": "Input should be a valid list"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "write_file",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Write text file",
+                    "input": {
+                      "path": "/tmp/test_dir/test_file.txt",
+                      "content": "Line 1\\nLine 2\\nLine 3\\nLine 4\\nLine 5\\nLine 6\\nLine 7\\nLine 8\\nLine 9\\nLine 10"
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Write JSON file",
+                    "input": {
+                      "path": "/tmp/test_dir/another_test.json",
+                      "content": "{\\\"key\\\": \\\"value\\\"}"
+                    },
+                    "result": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "edit_file",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Dry run edit",
+                    "input": {
+                      "path": "/tmp/test_dir/test_file.txt",
+                      "oldText": "Line 5",
+                      "newText": "Line Five",
+                      "dryRun": true
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Apply edit",
+                    "input": {
+                      "path": "/tmp/test_dir/test_file.txt",
+                      "oldText": "Line 5",
+                      "newText": "Line Five",
+                      "dryRun": false
+                    },
+                    "result": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "create_directory",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Create new directory",
+                    "input": {
+                      "path": "/tmp/test_dir"
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Create subdirectory",
+                    "input": {
+                      "path": "/tmp/test_dir/subdir"
+                    },
+                    "result": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "list_directory",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "List directory contents",
+                    "input": {
+                      "path": "/tmp/test_dir"
+                    },
+                    "result": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "move_file",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Rename file",
+                    "input": {
+                      "source": "/tmp/test_dir/test_file.txt",
+                      "destination": "/tmp/test_dir/renamed_file.txt"
+                    },
+                    "result": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "search_files",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Search with glob pattern",
+                    "input": {
+                      "path": "/tmp/test_dir",
+                      "pattern": "*.txt"
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Search with exclude patterns",
+                    "input": {
+                      "path": "/tmp/test_dir",
+                      "pattern": "*.*",
+                      "excludePatterns": [
+                        "*.json"
+                      ]
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: empty pattern",
+                    "input": {
+                      "path": "/tmp/test_dir",
+                      "pattern": ""
+                    },
+                    "result": "expected_error",
+                    "error": "Pattern must be a non-empty string"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "directory_tree",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Generate directory tree",
+                    "input": {
+                      "path": "/tmp/test_dir"
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Generate tree with exclude patterns",
+                    "input": {
+                      "path": "/tmp/test_dir",
+                      "excludePatterns": [
+                        "*.json"
+                      ]
+                    },
+                    "result": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_file_info",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Get file metadata",
+                    "input": {
+                      "path": "/tmp/test_dir/renamed_file.txt"
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: nonexistent file",
+                    "input": {
+                      "path": "/tmp/test_dir/nonexistent.txt"
+                    },
+                    "result": "expected_error",
+                    "error": "Path /tmp/test_dir/nonexistent.txt not found"
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 122.7379641532898
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "create_directory",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "write_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "read_text_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "read_text_file_with_head",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "read_text_file_with_tail",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_directory",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "read_multiple_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_file_info",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "edit_file_dry_run",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "edit_file_apply",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "directory_tree",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "move_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "read_media_file",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 57.334086179733276
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/Filesystem.py"
+  }
+}

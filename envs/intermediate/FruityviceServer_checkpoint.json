@@ -1,0 +1,1384 @@
+{
+  "metadata": {
+    "class_name": "FruityviceServer",
+    "metadata_path": "envs\\metadata\\FruityviceServer_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-04T00:28:43.589189",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "FruityviceServer",
+    "description": "A server for accessing fruit information and nutritional data from the Fruityvice API, providing details about various fruits and their nutritional content.",
+    "tools": [
+      {
+        "name": "list_fruits",
+        "description": "Retrieve a list of all available fruits from the Fruityvice database.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of fruit results to return. If not specified, all available fruits are returned."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "fruits": {
+              "type": "array",
+              "description": "List of available fruits from the Fruityvice database.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The common name of the fruit (e.g., 'apple', 'banana', 'orange')."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_fruit_nutrition",
+        "description": "Retrieve detailed nutritional information for a specific fruit by name.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "fruit_name": {
+              "type": "string",
+              "description": "The common name of the fruit to look up (e.g., 'apple', 'banana', 'orange')."
+            }
+          },
+          "required": [
+            "fruit_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The common name of the fruit (e.g., 'apple', 'banana', 'orange')."
+            },
+            "nutritions": {
+              "type": "object",
+              "description": "Nutritional breakdown of the fruit per 100 grams of edible portion.",
+              "properties": {
+                "calories": {
+                  "type": "number",
+                  "description": "Energy content in kilocalories (kcal) per 100g of the fruit."
+                },
+                "fat": {
+                  "type": "number",
+                  "description": "Total fat content in grams per 100g of the fruit."
+                },
+                "sugar": {
+                  "type": "number",
+                  "description": "Total sugar content in grams per 100g of the fruit."
+                },
+                "carbohydrates": {
+                  "type": "number",
+                  "description": "Total carbohydrate content in grams per 100g of the fruit."
+                },
+                "protein": {
+                  "type": "number",
+                  "description": "Total protein content in grams per 100g of the fruit."
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Fruit(BaseModel):\n    \"\"\"Represents a fruit with basic information.\"\"\"\n    name: str = Field(..., description=\"The common name of the fruit\")\n\nclass NutritionInfo(BaseModel):\n    \"\"\"Represents nutritional information for a fruit.\"\"\"\n    calories: float = Field(..., ge=0, description=\"Energy content in kilocalories (kcal) per 100g\")\n    fat: float = Field(..., ge=0, description=\"Total fat content in grams per 100g\")\n    sugar: float = Field(..., ge=0, description=\"Total sugar content in grams per 100g\")\n    carbohydrates: float = Field(..., ge=0, description=\"Total carbohydrate content in grams per 100g\")\n    protein: float = Field(..., ge=0, description=\"Total protein content in grams per 100g\")\n\nclass FruitNutrition(BaseModel):\n    \"\"\"Represents a fruit with detailed nutrition information.\"\"\"\n    name: str = Field(..., description=\"The common name of the fruit\")\n    nutritions: NutritionInfo = Field(..., description=\"Nutritional breakdown per 100 grams\")\n\nclass FruityviceScenario(BaseModel):\n    \"\"\"Main scenario model for Fruityvice API data.\"\"\"\n    fruits: List[Fruit] = Field(default=[], description=\"List of available fruits\")\n    fruitNutritionMap: Dict[str, FruitNutrition] = Field(default={\n        \"apple\": FruitNutrition(name=\"apple\", nutritions=NutritionInfo(calories=52, fat=0.2, sugar=10.4, carbohydrates=14.0, protein=0.3)),\n        \"banana\": FruitNutrition(name=\"banana\", nutritions=NutritionInfo(calories=89, fat=0.3, sugar=12.2, carbohydrates=23.0, protein=1.1)),\n        \"orange\": FruitNutrition(name=\"orange\", nutritions=NutritionInfo(calories=47, fat=0.1, sugar=9.4, carbohydrates=12.0, protein=0.9)),\n        \"strawberry\": FruitNutrition(name=\"strawberry\", nutritions=NutritionInfo(calories=32, fat=0.3, sugar=4.9, carbohydrates=7.7, protein=0.7)),\n        \"blueberry\": FruitNutrition(name=\"blueberry\", nutritions=NutritionInfo(calories=57, fat=0.3, sugar=10.0, carbohydrates=14.0, protein=0.7)),\n        \"grape\": FruitNutrition(name=\"grape\", nutritions=NutritionInfo(calories=67, fat=0.4, sugar=16.0, carbohydrates=17.0, protein=0.6)),\n        \"watermelon\": FruitNutrition(name=\"watermelon\", nutritions=NutritionInfo(calories=30, fat=0.2, sugar=6.2, carbohydrates=7.6, protein=0.6)),\n        \"pineapple\": FruitNutrition(name=\"pineapple\", nutritions=NutritionInfo(calories=50, fat=0.1, sugar=10.0, carbohydrates=13.0, protein=0.5)),\n        \"mango\": FruitNutrition(name=\"mango\", nutritions=NutritionInfo(calories=60, fat=0.4, sugar=14.0, carbohydrates=15.0, protein=0.8)),\n        \"kiwi\": FruitNutrition(name=\"kiwi\", nutritions=NutritionInfo(calories=61, fat=0.5, sugar=9.0, carbohydrates=15.0, protein=1.1)),\n        \"peach\": FruitNutrition(name=\"peach\", nutritions=NutritionInfo(calories=39, fat=0.3, sugar=8.4, carbohydrates=10.0, protein=0.9)),\n        \"pear\": FruitNutrition(name=\"pear\", nutritions=NutritionInfo(calories=57, fat=0.1, sugar=10.0, carbohydrates=15.0, protein=0.4)),\n        \"plum\": FruitNutrition(name=\"plum\", nutritions=NutritionInfo(calories=46, fat=0.3, sugar=10.0, carbohydrates=11.0, protein=0.7)),\n        \"cherry\": FruitNutrition(name=\"cherry\", nutritions=NutritionInfo(calories=63, fat=0.2, sugar=13.0, carbohydrates=16.0, protein=1.1)),\n        \"avocado\": FruitNutrition(name=\"avocado\", nutritions=NutritionInfo(calories=160, fat=15.0, sugar=0.7, carbohydrates=9.0, protein=2.0)),\n        \"lemon\": FruitNutrition(name=\"lemon\", nutritions=NutritionInfo(calories=17, fat=0.2, sugar=1.5, carbohydrates=5.4, protein=0.6)),\n        \"lime\": FruitNutrition(name=\"lime\", nutritions=NutritionInfo(calories=30, fat=0.2, sugar=1.7, carbohydrates=11.0, protein=0.7)),\n        \"pomegranate\": FruitNutrition(name=\"pomegranate\", nutritions=NutritionInfo(calories=83, fat=1.2, sugar=14.0, carbohydrates=19.0, protein=1.7)),\n        \"papaya\": FruitNutrition(name=\"papaya\", nutritions=NutritionInfo(calories=43, fat=0.3, sugar=8.0, carbohydrates=11.0, protein=0.5)),\n        \"coconut\": FruitNutrition(name=\"coconut\", nutritions=NutritionInfo(calories=354, fat=33.0, sugar=6.2, carbohydrates=15.0, protein=3.3))\n    }, description=\"Nutritional data mapping by fruit name\")\n\nScenario_Schema = [Fruit, NutritionInfo, FruitNutrition, FruityviceScenario]\n\n# Section 2: Class\nclass FruityviceAPI:\n    def __init__(self):\n        \"\"\"Initialize Fruityvice API with empty state.\"\"\"\n        self.fruits: List[Fruit] = []\n        self.fruitNutritionMap: Dict[str, FruitNutrition] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = FruityviceScenario(**scenario)\n        self.fruits = model.fruits\n        self.fruitNutritionMap = model.fruitNutritionMap\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"fruits\": [fruit.dict() for fruit in self.fruits],\n            \"fruitNutritionMap\": {name: nutrition.dict() for name, nutrition in self.fruitNutritionMap.items()}\n        }\n\n    def list_fruits(self, limit: Optional[int] = None) -> dict:\n        \"\"\"Retrieve a list of all available fruits.\"\"\"\n        if limit is not None:\n            limited_fruits = self.fruits[:limit]\n        else:\n            limited_fruits = self.fruits\n        return {\"fruits\": [{\"name\": fruit.name} for fruit in limited_fruits]}\n\n    def get_fruit_nutrition(self, fruit_name: str) -> dict:\n        \"\"\"Retrieve detailed nutritional information for a specific fruit.\"\"\"\n        nutrition_data = self.fruitNutritionMap[fruit_name.lower()]\n        return {\n            \"name\": nutrition_data.name,\n            \"nutritions\": {\n                \"calories\": nutrition_data.nutritions.calories,\n                \"fat\": nutrition_data.nutritions.fat,\n                \"sugar\": nutrition_data.nutritions.sugar,\n                \"carbohydrates\": nutrition_data.nutritions.carbohydrates,\n                \"protein\": nutrition_data.nutritions.protein\n            }\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"FruityviceServer\")\napi = FruityviceAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Fruityvice API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching FruityviceScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Fruityvice state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef list_fruits(limit: Optional[int] = None) -> dict:\n    \"\"\"\n    Retrieve a list of all available fruits from the Fruityvice database.\n    \n    Args:\n        limit (int) [Optional]: Maximum number of fruit results to return. If not specified, all available fruits are returned.\n    \n    Returns:\n        fruits (list): List of available fruits from the Fruityvice database.\n    \"\"\"\n    try:\n        # Basic type check only - range validation (ge=0) handled by Pydantic when data passes through models\n        if limit is not None and not isinstance(limit, int):\n            raise ValueError(\"Limit must be an integer\")\n        return api.list_fruits(limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_fruit_nutrition(fruit_name: str) -> dict:\n    \"\"\"\n    Retrieve detailed nutritional information for a specific fruit by name.\n    \n    Args:\n        fruit_name (str): The common name of the fruit to look up (e.g., 'apple', 'banana', 'orange').\n    \n    Returns:\n        name (str): The common name of the fruit.\n        nutritions (dict): Nutritional breakdown of the fruit per 100 grams of edible portion.\n    \"\"\"\n    try:\n        # Business logic check: verify fruit exists (not format validation)\n        if not fruit_name or not isinstance(fruit_name, str):\n            raise ValueError(\"Fruit name must be a non-empty string\")\n        fruit_key = fruit_name.lower()\n        if fruit_key not in api.fruitNutritionMap:\n            raise ValueError(f\"Fruit '{fruit_name}' not found\")\n        return api.get_fruit_nutrition(fruit_name)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-04T00:28:43.589189",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with 2 fruits and default nutrition data for common fruits",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "fruits": [
+          {
+            "name": "apple"
+          },
+          {
+            "name": "banana"
+          }
+        ],
+        "fruitNutritionMap": {
+          "apple": {
+            "name": "apple",
+            "nutritions": {
+              "calories": 52.0,
+              "fat": 0.2,
+              "sugar": 10.4,
+              "carbohydrates": 14.0,
+              "protein": 0.3
+            }
+          },
+          "banana": {
+            "name": "banana",
+            "nutritions": {
+              "calories": 89.0,
+              "fat": 0.3,
+              "sugar": 12.2,
+              "carbohydrates": 23.0,
+              "protein": 1.1
+            }
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Medium complexity with 5 diverse fruits including tropical and citrus varieties",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "fruits": [
+          {
+            "name": "strawberry"
+          },
+          {
+            "name": "mango"
+          },
+          {
+            "name": "lemon"
+          },
+          {
+            "name": "watermelon"
+          },
+          {
+            "name": "kiwi"
+          }
+        ],
+        "fruitNutritionMap": {
+          "strawberry": {
+            "name": "strawberry",
+            "nutritions": {
+              "calories": 32.0,
+              "fat": 0.3,
+              "sugar": 4.9,
+              "carbohydrates": 7.7,
+              "protein": 0.7
+            }
+          },
+          "mango": {
+            "name": "mango",
+            "nutritions": {
+              "calories": 60.0,
+              "fat": 0.4,
+              "sugar": 14.0,
+              "carbohydrates": 15.0,
+              "protein": 0.8
+            }
+          },
+          "lemon": {
+            "name": "lemon",
+            "nutritions": {
+              "calories": 17.0,
+              "fat": 0.2,
+              "sugar": 1.5,
+              "carbohydrates": 5.4,
+              "protein": 0.6
+            }
+          },
+          "watermelon": {
+            "name": "watermelon",
+            "nutritions": {
+              "calories": 30.0,
+              "fat": 0.2,
+              "sugar": 6.2,
+              "carbohydrates": 7.6,
+              "protein": 0.6
+            }
+          },
+          "kiwi": {
+            "name": "kiwi",
+            "nutritions": {
+              "calories": 61.0,
+              "fat": 0.5,
+              "sugar": 9.0,
+              "carbohydrates": 15.0,
+              "protein": 1.1
+            }
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Complex scenario with 8 fruits covering wide nutritional range from low-calorie citrus to high-fat avocado and coconut",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "fruits": [
+          {
+            "name": "avocado"
+          },
+          {
+            "name": "coconut"
+          },
+          {
+            "name": "pomegranate"
+          },
+          {
+            "name": "cherry"
+          },
+          {
+            "name": "pineapple"
+          },
+          {
+            "name": "papaya"
+          },
+          {
+            "name": "lime"
+          },
+          {
+            "name": "peach"
+          }
+        ],
+        "fruitNutritionMap": {
+          "avocado": {
+            "name": "avocado",
+            "nutritions": {
+              "calories": 160.0,
+              "fat": 15.0,
+              "sugar": 0.7,
+              "carbohydrates": 9.0,
+              "protein": 2.0
+            }
+          },
+          "coconut": {
+            "name": "coconut",
+            "nutritions": {
+              "calories": 354.0,
+              "fat": 33.0,
+              "sugar": 6.2,
+              "carbohydrates": 15.0,
+              "protein": 3.3
+            }
+          },
+          "pomegranate": {
+            "name": "pomegranate",
+            "nutritions": {
+              "calories": 83.0,
+              "fat": 1.2,
+              "sugar": 14.0,
+              "carbohydrates": 19.0,
+              "protein": 1.7
+            }
+          },
+          "cherry": {
+            "name": "cherry",
+            "nutritions": {
+              "calories": 63.0,
+              "fat": 0.2,
+              "sugar": 13.0,
+              "carbohydrates": 16.0,
+              "protein": 1.1
+            }
+          },
+          "pineapple": {
+            "name": "pineapple",
+            "nutritions": {
+              "calories": 50.0,
+              "fat": 0.1,
+              "sugar": 10.0,
+              "carbohydrates": 13.0,
+              "protein": 0.5
+            }
+          },
+          "papaya": {
+            "name": "papaya",
+            "nutritions": {
+              "calories": 43.0,
+              "fat": 0.3,
+              "sugar": 8.0,
+              "carbohydrates": 11.0,
+              "protein": 0.5
+            }
+          },
+          "lime": {
+            "name": "lime",
+            "nutritions": {
+              "calories": 30.0,
+              "fat": 0.2,
+              "sugar": 1.7,
+              "carbohydrates": 11.0,
+              "protein": 0.7
+            }
+          },
+          "peach": {
+            "name": "peach",
+            "nutritions": {
+              "calories": 39.0,
+              "fat": 0.3,
+              "sugar": 8.4,
+              "carbohydrates": 10.0,
+              "protein": 0.9
+            }
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Boundary case with empty fruits list and minimal nutrition map to test edge case handling",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "fruits": [],
+        "fruitNutritionMap": {
+          "orange": {
+            "name": "orange",
+            "nutritions": {
+              "calories": 47.0,
+              "fat": 0.1,
+              "sugar": 9.4,
+              "carbohydrates": 12.0,
+              "protein": 0.9
+            }
+          }
+        }
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_fruits",
+                "test_cases": [
+                  {
+                    "description": "List all fruits without limit",
+                    "input": {},
+                    "passed": true,
+                    "output": {
+                      "fruits": [
+                        {
+                          "name": "apple"
+                        },
+                        {
+                          "name": "banana"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "List fruits with limit=1",
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": {
+                      "fruits": [
+                        {
+                          "name": "apple"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "List fruits with limit=10 (boundary case, exceeds available)",
+                    "input": {
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": {
+                      "fruits": [
+                        {
+                          "name": "apple"
+                        },
+                        {
+                          "name": "banana"
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_fruit_nutrition",
+                "test_cases": [
+                  {
+                    "description": "Get nutrition for apple",
+                    "input": {
+                      "fruit_name": "apple"
+                    },
+                    "passed": true,
+                    "output": {
+                      "name": "apple",
+                      "nutritions": {
+                        "calories": 52.0,
+                        "fat": 0.2,
+                        "sugar": 10.4,
+                        "carbohydrates": 14.0,
+                        "protein": 0.3
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Get nutrition for banana",
+                    "input": {
+                      "fruit_name": "banana"
+                    },
+                    "passed": true,
+                    "output": {
+                      "name": "banana",
+                      "nutritions": {
+                        "calories": 89.0,
+                        "fat": 0.3,
+                        "sugar": 12.2,
+                        "carbohydrates": 23.0,
+                        "protein": 1.1
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Get nutrition for non-existent fruit (error case)",
+                    "input": {
+                      "fruit_name": "orange"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Fruit 'orange' not found",
+                    "note": "Expected error - tool correctly rejects fruit not in scenario"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All state preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 40.75440764427185
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_fruits",
+                "test_cases": [
+                  {
+                    "description": "Boundary case: limit=0 (should return empty list)",
+                    "input": {
+                      "limit": 0
+                    },
+                    "passed": true,
+                    "output": {
+                      "fruits": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: no limit (should return all fruits)",
+                    "input": {},
+                    "passed": true,
+                    "output": {
+                      "fruits": [
+                        {
+                          "name": "strawberry"
+                        },
+                        {
+                          "name": "mango"
+                        },
+                        {
+                          "name": "lemon"
+                        },
+                        {
+                          "name": "watermelon"
+                        },
+                        {
+                          "name": "kiwi"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: limit=3 (should return first 3 fruits)",
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": {
+                      "fruits": [
+                        {
+                          "name": "strawberry"
+                        },
+                        {
+                          "name": "mango"
+                        },
+                        {
+                          "name": "lemon"
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_fruit_nutrition",
+                "test_cases": [
+                  {
+                    "description": "Valid case: get nutrition for strawberry",
+                    "input": {
+                      "fruit_name": "strawberry"
+                    },
+                    "passed": true,
+                    "output": {
+                      "name": "strawberry",
+                      "nutritions": {
+                        "calories": 32.0,
+                        "fat": 0.3,
+                        "sugar": 4.9,
+                        "carbohydrates": 7.7,
+                        "protein": 0.7
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: get nutrition for mango",
+                    "input": {
+                      "fruit_name": "mango"
+                    },
+                    "passed": true,
+                    "output": {
+                      "name": "mango",
+                      "nutritions": {
+                        "calories": 60.0,
+                        "fat": 0.4,
+                        "sugar": 14.0,
+                        "carbohydrates": 15.0,
+                        "protein": 0.8
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: get nutrition for kiwi",
+                    "input": {
+                      "fruit_name": "kiwi"
+                    },
+                    "passed": true,
+                    "output": {
+                      "name": "kiwi",
+                      "nutritions": {
+                        "calories": 61.0,
+                        "fat": 0.5,
+                        "sugar": 9.0,
+                        "carbohydrates": 15.0,
+                        "protein": 1.1
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: fruit not found in scenario",
+                    "input": {
+                      "fruit_name": "banana"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Fruit 'banana' not found",
+                    "note": "Expected error - correctly rejected invalid fruit name"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All fruits and nutrition data preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 39.27887845039368
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_fruits",
+                "test_cases": [
+                  {
+                    "description": "List all fruits without limit",
+                    "input": {},
+                    "passed": true,
+                    "output": "Successfully returned all 8 fruits",
+                    "error": null
+                  },
+                  {
+                    "description": "List fruits with limit=3",
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Successfully returned 3 fruits (avocado, coconut, pomegranate)",
+                    "error": null
+                  },
+                  {
+                    "description": "List fruits with limit=0 (boundary case)",
+                    "input": {
+                      "limit": 0
+                    },
+                    "passed": true,
+                    "output": "Successfully returned empty list",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_fruit_nutrition",
+                "test_cases": [
+                  {
+                    "description": "Get nutrition for pomegranate (case-insensitive test)",
+                    "input": {
+                      "fruit_name": "Pomegranate"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned nutrition data with calories=83.0, fat=1.2, sugar=14.0, carbohydrates=19.0, protein=1.7",
+                    "error": null
+                  },
+                  {
+                    "description": "Get nutrition for avocado (valid case)",
+                    "input": {
+                      "fruit_name": "avocado"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned nutrition data with calories=160.0, fat=15.0, sugar=0.7, carbohydrates=9.0, protein=2.0",
+                    "error": null
+                  },
+                  {
+                    "description": "Get nutrition for cherry (valid case)",
+                    "input": {
+                      "fruit_name": "cherry"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned nutrition data with calories=63.0, fat=0.2, sugar=13.0, carbohydrates=16.0, protein=1.1",
+                    "error": null
+                  },
+                  {
+                    "description": "Get nutrition for non-existent fruit (error handling test)",
+                    "input": {
+                      "fruit_name": "mango"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with error: Fruit 'mango' not found",
+                    "error": "Fruit 'mango' not found",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All 8 fruits and their complete nutritional data preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 39.79809069633484
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_fruits",
+                "test_cases": [
+                  {
+                    "description": "List fruits with limit=0 (boundary case)",
+                    "input": {
+                      "limit": 0
+                    },
+                    "expected": "Empty list since fruits array is empty",
+                    "actual": {
+                      "fruits": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "List all fruits without limit (valid case)",
+                    "input": {},
+                    "expected": "Empty list since fruits array is empty",
+                    "actual": {
+                      "fruits": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "List fruits with limit=1 (valid case)",
+                    "input": {
+                      "limit": 1
+                    },
+                    "expected": "Empty list since fruits array is empty",
+                    "actual": {
+                      "fruits": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_fruit_nutrition",
+                "test_cases": [
+                  {
+                    "description": "Get nutrition for existing fruit (valid case)",
+                    "input": {
+                      "fruit_name": "orange"
+                    },
+                    "expected": "Return orange nutrition data",
+                    "actual": {
+                      "name": "orange",
+                      "nutritions": {
+                        "calories": 47.0,
+                        "fat": 0.1,
+                        "sugar": 9.4,
+                        "carbohydrates": 12.0,
+                        "protein": 0.9
+                      }
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Get nutrition for non-existent fruit (error case)",
+                    "input": {
+                      "fruit_name": "banana"
+                    },
+                    "expected": "Error: Fruit not found",
+                    "actual": "Error: Fruit 'banana' not found",
+                    "passed": true
+                  },
+                  {
+                    "description": "Get nutrition with different case (boundary case)",
+                    "input": {
+                      "fruit_name": "Orange"
+                    },
+                    "expected": "Return orange nutrition data (case-insensitive)",
+                    "actual": {
+                      "name": "orange",
+                      "nutritions": {
+                        "calories": 47.0,
+                        "fat": 0.1,
+                        "sugar": 9.4,
+                        "carbohydrates": 12.0,
+                        "protein": 0.9
+                      }
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. State remained consistent throughout all operations."
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 36.862876176834106
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_fruits",
+                "test_cases": [
+                  {
+                    "description": "List all fruits without limit",
+                    "input": {},
+                    "passed": true,
+                    "output": {
+                      "fruits": [
+                        {
+                          "name": "apple"
+                        },
+                        {
+                          "name": "banana"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "List fruits with limit=1",
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": {
+                      "fruits": [
+                        {
+                          "name": "apple"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "List fruits with limit=10 (boundary case, exceeds available)",
+                    "input": {
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": {
+                      "fruits": [
+                        {
+                          "name": "apple"
+                        },
+                        {
+                          "name": "banana"
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_fruit_nutrition",
+                "test_cases": [
+                  {
+                    "description": "Get nutrition for apple",
+                    "input": {
+                      "fruit_name": "apple"
+                    },
+                    "passed": true,
+                    "output": {
+                      "name": "apple",
+                      "nutritions": {
+                        "calories": 52.0,
+                        "fat": 0.2,
+                        "sugar": 10.4,
+                        "carbohydrates": 14.0,
+                        "protein": 0.3
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Get nutrition for banana",
+                    "input": {
+                      "fruit_name": "banana"
+                    },
+                    "passed": true,
+                    "output": {
+                      "name": "banana",
+                      "nutritions": {
+                        "calories": 89.0,
+                        "fat": 0.3,
+                        "sugar": 12.2,
+                        "carbohydrates": 23.0,
+                        "protein": 1.1
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Get nutrition for non-existent fruit (error case)",
+                    "input": {
+                      "fruit_name": "orange"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Fruit 'orange' not found",
+                    "note": "Expected error - tool correctly rejects fruit not in scenario"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All state preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 40.75440764427185
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_fruits",
+                "test_cases": [
+                  {
+                    "description": "Boundary case: limit=0 (should return empty list)",
+                    "input": {
+                      "limit": 0
+                    },
+                    "passed": true,
+                    "output": {
+                      "fruits": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: no limit (should return all fruits)",
+                    "input": {},
+                    "passed": true,
+                    "output": {
+                      "fruits": [
+                        {
+                          "name": "strawberry"
+                        },
+                        {
+                          "name": "mango"
+                        },
+                        {
+                          "name": "lemon"
+                        },
+                        {
+                          "name": "watermelon"
+                        },
+                        {
+                          "name": "kiwi"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: limit=3 (should return first 3 fruits)",
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": {
+                      "fruits": [
+                        {
+                          "name": "strawberry"
+                        },
+                        {
+                          "name": "mango"
+                        },
+                        {
+                          "name": "lemon"
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_fruit_nutrition",
+                "test_cases": [
+                  {
+                    "description": "Valid case: get nutrition for strawberry",
+                    "input": {
+                      "fruit_name": "strawberry"
+                    },
+                    "passed": true,
+                    "output": {
+                      "name": "strawberry",
+                      "nutritions": {
+                        "calories": 32.0,
+                        "fat": 0.3,
+                        "sugar": 4.9,
+                        "carbohydrates": 7.7,
+                        "protein": 0.7
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: get nutrition for mango",
+                    "input": {
+                      "fruit_name": "mango"
+                    },
+                    "passed": true,
+                    "output": {
+                      "name": "mango",
+                      "nutritions": {
+                        "calories": 60.0,
+                        "fat": 0.4,
+                        "sugar": 14.0,
+                        "carbohydrates": 15.0,
+                        "protein": 0.8
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: get nutrition for kiwi",
+                    "input": {
+                      "fruit_name": "kiwi"
+                    },
+                    "passed": true,
+                    "output": {
+                      "name": "kiwi",
+                      "nutritions": {
+                        "calories": 61.0,
+                        "fat": 0.5,
+                        "sugar": 9.0,
+                        "carbohydrates": 15.0,
+                        "protein": 1.1
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: fruit not found in scenario",
+                    "input": {
+                      "fruit_name": "banana"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Fruit 'banana' not found",
+                    "note": "Expected error - correctly rejected invalid fruit name"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All fruits and nutrition data preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 39.27887845039368
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_fruits",
+                "test_cases": [
+                  {
+                    "description": "List all fruits without limit",
+                    "input": {},
+                    "passed": true,
+                    "output": "Successfully returned all 8 fruits",
+                    "error": null
+                  },
+                  {
+                    "description": "List fruits with limit=3",
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Successfully returned 3 fruits (avocado, coconut, pomegranate)",
+                    "error": null
+                  },
+                  {
+                    "description": "List fruits with limit=0 (boundary case)",
+                    "input": {
+                      "limit": 0
+                    },
+                    "passed": true,
+                    "output": "Successfully returned empty list",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_fruit_nutrition",
+                "test_cases": [
+                  {
+                    "description": "Get nutrition for pomegranate (case-insensitive test)",
+                    "input": {
+                      "fruit_name": "Pomegranate"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned nutrition data with calories=83.0, fat=1.2, sugar=14.0, carbohydrates=19.0, protein=1.7",
+                    "error": null
+                  },
+                  {
+                    "description": "Get nutrition for avocado (valid case)",
+                    "input": {
+                      "fruit_name": "avocado"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned nutrition data with calories=160.0, fat=15.0, sugar=0.7, carbohydrates=9.0, protein=2.0",
+                    "error": null
+                  },
+                  {
+                    "description": "Get nutrition for cherry (valid case)",
+                    "input": {
+                      "fruit_name": "cherry"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned nutrition data with calories=63.0, fat=0.2, sugar=13.0, carbohydrates=16.0, protein=1.1",
+                    "error": null
+                  },
+                  {
+                    "description": "Get nutrition for non-existent fruit (error handling test)",
+                    "input": {
+                      "fruit_name": "mango"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with error: Fruit 'mango' not found",
+                    "error": "Fruit 'mango' not found",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All 8 fruits and their complete nutritional data preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 39.79809069633484
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_fruits",
+                "test_cases": [
+                  {
+                    "description": "List fruits with limit=0 (boundary case)",
+                    "input": {
+                      "limit": 0
+                    },
+                    "expected": "Empty list since fruits array is empty",
+                    "actual": {
+                      "fruits": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "List all fruits without limit (valid case)",
+                    "input": {},
+                    "expected": "Empty list since fruits array is empty",
+                    "actual": {
+                      "fruits": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "List fruits with limit=1 (valid case)",
+                    "input": {
+                      "limit": 1
+                    },
+                    "expected": "Empty list since fruits array is empty",
+                    "actual": {
+                      "fruits": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_fruit_nutrition",
+                "test_cases": [
+                  {
+                    "description": "Get nutrition for existing fruit (valid case)",
+                    "input": {
+                      "fruit_name": "orange"
+                    },
+                    "expected": "Return orange nutrition data",
+                    "actual": {
+                      "name": "orange",
+                      "nutritions": {
+                        "calories": 47.0,
+                        "fat": 0.1,
+                        "sugar": 9.4,
+                        "carbohydrates": 12.0,
+                        "protein": 0.9
+                      }
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Get nutrition for non-existent fruit (error case)",
+                    "input": {
+                      "fruit_name": "banana"
+                    },
+                    "expected": "Error: Fruit not found",
+                    "actual": "Error: Fruit 'banana' not found",
+                    "passed": true
+                  },
+                  {
+                    "description": "Get nutrition with different case (boundary case)",
+                    "input": {
+                      "fruit_name": "Orange"
+                    },
+                    "expected": "Return orange nutrition data (case-insensitive)",
+                    "actual": {
+                      "name": "orange",
+                      "nutritions": {
+                        "calories": 47.0,
+                        "fat": 0.1,
+                        "sugar": 9.4,
+                        "carbohydrates": 12.0,
+                        "protein": 0.9
+                      }
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. State remained consistent throughout all operations."
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 36.862876176834106
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/FruityviceServer.py"
+  }
+}

@@ -1,0 +1,492 @@
+{
+  "class_name": "Message",
+  "description": "Provides tools for user authentication, contact management, and message operations in a messaging workspace. Supports login/logout, sending and receiving messages, viewing inboxes, searching message history, and retrieving statistics. Useful for building chat applications and messaging integrations.",
+  "tools": [
+    {
+      "name": "login",
+      "description": "Use this tool to authenticate and log in a user to the messaging system. Requires a user ID and returns authentication status along with the logged-in user ID if successful.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "The unique identifier of the user attempting to log in to the messaging system. This ID is used to authenticate the user session."
+          }
+        },
+        "required": [
+          "user_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the login attempt was successful (true) or failed (false)."
+          },
+          "user_id": {
+            "type": "string",
+            "description": "The unique identifier of the user who successfully logged in. This field is only present when success is true."
+          },
+          "message": {
+            "type": "string",
+            "description": "A human-readable status message describing the outcome of the login attempt, such as success or error details."
+          }
+        }
+      }
+    },
+    {
+      "name": "logout",
+      "description": "Use this tool to log out the currently authenticated user from the messaging system. Returns logout success status.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the logout operation was successful (true) or failed (false)."
+          },
+          "message": {
+            "type": "string",
+            "description": "A human-readable status message describing the outcome of the logout operation."
+          }
+        }
+      }
+    },
+    {
+      "name": "check_login_status",
+      "description": "Use this tool to check the current login status of the user in the messaging system. Returns whether a user is logged in and the current user ID if authenticated.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "is_logged_in": {
+            "type": "boolean",
+            "description": "Indicates whether a user is currently authenticated and logged in to the messaging system."
+          },
+          "user_id": {
+            "type": "string",
+            "description": "The unique identifier of the currently logged-in user. This field is only present when is_logged_in is true."
+          }
+        }
+      }
+    },
+    {
+      "name": "list_users",
+      "description": "Use this tool to retrieve a list of all users available in the messaging workspace. Returns an array of user objects containing usernames and user IDs that can be used for login and messaging operations.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "description": "The human-readable username of the user in the messaging workspace."
+            },
+            "user_id": {
+              "type": "string",
+              "description": "The unique identifier assigned to the user, used for login and messaging operations."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_user_id",
+      "description": "Use this tool to retrieve the user ID for a given username. Returns the user ID and username, which can be used for login and sending messages.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "The username to look up in the messaging workspace. This is used to retrieve the corresponding unique user ID."
+          }
+        },
+        "required": [
+          "username"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "The unique identifier corresponding to the requested username, used for login and sending messages."
+          },
+          "username": {
+            "type": "string",
+            "description": "The username that was looked up, confirming the mapping."
+          }
+        }
+      }
+    },
+    {
+      "name": "add_contact",
+      "description": "Use this tool to add a new contact to the messaging workspace. The system automatically assigns a unique user ID. Returns the new contact's details and creation status.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "The username for the new contact to be added to the messaging workspace. The system will automatically assign a unique user ID to this contact."
+          }
+        },
+        "required": [
+          "username"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the contact was successfully added to the workspace (true) or failed (false)."
+          },
+          "username": {
+            "type": "string",
+            "description": "The username of the newly added contact."
+          },
+          "user_id": {
+            "type": "string",
+            "description": "The unique identifier automatically assigned to the new contact, used for login and messaging operations."
+          },
+          "message": {
+            "type": "string",
+            "description": "A human-readable status message describing the outcome of the contact addition."
+          }
+        }
+      }
+    },
+    {
+      "name": "send_message",
+      "description": "Use this tool to send a message to another user in the messaging system. Requires authentication via login. Returns message delivery status and metadata including a unique message ID for future reference.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "receiver_id": {
+            "type": "string",
+            "description": "The unique user ID of the message recipient. This ID identifies which user will receive the message."
+          },
+          "message": {
+            "type": "string",
+            "description": "The content of the message to be sent to the recipient. This text forms the body of the communication."
+          }
+        },
+        "required": [
+          "receiver_id",
+          "message"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the message was successfully sent (true) or failed (false)."
+          },
+          "message_id": {
+            "type": "integer",
+            "description": "A unique integer identifier assigned to the sent message, used for retrieval or deletion operations."
+          },
+          "receiver_id": {
+            "type": "string",
+            "description": "The user ID of the message recipient, confirming who received the message."
+          },
+          "sent_at": {
+            "type": "string",
+            "description": "The timestamp when the message was sent, formatted as YYYY-MM-DD HH:MM:SS."
+          },
+          "message": {
+            "type": "string",
+            "description": "A human-readable status message describing the outcome of the send operation."
+          }
+        }
+      }
+    },
+    {
+      "name": "view_inbox",
+      "description": "Use this tool to view all messages received by the currently logged-in user. Supports pagination via limit and offset parameters. Requires authentication via login. Returns an array of received message objects.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of messages to return in a single call, used to control pagination and response size. Defaults to 50 if not specified."
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Number of messages to skip from the beginning of the result set, used for pagination. Defaults to 0 if not specified."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "message_id": {
+              "type": "integer",
+              "description": "Unique identifier of the received message, used for retrieval or deletion operations."
+            },
+            "sender_id": {
+              "type": "string",
+              "description": "The user ID of the message sender."
+            },
+            "sender_username": {
+              "type": "string",
+              "description": "The username of the message sender, if available."
+            },
+            "message": {
+              "type": "string",
+              "description": "The content of the received message."
+            },
+            "received_at": {
+              "type": "string",
+              "description": "The timestamp when the message was received, formatted as YYYY-MM-DD HH:MM:SS."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "view_sent_messages",
+      "description": "Use this tool to view all messages sent by the currently logged-in user. Optionally filter by receiver and supports pagination. Requires authentication via login. Returns an array of sent message objects.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "receiver_id": {
+            "type": "string",
+            "description": "Optional filter to restrict results to messages sent to a specific user ID. If not provided, returns messages to all recipients."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of messages to return in a single call, used to control pagination and response size. Defaults to 50 if not specified."
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Number of messages to skip from the beginning of the result set, used for pagination. Defaults to 0 if not specified."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "message_id": {
+              "type": "integer",
+              "description": "Unique identifier of the sent message, used for retrieval or deletion operations."
+            },
+            "receiver_id": {
+              "type": "string",
+              "description": "The user ID of the message recipient."
+            },
+            "receiver_username": {
+              "type": "string",
+              "description": "The username of the message recipient, if available."
+            },
+            "message": {
+              "type": "string",
+              "description": "The content of the sent message."
+            },
+            "sent_at": {
+              "type": "string",
+              "description": "The timestamp when the message was sent, formatted as YYYY-MM-DD HH:MM:SS."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_message",
+      "description": "Use this tool to retrieve detailed information about a specific message by its unique ID. Returns complete message details including sender, receiver, content, timestamp, and read status for received messages.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "message_id": {
+            "type": "integer",
+            "description": "The unique identifier of the message to retrieve. This ID is obtained from previous message operations like send_message, view_inbox, or view_sent_messages."
+          }
+        },
+        "required": [
+          "message_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "message_id": {
+            "type": "integer",
+            "description": "The unique identifier of the retrieved message."
+          },
+          "sender_id": {
+            "type": "string",
+            "description": "The user ID of the message sender."
+          },
+          "receiver_id": {
+            "type": "string",
+            "description": "The user ID of the message recipient."
+          },
+          "message": {
+            "type": "string",
+            "description": "The content of the message."
+          },
+          "sent_at": {
+            "type": "string",
+            "description": "The timestamp when the message was sent, formatted as YYYY-MM-DD HH:MM:SS."
+          },
+          "is_read": {
+            "type": "boolean",
+            "description": "Indicates whether the message has been read by the recipient. This field is only present for received messages."
+          }
+        }
+      }
+    },
+    {
+      "name": "delete_message",
+      "description": "Use this tool to delete a message that the user has sent or received. Requires authentication via login. Returns deletion status and the message ID.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "message_id": {
+            "type": "integer",
+            "description": "The unique identifier of the message to delete. This ID is obtained from previous message operations and must reference a message the user has permission to delete."
+          }
+        },
+        "required": [
+          "message_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the message was successfully deleted (true) or failed (false)."
+          },
+          "message_id": {
+            "type": "integer",
+            "description": "The unique identifier of the message that was deleted."
+          },
+          "message": {
+            "type": "string",
+            "description": "A human-readable status message describing the outcome of the deletion operation."
+          }
+        }
+      }
+    },
+    {
+      "name": "search_messages",
+      "description": "Use this tool to search for messages containing a specific keyword in the current user's message history. Searches both sent and received messages with optional sender/receiver filters. Requires authentication via login. Returns an array of matching message objects.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "keyword": {
+            "type": "string",
+            "description": "The search term to find within message content. The tool will return messages containing this keyword in either sent or received messages."
+          },
+          "sender_id": {
+            "type": "string",
+            "description": "Optional filter to restrict search results to messages sent by a specific user ID. If not provided, searches across all senders."
+          },
+          "receiver_id": {
+            "type": "string",
+            "description": "Optional filter to restrict search results to messages sent to a specific user ID. If not provided, searches across all recipients."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of search results to return. Used to control response size and defaults to 20 if not specified."
+          }
+        },
+        "required": [
+          "keyword"
+        ]
+      },
+      "output_schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "message_id": {
+              "type": "integer",
+              "description": "Unique identifier of the matching message, used for retrieval or deletion operations."
+            },
+            "sender_id": {
+              "type": "string",
+              "description": "The user ID of the message sender."
+            },
+            "receiver_id": {
+              "type": "string",
+              "description": "The user ID of the message recipient."
+            },
+            "message": {
+              "type": "string",
+              "description": "The content of the message that matched the search keyword."
+            },
+            "sent_at": {
+              "type": "string",
+              "description": "The timestamp when the message was sent, formatted as YYYY-MM-DD HH:MM:SS."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_message_stats",
+      "description": "Use this tool to retrieve messaging statistics for the currently logged-in user. Optionally specify a time period to filter results. Requires authentication via login. Returns message counts and contact interaction metrics.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "time_period": {
+            "type": "string",
+            "enum": [
+              "today",
+              "week",
+              "month",
+              "year",
+              "all"
+            ],
+            "description": "The time period for which to calculate statistics. Valid values are 'today', 'week', 'month', 'year', or 'all'. Defaults to 'all' if not specified."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "total_sent": {
+            "type": "integer",
+            "description": "The total number of messages sent by the current user during the specified time period."
+          },
+          "total_received": {
+            "type": "integer",
+            "description": "The total number of messages received by the current user during the specified time period."
+          },
+          "total_contacts": {
+            "type": "integer",
+            "description": "The number of unique contacts the user has interacted with during the specified time period."
+          },
+          "messages_by_contact": {
+            "type": "object",
+            "description": "A dictionary mapping user IDs to message counts, showing the distribution of messages per contact. This field is optional and may not be present in all responses."
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,329 @@
+{
+  "class_name": "HKBus",
+  "description": "Hong Kong public bus information service providing real-time arrival times, route planning, stop information, and route discovery across the Hong Kong bus network.",
+  "tools": [
+    {
+      "name": "get_next_bus",
+      "description": "Retrieve the next estimated arrival time for a specific bus route at a designated stop, including distance and timing information.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "route": {
+            "type": "string",
+            "description": "The bus route number identifier (e.g., '1A', '6', '960') for which to retrieve arrival information."
+          },
+          "stop_name": {
+            "type": "string",
+            "description": "The name of the bus stop where the arrival time should be checked."
+          },
+          "direction": {
+            "type": "string",
+            "description": "The route direction indicator (e.g., 'to Tsim Sha Tsui', 'to Central'). Required when the route operates in multiple directions to disambiguate the service."
+          }
+        },
+        "required": [
+          "route",
+          "stop_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "estimated_arrival_time": {
+            "type": "string",
+            "description": "The estimated time when the next bus will arrive at the specified stop, typically in ISO 8601 format or minutes remaining."
+          },
+          "distance_from_stop": {
+            "type": "number",
+            "description": "The current distance of the approaching bus from the stop, measured in kilometers or meters."
+          }
+        }
+      }
+    },
+    {
+      "name": "find_buses_to_destination",
+      "description": "Discover all bus routes that serve a specified destination, optionally filtered by an origin location for point-to-point route planning.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "destination": {
+            "type": "string",
+            "description": "The destination location name to search for (e.g., 'Central', 'Mong Kok', 'Airport')."
+          },
+          "origin": {
+            "type": "string",
+            "description": "The origin location name. When provided, filters results to show only routes traveling from the origin to the destination."
+          }
+        },
+        "required": [
+          "destination"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "routes": {
+            "type": "array",
+            "description": "Collection of bus routes that can reach the specified destination.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "route_number": {
+                  "type": "string",
+                  "description": "The bus route number identifier (e.g., '1A', '6', '960')."
+                },
+                "route_name": {
+                  "type": "string",
+                  "description": "The descriptive name of the bus route, typically indicating the origin and destination terminals."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_route_stops_info",
+      "description": "Retrieve comprehensive information about all stops along a specified bus route, including their sequence and names.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "route": {
+            "type": "string",
+            "description": "The bus route number identifier (e.g., '1A', '6', '960') for which to retrieve stop information."
+          },
+          "direction": {
+            "type": "string",
+            "description": "The route direction indicator. Required when the route operates in multiple directions to specify which service direction to query."
+          }
+        },
+        "required": [
+          "route"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "stops": {
+            "type": "array",
+            "description": "Ordered list of all bus stops along the specified route.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "stop_order": {
+                  "type": "integer",
+                  "description": "The sequential position of this stop along the route, starting from the origin terminal."
+                },
+                "stop_name": {
+                  "type": "string",
+                  "description": "The name of the bus stop."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "find_stop_by_name",
+      "description": "Search for bus stops by full or partial name matching, returning detailed information about each matching stop.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "stop_name": {
+            "type": "string",
+            "description": "Full or partial name of the bus stop to search for. Supports fuzzy matching to find stops with similar names."
+          }
+        },
+        "required": [
+          "stop_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "stops": {
+            "type": "array",
+            "description": "Collection of bus stops matching the search criteria.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "stop_id": {
+                  "type": "string",
+                  "description": "The unique identifier assigned to the bus stop in the Hong Kong bus system."
+                },
+                "stop_name": {
+                  "type": "string",
+                  "description": "The name of the bus stop."
+                },
+                "location": {
+                  "type": "object",
+                  "description": "Geographic location information for the bus stop.",
+                  "properties": {
+                    "latitude": {
+                      "type": "number",
+                      "description": "The latitude coordinate of the bus stop location."
+                    },
+                    "longitude": {
+                      "type": "number",
+                      "description": "The longitude coordinate of the bus stop location."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_all_routes_at_stop",
+      "description": "Retrieve all bus routes that service a specified bus stop, including route numbers, names, and directions.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "stop_name": {
+            "type": "string",
+            "description": "The name of the bus stop for which to retrieve all servicing routes."
+          }
+        },
+        "required": [
+          "stop_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "routes": {
+            "type": "array",
+            "description": "Collection of all bus routes that pass through the specified stop.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "route_number": {
+                  "type": "string",
+                  "description": "The bus route number identifier (e.g., '1A', '6', '960')."
+                },
+                "route_name": {
+                  "type": "string",
+                  "description": "The descriptive name of the bus route, typically indicating the origin and destination terminals."
+                },
+                "direction": {
+                  "type": "string",
+                  "description": "The route direction indicator for this service at the stop (e.g., 'to Tsim Sha Tsui', 'to Central')."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_bus_eta",
+      "description": "Retrieve multiple estimated arrival times for a specified bus route at a stop, showing the next several buses approaching.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "route": {
+            "type": "string",
+            "description": "The bus route number identifier (e.g., '1A', '6', '960') for which to retrieve arrival times."
+          },
+          "stop_name": {
+            "type": "string",
+            "description": "The name of the bus stop where arrival times should be checked."
+          },
+          "direction": {
+            "type": "string",
+            "description": "The route direction indicator. Required when the route operates in multiple directions to specify which service to query."
+          },
+          "count": {
+            "type": "integer",
+            "description": "The number of upcoming bus arrivals to retrieve. Defaults to 3 if not specified, allowing users to see multiple approaching buses."
+          }
+        },
+        "required": [
+          "route",
+          "stop_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "arrivals": {
+            "type": "array",
+            "description": "Ordered list of upcoming bus arrivals, from soonest to latest.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "estimated_arrival_time": {
+                  "type": "string",
+                  "description": "The estimated time when this bus will arrive at the specified stop, typically in ISO 8601 format or minutes remaining."
+                },
+                "distance_from_stop": {
+                  "type": "number",
+                  "description": "The current distance of this approaching bus from the stop, measured in kilometers or meters."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "search_route_by_stops",
+      "description": "Find available bus routes connecting two specific stops, including direct routes and transfer options for journey planning.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "from_stop_name": {
+            "type": "string",
+            "description": "The name of the origin bus stop where the journey begins."
+          },
+          "to_stop_name": {
+            "type": "string",
+            "description": "The name of the destination bus stop where the journey ends."
+          }
+        },
+        "required": [
+          "from_stop_name",
+          "to_stop_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "routes": {
+            "type": "array",
+            "description": "Collection of available bus routes connecting the origin to the destination.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "route_number": {
+                  "type": "string",
+                  "description": "The bus route number identifier (e.g., '1A', '6', '960')."
+                },
+                "transfer_information": {
+                  "type": "object",
+                  "description": "Details about any required transfers, including intermediate stops and connecting routes. Empty if the route is direct.",
+                  "properties": {
+                    "is_direct": {
+                      "type": "boolean",
+                      "description": "Indicates whether this is a direct route (true) or requires transfers (false)."
+                    },
+                    "transfer_stops": {
+                      "type": "array",
+                      "description": "List of stops where transfers are required.",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

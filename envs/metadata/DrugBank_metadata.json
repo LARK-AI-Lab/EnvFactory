@@ -1,0 +1,317 @@
+{
+  "class_name": "DrugBank",
+  "description": "Clinical drug information server providing access to pharmaceutical databases, including drug search, detailed monographs, interaction checking, condition-based medication discovery, and product barcode identification services.",
+  "tools": [
+    {
+      "name": "search_drugs",
+      "description": "Search the DrugBank database for pharmaceutical substances by name, brand, active ingredient, or chemical synonym.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search term matching drug names, brand names, active ingredients, or chemical identifiers."
+          },
+          "fuzzy": {
+            "type": "boolean",
+            "description": "Enable approximate string matching to accommodate spelling variations and typographical errors (default: true)."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of search results to return, controlling result set size (default: 10)."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "drugs": {
+            "type": "array",
+            "description": "List of pharmaceutical substances matching the search criteria.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "drugbank_id": {
+                  "type": "string",
+                  "description": "The unique DrugBank accession identifier assigned to the pharmaceutical compound."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The primary generic or proprietary name of the pharmaceutical product."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Comprehensive clinical description of the drug's pharmacological properties and therapeutic applications."
+                },
+                "synonyms": {
+                  "type": "array",
+                  "description": "Alternative brand names, chemical names, or abbreviations used to identify the drug.",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "categories": {
+                  "type": "array",
+                  "description": "Therapeutic classification categories indicating the drug's medical use or pharmacological class.",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "atc_codes": {
+                  "type": "array",
+                  "description": "Anatomical Therapeutic Chemical (ATC) classification codes from the WHO drug classification system.",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_drug_details",
+      "description": "Retrieve comprehensive pharmacological and clinical information for a specific drug using its DrugBank identifier.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "drugbank_id": {
+            "type": "string",
+            "description": "The unique DrugBank accession identifier assigned to the pharmaceutical compound."
+          }
+        },
+        "required": [
+          "drugbank_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "drugbank_id": {
+            "type": "string",
+            "description": "The unique DrugBank accession identifier assigned to the pharmaceutical compound."
+          },
+          "name": {
+            "type": "string",
+            "description": "The primary generic or proprietary name of the pharmaceutical product."
+          },
+          "description": {
+            "type": "string",
+            "description": "Comprehensive clinical description of the drug's pharmacological properties and therapeutic applications."
+          },
+          "mechanism_of_action": {
+            "type": "string",
+            "description": "Description of the specific biochemical interaction through which the drug produces its pharmacological effect."
+          },
+          "pharmacodynamics": {
+            "type": "string",
+            "description": "Description of the drug's biochemical and physiological effects on the body and mechanism of action."
+          },
+          "absorption": {
+            "type": "string",
+            "description": "Information regarding the drug's uptake into systemic circulation from the site of administration."
+          },
+          "metabolism": {
+            "type": "string",
+            "description": "Description of the chemical transformation processes the drug undergoes within the body."
+          },
+          "indications": {
+            "type": "array",
+            "description": "List of medically approved therapeutic uses and conditions for which the drug is prescribed.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "contraindications": {
+            "type": "array",
+            "description": "List of medical conditions or circumstances where the drug should not be used due to potential harm.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dosage_forms": {
+            "type": "array",
+            "description": "Available pharmaceutical formulations and routes of administration (e.g., tablet, injection, suspension).",
+            "items": {
+              "type": "string"
+            }
+          },
+          "side_effects": {
+            "type": "array",
+            "description": "Documented adverse reactions and unwanted effects associated with therapeutic use.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pregnancy_category": {
+            "type": "string",
+            "description": "FDA or standard pregnancy safety classification indicating risk level during gestation."
+          }
+        }
+      }
+    },
+    {
+      "name": "check_drug_interactions",
+      "description": "Analyze multiple drugs for potential pharmacological interactions, contraindications, and clinical severity.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "drugs": {
+            "type": "array",
+            "description": "List of drug identifiers (DrugBank IDs or common names) to analyze for potential pharmacological interactions.",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "drugs"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "interactions": {
+            "type": "array",
+            "description": "List of clinically significant drug-drug interactions identified between the specified medications.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "drug1": {
+                  "type": "string",
+                  "description": "The identifier or name of the first drug involved in the interaction."
+                },
+                "drug2": {
+                  "type": "string",
+                  "description": "The identifier or name of the second drug involved in the interaction."
+                },
+                "severity": {
+                  "type": "string",
+                  "description": "Clinical severity rating of the interaction (minor, moderate, or major)."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Detailed explanation of the pharmacological interaction mechanism and clinical effects."
+                },
+                "management": {
+                  "type": "string",
+                  "description": "Clinical recommendations for managing or mitigating the interaction risk."
+                }
+              }
+            }
+          },
+          "interaction_count": {
+            "type": "integer",
+            "description": "Total number of clinically significant interactions identified between the specified drugs."
+          },
+          "highest_severity": {
+            "type": "string",
+            "description": "The most severe interaction level detected among all drug pairs analyzed (none, minor, moderate, or major)."
+          }
+        }
+      }
+    },
+    {
+      "name": "search_by_condition",
+      "description": "Discover medications used to treat specific medical conditions, diseases, or therapeutic indications.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "string",
+            "description": "Medical condition, disease name, or therapeutic indication to search for appropriate treatments."
+          }
+        },
+        "required": [
+          "condition"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "drugs": {
+            "type": "array",
+            "description": "List of pharmaceutical products indicated for treatment of the specified medical condition.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "drugbank_id": {
+                  "type": "string",
+                  "description": "The unique DrugBank accession identifier assigned to the pharmaceutical compound."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The primary generic or proprietary name of the pharmaceutical product."
+                },
+                "indication_type": {
+                  "type": "string",
+                  "description": "Classification of the drug's approval status for the specific condition (approved, off-label, or investigational)."
+                },
+                "efficacy": {
+                  "type": "string",
+                  "description": "Qualitative or quantitative assessment of the drug's therapeutic effectiveness for the indication."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_drug_by_barcode",
+      "description": "Identify pharmaceutical products and retrieve detailed information using commercial product barcodes.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "barcode": {
+            "type": "string",
+            "description": "Universal Product Code (UPC) or European Article Number (EAN) barcode digits from product packaging."
+          }
+        },
+        "required": [
+          "barcode"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "drugbank_id": {
+            "type": "string",
+            "description": "The unique DrugBank accession identifier assigned to the pharmaceutical compound."
+          },
+          "product_name": {
+            "type": "string",
+            "description": "The commercial product name as registered by the manufacturer."
+          },
+          "manufacturer": {
+            "type": "string",
+            "description": "The pharmaceutical company or organization responsible for producing the commercial product."
+          },
+          "active_ingredients": {
+            "type": "array",
+            "description": "List of pharmacologically active compounds contained in the pharmaceutical preparation.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dosage_strength": {
+            "type": "string",
+            "description": "The concentration or potency of active ingredients per dosage unit."
+          },
+          "packaging": {
+            "type": "string",
+            "description": "Description of the commercial packaging configuration and container specifications."
+          },
+          "approved": {
+            "type": "boolean",
+            "description": "Boolean indicating whether the product has received regulatory approval for marketing."
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,338 @@
+{
+  "class_name": "OneDrive",
+  "description": "Microsoft OneDrive cloud storage integration for file upload, download, management, and sharing operations.",
+  "tools": [
+    {
+      "name": "upload_file",
+      "description": "Upload a file to OneDrive storage.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the file to be uploaded, including file extension."
+          },
+          "content": {
+            "type": "string",
+            "description": "The file content encoded as bytes."
+          },
+          "parent_id": {
+            "type": "string",
+            "description": "The unique identifier of the parent folder where the file will be stored. Defaults to root folder if not specified."
+          }
+        },
+        "required": [
+          "name",
+          "content"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the uploaded item in OneDrive."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the uploaded file."
+          },
+          "size": {
+            "type": "integer",
+            "description": "The size of the file in bytes."
+          },
+          "webUrl": {
+            "type": "string",
+            "description": "The URL to access the file in the OneDrive web interface."
+          },
+          "downloadUrl": {
+            "type": "string",
+            "description": "The direct download URL for the file content."
+          },
+          "createdDateTime": {
+            "type": "string",
+            "description": "The timestamp when the file was created, in ISO 8601 format."
+          },
+          "lastModifiedDateTime": {
+            "type": "string",
+            "description": "The timestamp when the file was last modified, in ISO 8601 format."
+          }
+        }
+      }
+    },
+    {
+      "name": "upload_large_file",
+      "description": "Upload a large file to OneDrive using resumable upload sessions for reliable transfer of large content.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the file to be uploaded, including file extension."
+          },
+          "content": {
+            "type": "string",
+            "description": "The file content encoded as bytes."
+          },
+          "parent_id": {
+            "type": "string",
+            "description": "The unique identifier of the parent folder where the file will be stored. Defaults to root folder if not specified."
+          },
+          "chunk_size": {
+            "type": "integer",
+            "description": "The size of each upload chunk in bytes. Defaults to 5MB (5242880 bytes) for optimal performance."
+          }
+        },
+        "required": [
+          "name",
+          "content"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the uploaded item in OneDrive."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the uploaded file."
+          },
+          "size": {
+            "type": "integer",
+            "description": "The size of the file in bytes."
+          },
+          "webUrl": {
+            "type": "string",
+            "description": "The URL to access the file in the OneDrive web interface."
+          },
+          "upload_session_id": {
+            "type": "string",
+            "description": "The identifier of the upload session used for the resumable upload."
+          }
+        }
+      }
+    },
+    {
+      "name": "download_file",
+      "description": "Download a file's content from OneDrive storage.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "description": "The unique identifier of the item in OneDrive to download."
+          }
+        },
+        "required": [
+          "item_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "The downloaded file content as bytes."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the downloaded file."
+          },
+          "size": {
+            "type": "integer",
+            "description": "The size of the file in bytes."
+          },
+          "content_type": {
+            "type": "string",
+            "description": "The MIME type of the file content (e.g., application/pdf, image/png)."
+          }
+        }
+      }
+    },
+    {
+      "name": "list_children",
+      "description": "List all files and folders contained within a OneDrive directory.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "description": "The unique identifier of the folder in OneDrive to list. Defaults to root folder if not specified."
+          },
+          "top": {
+            "type": "integer",
+            "description": "The maximum number of items to return in the response. Defaults to 200."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "array",
+            "description": "The list of child items (files and folders) in the directory.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The unique identifier of the item in OneDrive."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The name of the item."
+                },
+                "size": {
+                  "type": "integer",
+                  "description": "The size of the file in bytes."
+                },
+                "folder": {
+                  "type": "object",
+                  "description": "Metadata indicating this item is a folder. Present only if the item is a folder."
+                },
+                "file": {
+                  "type": "object",
+                  "description": "Metadata indicating this item is a file. Present only if the item is a file."
+                },
+                "webUrl": {
+                  "type": "string",
+                  "description": "The URL to access the item in the OneDrive web interface."
+                },
+                "createdDateTime": {
+                  "type": "string",
+                  "description": "The timestamp when the item was created, in ISO 8601 format."
+                },
+                "lastModifiedDateTime": {
+                  "type": "string",
+                  "description": "The timestamp when the item was last modified, in ISO 8601 format."
+                }
+              }
+            }
+          },
+          "@odata.nextLink": {
+            "type": "string",
+            "description": "The URL to retrieve the next page of results if pagination is required."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_item",
+      "description": "Retrieve metadata for a specific file or folder in OneDrive.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "description": "The unique identifier of the item in OneDrive to retrieve."
+          }
+        },
+        "required": [
+          "item_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the item in OneDrive."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the item."
+          },
+          "size": {
+            "type": "integer",
+            "description": "The size of the file in bytes."
+          },
+          "webUrl": {
+            "type": "string",
+            "description": "The URL to access the item in the OneDrive web interface."
+          },
+          "downloadUrl": {
+            "type": "string",
+            "description": "The temporary direct download URL for the file content, valid for a limited time."
+          },
+          "createdDateTime": {
+            "type": "string",
+            "description": "The timestamp when the item was created, in ISO 8601 format."
+          },
+          "lastModifiedDateTime": {
+            "type": "string",
+            "description": "The timestamp when the item was last modified, in ISO 8601 format."
+          },
+          "parentReference": {
+            "type": "object",
+            "description": "Reference information about the parent folder containing this item."
+          }
+        }
+      }
+    },
+    {
+      "name": "create_share_link",
+      "description": "Generate a sharing link to grant access to a OneDrive item.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "description": "The unique identifier of the item in OneDrive to share."
+          },
+          "type": {
+            "type": "string",
+            "description": "The type of sharing link to create: 'view' for read-only access, 'edit' for read-write access, or 'embed' for embeddable content. Defaults to 'view'."
+          },
+          "scope": {
+            "type": "string",
+            "description": "The scope of the sharing link: 'anonymous' allows anyone with the link to access, 'organization' restricts access to users within the organization. Defaults to 'anonymous'."
+          }
+        },
+        "required": [
+          "item_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the sharing permission."
+          },
+          "roles": {
+            "type": "array",
+            "description": "The list of permission roles granted by this sharing link.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "link": {
+            "type": "object",
+            "description": "The sharing link details.",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "The type of the sharing link (view, edit, or embed)."
+              },
+              "scope": {
+                "type": "string",
+                "description": "The scope of the sharing link (anonymous or organization)."
+              },
+              "webUrl": {
+                "type": "string",
+                "description": "The shareable URL that can be distributed to grant access to the item."
+              },
+              "webHtml": {
+                "type": "string",
+                "description": "The HTML embed code for the item. Present only when link type is 'embed'."
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

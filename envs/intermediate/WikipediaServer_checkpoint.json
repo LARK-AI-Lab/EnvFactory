@@ -1,0 +1,365 @@
+{
+  "metadata": {
+    "class_name": "WikipediaServer",
+    "metadata_path": "envs/metadata/WikipediaServer_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-04-17T05:46:02.625769",
+    "state": "scenario_gen"
+  },
+  "schema": {
+    "class_name": "WikipediaServer",
+    "description": "Provides read-only access to Wikipedia articles, summaries, search results, and related pages via the MediaWiki REST API.",
+    "tools": [
+      {
+        "name": "search_wikipedia",
+        "description": "Search Wikipedia for pages matching a query and return a ranked list of results with excerpts and thumbnails.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "The search string used to find matching Wikipedia pages."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of search results to return (default 5)."
+            },
+            "language": {
+              "type": "string",
+              "description": "The Wikipedia language code (e.g., 'en' for English) to search within."
+            }
+          },
+          "required": [
+            "query"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "The original search query string echoed back."
+            },
+            "results": {
+              "type": "array",
+              "description": "List of matching Wikipedia page summaries.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "The display title of the Wikipedia page."
+                  },
+                  "pageid": {
+                    "type": "integer",
+                    "description": "The unique numeric identifier of the Wikipedia page."
+                  },
+                  "excerpt": {
+                    "type": "string",
+                    "description": "A short text snippet highlighting the matched query context."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "A concise subtitle or description of the page topic."
+                  },
+                  "thumbnail": {
+                    "type": "object",
+                    "description": "Thumbnail image metadata (url, width, height) if available."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_article",
+        "description": "Retrieve the full Wikipedia article content, metadata, and hierarchical section breakdown for a given page title.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "The exact Wikipedia page title whose full article is requested."
+            },
+            "language": {
+              "type": "string",
+              "description": "The Wikipedia language code (e.g., 'en' for English) hosting the article."
+            }
+          },
+          "required": [
+            "title"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "The display title of the retrieved Wikipedia page."
+            },
+            "pageid": {
+              "type": "integer",
+              "description": "The unique numeric identifier of the Wikipedia page."
+            },
+            "summary": {
+              "type": "string",
+              "description": "A brief lead paragraph summarizing the article topic."
+            },
+            "text": {
+              "type": "string",
+              "description": "The complete article text including all sections."
+            },
+            "url": {
+              "type": "string",
+              "description": "The canonical web URL of the Wikipedia page."
+            },
+            "sections": {
+              "type": "array",
+              "description": "Hierarchical list of article sections with headings and nested subsections.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Heading text of the section."
+                  },
+                  "level": {
+                    "type": "integer",
+                    "description": "Nesting depth of the section (1 for top-level)."
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "Full wikitext content of the section."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_summary",
+        "description": "Retrieve a concise summary extract and basic metadata for a Wikipedia article.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "The exact Wikipedia page title whose summary is requested."
+            },
+            "language": {
+              "type": "string",
+              "description": "The Wikipedia language code (e.g., 'en' for English) hosting the article."
+            }
+          },
+          "required": [
+            "title"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "The display title of the Wikipedia page."
+            },
+            "extract": {
+              "type": "string",
+              "description": "A concise plain-text summary of the article topic."
+            },
+            "description": {
+              "type": "string",
+              "description": "A short subtitle or description of the page topic."
+            },
+            "thumbnail": {
+              "type": "object",
+              "description": "Thumbnail image metadata (url, width, height) if available."
+            },
+            "lang": {
+              "type": "string",
+              "description": "The language code of the returned summary."
+            },
+            "timestamp": {
+              "type": "string",
+              "description": "ISO 8601 timestamp indicating when the summary was last updated."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_page_sections",
+        "description": "Retrieve the hierarchical section headings and corresponding text fragments of a Wikipedia article.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "The exact Wikipedia page title whose section outline is requested."
+            },
+            "language": {
+              "type": "string",
+              "description": "The Wikipedia language code (e.g., 'en' for English) hosting the article."
+            }
+          },
+          "required": [
+            "title"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "The display title of the Wikipedia page."
+            },
+            "sections": {
+              "type": "array",
+              "description": "Ordered list of article sections with their heading level and text content.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Heading text of the section."
+                  },
+                  "level": {
+                    "type": "integer",
+                    "description": "Nesting depth of the section (1 for top-level)."
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "Plain-text content of the section."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_related_pages",
+        "description": "Retrieve a list of Wikipedia pages thematically related to a given article.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "The exact Wikipedia page title whose related pages are requested."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of related pages to return (default 10)."
+            },
+            "language": {
+              "type": "string",
+              "description": "The Wikipedia language code (e.g., 'en' for English) hosting the article."
+            }
+          },
+          "required": [
+            "title"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "The display title of the source Wikipedia page."
+            },
+            "related": {
+              "type": "array",
+              "description": "List of Wikipedia pages thematically linked to the source page.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "The display title of the related Wikipedia page."
+                  },
+                  "pageid": {
+                    "type": "integer",
+                    "description": "The unique numeric identifier of the related Wikipedia page."
+                  },
+                  "extract": {
+                    "type": "string",
+                    "description": "A brief summary extract of the related page."
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "The canonical web URL of the related Wikipedia page."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nimport requests\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass SearchResult(BaseModel):\n    \"\"\"A single Wikipedia search result.\"\"\"\n    title: str = Field(..., description=\"Display title of the Wikipedia page\")\n    pageid: int = Field(..., description=\"Unique numeric identifier of the page\")\n    excerpt: str = Field(default=\"\", description=\"Short text snippet highlighting matched context\")\n    description: str = Field(default=\"\", description=\"Concise subtitle or description\")\n    thumbnail: Optional[Dict[str, Any]] = Field(default=None, description=\"Thumbnail image metadata\")\n\nclass ArticleSection(BaseModel):\n    \"\"\"A section within a Wikipedia article.\"\"\"\n    title: str = Field(..., description=\"Heading text of the section\")\n    level: int = Field(..., ge=1, description=\"Nesting depth of the section\")\n    text: str = Field(default=\"\", description=\"Content of the section\")\n\nclass RelatedPage(BaseModel):\n    \"\"\"A related Wikipedia page.\"\"\"\n    title: str = Field(..., description=\"Display title of the related page\")\n    pageid: int = Field(..., description=\"Unique numeric identifier\")\n    extract: str = Field(default=\"\", description=\"Brief summary extract\")\n    url: str = Field(default=\"\", description=\"Canonical web URL\")\n\nclass WikipediaScenario(BaseModel):\n    \"\"\"Main scenario model for Wikipedia server state.\"\"\"\n    default_language: str = Field(default=\"en\", description=\"Default Wikipedia language code\")\n    default_search_limit: int = Field(default=5, ge=1, le=50, description=\"Default search result limit\")\n    default_related_limit: int = Field(default=10, ge=1, le=50, description=\"Default related pages limit\")\n\nScenario_Schema = [SearchResult, ArticleSection, RelatedPage, WikipediaScenario]\n\n# Section 2: Class\nclass WikipediaAPI:\n    def __init__(self):\n        \"\"\"Initialize Wikipedia API with default state.\"\"\"\n        self.default_language: str = \"en\"\n        self.default_search_limit: int = 5\n        self.default_related_limit: int = 10\n\n    def _base_url(self, language: str) -> str:\n        \"\"\"Return the MediaWiki REST API base URL for a given language.\"\"\"\n        return f\"https://{language}.wikipedia.org/w/rest.php/v1\"\n\n    def _legacy_url(self, language: str) -> str:\n        \"\"\"Return the legacy MediaWiki API URL for a given language.\"\"\"\n        return f\"https://{language}.wikipedia.org/w/api.php\"\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = WikipediaScenario(**scenario)\n        self.default_language = model.default_language\n        self.default_search_limit = model.default_search_limit\n        self.default_related_limit = model.default_related_limit\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"default_language\": self.default_language,\n            \"default_search_limit\": self.default_search_limit,\n            \"default_related_limit\": self.default_related_limit,\n        }\n\n    def search_wikipedia(self, query: str, limit: int, language: str) -> dict:\n        \"\"\"Search Wikipedia and return ranked results with excerpts.\"\"\"\n        url = f\"{self._base_url(language)}/search/page\"\n        resp = requests.get(url, params={\"q\": query, \"limit\": limit}, timeout=10)\n        resp.raise_for_status()\n        data = resp.json()\n        results = []\n        for page in data.get(\"pages\", []):\n            thumb = page.get(\"thumbnail\")\n            results.append({\n                \"title\": page.get(\"title\", \"\"),\n                \"pageid\": page.get(\"id\", 0),\n                \"excerpt\": page.get(\"excerpt\", \"\"),\n                \"description\": page.get(\"description\", \"\"),\n                \"thumbnail\": {\"url\": thumb[\"url\"], \"width\": thumb.get(\"width\"), \"height\": thumb.get(\"height\")} if thumb else None,\n            })\n        return {\"query\": query, \"results\": results}\n\n    def get_article(self, title: str, language: str) -> dict:\n        \"\"\"Retrieve full article content and section breakdown.\"\"\"\n        # Get summary for metadata\n        summary_url = f\"https://{language}.wikipedia.org/api/rest_v1/page/summary/{requests.utils.quote(title)}\"\n        summary_resp = requests.get(summary_url, timeout=10)\n        summary_resp.raise_for_status()\n        summary_data = summary_resp.json()\n\n        # Get full wikitext sections via parse API\n        parse_resp = requests.get(self._legacy_url(language), params={\n            \"action\": \"parse\", \"page\": title, \"prop\": \"sections|wikitext\", \"format\": \"json\"\n        }, timeout=10)\n        parse_resp.raise_for_status()\n        parse_data = parse_resp.json().get(\"parse\", {})\n\n        sections = []\n        for s in parse_data.get(\"sections\", []):\n            sections.append({\n                \"title\": s.get(\"line\", \"\"),\n                \"level\": int(s.get(\"level\", 1)),\n                \"text\": s.get(\"anchor\", \"\"),\n            })\n\n        return {\n            \"title\": summary_data.get(\"title\", title),\n            \"pageid\": summary_data.get(\"pageid\", 0),\n            \"summary\": summary_data.get(\"extract\", \"\"),\n            \"text\": parse_data.get(\"wikitext\", {}).get(\"*\", \"\"),\n            \"url\": summary_data.get(\"content_urls\", {}).get(\"desktop\", {}).get(\"page\", \"\"),\n            \"sections\": sections,\n        }\n\n    def get_summary(self, title: str, language: str) -> dict:\n        \"\"\"Retrieve concise summary and metadata for a Wikipedia article.\"\"\"\n        url = f\"https://{language}.wikipedia.org/api/rest_v1/page/summary/{requests.utils.quote(title)}\"\n        resp = requests.get(url, timeout=10)\n        resp.raise_for_status()\n        data = resp.json()\n        thumb = data.get(\"thumbnail\")\n        return {\n            \"title\": data.get(\"title\", title),\n            \"extract\": data.get(\"extract\", \"\"),\n            \"description\": data.get(\"description\", \"\"),\n            \"thumbnail\": {\"url\": thumb[\"url\"], \"width\": thumb.get(\"width\"), \"height\": thumb.get(\"height\")} if thumb else None,\n            \"lang\": data.get(\"lang\", language),\n            \"timestamp\": data.get(\"timestamp\", \"\"),\n        }\n\n    def get_page_sections(self, title: str, language: str) -> dict:\n        \"\"\"Retrieve hierarchical section headings and text for a Wikipedia article.\"\"\"\n        resp = requests.get(self._legacy_url(language), params={\n            \"action\": \"parse\", \"page\": title, \"prop\": \"sections\", \"format\": \"json\"\n        }, timeout=10)\n        resp.raise_for_status()\n        parse_data = resp.json().get(\"parse\", {})\n        sections = [\n            {\"title\": s.get(\"line\", \"\"), \"level\": int(s.get(\"level\", 1)), \"text\": s.get(\"anchor\", \"\")}\n            for s in parse_data.get(\"sections\", [])\n        ]\n        return {\"title\": parse_data.get(\"title\", title), \"sections\": sections}\n\n    def get_related_pages(self, title: str, limit: int, language: str) -> dict:\n        \"\"\"Retrieve thematically related Wikipedia pages.\"\"\"\n        url = f\"https://{language}.wikipedia.org/api/rest_v1/page/related/{requests.utils.quote(title)}\"\n        resp = requests.get(url, timeout=10)\n        resp.raise_for_status()\n        data = resp.json()\n        related = []\n        for page in data.get(\"pages\", [])[:limit]:\n            related.append({\n                \"title\": page.get(\"title\", \"\"),\n                \"pageid\": page.get(\"pageid\", 0),\n                \"extract\": page.get(\"extract\", \"\"),\n                \"url\": page.get(\"content_urls\", {}).get(\"desktop\", {}).get(\"page\", \"\"),\n            })\n        return {\"title\": title, \"related\": related}\n\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"WikipediaServer\")\napi = WikipediaAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Wikipedia API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching WikipediaScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Wikipedia API state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_wikipedia(query: str, limit: int = None, language: str = None) -> dict:\n    \"\"\"\n    Search Wikipedia for pages matching a query.\n\n    Args:\n        query (str): The search string used to find matching Wikipedia pages.\n        limit (int): [Optional] Maximum number of search results to return (default 5).\n        language (str): [Optional] Wikipedia language code (e.g., 'en' for English).\n\n    Returns:\n        query (str): The original search query string echoed back.\n        results (list): List of matching Wikipedia page summaries, each with title, pageid, excerpt, description, and thumbnail.\n    \"\"\"\n    try:\n        if not query or not isinstance(query, str):\n            raise ValueError(\"query must be a non-empty string\")\n        resolved_limit = limit if limit is not None else api.default_search_limit\n        resolved_lang = language if language else api.default_language\n        return api.search_wikipedia(query, resolved_limit, resolved_lang)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_article(title: str, language: str = None) -> dict:\n    \"\"\"\n    Retrieve the full Wikipedia article content and section breakdown.\n\n    Args:\n        title (str): The exact Wikipedia page title whose full article is requested.\n        language (str): [Optional] Wikipedia language code (e.g., 'en' for English).\n\n    Returns:\n        title (str): Display title of the retrieved Wikipedia page.\n        pageid (int): Unique numeric identifier of the page.\n        summary (str): Brief lead paragraph summarizing the article.\n        text (str): Complete article text including all sections.\n        url (str): Canonical web URL of the Wikipedia page.\n        sections (list): Hierarchical list of article sections with title, level, and text.\n    \"\"\"\n    try:\n        if not title or not isinstance(title, str):\n            raise ValueError(\"title must be a non-empty string\")\n        resolved_lang = language if language else api.default_language\n        return api.get_article(title, resolved_lang)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_summary(title: str, language: str = None) -> dict:\n    \"\"\"\n    Retrieve a concise summary and metadata for a Wikipedia article.\n\n    Args:\n        title (str): The exact Wikipedia page title whose summary is requested.\n        language (str): [Optional] Wikipedia language code (e.g., 'en' for English).\n\n    Returns:\n        title (str): Display title of the Wikipedia page.\n        extract (str): Concise plain-text summary of the article topic.\n        description (str): Short subtitle or description of the page topic.\n        thumbnail (dict): Thumbnail image metadata (url, width, height) if available.\n        lang (str): Language code of the returned summary.\n        timestamp (str): ISO 8601 timestamp of when the summary was last updated.\n    \"\"\"\n    try:\n        if not title or not isinstance(title, str):\n            raise ValueError(\"title must be a non-empty string\")\n        resolved_lang = language if language else api.default_language\n        return api.get_summary(title, resolved_lang)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_page_sections(title: str, language: str = None) -> dict:\n    \"\"\"\n    Retrieve hierarchical section headings and text fragments of a Wikipedia article.\n\n    Args:\n        title (str): The exact Wikipedia page title whose section outline is requested.\n        language (str): [Optional] Wikipedia language code (e.g., 'en' for English).\n\n    Returns:\n        title (str): Display title of the Wikipedia page.\n        sections (list): Ordered list of sections with title, level, and text content.\n    \"\"\"\n    try:\n        if not title or not isinstance(title, str):\n            raise ValueError(\"title must be a non-empty string\")\n        resolved_lang = language if language else api.default_language\n        return api.get_page_sections(title, resolved_lang)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_related_pages(title: str, limit: int = None, language: str = None) -> dict:\n    \"\"\"\n    Retrieve a list of Wikipedia pages thematically related to a given article.\n\n    Args:\n        title (str): The exact Wikipedia page title whose related pages are requested.\n        limit (int): [Optional] Maximum number of related pages to return (default 10).\n        language (str): [Optional] Wikipedia language code (e.g., 'en' for English).\n\n    Returns:\n        title (str): Display title of the source Wikipedia page.\n        related (list): List of related pages, each with title, pageid, extract, and url.\n    \"\"\"\n    try:\n        if not title or not isinstance(title, str):\n            raise ValueError(\"title must be a non-empty string\")\n        resolved_limit = limit if limit is not None else api.default_related_limit\n        resolved_lang = language if language else api.default_language\n        return api.get_related_pages(title, resolved_limit, resolved_lang)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-04-17T05:46:02.625797",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Default configuration with English language and standard limits",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "default_language": "en",
+        "default_search_limit": 5,
+        "default_related_limit": 10
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Non-English language (French) with custom search and related limits",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "default_language": "fr",
+        "default_search_limit": 15,
+        "default_related_limit": 20
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Maximum allowed limits with a less common language code (Japanese)",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "default_language": "ja",
+        "default_search_limit": 50,
+        "default_related_limit": 50
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Search limit below minimum allowed value (0 violates ge=1 constraint)",
+      "expected_behavior": "validation_error",
+      "scenario_data": {
+        "default_language": "en",
+        "default_search_limit": 0,
+        "default_related_limit": 10
+      }
+    }
+  ],
+  "validation_results": {},
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": false,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/WikipediaServer.py"
+  }
+}

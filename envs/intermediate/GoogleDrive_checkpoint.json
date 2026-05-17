@@ -1,0 +1,940 @@
+{
+  "metadata": {
+    "class_name": "GoogleDrive",
+    "metadata_path": "envs\\metadata\\GoogleDrive_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-03-05T19:43:12.704339",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "GoogleDrive",
+    "description": "Manage files and permissions in Google Drive, including upload, download, listing, metadata retrieval, and sharing operations.",
+    "tools": [
+      {
+        "name": "upload_file",
+        "description": "Upload a new file to Google Drive with optional parent folder assignment.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The name to assign to the uploaded file in Google Drive."
+            },
+            "content": {
+              "type": "string",
+              "description": "The file content as bytes to be uploaded."
+            },
+            "mime_type": {
+              "type": "string",
+              "description": "The MIME type of the file (e.g., 'image/jpeg', 'application/pdf'). Auto-detected if not provided."
+            },
+            "parents": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of parent folder IDs where the file should be placed in Google Drive."
+            }
+          },
+          "required": [
+            "name",
+            "content"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier of the uploaded file in Google Drive."
+            },
+            "name": {
+              "type": "string",
+              "description": "The name of the uploaded file."
+            },
+            "mimeType": {
+              "type": "string",
+              "description": "The MIME type of the uploaded file."
+            },
+            "size": {
+              "type": "string",
+              "description": "The size of the uploaded file in bytes, represented as a string."
+            },
+            "createdTime": {
+              "type": "string",
+              "description": "The creation timestamp of the file in RFC 3339 format."
+            },
+            "parents": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of parent folder IDs where the file is located in Google Drive."
+            }
+          }
+        }
+      },
+      {
+        "name": "download_file",
+        "description": "Download a file's content and metadata from Google Drive by its file ID.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "file_id": {
+              "type": "string",
+              "description": "The unique identifier of the file to download from Google Drive."
+            },
+            "acknowledge_abuse": {
+              "type": "boolean",
+              "description": "Whether to acknowledge the abuse warning for files flagged by Google Drive (default: false)."
+            }
+          },
+          "required": [
+            "file_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "description": "The file content as bytes."
+            },
+            "name": {
+              "type": "string",
+              "description": "The name of the downloaded file."
+            },
+            "mimeType": {
+              "type": "string",
+              "description": "The MIME type of the downloaded file."
+            },
+            "size": {
+              "type": "string",
+              "description": "The size of the downloaded file in bytes, represented as a string."
+            }
+          }
+        }
+      },
+      {
+        "name": "list_files",
+        "description": "List files in Google Drive with optional filtering, sorting, and pagination.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "page_size": {
+              "type": "integer",
+              "description": "Maximum number of files to return per page (default: 100)."
+            },
+            "q": {
+              "type": "string",
+              "description": "Query string for filtering files using Google Drive query syntax (e.g., \"mimeType='image/jpeg'\" or \"name contains 'report'\")."
+            },
+            "order_by": {
+              "type": "string",
+              "description": "Sort order for the file list (e.g., 'modifiedTime desc', 'name', 'createdTime'). Default: 'modifiedTime desc'."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The unique identifier of the file in Google Drive."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The name of the file."
+                  },
+                  "mimeType": {
+                    "type": "string",
+                    "description": "The MIME type of the file."
+                  },
+                  "size": {
+                    "type": "string",
+                    "description": "The size of the file in bytes, represented as a string."
+                  },
+                  "modifiedTime": {
+                    "type": "string",
+                    "description": "The last modification timestamp of the file in RFC 3339 format."
+                  },
+                  "parents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of parent folder IDs where the file is located in Google Drive."
+                  }
+                }
+              },
+              "description": "Array of file objects matching the query criteria."
+            },
+            "nextPageToken": {
+              "type": "string",
+              "description": "Token for retrieving the next page of results in paginated queries."
+            },
+            "incompleteSearch": {
+              "type": "boolean",
+              "description": "Indicates whether the search results are incomplete due to query limitations."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_file",
+        "description": "Retrieve detailed metadata for a specific file in Google Drive.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "file_id": {
+              "type": "string",
+              "description": "The unique identifier of the file to retrieve metadata for."
+            },
+            "fields": {
+              "type": "string",
+              "description": "Comma-separated list of metadata fields to return (e.g., 'id,name,mimeType'). Use '*' to return all fields (default: '*')."
+            }
+          },
+          "required": [
+            "file_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier of the file in Google Drive."
+            },
+            "name": {
+              "type": "string",
+              "description": "The name of the file."
+            },
+            "mimeType": {
+              "type": "string",
+              "description": "The MIME type of the file."
+            },
+            "description": {
+              "type": "string",
+              "description": "The user-provided description of the file."
+            },
+            "size": {
+              "type": "string",
+              "description": "The size of the file in bytes, represented as a string."
+            },
+            "createdTime": {
+              "type": "string",
+              "description": "The creation timestamp of the file in RFC 3339 format."
+            },
+            "modifiedTime": {
+              "type": "string",
+              "description": "The last modification timestamp of the file in RFC 3339 format."
+            },
+            "parents": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of parent folder IDs where the file is located in Google Drive."
+            },
+            "webViewLink": {
+              "type": "string",
+              "description": "URL to view the file in the Google Drive web interface."
+            },
+            "webContentLink": {
+              "type": "string",
+              "description": "Direct download URL for the file content."
+            }
+          }
+        }
+      },
+      {
+        "name": "create_permission",
+        "description": "Create a sharing permission for a file in Google Drive to grant access to users, groups, domains, or anyone.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "file_id": {
+              "type": "string",
+              "description": "The unique identifier of the file to share."
+            },
+            "role": {
+              "type": "string",
+              "description": "The permission role to grant: 'owner', 'organizer', 'fileOrganizer', 'writer', 'commenter', or 'reader'."
+            },
+            "type": {
+              "type": "string",
+              "description": "The type of grantee: 'user' (specific user), 'group' (Google Group), 'domain' (entire domain), or 'anyone' (public access)."
+            },
+            "email_address": {
+              "type": "string",
+              "description": "The email address of the user or group to grant permission to. Required when type is 'user' or 'group'."
+            }
+          },
+          "required": [
+            "file_id",
+            "role",
+            "type"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier of the created permission."
+            },
+            "role": {
+              "type": "string",
+              "description": "The permission role that was granted."
+            },
+            "type": {
+              "type": "string",
+              "description": "The type of grantee for this permission."
+            },
+            "emailAddress": {
+              "type": "string",
+              "description": "The email address of the user or group that was granted permission."
+            },
+            "link": {
+              "type": "string",
+              "description": "The shareable link for the file when permission type is 'anyone'."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass DriveFile(BaseModel):\n    \"\"\"Represents a Google Drive file.\"\"\"\n    id: str = Field(..., description=\"File ID\")\n    name: str = Field(..., description=\"File name\")\n    mimeType: str = Field(..., description=\"MIME type\")\n    size: str = Field(..., description=\"File size in bytes\")\n    createdTime: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"Creation timestamp\")\n    modifiedTime: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"Modification timestamp\")\n    parents: List[str] = Field(default=[], description=\"Parent folder IDs\")\n    description: Optional[str] = Field(default=\"\", description=\"File description\")\n    webViewLink: Optional[str] = Field(default=\"\", description=\"Web view URL\")\n    webContentLink: Optional[str] = Field(default=\"\", description=\"Download URL\")\n    content: str = Field(default=\"\", description=\"File content as bytes\")\n\nclass Permission(BaseModel):\n    \"\"\"Represents a file permission.\"\"\"\n    id: str = Field(..., description=\"Permission ID\")\n    file_id: str = Field(..., description=\"File ID\")\n    role: str = Field(..., description=\"Permission role\")\n    type: str = Field(..., description=\"Grantee type\")\n    emailAddress: Optional[str] = Field(default=\"\", description=\"Email address\")\n    link: Optional[str] = Field(default=\"\", description=\"Shareable link\")\n\nclass GoogleDriveScenario(BaseModel):\n    \"\"\"Main scenario model for Google Drive.\"\"\"\n    files: Dict[str, DriveFile] = Field(default={}, description=\"Files in Drive\")\n    permissions: Dict[str, Permission] = Field(default={}, description=\"File permissions\")\n\nScenario_Schema = [DriveFile, Permission, GoogleDriveScenario]\n\n# Section 2: Class\nclass GoogleDriveAPI:\n    def __init__(self):\n        \"\"\"Initialize Google Drive API with empty state.\"\"\"\n        self.files: Dict[str, DriveFile] = {}\n        self.permissions: Dict[str, Permission] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = GoogleDriveScenario(**scenario)\n        self.files = model.files\n        self.permissions = model.permissions\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"files\": {fid: f.model_dump() for fid, f in self.files.items()},\n            \"permissions\": {pid: p.model_dump() for pid, p in self.permissions.items()}\n        }\n\n    def upload_file(self, name: str, content: str, mime_type: Optional[str], parents: Optional[List[str]]) -> dict:\n        \"\"\"Upload a new file to Google Drive.\"\"\"\n        file_id = f\"file_{len(self.files) + 1}\"\n        file = DriveFile(\n            id=file_id,\n            name=name,\n            mimeType=mime_type or \"application/octet-stream\",\n            size=str(len(content)),\n            createdTime=\"2026-03-05T11:37:55\",\n            modifiedTime=\"2026-03-05T11:37:55\",\n            parents=parents or [],\n            content=content\n        )\n        self.files[file_id] = file\n        return {\n            \"id\": file.id,\n            \"name\": file.name,\n            \"mimeType\": file.mimeType,\n            \"size\": file.size,\n            \"createdTime\": file.createdTime,\n            \"parents\": file.parents\n        }\n\n    def download_file(self, file_id: str, acknowledge_abuse: bool) -> dict:\n        \"\"\"Download a file's content and metadata.\"\"\"\n        file = self.files[file_id]\n        return {\n            \"content\": file.content,\n            \"name\": file.name,\n            \"mimeType\": file.mimeType,\n            \"size\": file.size\n        }\n\n    def list_files(self, page_size: int, q: Optional[str], order_by: Optional[str]) -> dict:\n        \"\"\"List files in Google Drive.\"\"\"\n        files_list = []\n        for file in self.files.values():\n            files_list.append({\n                \"id\": file.id,\n                \"name\": file.name,\n                \"mimeType\": file.mimeType,\n                \"size\": file.size,\n                \"modifiedTime\": file.modifiedTime,\n                \"parents\": file.parents\n            })\n        return {\n            \"files\": files_list[:page_size],\n            \"nextPageToken\": \"\",\n            \"incompleteSearch\": False\n        }\n\n    def get_file(self, file_id: str, fields: str) -> dict:\n        \"\"\"Retrieve detailed metadata for a specific file.\"\"\"\n        file = self.files[file_id]\n        return {\n            \"id\": file.id,\n            \"name\": file.name,\n            \"mimeType\": file.mimeType,\n            \"description\": file.description,\n            \"size\": file.size,\n            \"createdTime\": file.createdTime,\n            \"modifiedTime\": file.modifiedTime,\n            \"parents\": file.parents,\n            \"webViewLink\": file.webViewLink,\n            \"webContentLink\": file.webContentLink\n        }\n\n    def create_permission(self, file_id: str, role: str, type: str, email_address: Optional[str]) -> dict:\n        \"\"\"Create a sharing permission for a file.\"\"\"\n        perm_id = f\"perm_{len(self.permissions) + 1}\"\n        permission = Permission(\n            id=perm_id,\n            file_id=file_id,\n            role=role,\n            type=type,\n            emailAddress=email_address or \"\",\n            link=f\"https://drive.google.com/file/d/{file_id}/view\" if type == \"anyone\" else \"\"\n        )\n        self.permissions[perm_id] = permission\n        return {\n            \"id\": permission.id,\n            \"role\": permission.role,\n            \"type\": permission.type,\n            \"emailAddress\": permission.emailAddress,\n            \"link\": permission.link\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"GoogleDrive\")\napi = GoogleDriveAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Google Drive API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching GoogleDriveScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Google Drive state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef upload_file(name: str, content: str, mime_type: str = None, parents: List[str] = None) -> dict:\n    \"\"\"\n    Upload a new file to Google Drive with optional parent folder assignment.\n\n    Args:\n        name (str): The name to assign to the uploaded file in Google Drive.\n        content (str): The file content as bytes to be uploaded.\n        mime_type (str): [Optional] The MIME type of the file.\n        parents (List[str]): [Optional] List of parent folder IDs.\n\n    Returns:\n        id (str): The unique identifier of the uploaded file in Google Drive.\n        name (str): The name of the uploaded file.\n        mimeType (str): The MIME type of the uploaded file.\n        size (str): The size of the uploaded file in bytes.\n        createdTime (str): The creation timestamp of the file in RFC 3339 format.\n        parents (List[str]): List of parent folder IDs where the file is located.\n    \"\"\"\n    try:\n        if not name or not isinstance(name, str):\n            raise ValueError(\"Name must be a non-empty string\")\n        if not content or not isinstance(content, str):\n            raise ValueError(\"Content must be a non-empty string\")\n        return api.upload_file(name, content, mime_type, parents)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef download_file(file_id: str, acknowledge_abuse: bool = False) -> dict:\n    \"\"\"\n    Download a file's content and metadata from Google Drive by its file ID.\n\n    Args:\n        file_id (str): The unique identifier of the file to download from Google Drive.\n        acknowledge_abuse (bool): [Optional] Whether to acknowledge the abuse warning.\n\n    Returns:\n        content (str): The file content as bytes.\n        name (str): The name of the downloaded file.\n        mimeType (str): The MIME type of the downloaded file.\n        size (str): The size of the downloaded file in bytes.\n    \"\"\"\n    try:\n        if not file_id or not isinstance(file_id, str):\n            raise ValueError(\"File ID must be a non-empty string\")\n        if file_id not in api.files:\n            raise ValueError(f\"File {file_id} not found\")\n        return api.download_file(file_id, acknowledge_abuse)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef list_files(page_size: int = 100, q: str = None, order_by: str = None) -> dict:\n    \"\"\"\n    List files in Google Drive with optional filtering, sorting, and pagination.\n\n    Args:\n        page_size (int): [Optional] Maximum number of files to return per page.\n        q (str): [Optional] Query string for filtering files.\n        order_by (str): [Optional] Sort order for the file list.\n\n    Returns:\n        files (List[dict]): Array of file objects matching the query criteria.\n        nextPageToken (str): Token for retrieving the next page of results.\n        incompleteSearch (bool): Indicates whether the search results are incomplete.\n    \"\"\"\n    try:\n        return api.list_files(page_size, q, order_by)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_file(file_id: str, fields: str = \"*\") -> dict:\n    \"\"\"\n    Retrieve detailed metadata for a specific file in Google Drive.\n\n    Args:\n        file_id (str): The unique identifier of the file to retrieve metadata for.\n        fields (str): [Optional] Comma-separated list of metadata fields to return.\n\n    Returns:\n        id (str): The unique identifier of the file in Google Drive.\n        name (str): The name of the file.\n        mimeType (str): The MIME type of the file.\n        description (str): The user-provided description of the file.\n        size (str): The size of the file in bytes.\n        createdTime (str): The creation timestamp of the file in RFC 3339 format.\n        modifiedTime (str): The last modification timestamp of the file in RFC 3339 format.\n        parents (List[str]): List of parent folder IDs where the file is located.\n        webViewLink (str): URL to view the file in the Google Drive web interface.\n        webContentLink (str): Direct download URL for the file content.\n    \"\"\"\n    try:\n        if not file_id or not isinstance(file_id, str):\n            raise ValueError(\"File ID must be a non-empty string\")\n        if file_id not in api.files:\n            raise ValueError(f\"File {file_id} not found\")\n        return api.get_file(file_id, fields)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef create_permission(file_id: str, role: str, type: str, email_address: str = None) -> dict:\n    \"\"\"\n    Create a sharing permission for a file in Google Drive to grant access to users, groups, domains, or anyone.\n\n    Args:\n        file_id (str): The unique identifier of the file to share.\n        role (str): The permission role to grant.\n        type (str): The type of grantee.\n        email_address (str): [Optional] The email address of the user or group.\n\n    Returns:\n        id (str): The unique identifier of the created permission.\n        role (str): The permission role that was granted.\n        type (str): The type of grantee for this permission.\n        emailAddress (str): The email address of the user or group that was granted permission.\n        link (str): The shareable link for the file when permission type is 'anyone'.\n    \"\"\"\n    try:\n        if not file_id or not isinstance(file_id, str):\n            raise ValueError(\"File ID must be a non-empty string\")\n        if file_id not in api.files:\n            raise ValueError(f\"File {file_id} not found\")\n        if not role or not isinstance(role, str):\n            raise ValueError(\"Role must be a non-empty string\")\n        if not type or not isinstance(type, str):\n            raise ValueError(\"Type must be a non-empty string\")\n        return api.create_permission(file_id, role, type, email_address)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-03-05T19:43:12.704339",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Single document file with basic metadata, no permissions",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "files": {
+          "file_001": {
+            "id": "file_001",
+            "name": "Meeting Notes.txt",
+            "mimeType": "text/plain",
+            "size": "2048",
+            "createdTime": "2026-03-01T09:00:00",
+            "modifiedTime": "2026-03-01T09:30:00",
+            "parents": [
+              "root"
+            ],
+            "description": "Team meeting notes",
+            "webViewLink": "https://drive.google.com/file/d/file_001/view",
+            "webContentLink": "https://drive.google.com/uc?id=file_001",
+            "content": "Meeting notes content here"
+          }
+        },
+        "permissions": {}
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple files with folder structure and shared permissions",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "files": {
+          "folder_001": {
+            "id": "folder_001",
+            "name": "Project Alpha",
+            "mimeType": "application/vnd.google-apps.folder",
+            "size": "0",
+            "createdTime": "2026-02-15T10:00:00",
+            "modifiedTime": "2026-03-01T14:00:00",
+            "parents": [
+              "root"
+            ],
+            "description": "Project folder",
+            "webViewLink": "https://drive.google.com/drive/folders/folder_001",
+            "webContentLink": "",
+            "content": ""
+          },
+          "doc_001": {
+            "id": "doc_001",
+            "name": "Requirements.docx",
+            "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "size": "45678",
+            "createdTime": "2026-02-20T11:30:00",
+            "modifiedTime": "2026-02-28T16:45:00",
+            "parents": [
+              "folder_001"
+            ],
+            "description": "",
+            "webViewLink": "https://drive.google.com/file/d/doc_001/view",
+            "webContentLink": "https://drive.google.com/uc?id=doc_001",
+            "content": ""
+          },
+          "sheet_001": {
+            "id": "sheet_001",
+            "name": "Budget.xlsx",
+            "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "size": "12345",
+            "createdTime": "2026-02-25T08:00:00",
+            "modifiedTime": "2026-03-04T10:00:00",
+            "parents": [
+              "folder_001"
+            ],
+            "description": "Q1 budget spreadsheet",
+            "webViewLink": "https://drive.google.com/file/d/sheet_001/view",
+            "webContentLink": "https://drive.google.com/uc?id=sheet_001",
+            "content": ""
+          }
+        },
+        "permissions": {
+          "perm_001": {
+            "id": "perm_001",
+            "file_id": "doc_001",
+            "role": "writer",
+            "type": "user",
+            "emailAddress": "colleague@example.com",
+            "link": ""
+          },
+          "perm_002": {
+            "id": "perm_002",
+            "file_id": "folder_001",
+            "role": "reader",
+            "type": "anyone",
+            "emailAddress": "",
+            "link": "https://drive.google.com/drive/folders/folder_001?usp=sharing"
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich file hierarchy with multiple folders, various file types, and diverse permission settings",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "files": {
+          "root_folder": {
+            "id": "root_folder",
+            "name": "Company Docs",
+            "mimeType": "application/vnd.google-apps.folder",
+            "size": "0",
+            "createdTime": "2025-12-01T08:00:00",
+            "modifiedTime": "2026-03-05T09:00:00",
+            "parents": [
+              "root"
+            ],
+            "description": "Main company documentation",
+            "webViewLink": "https://drive.google.com/drive/folders/root_folder",
+            "webContentLink": "",
+            "content": ""
+          },
+          "subfolder_hr": {
+            "id": "subfolder_hr",
+            "name": "HR",
+            "mimeType": "application/vnd.google-apps.folder",
+            "size": "0",
+            "createdTime": "2026-01-10T09:00:00",
+            "modifiedTime": "2026-02-20T11:00:00",
+            "parents": [
+              "root_folder"
+            ],
+            "description": "Human resources documents",
+            "webViewLink": "https://drive.google.com/drive/folders/subfolder_hr",
+            "webContentLink": "",
+            "content": ""
+          },
+          "pdf_001": {
+            "id": "pdf_001",
+            "name": "Employee Handbook.pdf",
+            "mimeType": "application/pdf",
+            "size": "2048576",
+            "createdTime": "2026-01-15T10:00:00",
+            "modifiedTime": "2026-01-15T10:00:00",
+            "parents": [
+              "subfolder_hr"
+            ],
+            "description": "Official employee handbook 2026",
+            "webViewLink": "https://drive.google.com/file/d/pdf_001/view",
+            "webContentLink": "https://drive.google.com/uc?id=pdf_001",
+            "content": ""
+          },
+          "image_001": {
+            "id": "image_001",
+            "name": "logo.png",
+            "mimeType": "image/png",
+            "size": "524288",
+            "createdTime": "2026-02-01T14:30:00",
+            "modifiedTime": "2026-02-01T14:30:00",
+            "parents": [
+              "root_folder"
+            ],
+            "description": "Company logo",
+            "webViewLink": "https://drive.google.com/file/d/image_001/view",
+            "webContentLink": "https://drive.google.com/uc?id=image_001",
+            "content": ""
+          },
+          "gdoc_001": {
+            "id": "gdoc_001",
+            "name": "Q1 Report",
+            "mimeType": "application/vnd.google-apps.document",
+            "size": "0",
+            "createdTime": "2026-03-01T08:00:00",
+            "modifiedTime": "2026-03-05T11:00:00",
+            "parents": [
+              "root_folder"
+            ],
+            "description": "Quarterly business report",
+            "webViewLink": "https://docs.google.com/document/d/gdoc_001/edit",
+            "webContentLink": "",
+            "content": "Q1 report content"
+          }
+        },
+        "permissions": {
+          "perm_001": {
+            "id": "perm_001",
+            "file_id": "pdf_001",
+            "role": "reader",
+            "type": "domain",
+            "emailAddress": "",
+            "link": ""
+          },
+          "perm_002": {
+            "id": "perm_002",
+            "file_id": "gdoc_001",
+            "role": "writer",
+            "type": "user",
+            "emailAddress": "manager@example.com",
+            "link": ""
+          },
+          "perm_003": {
+            "id": "perm_003",
+            "file_id": "gdoc_001",
+            "role": "commenter",
+            "type": "user",
+            "emailAddress": "reviewer@example.com",
+            "link": ""
+          },
+          "perm_004": {
+            "id": "perm_004",
+            "file_id": "root_folder",
+            "role": "reader",
+            "type": "anyone",
+            "emailAddress": "",
+            "link": "https://drive.google.com/drive/folders/root_folder?usp=sharing"
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty Drive with no files or permissions",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "files": {},
+        "permissions": {}
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_file",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "download_file",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "list_files",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "upload_file",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "create_permission",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "upload_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "download_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_permission",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_execution": [
+              {
+                "tool_name": "list_files",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_file",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "download_file",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "upload_file",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "create_permission",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "upload_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "download_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_permission",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_file",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "download_file",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "list_files",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "upload_file",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "create_permission",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "upload_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "download_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_permission",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_execution": [
+              {
+                "tool_name": "list_files",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_file",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "download_file",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "upload_file",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "create_permission",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "upload_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "download_file",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_permission",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/GoogleDrive.py"
+  }
+}

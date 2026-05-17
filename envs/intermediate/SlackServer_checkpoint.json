@@ -1,0 +1,708 @@
+{
+  "metadata": {
+    "class_name": "SlackServer",
+    "metadata_path": "envs/metadata/SlackServer_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-04-17T10:14:01.140570",
+    "state": "scenario_gen"
+  },
+  "schema": {
+    "class_name": "SlackServer",
+    "description": "Provides read and write access to Slack conversations, channels, and messages, including search and threaded replies.",
+    "tools": [
+      {
+        "name": "channels_list",
+        "description": "List Slack conversations such as public channels, private channels, DMs, and group DMs.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "channel_types": {
+              "type": "string",
+              "description": "Comma-separated channel types such as \"public_channel,private_channel,im\"."
+            },
+            "sort": {
+              "type": "string",
+              "description": "Sort mode such as \"popularity\"."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of channels to return (default 100)."
+            },
+            "cursor": {
+              "type": "string",
+              "description": "Pagination cursor from a previous response."
+            }
+          },
+          "required": [
+            "channel_types"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "channels": {
+              "type": "array",
+              "description": "List of channel objects.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The unique identifier of the channel."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The display name of the channel."
+                  },
+                  "is_channel": {
+                    "type": "boolean",
+                    "description": "True if the conversation is a channel."
+                  },
+                  "is_private": {
+                    "type": "boolean",
+                    "description": "True if the conversation is private."
+                  },
+                  "is_im": {
+                    "type": "boolean",
+                    "description": "True if the conversation is a direct message."
+                  },
+                  "num_members": {
+                    "type": "integer",
+                    "description": "Number of members in the channel."
+                  },
+                  "topic": {
+                    "type": "string",
+                    "description": "The topic of the channel."
+                  }
+                }
+              }
+            },
+            "next_cursor": {
+              "type": "string",
+              "description": "Cursor for the next page of results."
+            }
+          }
+        }
+      },
+      {
+        "name": "conversations_history",
+        "description": "Fetch messages from a Slack channel, DM, or group DM.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "channel_id": {
+              "type": "string",
+              "description": "Channel ID or name such as \"C1234567890\" or \"#general\"."
+            },
+            "limit": {
+              "type": "string",
+              "description": "Time window or message count such as \"1d\", \"30d\", \"90d\", or \"50\"."
+            },
+            "cursor": {
+              "type": "string",
+              "description": "Pagination cursor from a previous response."
+            },
+            "include_activity_messages": {
+              "type": "boolean",
+              "description": "Include channel join/leave and other activity messages."
+            }
+          },
+          "required": [
+            "channel_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "messages": {
+              "type": "array",
+              "description": "List of message objects.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The type of message."
+                  },
+                  "user": {
+                    "type": "string",
+                    "description": "The unique identifier of the user who sent the message."
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "The text content of the message."
+                  },
+                  "ts": {
+                    "type": "string",
+                    "description": "The timestamp of the message."
+                  },
+                  "thread_ts": {
+                    "type": "string",
+                    "description": "The timestamp of the parent message if this is a reply."
+                  },
+                  "reactions": {
+                    "type": "array",
+                    "description": "List of reaction objects."
+                  }
+                }
+              }
+            },
+            "next_cursor": {
+              "type": "string",
+              "description": "Cursor for the next page of results."
+            }
+          }
+        }
+      },
+      {
+        "name": "conversations_replies",
+        "description": "Fetch replies in a Slack message thread.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "channel_id": {
+              "type": "string",
+              "description": "Channel ID or name containing the thread."
+            },
+            "thread_ts": {
+              "type": "string",
+              "description": "Timestamp of the parent message or a message in the thread."
+            },
+            "limit": {
+              "type": "string",
+              "description": "Time window or message count."
+            },
+            "cursor": {
+              "type": "string",
+              "description": "Pagination cursor from a previous response."
+            },
+            "include_activity_messages": {
+              "type": "boolean",
+              "description": "Include channel activity messages."
+            }
+          },
+          "required": [
+            "channel_id",
+            "thread_ts"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "messages": {
+              "type": "array",
+              "description": "List of message objects in the thread.",
+              "items": {
+                "type": "object"
+              }
+            },
+            "next_cursor": {
+              "type": "string",
+              "description": "Cursor for the next page of results."
+            },
+            "thread_ts": {
+              "type": "string",
+              "description": "The timestamp of the parent message in the thread."
+            }
+          }
+        }
+      },
+      {
+        "name": "conversations_search_messages",
+        "description": "Search Slack messages across channels, DMs, and threads.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "search_query": {
+              "type": "string",
+              "description": "Text query or Slack message URL."
+            },
+            "filter_in_channel": {
+              "type": "string",
+              "description": "Channel ID or name to restrict the search."
+            },
+            "filter_users_from": {
+              "type": "string",
+              "description": "User ID or display name of message sender."
+            },
+            "filter_date_after": {
+              "type": "string",
+              "description": "Earliest message date in YYYY-MM-DD format."
+            },
+            "filter_date_before": {
+              "type": "string",
+              "description": "Latest message date in YYYY-MM-DD format."
+            },
+            "filter_threads_only": {
+              "type": "boolean",
+              "description": "Return only messages that are part of threads."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of matching messages."
+            },
+            "cursor": {
+              "type": "string",
+              "description": "Pagination cursor from a previous response."
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "messages": {
+              "type": "array",
+              "description": "List of matching message objects.",
+              "items": {
+                "type": "object"
+              }
+            },
+            "next_cursor": {
+              "type": "string",
+              "description": "Cursor for the next page of results."
+            },
+            "total": {
+              "type": "integer",
+              "description": "Total number of matching messages."
+            }
+          }
+        }
+      },
+      {
+        "name": "conversations_add_message",
+        "description": "Add a message to a Slack channel, DM, or thread.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "channel_id": {
+              "type": "string",
+              "description": "Channel ID or name where the message should be posted."
+            },
+            "payload": {
+              "type": "string",
+              "description": "Message content."
+            },
+            "thread_ts": {
+              "type": "string",
+              "description": "Thread timestamp for a reply."
+            },
+            "content_type": {
+              "type": "string",
+              "description": "Payload content type such as \"text/markdown\" or \"text/plain\"."
+            }
+          },
+          "required": [
+            "channel_id",
+            "payload"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "ok": {
+              "type": "boolean",
+              "description": "True if the message was posted successfully."
+            },
+            "channel": {
+              "type": "string",
+              "description": "The unique identifier of the channel where the message was posted."
+            },
+            "ts": {
+              "type": "string",
+              "description": "The timestamp of the posted message."
+            },
+            "message": {
+              "type": "object",
+              "description": "The full message object that was posted."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\n\nclass Channel(BaseModel):\n    \"\"\"Represents a Slack channel or conversation.\"\"\"\n    id: str = Field(..., description=\"Unique identifier of the channel\")\n    name: str = Field(default=\"\", description=\"Display name of the channel\")\n    is_channel: bool = Field(default=False, description=\"True if conversation is a channel\")\n    is_private: bool = Field(default=False, description=\"True if conversation is private\")\n    is_im: bool = Field(default=False, description=\"True if conversation is a DM\")\n    num_members: int = Field(default=0, ge=0, description=\"Number of members\")\n    topic: str = Field(default=\"\", description=\"Channel topic\")\n\nclass Message(BaseModel):\n    \"\"\"Represents a Slack message.\"\"\"\n    type: str = Field(default=\"message\", description=\"Type of message\")\n    user: str = Field(default=\"\", description=\"User ID who sent the message\")\n    text: str = Field(default=\"\", description=\"Text content of the message\")\n    ts: str = Field(..., description=\"Timestamp of the message\")\n    thread_ts: Optional[str] = Field(default=None, description=\"Parent thread timestamp\")\n    reactions: List[Any] = Field(default=[], description=\"List of reactions\")\n    channel_id: str = Field(default=\"\", description=\"Channel this message belongs to\")\n\nclass SlackScenario(BaseModel):\n    \"\"\"Main scenario model for Slack server state.\"\"\"\n    channels: Dict[str, Any] = Field(default={}, description=\"Map of channel_id to channel data\")\n    messages: Dict[str, Any] = Field(default={}, description=\"Map of channel_id to list of messages\")\n    threads: Dict[str, Any] = Field(default={}, description=\"Map of thread_ts to list of reply messages\")\n    current_time: str = Field(default=\"2026-04-17T02:12:12\", description=\"Current timestamp in ISO 8601 format\")\n\nScenario_Schema = [Channel, Message, SlackScenario]\n\n# Section 2: Class\n\nclass SlackAPI:\n    def __init__(self):\n        \"\"\"Initialize Slack API with empty state.\"\"\"\n        self.channels: Dict[str, Any] = {}\n        self.messages: Dict[str, Any] = {}\n        self.threads: Dict[str, Any] = {}\n        self.current_time: str = \"\"\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = SlackScenario(**scenario)\n        self.channels = model.channels\n        self.messages = model.messages\n        self.threads = model.threads\n        self.current_time = model.current_time\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"channels\": self.channels,\n            \"messages\": self.messages,\n            \"threads\": self.threads,\n            \"current_time\": self.current_time,\n        }\n\n    def channels_list(self, channel_types: str, sort: Optional[str] = None, limit: int = 100, cursor: Optional[str] = None) -> dict:\n        \"\"\"List Slack conversations filtered by channel types.\"\"\"\n        types = [t.strip() for t in channel_types.split(\",\")]\n        result = []\n        for ch in self.channels.values():\n            if \"public_channel\" in types and ch.get(\"is_channel\") and not ch.get(\"is_private\") and not ch.get(\"is_im\"):\n                result.append(ch)\n            elif \"private_channel\" in types and ch.get(\"is_private\") and not ch.get(\"is_im\"):\n                result.append(ch)\n            elif \"im\" in types and ch.get(\"is_im\"):\n                result.append(ch)\n            elif \"mpim\" in types and ch.get(\"is_mpim\"):\n                result.append(ch)\n\n        if sort == \"popularity\":\n            result.sort(key=lambda c: c.get(\"num_members\", 0), reverse=True)\n\n        start = 0\n        if cursor:\n            try:\n                start = int(cursor)\n            except ValueError:\n                start = 0\n\n        page = result[start:start + limit]\n        next_cursor = str(start + limit) if start + limit < len(result) else \"\"\n        return {\"channels\": page, \"next_cursor\": next_cursor}\n\n    def conversations_history(self, channel_id: str, limit: Optional[str] = None, cursor: Optional[str] = None, include_activity_messages: bool = False) -> dict:\n        \"\"\"Fetch messages from a Slack channel.\"\"\"\n        channel_id = channel_id.lstrip(\"#\")\n        # resolve name to id\n        resolved_id = channel_id\n        for cid, ch in self.channels.items():\n            if ch.get(\"name\") == channel_id:\n                resolved_id = cid\n                break\n\n        msgs = list(self.messages.get(resolved_id, []))\n        if not include_activity_messages:\n            msgs = [m for m in msgs if m.get(\"subtype\") not in (\"channel_join\", \"channel_leave\")]\n\n        max_count = 50\n        if limit and limit.isdigit():\n            max_count = int(limit)\n\n        start = 0\n        if cursor:\n            try:\n                start = int(cursor)\n            except ValueError:\n                start = 0\n\n        page = msgs[start:start + max_count]\n        next_cursor = str(start + max_count) if start + max_count < len(msgs) else \"\"\n        return {\"messages\": page, \"next_cursor\": next_cursor}\n\n    def conversations_replies(self, channel_id: str, thread_ts: str, limit: Optional[str] = None, cursor: Optional[str] = None, include_activity_messages: bool = False) -> dict:\n        \"\"\"Fetch replies in a Slack message thread.\"\"\"\n        replies = list(self.threads.get(thread_ts, []))\n        if not include_activity_messages:\n            replies = [m for m in replies if m.get(\"subtype\") not in (\"channel_join\", \"channel_leave\")]\n\n        max_count = 50\n        if limit and limit.isdigit():\n            max_count = int(limit)\n\n        start = 0\n        if cursor:\n            try:\n                start = int(cursor)\n            except ValueError:\n                start = 0\n\n        page = replies[start:start + max_count]\n        next_cursor = str(start + max_count) if start + max_count < len(replies) else \"\"\n        return {\"messages\": page, \"next_cursor\": next_cursor, \"thread_ts\": thread_ts}\n\n    def conversations_search_messages(self, search_query: Optional[str] = None, filter_in_channel: Optional[str] = None,\n                                       filter_users_from: Optional[str] = None, filter_date_after: Optional[str] = None,\n                                       filter_date_before: Optional[str] = None, filter_threads_only: bool = False,\n                                       limit: int = 20, cursor: Optional[str] = None) -> dict:\n        \"\"\"Search Slack messages across channels and threads.\"\"\"\n        all_msgs = []\n        for cid, msgs in self.messages.items():\n            for m in msgs:\n                m_copy = dict(m)\n                m_copy[\"channel_id\"] = cid\n                all_msgs.append(m_copy)\n        for thread_ts, replies in self.threads.items():\n            for m in replies:\n                m_copy = dict(m)\n                if \"channel_id\" not in m_copy:\n                    m_copy[\"thread_ts\"] = thread_ts\n                all_msgs.append(m_copy)\n\n        results = []\n        for m in all_msgs:\n            if search_query and search_query.lower() not in m.get(\"text\", \"\").lower():\n                continue\n            if filter_in_channel:\n                ch = filter_in_channel.lstrip(\"#\")\n                if m.get(\"channel_id\") != ch:\n                    # try name match\n                    ch_data = self.channels.get(m.get(\"channel_id\", \"\"), {})\n                    if ch_data.get(\"name\") != ch:\n                        continue\n            if filter_users_from and m.get(\"user\") != filter_users_from:\n                continue\n            if filter_date_after and m.get(\"ts\", \"\") < filter_date_after:\n                continue\n            if filter_date_before and m.get(\"ts\", \"\") > filter_date_before:\n                continue\n            if filter_threads_only and not m.get(\"thread_ts\"):\n                continue\n            results.append(m)\n\n        start = 0\n        if cursor:\n            try:\n                start = int(cursor)\n            except ValueError:\n                start = 0\n\n        page = results[start:start + limit]\n        next_cursor = str(start + limit) if start + limit < len(results) else \"\"\n        return {\"messages\": page, \"next_cursor\": next_cursor, \"total\": len(results)}\n\n    def conversations_add_message(self, channel_id: str, payload: str, thread_ts: Optional[str] = None, content_type: Optional[str] = None) -> dict:\n        \"\"\"Add a message to a Slack channel or thread.\"\"\"\n        channel_id = channel_id.lstrip(\"#\")\n        resolved_id = channel_id\n        for cid, ch in self.channels.items():\n            if ch.get(\"name\") == channel_id:\n                resolved_id = cid\n                break\n\n        ts = self.current_time.replace(\"T\", \".\").replace(\":\", \"\").replace(\"-\", \"\") + \"000\"\n        msg = {\"type\": \"message\", \"user\": \"bot\", \"text\": payload, \"ts\": ts}\n        if thread_ts:\n            msg[\"thread_ts\"] = thread_ts\n            if thread_ts not in self.threads:\n                self.threads[thread_ts] = []\n            self.threads[thread_ts].append(msg)\n        else:\n            if resolved_id not in self.messages:\n                self.messages[resolved_id] = []\n            self.messages[resolved_id].append(msg)\n\n        return {\"ok\": True, \"channel\": resolved_id, \"ts\": ts, \"message\": msg}\n\n\n# Section 3: MCP Tools\n\nmcp = FastMCP(name=\"SlackServer\")\napi = SlackAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Slack API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching SlackScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Slack state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef channels_list(channel_types: str, sort: Optional[str] = None, limit: int = 100, cursor: Optional[str] = None) -> dict:\n    \"\"\"\n    List Slack conversations such as public channels, private channels, DMs, and group DMs.\n\n    Args:\n        channel_types (str): Comma-separated channel types such as \"public_channel,private_channel,im\".\n        sort (str): [Optional] Sort mode such as \"popularity\".\n        limit (int): [Optional] Maximum number of channels to return (default 100).\n        cursor (str): [Optional] Pagination cursor from a previous response.\n\n    Returns:\n        channels (list): List of channel objects.\n        next_cursor (str): Cursor for the next page of results.\n    \"\"\"\n    try:\n        if not channel_types or not isinstance(channel_types, str):\n            raise ValueError(\"channel_types must be a non-empty string\")\n        return api.channels_list(channel_types, sort, limit, cursor)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef conversations_history(channel_id: str, limit: Optional[str] = None, cursor: Optional[str] = None, include_activity_messages: bool = False) -> dict:\n    \"\"\"\n    Fetch messages from a Slack channel, DM, or group DM.\n\n    Args:\n        channel_id (str): Channel ID or name such as \"C1234567890\" or \"#general\".\n        limit (str): [Optional] Time window or message count such as \"1d\", \"30d\", \"90d\", or \"50\".\n        cursor (str): [Optional] Pagination cursor from a previous response.\n        include_activity_messages (bool): [Optional] Include channel join/leave and other activity messages.\n\n    Returns:\n        messages (list): List of message objects.\n        next_cursor (str): Cursor for the next page of results.\n    \"\"\"\n    try:\n        if not channel_id or not isinstance(channel_id, str):\n            raise ValueError(\"channel_id must be a non-empty string\")\n        return api.conversations_history(channel_id, limit, cursor, include_activity_messages)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef conversations_replies(channel_id: str, thread_ts: str, limit: Optional[str] = None, cursor: Optional[str] = None, include_activity_messages: bool = False) -> dict:\n    \"\"\"\n    Fetch replies in a Slack message thread.\n\n    Args:\n        channel_id (str): Channel ID or name containing the thread.\n        thread_ts (str): Timestamp of the parent message or a message in the thread.\n        limit (str): [Optional] Time window or message count.\n        cursor (str): [Optional] Pagination cursor from a previous response.\n        include_activity_messages (bool): [Optional] Include channel activity messages.\n\n    Returns:\n        messages (list): List of message objects in the thread.\n        next_cursor (str): Cursor for the next page of results.\n        thread_ts (str): The timestamp of the parent message in the thread.\n    \"\"\"\n    try:\n        if not channel_id or not isinstance(channel_id, str):\n            raise ValueError(\"channel_id must be a non-empty string\")\n        if not thread_ts or not isinstance(thread_ts, str):\n            raise ValueError(\"thread_ts must be a non-empty string\")\n        if thread_ts not in api.threads:\n            raise ValueError(f\"Thread {thread_ts} not found\")\n        return api.conversations_replies(channel_id, thread_ts, limit, cursor, include_activity_messages)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef conversations_search_messages(search_query: Optional[str] = None, filter_in_channel: Optional[str] = None,\n                                   filter_users_from: Optional[str] = None, filter_date_after: Optional[str] = None,\n                                   filter_date_before: Optional[str] = None, filter_threads_only: bool = False,\n                                   limit: int = 20, cursor: Optional[str] = None) -> dict:\n    \"\"\"\n    Search Slack messages across channels, DMs, and threads.\n\n    Args:\n        search_query (str): [Optional] Text query or Slack message URL.\n        filter_in_channel (str): [Optional] Channel ID or name to restrict the search.\n        filter_users_from (str): [Optional] User ID or display name of message sender.\n        filter_date_after (str): [Optional] Earliest message date in YYYY-MM-DD format.\n        filter_date_before (str): [Optional] Latest message date in YYYY-MM-DD format.\n        filter_threads_only (bool): [Optional] Return only messages that are part of threads.\n        limit (int): [Optional] Maximum number of matching messages.\n        cursor (str): [Optional] Pagination cursor from a previous response.\n\n    Returns:\n        messages (list): List of matching message objects.\n        next_cursor (str): Cursor for the next page of results.\n        total (int): Total number of matching messages.\n    \"\"\"\n    try:\n        return api.conversations_search_messages(search_query, filter_in_channel, filter_users_from,\n                                                  filter_date_after, filter_date_before, filter_threads_only,\n                                                  limit, cursor)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef conversations_add_message(channel_id: str, payload: str, thread_ts: Optional[str] = None, content_type: Optional[str] = None) -> dict:\n    \"\"\"\n    Add a message to a Slack channel, DM, or thread.\n\n    Args:\n        channel_id (str): Channel ID or name where the message should be posted.\n        payload (str): Message content.\n        thread_ts (str): [Optional] Thread timestamp for a reply.\n        content_type (str): [Optional] Payload content type such as \"text/markdown\" or \"text/plain\".\n\n    Returns:\n        ok (bool): True if the message was posted successfully.\n        channel (str): The unique identifier of the channel where the message was posted.\n        ts (str): The timestamp of the posted message.\n        message (dict): The full message object that was posted.\n    \"\"\"\n    try:\n        if not channel_id or not isinstance(channel_id, str):\n            raise ValueError(\"channel_id must be a non-empty string\")\n        if not payload or not isinstance(payload, str):\n            raise ValueError(\"payload must be a non-empty string\")\n        return api.conversations_add_message(channel_id, payload, thread_ts, content_type)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-04-17T10:14:01.140607",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Single public channel with one message - tests basic channel and message retrieval",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "channels": {
+          "C001": {
+            "id": "C001",
+            "name": "general",
+            "is_channel": true,
+            "is_private": false,
+            "is_im": false,
+            "num_members": 5,
+            "topic": "General discussion"
+          }
+        },
+        "messages": {
+          "C001": [
+            {
+              "type": "message",
+              "user": "U001",
+              "text": "Hello, world!",
+              "ts": "1713312732.000100",
+              "thread_ts": null,
+              "reactions": [],
+              "channel_id": "C001"
+            }
+          ]
+        },
+        "threads": {},
+        "current_time": "2026-04-17T02:12:12"
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple channels including a DM and private channel, messages with reactions and a thread",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "channels": {
+          "C001": {
+            "id": "C001",
+            "name": "engineering",
+            "is_channel": true,
+            "is_private": false,
+            "is_im": false,
+            "num_members": 12,
+            "topic": "Engineering team discussions"
+          },
+          "C002": {
+            "id": "C002",
+            "name": "secret-project",
+            "is_channel": true,
+            "is_private": true,
+            "is_im": false,
+            "num_members": 3,
+            "topic": "Confidential project work"
+          },
+          "D001": {
+            "id": "D001",
+            "name": "",
+            "is_channel": false,
+            "is_private": true,
+            "is_im": true,
+            "num_members": 2,
+            "topic": ""
+          }
+        },
+        "messages": {
+          "C001": [
+            {
+              "type": "message",
+              "user": "U001",
+              "text": "Deployed the new feature to staging",
+              "ts": "1713312600.000100",
+              "thread_ts": null,
+              "reactions": [
+                {
+                  "name": "rocket",
+                  "count": 3,
+                  "users": [
+                    "U002",
+                    "U003",
+                    "U004"
+                  ]
+                }
+              ],
+              "channel_id": "C001"
+            },
+            {
+              "type": "message",
+              "user": "U002",
+              "text": "Can someone review my PR?",
+              "ts": "1713312700.000200",
+              "thread_ts": "1713312700.000200",
+              "reactions": [],
+              "channel_id": "C001"
+            }
+          ],
+          "D001": [
+            {
+              "type": "message",
+              "user": "U003",
+              "text": "Hey, are you free for a quick call?",
+              "ts": "1713312650.000300",
+              "thread_ts": null,
+              "reactions": [],
+              "channel_id": "D001"
+            }
+          ]
+        },
+        "threads": {
+          "1713312700.000200": [
+            {
+              "type": "message",
+              "user": "U003",
+              "text": "I'll take a look!",
+              "ts": "1713312750.000400",
+              "thread_ts": "1713312700.000200",
+              "reactions": [],
+              "channel_id": "C001"
+            }
+          ]
+        },
+        "current_time": "2026-04-17T02:12:12"
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich workspace with multiple channels, threaded conversations, reactions, and cross-channel activity",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "channels": {
+          "C001": {
+            "id": "C001",
+            "name": "general",
+            "is_channel": true,
+            "is_private": false,
+            "is_im": false,
+            "num_members": 50,
+            "topic": "Company-wide announcements"
+          },
+          "C002": {
+            "id": "C002",
+            "name": "engineering",
+            "is_channel": true,
+            "is_private": false,
+            "is_im": false,
+            "num_members": 15,
+            "topic": "Engineering discussions and code reviews"
+          },
+          "C003": {
+            "id": "C003",
+            "name": "random",
+            "is_channel": true,
+            "is_private": false,
+            "is_im": false,
+            "num_members": 48,
+            "topic": "Off-topic fun"
+          },
+          "C004": {
+            "id": "C004",
+            "name": "leadership",
+            "is_channel": true,
+            "is_private": true,
+            "is_im": false,
+            "num_members": 5,
+            "topic": "Leadership sync"
+          },
+          "D001": {
+            "id": "D001",
+            "name": "",
+            "is_channel": false,
+            "is_private": true,
+            "is_im": true,
+            "num_members": 2,
+            "topic": ""
+          }
+        },
+        "messages": {
+          "C001": [
+            {
+              "type": "message",
+              "user": "U010",
+              "text": "Welcome to Q2! Big things ahead for the team.",
+              "ts": "1713312000.000100",
+              "thread_ts": "1713312000.000100",
+              "reactions": [
+                {
+                  "name": "tada",
+                  "count": 10,
+                  "users": [
+                    "U001",
+                    "U002",
+                    "U003",
+                    "U004",
+                    "U005"
+                  ]
+                }
+              ],
+              "channel_id": "C001"
+            },
+            {
+              "type": "message",
+              "user": "U001",
+              "text": "Reminder: all-hands meeting tomorrow at 10am",
+              "ts": "1713312200.000200",
+              "thread_ts": null,
+              "reactions": [
+                {
+                  "name": "white_check_mark",
+                  "count": 5,
+                  "users": [
+                    "U002",
+                    "U003",
+                    "U004",
+                    "U005",
+                    "U006"
+                  ]
+                }
+              ],
+              "channel_id": "C001"
+            }
+          ],
+          "C002": [
+            {
+              "type": "message",
+              "user": "U002",
+              "text": "PR #142 is ready for review: https://github.com/org/repo/pull/142",
+              "ts": "1713312300.000300",
+              "thread_ts": "1713312300.000300",
+              "reactions": [],
+              "channel_id": "C002"
+            },
+            {
+              "type": "message",
+              "user": "U003",
+              "text": "Build is failing on main, investigating now",
+              "ts": "1713312400.000400",
+              "thread_ts": null,
+              "reactions": [
+                {
+                  "name": "eyes",
+                  "count": 4,
+                  "users": [
+                    "U001",
+                    "U002",
+                    "U004",
+                    "U005"
+                  ]
+                }
+              ],
+              "channel_id": "C002"
+            }
+          ],
+          "C003": [
+            {
+              "type": "message",
+              "user": "U005",
+              "text": "Anyone else watching the game tonight?",
+              "ts": "1713312500.000500",
+              "thread_ts": null,
+              "reactions": [
+                {
+                  "name": "+1",
+                  "count": 3,
+                  "users": [
+                    "U006",
+                    "U007",
+                    "U008"
+                  ]
+                }
+              ],
+              "channel_id": "C003"
+            }
+          ],
+          "D001": [
+            {
+              "type": "message",
+              "user": "U001",
+              "text": "Can we sync about the roadmap before the meeting?",
+              "ts": "1713312550.000600",
+              "thread_ts": null,
+              "reactions": [],
+              "channel_id": "D001"
+            },
+            {
+              "type": "message",
+              "user": "U010",
+              "text": "Sure, 9am works for me",
+              "ts": "1713312580.000700",
+              "thread_ts": null,
+              "reactions": [],
+              "channel_id": "D001"
+            }
+          ]
+        },
+        "threads": {
+          "1713312000.000100": [
+            {
+              "type": "message",
+              "user": "U002",
+              "text": "Excited for what's coming!",
+              "ts": "1713312050.000800",
+              "thread_ts": "1713312000.000100",
+              "reactions": [],
+              "channel_id": "C001"
+            },
+            {
+              "type": "message",
+              "user": "U003",
+              "text": "Let's crush it this quarter 💪",
+              "ts": "1713312080.000900",
+              "thread_ts": "1713312000.000100",
+              "reactions": [
+                {
+                  "name": "muscle",
+                  "count": 2,
+                  "users": [
+                    "U004",
+                    "U005"
+                  ]
+                }
+              ],
+              "channel_id": "C001"
+            }
+          ],
+          "1713312300.000300": [
+            {
+              "type": "message",
+              "user": "U004",
+              "text": "Left some comments, looks good overall",
+              "ts": "1713312360.001000",
+              "thread_ts": "1713312300.000300",
+              "reactions": [
+                {
+                  "name": "thanks",
+                  "count": 1,
+                  "users": [
+                    "U002"
+                  ]
+                }
+              ],
+              "channel_id": "C002"
+            }
+          ]
+        },
+        "current_time": "2026-04-17T02:12:12"
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty workspace with no channels, messages, or threads - tests tool behavior with minimal/empty state",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "channels": {},
+        "messages": {},
+        "threads": {},
+        "current_time": "2026-04-17T02:12:12"
+      }
+    }
+  ],
+  "validation_results": {},
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": false,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/SlackServer.py"
+  }
+}

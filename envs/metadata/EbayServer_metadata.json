@@ -1,0 +1,365 @@
+{
+  "class_name": "EbayServer",
+  "description": "eCommerce server providing access to eBay marketplace operations including item search, listing management, seller operations, and order processing.",
+  "tools": [
+    {
+      "name": "search_items",
+      "description": "Search for items on the eBay marketplace using keywords and optional filters.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "keywords": {
+            "type": "string",
+            "description": "Search query terms used to find items on the eBay marketplace."
+          },
+          "category_id": {
+            "type": "string",
+            "description": "The eBay category ID used to classify items into specific product taxonomies."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of search results to return (default: 10, maximum: 100)."
+          },
+          "sort": {
+            "type": "string",
+            "description": "Sort order for results (e.g., 'bestMatch', 'price' for ascending price, '-price' for descending price)."
+          }
+        },
+        "required": [
+          "keywords"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "description": "Total number of items matching the search criteria."
+          },
+          "items": {
+            "type": "array",
+            "description": "List of items matching the search query.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "item_id": {
+                  "type": "string",
+                  "description": "The unique identifier of the eBay item listing."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The title of the item listing."
+                },
+                "price": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": "number",
+                      "description": "The numerical monetary amount."
+                    },
+                    "currency": {
+                      "type": "string",
+                      "description": "The ISO 4217 currency code representing the monetary unit (e.g., USD, EUR, GBP)."
+                    }
+                  }
+                },
+                "condition": {
+                  "type": "string",
+                  "description": "The physical condition state of the item (e.g., NEW, USED, REFURBISHED)."
+                },
+                "seller": {
+                  "type": "object",
+                  "properties": {
+                    "username": {
+                      "type": "string",
+                      "description": "The eBay username of the seller."
+                    },
+                    "feedback_score": {
+                      "type": "integer",
+                      "description": "The seller's feedback score rating."
+                    }
+                  }
+                },
+                "listing_url": {
+                  "type": "string",
+                  "description": "The URL to view the item listing on eBay."
+                },
+                "thumbnail": {
+                  "type": "string",
+                  "description": "URL of the item's thumbnail image."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_item_details",
+      "description": "Retrieve comprehensive details for a specific eBay item listing.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "description": "The unique identifier of the eBay item listing."
+          }
+        },
+        "required": [
+          "item_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "description": "The unique identifier of the eBay item listing."
+          },
+          "title": {
+            "type": "string",
+            "description": "The title of the item listing."
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed text description of the item."
+          },
+          "price": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "number",
+                "description": "The numerical monetary amount."
+              },
+              "currency": {
+                "type": "string",
+                "description": "The ISO 4217 currency code representing the monetary unit (e.g., USD, EUR, GBP)."
+              }
+            }
+          },
+          "condition": {
+            "type": "string",
+            "description": "The physical condition state of the item (e.g., NEW, USED, REFURBISHED)."
+          },
+          "seller": {
+            "type": "object",
+            "properties": {
+              "username": {
+                "type": "string",
+                "description": "The eBay username of the seller."
+              },
+              "feedback_score": {
+                "type": "integer",
+                "description": "The seller's feedback score rating."
+              },
+              "feedback_percentage": {
+                "type": "number",
+                "description": "The seller's positive feedback percentage."
+              }
+            }
+          },
+          "images": {
+            "type": "array",
+            "description": "URLs of item images.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "item_specifics": {
+            "type": "object",
+            "description": "Key-value pairs of item attributes and specifications."
+          },
+          "shipping_options": {
+            "type": "array",
+            "description": "Available shipping methods and costs.",
+            "items": {
+              "type": "object"
+            }
+          },
+          "return_policy": {
+            "type": "object",
+            "description": "Details of the seller's return policy."
+          }
+        }
+      }
+    },
+    {
+      "name": "create_listing",
+      "description": "Create a new item listing on eBay for selling products (seller operation).",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the item listing."
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed text description of the item."
+          },
+          "category_id": {
+            "type": "string",
+            "description": "The eBay category ID used to classify items into specific product taxonomies."
+          },
+          "price": {
+            "type": "number",
+            "description": "The numerical monetary amount for the item price."
+          },
+          "currency": {
+            "type": "string",
+            "description": "The ISO 4217 currency code representing the monetary unit (e.g., USD, EUR, GBP)."
+          },
+          "condition": {
+            "type": "string",
+            "description": "The physical condition state of the item (e.g., NEW, USED, REFURBISHED)."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Number of items available for sale."
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "category_id",
+          "price"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "listing_id": {
+            "type": "string",
+            "description": "The unique identifier of the created eBay listing."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the listing (e.g., ACTIVE, PENDING)."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "ISO 8601 timestamp when the listing was created."
+          },
+          "url": {
+            "type": "string",
+            "description": "The URL to view the created listing on eBay."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_order_details",
+      "description": "Retrieve detailed information about a specific eBay order transaction.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "description": "The unique identifier of the eBay order transaction."
+          }
+        },
+        "required": [
+          "order_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "description": "The unique identifier of the eBay order transaction."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current fulfillment status of the order."
+          },
+          "buyer": {
+            "type": "object",
+            "properties": {
+              "username": {
+                "type": "string",
+                "description": "The eBay username of the buyer."
+              },
+              "email": {
+                "type": "string",
+                "description": "Contact email address of the buyer."
+              }
+            }
+          },
+          "items": {
+            "type": "array",
+            "description": "Line items included in the order.",
+            "items": {
+              "type": "object"
+            }
+          },
+          "total": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "number",
+                "description": "The numerical monetary amount."
+              },
+              "currency": {
+                "type": "string",
+                "description": "The ISO 4217 currency code representing the monetary unit (e.g., USD, EUR, GBP)."
+              }
+            }
+          },
+          "shipping_address": {
+            "type": "object",
+            "description": "Delivery address for the order."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "ISO 8601 timestamp when the order was placed."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_categories",
+      "description": "Retrieve the category taxonomy for a specific eBay marketplace.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "marketplace_id": {
+            "type": "string",
+            "description": "The eBay marketplace ID (e.g., 'EBAY_US', 'EBAY_GB') to retrieve categories for."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "description": "List of available categories in the marketplace.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category_id": {
+                  "type": "string",
+                  "description": "The eBay category ID used to classify items into specific product taxonomies."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Display name of the category."
+                },
+                "parent_id": {
+                  "type": "string",
+                  "description": "Category ID of the parent category in the taxonomy hierarchy."
+                },
+                "level": {
+                  "type": "integer",
+                  "description": "Depth level of the category in the taxonomy tree."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

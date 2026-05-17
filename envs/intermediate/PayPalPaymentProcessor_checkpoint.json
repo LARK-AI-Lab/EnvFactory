@@ -1,0 +1,933 @@
+{
+  "metadata": {
+    "class_name": "PayPalPaymentProcessor",
+    "metadata_path": "envs\\metadata\\PayPalPaymentProcessor_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-03-05T20:19:01.428643",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "PayPalPaymentProcessor",
+    "description": "PayPal REST API integration for creating, authorizing, capturing, and managing payment orders.",
+    "tools": [
+      {
+        "name": "create_order",
+        "description": "Create a new PayPal order for payment processing with specified amount and currency.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "amount": {
+              "type": "string",
+              "description": "The total payment amount as a decimal string (e.g., '100.00')."
+            },
+            "currency_code": {
+              "type": "string",
+              "description": "The three-letter ISO 4217 currency code for the payment (e.g., 'USD', 'EUR')."
+            },
+            "intent": {
+              "type": "string",
+              "description": "The payment intent: 'CAPTURE' for immediate payment capture or 'AUTHORIZE' for delayed capture requiring explicit authorization."
+            },
+            "description": {
+              "type": "string",
+              "description": "A human-readable description of the order for reference purposes."
+            },
+            "items": {
+              "type": "array",
+              "description": "Line items included in the order, each containing name, quantity, and unit_amount properties."
+            }
+          },
+          "required": [
+            "amount"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique PayPal order identifier used to reference this order in subsequent operations."
+            },
+            "status": {
+              "type": "string",
+              "description": "The current status of the order (e.g., 'CREATED', 'APPROVED', 'COMPLETED')."
+            },
+            "intent": {
+              "type": "string",
+              "description": "The payment intent: 'CAPTURE' for immediate payment capture or 'AUTHORIZE' for delayed capture requiring explicit authorization."
+            },
+            "amount": {
+              "type": "string",
+              "description": "The total payment amount as a decimal string."
+            },
+            "currency": {
+              "type": "string",
+              "description": "The three-letter ISO 4217 currency code for the payment."
+            },
+            "links": {
+              "type": "array",
+              "description": "HATEOAS links for order-related actions such as approval and capture URLs."
+            }
+          }
+        }
+      },
+      {
+        "name": "capture_order",
+        "description": "Capture payment for an order to complete the transaction and transfer funds.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "description": "The unique PayPal order identifier used to reference this order in subsequent operations."
+            }
+          },
+          "required": [
+            "order_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique PayPal order identifier used to reference this order in subsequent operations."
+            },
+            "status": {
+              "type": "string",
+              "description": "The current status of the order (e.g., 'CREATED', 'APPROVED', 'COMPLETED')."
+            },
+            "capture_id": {
+              "type": "string",
+              "description": "The unique identifier for the payment capture transaction."
+            },
+            "amount": {
+              "type": "string",
+              "description": "The total payment amount as a decimal string."
+            },
+            "currency": {
+              "type": "string",
+              "description": "The three-letter ISO 4217 currency code for the payment."
+            },
+            "payer": {
+              "type": "object",
+              "description": "Information about the payer including email, name, and PayPal account details."
+            }
+          }
+        }
+      },
+      {
+        "name": "authorize_order",
+        "description": "Authorize payment for an order without capturing funds, allowing for delayed capture.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "description": "The unique PayPal order identifier used to reference this order in subsequent operations."
+            }
+          },
+          "required": [
+            "order_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique PayPal order identifier used to reference this order in subsequent operations."
+            },
+            "status": {
+              "type": "string",
+              "description": "The current status of the order (e.g., 'CREATED', 'APPROVED', 'COMPLETED')."
+            },
+            "authorization_id": {
+              "type": "string",
+              "description": "The unique identifier for the payment authorization that can be used to capture funds later."
+            },
+            "amount": {
+              "type": "string",
+              "description": "The total payment amount as a decimal string."
+            },
+            "currency": {
+              "type": "string",
+              "description": "The three-letter ISO 4217 currency code for the payment."
+            },
+            "expiration_time": {
+              "type": "string",
+              "description": "The ISO 8601 timestamp when the authorization expires and can no longer be captured."
+            }
+          }
+        }
+      },
+      {
+        "name": "capture_authorized_payment",
+        "description": "Capture funds from a previously authorized payment, either partially or in full.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "authorization_id": {
+              "type": "string",
+              "description": "The unique identifier for the payment authorization that can be used to capture funds later."
+            },
+            "amount": {
+              "type": "string",
+              "description": "The amount to capture as a decimal string; if omitted, captures the full authorized amount."
+            },
+            "final_capture": {
+              "type": "boolean",
+              "description": "Indicates whether this is the final capture for the authorization; if true, any remaining authorized amount is released."
+            }
+          },
+          "required": [
+            "authorization_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier for the payment capture transaction."
+            },
+            "status": {
+              "type": "string",
+              "description": "The current status of the capture (e.g., 'PENDING', 'COMPLETED', 'DECLINED')."
+            },
+            "amount": {
+              "type": "string",
+              "description": "The total payment amount as a decimal string."
+            },
+            "currency": {
+              "type": "string",
+              "description": "The three-letter ISO 4217 currency code for the payment."
+            },
+            "final_capture": {
+              "type": "boolean",
+              "description": "Indicates whether this is the final capture for the authorization; if true, any remaining authorized amount is released."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_order_details",
+        "description": "Retrieve complete details of an existing PayPal order including status, payer information, and purchase units.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "description": "The unique PayPal order identifier used to reference this order in subsequent operations."
+            }
+          },
+          "required": [
+            "order_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique PayPal order identifier used to reference this order in subsequent operations."
+            },
+            "status": {
+              "type": "string",
+              "description": "The current status of the order (e.g., 'CREATED', 'APPROVED', 'COMPLETED')."
+            },
+            "intent": {
+              "type": "string",
+              "description": "The payment intent: 'CAPTURE' for immediate payment capture or 'AUTHORIZE' for delayed capture requiring explicit authorization."
+            },
+            "purchase_units": {
+              "type": "array",
+              "description": "The items or services being purchased, including amounts, descriptions, and shipping details."
+            },
+            "payer": {
+              "type": "object",
+              "description": "Information about the payer including email, name, and PayPal account details."
+            },
+            "create_time": {
+              "type": "string",
+              "description": "The ISO 8601 timestamp when the order was created."
+            },
+            "update_time": {
+              "type": "string",
+              "description": "The ISO 8601 timestamp when the order was last updated."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass OrderItem(BaseModel):\n    \"\"\"Represents a line item in an order.\"\"\"\n    name: str = Field(..., description=\"Item name\")\n    quantity: int = Field(..., ge=1, description=\"Item quantity\")\n    unit_amount: str = Field(..., pattern=r\"^\\d+\\.\\d{2}$\", description=\"Unit price\")\n\nclass Order(BaseModel):\n    \"\"\"Represents a PayPal order.\"\"\"\n    id: str = Field(..., description=\"Order ID\")\n    status: str = Field(..., description=\"Order status\")\n    intent: str = Field(..., description=\"Payment intent\")\n    amount: str = Field(..., pattern=r\"^\\d+\\.\\d{2}$\", description=\"Total amount\")\n    currency: str = Field(..., pattern=r\"^[A-Z]{3}$\", description=\"Currency code\")\n    description: Optional[str] = Field(default=None, description=\"Order description\")\n    items: List[OrderItem] = Field(default_factory=list, description=\"Order items\")\n    links: List[Dict[str, str]] = Field(default_factory=list, description=\"HATEOAS links\")\n    payer: Optional[Dict[str, Any]] = Field(default=None, description=\"Payer information\")\n    create_time: Optional[str] = Field(default=None, pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z?$\", description=\"Creation timestamp\")\n    update_time: Optional[str] = Field(default=None, pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z?$\", description=\"Update timestamp\")\n\nclass Authorization(BaseModel):\n    \"\"\"Represents a payment authorization.\"\"\"\n    id: str = Field(..., description=\"Authorization ID\")\n    order_id: str = Field(..., description=\"Associated order ID\")\n    amount: str = Field(..., pattern=r\"^\\d+\\.\\d{2}$\", description=\"Authorized amount\")\n    currency: str = Field(..., pattern=r\"^[A-Z]{3}$\", description=\"Currency code\")\n    expiration_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z?$\", description=\"Expiration timestamp\")\n\nclass Capture(BaseModel):\n    \"\"\"Represents a payment capture.\"\"\"\n    id: str = Field(..., description=\"Capture ID\")\n    order_id: Optional[str] = Field(default=None, description=\"Associated order ID\")\n    authorization_id: Optional[str] = Field(default=None, description=\"Associated authorization ID\")\n    status: str = Field(..., description=\"Capture status\")\n    amount: str = Field(..., pattern=r\"^\\d+\\.\\d{2}$\", description=\"Captured amount\")\n    currency: str = Field(..., pattern=r\"^[A-Z]{3}$\", description=\"Currency code\")\n    final_capture: bool = Field(default=False, description=\"Is final capture\")\n\nclass PayPalScenario(BaseModel):\n    \"\"\"Main scenario model for PayPal payment processing.\"\"\"\n    orders: Dict[str, Order] = Field(default_factory=dict, description=\"All orders\")\n    authorizations: Dict[str, Authorization] = Field(default_factory=dict, description=\"All authorizations\")\n    captures: Dict[str, Capture] = Field(default_factory=dict, description=\"All captures\")\n    next_order_id: int = Field(default=1, ge=1, description=\"Next order ID counter\")\n    next_auth_id: int = Field(default=1, ge=1, description=\"Next authorization ID counter\")\n    next_capture_id: int = Field(default=1, ge=1, description=\"Next capture ID counter\")\n    current_time: str = Field(default=\"2026-03-05T12:12:45Z\", pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z?$\", description=\"Current timestamp\")\n\nScenario_Schema = [OrderItem, Order, Authorization, Capture, PayPalScenario]\n\n# Section 2: Class\nclass PayPalPaymentProcessor:\n    def __init__(self):\n        \"\"\"Initialize PayPal payment processor with empty state.\"\"\"\n        self.orders: Dict[str, Order] = {}\n        self.authorizations: Dict[str, Authorization] = {}\n        self.captures: Dict[str, Capture] = {}\n        self.next_order_id: int = 1\n        self.next_auth_id: int = 1\n        self.next_capture_id: int = 1\n        self.current_time: str = \"\"\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the processor instance.\"\"\"\n        model = PayPalScenario(**scenario)\n        self.orders = model.orders\n        self.authorizations = model.authorizations\n        self.captures = model.captures\n        self.next_order_id = model.next_order_id\n        self.next_auth_id = model.next_auth_id\n        self.next_capture_id = model.next_capture_id\n        self.current_time = model.current_time\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"orders\": {oid: order.model_dump() for oid, order in self.orders.items()},\n            \"authorizations\": {aid: auth.model_dump() for aid, auth in self.authorizations.items()},\n            \"captures\": {cid: cap.model_dump() for cid, cap in self.captures.items()},\n            \"next_order_id\": self.next_order_id,\n            \"next_auth_id\": self.next_auth_id,\n            \"next_capture_id\": self.next_capture_id,\n            \"current_time\": self.current_time\n        }\n\n    def create_order(self, amount: str, currency_code: str, intent: str, description: str, items: List[dict]) -> dict:\n        \"\"\"Create a new PayPal order.\"\"\"\n        order_id = f\"ORDER-{self.next_order_id}\"\n        self.next_order_id += 1\n        \n        order_items = [OrderItem(**item) for item in items] if items else []\n        \n        order = Order(\n            id=order_id,\n            status=\"CREATED\",\n            intent=intent,\n            amount=amount,\n            currency=currency_code,\n            description=description,\n            items=order_items,\n            links=[\n                {\"rel\": \"approve\", \"href\": f\"https://www.paypal.com/checkoutnow?token={order_id}\"},\n                {\"rel\": \"self\", \"href\": f\"https://api.paypal.com/v2/checkout/orders/{order_id}\"}\n            ],\n            create_time=self.current_time,\n            update_time=self.current_time\n        )\n        \n        self.orders[order_id] = order\n        \n        return {\n            \"id\": order.id,\n            \"status\": order.status,\n            \"intent\": order.intent,\n            \"amount\": order.amount,\n            \"currency\": order.currency,\n            \"links\": order.links\n        }\n\n    def capture_order(self, order_id: str) -> dict:\n        \"\"\"Capture payment for an order.\"\"\"\n        order = self.orders[order_id]\n        \n        capture_id = f\"CAPTURE-{self.next_capture_id}\"\n        self.next_capture_id += 1\n        \n        capture = Capture(\n            id=capture_id,\n            order_id=order_id,\n            status=\"COMPLETED\",\n            amount=order.amount,\n            currency=order.currency,\n            final_capture=True\n        )\n        \n        self.captures[capture_id] = capture\n        order.status = \"COMPLETED\"\n        order.update_time = self.current_time\n        \n        return {\n            \"id\": order.id,\n            \"status\": order.status,\n            \"capture_id\": capture_id,\n            \"amount\": order.amount,\n            \"currency\": order.currency,\n            \"payer\": order.payer or {}\n        }\n\n    def authorize_order(self, order_id: str) -> dict:\n        \"\"\"Authorize payment for an order.\"\"\"\n        order = self.orders[order_id]\n        \n        auth_id = f\"AUTH-{self.next_auth_id}\"\n        self.next_auth_id += 1\n        \n        authorization = Authorization(\n            id=auth_id,\n            order_id=order_id,\n            amount=order.amount,\n            currency=order.currency,\n            expiration_time=self.current_time\n        )\n        \n        self.authorizations[auth_id] = authorization\n        order.status = \"APPROVED\"\n        order.update_time = self.current_time\n        \n        return {\n            \"id\": order.id,\n            \"status\": order.status,\n            \"authorization_id\": auth_id,\n            \"amount\": order.amount,\n            \"currency\": order.currency,\n            \"expiration_time\": authorization.expiration_time\n        }\n\n    def capture_authorized_payment(self, authorization_id: str, amount: str, final_capture: bool) -> dict:\n        \"\"\"Capture funds from a previously authorized payment.\"\"\"\n        authorization = self.authorizations[authorization_id]\n        \n        capture_id = f\"CAPTURE-{self.next_capture_id}\"\n        self.next_capture_id += 1\n        \n        capture_amount = amount if amount else authorization.amount\n        \n        capture = Capture(\n            id=capture_id,\n            authorization_id=authorization_id,\n            status=\"COMPLETED\",\n            amount=capture_amount,\n            currency=authorization.currency,\n            final_capture=final_capture\n        )\n        \n        self.captures[capture_id] = capture\n        \n        return {\n            \"id\": capture_id,\n            \"status\": capture.status,\n            \"amount\": capture.amount,\n            \"currency\": capture.currency,\n            \"final_capture\": capture.final_capture\n        }\n\n    def get_order_details(self, order_id: str) -> dict:\n        \"\"\"Retrieve complete details of an existing order.\"\"\"\n        order = self.orders[order_id]\n        \n        return {\n            \"id\": order.id,\n            \"status\": order.status,\n            \"intent\": order.intent,\n            \"purchase_units\": [{\"amount\": {\"value\": order.amount, \"currency_code\": order.currency}, \"items\": [item.model_dump() for item in order.items]}],\n            \"payer\": order.payer or {},\n            \"create_time\": order.create_time,\n            \"update_time\": order.update_time\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"PayPalPaymentProcessor\")\napi = PayPalPaymentProcessor()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the PayPal payment processor.\n\n    Args:\n        scenario (dict): Scenario dictionary matching PayPalScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current PayPal payment processor state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef create_order(amount: str, currency_code: str = \"USD\", intent: str = \"CAPTURE\", description: str = \"\", items: list = None) -> dict:\n    \"\"\"\n    Create a new PayPal order for payment processing with specified amount and currency.\n\n    Args:\n        amount (str): The total payment amount as a decimal string (e.g., '100.00').\n        currency_code (str): [Optional] The three-letter ISO 4217 currency code for the payment (e.g., 'USD', 'EUR').\n        intent (str): [Optional] The payment intent: 'CAPTURE' for immediate payment capture or 'AUTHORIZE' for delayed capture requiring explicit authorization.\n        description (str): [Optional] A human-readable description of the order for reference purposes.\n        items (list): [Optional] Line items included in the order, each containing name, quantity, and unit_amount properties.\n\n    Returns:\n        id (str): The unique PayPal order identifier used to reference this order in subsequent operations.\n        status (str): The current status of the order (e.g., 'CREATED', 'APPROVED', 'COMPLETED').\n        intent (str): The payment intent: 'CAPTURE' for immediate payment capture or 'AUTHORIZE' for delayed capture requiring explicit authorization.\n        amount (str): The total payment amount as a decimal string.\n        currency (str): The three-letter ISO 4217 currency code for the payment.\n        links (list): HATEOAS links for order-related actions such as approval and capture URLs.\n    \"\"\"\n    try:\n        if not amount or not isinstance(amount, str):\n            raise ValueError(\"Amount must be a non-empty string\")\n        if items is None:\n            items = []\n        return api.create_order(amount, currency_code, intent, description, items)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef capture_order(order_id: str) -> dict:\n    \"\"\"\n    Capture payment for an order to complete the transaction and transfer funds.\n\n    Args:\n        order_id (str): The unique PayPal order identifier used to reference this order in subsequent operations.\n\n    Returns:\n        id (str): The unique PayPal order identifier used to reference this order in subsequent operations.\n        status (str): The current status of the order (e.g., 'CREATED', 'APPROVED', 'COMPLETED').\n        capture_id (str): The unique identifier for the payment capture transaction.\n        amount (str): The total payment amount as a decimal string.\n        currency (str): The three-letter ISO 4217 currency code for the payment.\n        payer (dict): Information about the payer including email, name, and PayPal account details.\n    \"\"\"\n    try:\n        if not order_id or not isinstance(order_id, str):\n            raise ValueError(\"Order ID must be a non-empty string\")\n        if order_id not in api.orders:\n            raise ValueError(f\"Order {order_id} not found\")\n        return api.capture_order(order_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef authorize_order(order_id: str) -> dict:\n    \"\"\"\n    Authorize payment for an order without capturing funds, allowing for delayed capture.\n\n    Args:\n        order_id (str): The unique PayPal order identifier used to reference this order in subsequent operations.\n\n    Returns:\n        id (str): The unique PayPal order identifier used to reference this order in subsequent operations.\n        status (str): The current status of the order (e.g., 'CREATED', 'APPROVED', 'COMPLETED').\n        authorization_id (str): The unique identifier for the payment authorization that can be used to capture funds later.\n        amount (str): The total payment amount as a decimal string.\n        currency (str): The three-letter ISO 4217 currency code for the payment.\n        expiration_time (str): The ISO 8601 timestamp when the authorization expires and can no longer be captured.\n    \"\"\"\n    try:\n        if not order_id or not isinstance(order_id, str):\n            raise ValueError(\"Order ID must be a non-empty string\")\n        if order_id not in api.orders:\n            raise ValueError(f\"Order {order_id} not found\")\n        return api.authorize_order(order_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef capture_authorized_payment(authorization_id: str, amount: str = None, final_capture: bool = False) -> dict:\n    \"\"\"\n    Capture funds from a previously authorized payment, either partially or in full.\n\n    Args:\n        authorization_id (str): The unique identifier for the payment authorization that can be used to capture funds later.\n        amount (str): [Optional] The amount to capture as a decimal string; if omitted, captures the full authorized amount.\n        final_capture (bool): [Optional] Indicates whether this is the final capture for the authorization; if true, any remaining authorized amount is released.\n\n    Returns:\n        id (str): The unique identifier for the payment capture transaction.\n        status (str): The current status of the capture (e.g., 'PENDING', 'COMPLETED', 'DECLINED').\n        amount (str): The total payment amount as a decimal string.\n        currency (str): The three-letter ISO 4217 currency code for the payment.\n        final_capture (bool): Indicates whether this is the final capture for the authorization; if true, any remaining authorized amount is released.\n    \"\"\"\n    try:\n        if not authorization_id or not isinstance(authorization_id, str):\n            raise ValueError(\"Authorization ID must be a non-empty string\")\n        if authorization_id not in api.authorizations:\n            raise ValueError(f\"Authorization {authorization_id} not found\")\n        return api.capture_authorized_payment(authorization_id, amount, final_capture)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_order_details(order_id: str) -> dict:\n    \"\"\"\n    Retrieve complete details of an existing PayPal order including status, payer information, and purchase units.\n\n    Args:\n        order_id (str): The unique PayPal order identifier used to reference this order in subsequent operations.\n\n    Returns:\n        id (str): The unique PayPal order identifier used to reference this order in subsequent operations.\n        status (str): The current status of the order (e.g., 'CREATED', 'APPROVED', 'COMPLETED').\n        intent (str): The payment intent: 'CAPTURE' for immediate payment capture or 'AUTHORIZE' for delayed capture requiring explicit authorization.\n        purchase_units (list): The items or services being purchased, including amounts, descriptions, and shipping details.\n        payer (dict): Information about the payer including email, name, and PayPal account details.\n        create_time (str): The ISO 8601 timestamp when the order was created.\n        update_time (str): The ISO 8601 timestamp when the order was last updated.\n    \"\"\"\n    try:\n        if not order_id or not isinstance(order_id, str):\n            raise ValueError(\"Order ID must be a non-empty string\")\n        if order_id not in api.orders:\n            raise ValueError(f\"Order {order_id} not found\")\n        return api.get_order_details(order_id)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-03-05T20:19:01.428643",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Single completed order with one item - tests basic order creation and capture flow",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "orders": {
+          "ORD-001": {
+            "id": "ORD-001",
+            "status": "COMPLETED",
+            "intent": "CAPTURE",
+            "amount": "25.00",
+            "currency": "USD",
+            "description": "Coffee purchase",
+            "items": [
+              {
+                "name": "Espresso",
+                "quantity": 1,
+                "unit_amount": "25.00"
+              }
+            ],
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://api.paypal.com/v2/checkout/orders/ORD-001"
+              }
+            ],
+            "payer": {
+              "email_address": "buyer@example.com"
+            },
+            "create_time": "2026-03-05T10:00:00Z",
+            "update_time": "2026-03-05T10:05:00Z"
+          }
+        },
+        "authorizations": {},
+        "captures": {
+          "CAP-001": {
+            "id": "CAP-001",
+            "order_id": "ORD-001",
+            "status": "COMPLETED",
+            "amount": "25.00",
+            "currency": "USD",
+            "final_capture": true
+          }
+        },
+        "next_order_id": 2,
+        "next_auth_id": 1,
+        "next_capture_id": 2,
+        "current_time": "2026-03-05T12:12:45Z"
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple orders with authorization flow - tests authorize-then-capture pattern with partial captures",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "orders": {
+          "ORD-101": {
+            "id": "ORD-101",
+            "status": "APPROVED",
+            "intent": "AUTHORIZE",
+            "amount": "150.00",
+            "currency": "EUR",
+            "description": "Electronics order",
+            "items": [
+              {
+                "name": "Wireless Mouse",
+                "quantity": 2,
+                "unit_amount": "50.00"
+              },
+              {
+                "name": "USB Cable",
+                "quantity": 1,
+                "unit_amount": "50.00"
+              }
+            ],
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://api.paypal.com/v2/checkout/orders/ORD-101"
+              }
+            ],
+            "create_time": "2026-03-04T14:30:00Z",
+            "update_time": "2026-03-04T14:35:00Z"
+          },
+          "ORD-102": {
+            "id": "ORD-102",
+            "status": "CREATED",
+            "intent": "CAPTURE",
+            "amount": "75.50",
+            "currency": "GBP",
+            "items": [],
+            "links": [],
+            "create_time": "2026-03-05T09:00:00Z"
+          }
+        },
+        "authorizations": {
+          "AUTH-101": {
+            "id": "AUTH-101",
+            "order_id": "ORD-101",
+            "amount": "150.00",
+            "currency": "EUR",
+            "expiration_time": "2026-03-11T14:35:00Z"
+          }
+        },
+        "captures": {
+          "CAP-201": {
+            "id": "CAP-201",
+            "authorization_id": "AUTH-101",
+            "status": "COMPLETED",
+            "amount": "100.00",
+            "currency": "EUR",
+            "final_capture": false
+          }
+        },
+        "next_order_id": 103,
+        "next_auth_id": 102,
+        "next_capture_id": 202,
+        "current_time": "2026-03-05T12:12:45Z"
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Multi-order scenario with various statuses and payment flows - tests complete payment lifecycle",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "orders": {
+          "ORD-501": {
+            "id": "ORD-501",
+            "status": "COMPLETED",
+            "intent": "CAPTURE",
+            "amount": "299.99",
+            "currency": "USD",
+            "description": "Subscription renewal",
+            "items": [
+              {
+                "name": "Premium Plan",
+                "quantity": 1,
+                "unit_amount": "249.99"
+              },
+              {
+                "name": "Tax",
+                "quantity": 1,
+                "unit_amount": "50.00"
+              }
+            ],
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://api.paypal.com/v2/checkout/orders/ORD-501"
+              }
+            ],
+            "payer": {
+              "email_address": "premium@example.com",
+              "payer_id": "PAYER123"
+            },
+            "create_time": "2026-03-01T08:00:00Z",
+            "update_time": "2026-03-01T08:10:00Z"
+          },
+          "ORD-502": {
+            "id": "ORD-502",
+            "status": "APPROVED",
+            "intent": "AUTHORIZE",
+            "amount": "1250.00",
+            "currency": "USD",
+            "description": "Large equipment order",
+            "items": [
+              {
+                "name": "Server Rack",
+                "quantity": 1,
+                "unit_amount": "1000.00"
+              },
+              {
+                "name": "Shipping",
+                "quantity": 1,
+                "unit_amount": "250.00"
+              }
+            ],
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://api.paypal.com/v2/checkout/orders/ORD-502"
+              },
+              {
+                "rel": "authorize",
+                "href": "https://api.paypal.com/v2/checkout/orders/ORD-502/authorize"
+              }
+            ],
+            "payer": {
+              "email_address": "business@example.com"
+            },
+            "create_time": "2026-03-03T11:20:00Z",
+            "update_time": "2026-03-03T11:25:00Z"
+          },
+          "ORD-503": {
+            "id": "ORD-503",
+            "status": "VOIDED",
+            "intent": "CAPTURE",
+            "amount": "45.00",
+            "currency": "CAD",
+            "description": "Cancelled order",
+            "items": [
+              {
+                "name": "Book",
+                "quantity": 3,
+                "unit_amount": "15.00"
+              }
+            ],
+            "links": [],
+            "create_time": "2026-03-02T16:45:00Z",
+            "update_time": "2026-03-02T17:00:00Z"
+          }
+        },
+        "authorizations": {
+          "AUTH-501": {
+            "id": "AUTH-501",
+            "order_id": "ORD-502",
+            "amount": "1250.00",
+            "currency": "USD",
+            "expiration_time": "2026-03-10T11:25:00Z"
+          }
+        },
+        "captures": {
+          "CAP-501": {
+            "id": "CAP-501",
+            "order_id": "ORD-501",
+            "status": "COMPLETED",
+            "amount": "299.99",
+            "currency": "USD",
+            "final_capture": true
+          },
+          "CAP-502": {
+            "id": "CAP-502",
+            "authorization_id": "AUTH-501",
+            "status": "COMPLETED",
+            "amount": "625.00",
+            "currency": "USD",
+            "final_capture": false
+          },
+          "CAP-503": {
+            "id": "CAP-503",
+            "authorization_id": "AUTH-501",
+            "status": "PENDING",
+            "amount": "625.00",
+            "currency": "USD",
+            "final_capture": true
+          }
+        },
+        "next_order_id": 504,
+        "next_auth_id": 502,
+        "next_capture_id": 504,
+        "current_time": "2026-03-05T12:12:45Z"
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty state with minimal counters - tests system with no transactions",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "orders": {},
+        "authorizations": {},
+        "captures": {},
+        "next_order_id": 1,
+        "next_auth_id": 1,
+        "next_capture_id": 1,
+        "current_time": "2026-03-05T12:12:45Z"
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "create_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "capture_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "authorize_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "capture_authorized_payment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "create_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "authorize_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "capture_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "capture_authorized_payment",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "create_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "authorize_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "capture_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "capture_authorized_payment",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "create_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "capture_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "authorize_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "capture_authorized_payment",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "create_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "capture_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "authorize_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "capture_authorized_payment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "create_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "authorize_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "capture_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "capture_authorized_payment",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "create_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "authorize_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "capture_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "capture_authorized_payment",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "create_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "capture_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "authorize_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "capture_authorized_payment",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/PayPalPaymentProcessor.py"
+  }
+}

@@ -1,0 +1,3764 @@
+{
+  "metadata": {
+    "class_name": "Canvas",
+    "metadata_path": "envs\\metadata\\Canvas_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-04T02:06:00.558433",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "Canvas",
+    "description": "A server for interacting with the Canvas Learning Management System, providing access to courses, modules, assignments, files, and student enrollment data.",
+    "tools": [
+      {
+        "name": "get_courses",
+        "description": "Retrieve all available Canvas courses for the current authenticated user.",
+        "input_schema": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "courses": {
+              "type": "object",
+              "description": "Dictionary mapping course names to their corresponding Canvas course identifiers.",
+              "additionalProperties": {
+                "type": "string",
+                "description": "The unique Canvas course identifier."
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_modules",
+        "description": "Retrieve all modules within a specific Canvas course.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "course_id": {
+              "type": "string",
+              "description": "The unique identifier of the Canvas course."
+            }
+          },
+          "required": [
+            "course_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "modules": {
+              "type": "array",
+              "description": "List of modules within the specified course.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "module_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the module within the course."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The display name of the module."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "The current status of the module (e.g., locked, unlocked, completed)."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_module_items",
+        "description": "Retrieve all items within a specific module in a Canvas course.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "course_id": {
+              "type": "string",
+              "description": "The unique identifier of the Canvas course."
+            },
+            "module_id": {
+              "type": "string",
+              "description": "The unique identifier of the module within the course."
+            }
+          },
+          "required": [
+            "course_id",
+            "module_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "description": "List of items contained within the specified module.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "item_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the module item."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The display title of the module item."
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "The type of content (e.g., File, Page, Assignment, Quiz, ExternalUrl)."
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "The URL to access or view the module item."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_file_url",
+        "description": "Get the direct download URL for a file stored in Canvas.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "file_id": {
+              "type": "string",
+              "description": "The unique identifier of the file in Canvas."
+            },
+            "course_id": {
+              "type": "string",
+              "description": "The unique identifier of the Canvas course."
+            }
+          },
+          "required": [
+            "file_id",
+            "course_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "download_url": {
+              "type": "string",
+              "description": "The direct download URL for accessing the file."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_course_assignments",
+        "description": "Retrieve all assignments for a specific Canvas course, with optional filtering by submission status.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "course_id": {
+              "type": "string",
+              "description": "The unique identifier of the Canvas course."
+            },
+            "bucket": {
+              "type": "string",
+              "description": "Optional filter for assignment status. Valid values: past, overdue, undated, ungraded, unsubmitted, upcoming, future."
+            }
+          },
+          "required": [
+            "course_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "assignments": {
+              "type": "array",
+              "description": "List of assignments matching the specified criteria.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "assignment_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the assignment."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The display name of the assignment."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "The detailed description or instructions for the assignment."
+                  },
+                  "due_date": {
+                    "type": "string",
+                    "description": "The due date and time for the assignment in ISO 8601 format."
+                  },
+                  "submission_status": {
+                    "type": "string",
+                    "description": "The current submission status (e.g., submitted, not_submitted, graded)."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_assignments_by_course_name",
+        "description": "Retrieve all assignments for a Canvas course using its name rather than ID, supporting partial name matches.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "course_name": {
+              "type": "string",
+              "description": "The name of the course as it appears in Canvas. Partial matches are supported."
+            },
+            "bucket": {
+              "type": "string",
+              "description": "Optional filter for assignment status. Valid values: past, overdue, undated, ungraded, unsubmitted, upcoming, future."
+            }
+          },
+          "required": [
+            "course_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "assignments": {
+              "type": "array",
+              "description": "List of assignments matching the specified criteria.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "assignment_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the assignment."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The display name of the assignment."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "The detailed description or instructions for the assignment."
+                  },
+                  "due_date": {
+                    "type": "string",
+                    "description": "The due date and time for the assignment in ISO 8601 format."
+                  },
+                  "submission_status": {
+                    "type": "string",
+                    "description": "The current submission status (e.g., submitted, not_submitted, graded)."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_students_in_course",
+        "description": "Retrieve all students enrolled in a specific Canvas course.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "course_id": {
+              "type": "string",
+              "description": "The unique identifier of the Canvas course."
+            }
+          },
+          "required": [
+            "course_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "students": {
+              "type": "array",
+              "description": "List of students enrolled in the specified course.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "student_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the student in Canvas."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The full name of the student."
+                  },
+                  "email": {
+                    "type": "string",
+                    "description": "The email address associated with the student's Canvas account."
+                  },
+                  "enrollment_status": {
+                    "type": "string",
+                    "description": "The current enrollment status (e.g., active, invited, inactive)."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_submission_status",
+        "description": "Retrieve submission status and grading details for a specific assignment in a Canvas course, optionally filtered by student.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "course_id": {
+              "type": "string",
+              "description": "The unique identifier of the Canvas course."
+            },
+            "assignment_id": {
+              "type": "string",
+              "description": "The unique identifier of the assignment."
+            },
+            "student_id": {
+              "type": "string",
+              "description": "The unique identifier of the student in Canvas. If not provided, returns submission status for all students."
+            }
+          },
+          "required": [
+            "course_id",
+            "assignment_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "submissions": {
+              "type": "object",
+              "description": "Dictionary mapping student IDs to their submission details. If a specific student_id was provided, contains only that student's submission.",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "student_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the student in Canvas."
+                  },
+                  "student_name": {
+                    "type": "string",
+                    "description": "The full name of the student."
+                  },
+                  "submitted_at": {
+                    "type": "string",
+                    "description": "The timestamp when the submission was made in ISO 8601 format."
+                  },
+                  "submission_status": {
+                    "type": "string",
+                    "description": "The current submission status (e.g., submitted, not_submitted, late)."
+                  },
+                  "score": {
+                    "type": "number",
+                    "description": "The numerical score awarded for the submission."
+                  },
+                  "graded_at": {
+                    "type": "string",
+                    "description": "The timestamp when the submission was graded in ISO 8601 format."
+                  },
+                  "workflow_state": {
+                    "type": "string",
+                    "description": "The workflow state of the submission (e.g., pending_review, graded, submitted)."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Course(BaseModel):\n    \"\"\"Represents a Canvas course.\"\"\"\n    id: str = Field(..., description=\"Unique Canvas course identifier\")\n    name: str = Field(..., description=\"Course display name\")\n\nclass Module(BaseModel):\n    \"\"\"Represents a Canvas module.\"\"\"\n    module_id: str = Field(..., description=\"Unique module identifier within course\")\n    name: str = Field(..., description=\"Module display name\")\n    status: str = Field(..., description=\"Current module status (locked, unlocked, completed)\")\n\nclass ModuleItem(BaseModel):\n    \"\"\"Represents an item within a Canvas module.\"\"\"\n    item_id: str = Field(..., description=\"Unique module item identifier\")\n    title: str = Field(..., description=\"Item display title\")\n    type: str = Field(..., description=\"Type of content (File, Page, Assignment, Quiz, ExternalUrl)\")\n    url: str = Field(..., description=\"URL to access the module item\")\n\nclass Assignment(BaseModel):\n    \"\"\"Represents a Canvas assignment.\"\"\"\n    assignment_id: str = Field(..., description=\"Unique assignment identifier\")\n    name: str = Field(..., description=\"Assignment display name\")\n    description: str = Field(default=\"\", description=\"Detailed assignment description\")\n    due_date: str = Field(default=\"\", description=\"Due date in ISO 8601 format\")\n    submission_status: str = Field(default=\"not_submitted\", description=\"Current submission status\")\n\nclass Student(BaseModel):\n    \"\"\"Represents a student enrolled in a course.\"\"\"\n    student_id: str = Field(..., description=\"Unique student identifier in Canvas\")\n    name: str = Field(..., description=\"Student full name\")\n    email: str = Field(..., description=\"Student email address\")\n    enrollment_status: str = Field(..., description=\"Enrollment status (active, invited, inactive)\")\n\nclass Submission(BaseModel):\n    \"\"\"Represents a submission for an assignment.\"\"\"\n    student_id: str = Field(..., description=\"Student identifier\")\n    student_name: str = Field(..., description=\"Student full name\")\n    submitted_at: str = Field(default=\"\", description=\"Submission timestamp in ISO 8601 format\")\n    submission_status: str = Field(default=\"not_submitted\", description=\"Submission status\")\n    score: float = Field(default=0.0, ge=0, description=\"Numerical score awarded\")\n    graded_at: str = Field(default=\"\", description=\"Grading timestamp in ISO 8601 format\")\n    workflow_state: str = Field(default=\"unsubmitted\", description=\"Workflow state of submission\")\n\nclass CanvasScenario(BaseModel):\n    \"\"\"Main scenario model for Canvas LMS data.\"\"\"\n    courses: Dict[str, Course] = Field(default={}, description=\"Dictionary mapping course IDs to Course objects\")\n    course_name_map: Dict[str, str] = Field(default={}, description=\"Dictionary mapping course names to course IDs\")\n    modules: Dict[str, List[Module]] = Field(default={}, description=\"Dictionary mapping course IDs to lists of modules\")\n    module_items: Dict[str, List[ModuleItem]] = Field(default={}, description=\"Dictionary mapping module IDs to lists of items\")\n    assignments: Dict[str, List[Assignment]] = Field(default={}, description=\"Dictionary mapping course IDs to lists of assignments\")\n    students: Dict[str, List[Student]] = Field(default={}, description=\"Dictionary mapping course IDs to lists of students\")\n    submissions: Dict[str, Dict[str, Submission]] = Field(default={}, description=\"Dictionary mapping assignment IDs to student submissions\")\n    files: Dict[str, Dict[str, str]] = Field(default={}, description=\"Dictionary mapping course IDs to file download URLs by file ID\")\n\nScenario_Schema = [Course, Module, ModuleItem, Assignment, Student, Submission, CanvasScenario]\n\n# Section 2: Class\nclass CanvasAPI:\n    def __init__(self):\n        \"\"\"Initialize Canvas API with empty state.\"\"\"\n        self.courses: Dict[str, Course] = {}\n        self.course_name_map: Dict[str, str] = {}\n        self.modules: Dict[str, List[Module]] = {}\n        self.module_items: Dict[str, List[ModuleItem]] = {}\n        self.assignments: Dict[str, List[Assignment]] = {}\n        self.students: Dict[str, List[Student]] = {}\n        self.submissions: Dict[str, Dict[str, Submission]] = {}\n        self.files: Dict[str, Dict[str, str]] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = CanvasScenario(**scenario)\n        self.courses = model.courses\n        self.course_name_map = model.course_name_map\n        self.modules = model.modules\n        self.module_items = model.module_items\n        self.assignments = model.assignments\n        self.students = model.students\n        self.submissions = model.submissions\n        self.files = model.files\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"courses\": {k: v.dict() for k, v in self.courses.items()},\n            \"course_name_map\": self.course_name_map,\n            \"modules\": {k: [m.dict() for m in v] for k, v in self.modules.items()},\n            \"module_items\": {k: [i.dict() for i in v] for k, v in self.module_items.items()},\n            \"assignments\": {k: [a.dict() for a in v] for k, v in self.assignments.items()},\n            \"students\": {k: [s.dict() for s in v] for k, v in self.students.items()},\n            \"submissions\": {k: {s_id: s.dict() for s_id, s in v.items()} for k, v in self.submissions.items()},\n            \"files\": self.files\n        }\n\n    def get_courses(self) -> dict:\n        \"\"\"Retrieve all available Canvas courses.\"\"\"\n        return {\"courses\": {course.name: course.id for course in self.courses.values()}}\n\n    def get_modules(self, course_id: str) -> dict:\n        \"\"\"Retrieve all modules within a specific Canvas course.\"\"\"\n        modules = self.modules.get(course_id, [])\n        return {\"modules\": [m.dict() for m in modules]}\n\n    def get_module_items(self, course_id: str, module_id: str) -> dict:\n        \"\"\"Retrieve all items within a specific module in a Canvas course.\"\"\"\n        items = self.module_items.get(module_id, [])\n        return {\"items\": [i.dict() for i in items]}\n\n    def get_file_url(self, file_id: str, course_id: str) -> dict:\n        \"\"\"Get the direct download URL for a file stored in Canvas.\"\"\"\n        course_files = self.files.get(course_id, {})\n        url = course_files.get(file_id, \"\")\n        return {\"download_url\": url}\n\n    def get_course_assignments(self, course_id: str, bucket: Optional[str] = None) -> dict:\n        \"\"\"Retrieve all assignments for a specific Canvas course, with optional filtering.\"\"\"\n        assignments = self.assignments.get(course_id, [])\n        if bucket:\n            filtered = [a for a in assignments if a.submission_status == bucket]\n            return {\"assignments\": [a.dict() for a in filtered]}\n        return {\"assignments\": [a.dict() for a in assignments]}\n\n    def get_assignments_by_course_name(self, course_name: str, bucket: Optional[str] = None) -> dict:\n        \"\"\"Retrieve all assignments for a Canvas course using its name.\"\"\"\n        course_id = None\n        for name, cid in self.course_name_map.items():\n            if course_name.lower() in name.lower():\n                course_id = cid\n                break\n        \n        if not course_id:\n            return {\"assignments\": []}\n        \n        return self.get_course_assignments(course_id, bucket)\n\n    def get_students_in_course(self, course_id: str) -> dict:\n        \"\"\"Retrieve all students enrolled in a specific Canvas course.\"\"\"\n        students = self.students.get(course_id, [])\n        return {\"students\": [s.dict() for s in students]}\n\n    def get_submission_status(self, course_id: str, assignment_id: str, student_id: Optional[str] = None) -> dict:\n        \"\"\"Retrieve submission status and grading details for a specific assignment.\"\"\"\n        submissions_dict = self.submissions.get(assignment_id, {})\n        \n        if student_id:\n            if student_id in submissions_dict:\n                return {\"submissions\": {student_id: submissions_dict[student_id].dict()}}\n            else:\n                return {\"submissions\": {}}\n        \n        return {\"submissions\": {k: v.dict() for k, v in submissions_dict.items()}}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"Canvas\")\napi = CanvasAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Canvas API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching CanvasScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Canvas state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_courses() -> dict:\n    \"\"\"\n    Retrieve all available Canvas courses for the current authenticated user.\n    \n    Returns:\n        courses (dict): Dictionary mapping course names to their Canvas course identifiers.\n    \"\"\"\n    try:\n        return api.get_courses()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_modules(course_id: str) -> dict:\n    \"\"\"\n    Retrieve all modules within a specific Canvas course.\n    \n    Args:\n        course_id (str): The unique identifier of the Canvas course.\n    \n    Returns:\n        modules (list): List of modules within the specified course.\n    \"\"\"\n    try:\n        if not course_id or not isinstance(course_id, str):\n            raise ValueError(\"Course ID must be a non-empty string\")\n        return api.get_modules(course_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_module_items(course_id: str, module_id: str) -> dict:\n    \"\"\"\n    Retrieve all items within a specific module in a Canvas course.\n    \n    Args:\n        course_id (str): The unique identifier of the Canvas course.\n        module_id (str): The unique identifier of the module within the course.\n    \n    Returns:\n        items (list): List of items contained within the specified module.\n    \"\"\"\n    try:\n        if not course_id or not isinstance(course_id, str):\n            raise ValueError(\"Course ID must be a non-empty string\")\n        if not module_id or not isinstance(module_id, str):\n            raise ValueError(\"Module ID must be a non-empty string\")\n        return api.get_module_items(course_id, module_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_file_url(file_id: str, course_id: str) -> dict:\n    \"\"\"\n    Get the direct download URL for a file stored in Canvas.\n    \n    Args:\n        file_id (str): The unique identifier of the file in Canvas.\n        course_id (str): The unique identifier of the Canvas course.\n    \n    Returns:\n        download_url (str): The direct download URL for accessing the file.\n    \"\"\"\n    try:\n        if not file_id or not isinstance(file_id, str):\n            raise ValueError(\"File ID must be a non-empty string\")\n        if not course_id or not isinstance(course_id, str):\n            raise ValueError(\"Course ID must be a non-empty string\")\n        result = api.get_file_url(file_id, course_id)\n        if not result[\"download_url\"]:\n            raise ValueError(f\"File {file_id} not found in course {course_id}\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_course_assignments(course_id: str, bucket: Optional[str] = None) -> dict:\n    \"\"\"\n    Retrieve all assignments for a specific Canvas course, with optional filtering by submission status.\n    \n    Args:\n        course_id (str): The unique identifier of the Canvas course.\n        bucket (str): [Optional] Filter for assignment status (past, overdue, undated, ungraded, unsubmitted, upcoming, future).\n    \n    Returns:\n        assignments (list): List of assignments matching the specified criteria.\n    \"\"\"\n    try:\n        if not course_id or not isinstance(course_id, str):\n            raise ValueError(\"Course ID must be a non-empty string\")\n        if bucket and not isinstance(bucket, str):\n            raise ValueError(\"Bucket must be a string if provided\")\n        return api.get_course_assignments(course_id, bucket)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_assignments_by_course_name(course_name: str, bucket: Optional[str] = None) -> dict:\n    \"\"\"\n    Retrieve all assignments for a Canvas course using its name rather than ID, supporting partial name matches.\n    \n    Args:\n        course_name (str): The name of the course as it appears in Canvas. Partial matches are supported.\n        bucket (str): [Optional] Filter for assignment status (past, overdue, undated, ungraded, unsubmitted, upcoming, future).\n    \n    Returns:\n        assignments (list): List of assignments matching the specified criteria.\n    \"\"\"\n    try:\n        if not course_name or not isinstance(course_name, str):\n            raise ValueError(\"Course name must be a non-empty string\")\n        if bucket and not isinstance(bucket, str):\n            raise ValueError(\"Bucket must be a string if provided\")\n        return api.get_assignments_by_course_name(course_name, bucket)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_students_in_course(course_id: str) -> dict:\n    \"\"\"\n    Retrieve all students enrolled in a specific Canvas course.\n    \n    Args:\n        course_id (str): The unique identifier of the Canvas course.\n    \n    Returns:\n        students (list): List of students enrolled in the specified course.\n    \"\"\"\n    try:\n        if not course_id or not isinstance(course_id, str):\n            raise ValueError(\"Course ID must be a non-empty string\")\n        return api.get_students_in_course(course_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_submission_status(course_id: str, assignment_id: str, student_id: Optional[str] = None) -> dict:\n    \"\"\"\n    Retrieve submission status and grading details for a specific assignment in a Canvas course, optionally filtered by student.\n    \n    Args:\n        course_id (str): The unique identifier of the Canvas course.\n        assignment_id (str): The unique identifier of the assignment.\n        student_id (str): [Optional] The unique identifier of the student in Canvas. If not provided, returns submission status for all students.\n    \n    Returns:\n        submissions (dict): Dictionary mapping student IDs to their submission details.\n    \"\"\"\n    try:\n        if not course_id or not isinstance(course_id, str):\n            raise ValueError(\"Course ID must be a non-empty string\")\n        if not assignment_id or not isinstance(assignment_id, str):\n            raise ValueError(\"Assignment ID must be a non-empty string\")\n        if student_id and not isinstance(student_id, str):\n            raise ValueError(\"Student ID must be a string if provided\")\n        return api.get_submission_status(course_id, assignment_id, student_id)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-04T02:06:00.558433",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Single course with one module, one assignment, and two students - tests basic Canvas functionality",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "courses": {
+          "course_101": {
+            "id": "course_101",
+            "name": "Introduction to Python"
+          }
+        },
+        "course_name_map": {
+          "Introduction to Python": "course_101"
+        },
+        "modules": {
+          "course_101": [
+            {
+              "module_id": "mod_001",
+              "name": "Week 1: Getting Started",
+              "status": "unlocked"
+            }
+          ]
+        },
+        "module_items": {
+          "mod_001": [
+            {
+              "item_id": "item_001",
+              "title": "Python Basics Lecture",
+              "type": "Page",
+              "url": "https://canvas.example.com/courses/101/pages/python-basics"
+            }
+          ]
+        },
+        "assignments": {
+          "course_101": [
+            {
+              "assignment_id": "assign_001",
+              "name": "Hello World Program",
+              "description": "Write your first Python program",
+              "due_date": "2024-02-15T23:59:00Z",
+              "submission_status": "not_submitted"
+            }
+          ]
+        },
+        "students": {
+          "course_101": [
+            {
+              "student_id": "student_001",
+              "name": "Alice Johnson",
+              "email": "alice.johnson@university.edu",
+              "enrollment_status": "active"
+            },
+            {
+              "student_id": "student_002",
+              "name": "Bob Smith",
+              "email": "bob.smith@university.edu",
+              "enrollment_status": "active"
+            }
+          ]
+        },
+        "submissions": {
+          "assign_001": {
+            "student_001": {
+              "student_id": "student_001",
+              "student_name": "Alice Johnson",
+              "submitted_at": "2024-02-14T18:30:00Z",
+              "submission_status": "submitted",
+              "score": 95.0,
+              "graded_at": "2024-02-15T10:00:00Z",
+              "workflow_state": "graded"
+            },
+            "student_002": {
+              "student_id": "student_002",
+              "student_name": "Bob Smith",
+              "submitted_at": "",
+              "submission_status": "not_submitted",
+              "score": 0.0,
+              "graded_at": "",
+              "workflow_state": "unsubmitted"
+            }
+          }
+        },
+        "files": {
+          "course_101": {
+            "file_001": "https://canvas.example.com/files/course_101/syllabus.pdf"
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Two courses with multiple modules, assignments, and varied submission statuses - tests typical multi-course scenario",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "courses": {
+          "course_201": {
+            "id": "course_201",
+            "name": "Data Structures"
+          },
+          "course_202": {
+            "id": "course_202",
+            "name": "Web Development"
+          }
+        },
+        "course_name_map": {
+          "Data Structures": "course_201",
+          "Web Development": "course_202"
+        },
+        "modules": {
+          "course_201": [
+            {
+              "module_id": "mod_201",
+              "name": "Arrays and Lists",
+              "status": "completed"
+            },
+            {
+              "module_id": "mod_202",
+              "name": "Trees and Graphs",
+              "status": "unlocked"
+            }
+          ],
+          "course_202": [
+            {
+              "module_id": "mod_301",
+              "name": "HTML & CSS Fundamentals",
+              "status": "unlocked"
+            }
+          ]
+        },
+        "module_items": {
+          "mod_201": [
+            {
+              "item_id": "item_201",
+              "title": "Array Operations",
+              "type": "Assignment",
+              "url": "https://canvas.example.com/courses/201/assignments/1"
+            },
+            {
+              "item_id": "item_202",
+              "title": "Linked Lists Tutorial",
+              "type": "File",
+              "url": "https://canvas.example.com/courses/201/files/101"
+            }
+          ],
+          "mod_202": [
+            {
+              "item_id": "item_203",
+              "title": "Binary Trees Quiz",
+              "type": "Quiz",
+              "url": "https://canvas.example.com/courses/201/quizzes/5"
+            }
+          ],
+          "mod_301": [
+            {
+              "item_id": "item_301",
+              "title": "CSS Grid Layout",
+              "type": "ExternalUrl",
+              "url": "https://cssgrid.io"
+            }
+          ]
+        },
+        "assignments": {
+          "course_201": [
+            {
+              "assignment_id": "assign_201",
+              "name": "Implement Stack",
+              "description": "Create a stack data structure with push, pop, and peek operations",
+              "due_date": "2024-03-01T23:59:00Z",
+              "submission_status": "submitted"
+            },
+            {
+              "assignment_id": "assign_202",
+              "name": "Graph Traversal",
+              "description": "",
+              "due_date": "2024-03-15T23:59:00Z",
+              "submission_status": "not_submitted"
+            }
+          ],
+          "course_202": [
+            {
+              "assignment_id": "assign_301",
+              "name": "Portfolio Website",
+              "description": "Build a responsive portfolio using HTML, CSS, and JavaScript",
+              "due_date": "2024-03-20T23:59:00Z",
+              "submission_status": "not_submitted"
+            }
+          ]
+        },
+        "students": {
+          "course_201": [
+            {
+              "student_id": "student_101",
+              "name": "Charlie Davis",
+              "email": "charlie.davis@university.edu",
+              "enrollment_status": "active"
+            },
+            {
+              "student_id": "student_102",
+              "name": "Diana Martinez",
+              "email": "diana.martinez@university.edu",
+              "enrollment_status": "active"
+            },
+            {
+              "student_id": "student_103",
+              "name": "Ethan Wilson",
+              "email": "ethan.wilson@university.edu",
+              "enrollment_status": "inactive"
+            }
+          ],
+          "course_202": [
+            {
+              "student_id": "student_101",
+              "name": "Charlie Davis",
+              "email": "charlie.davis@university.edu",
+              "enrollment_status": "active"
+            },
+            {
+              "student_id": "student_104",
+              "name": "Fiona Chen",
+              "email": "fiona.chen@university.edu",
+              "enrollment_status": "invited"
+            }
+          ]
+        },
+        "submissions": {
+          "assign_201": {
+            "student_101": {
+              "student_id": "student_101",
+              "student_name": "Charlie Davis",
+              "submitted_at": "2024-02-28T20:15:00Z",
+              "submission_status": "submitted",
+              "score": 88.5,
+              "graded_at": "2024-03-02T14:30:00Z",
+              "workflow_state": "graded"
+            },
+            "student_102": {
+              "student_id": "student_102",
+              "student_name": "Diana Martinez",
+              "submitted_at": "2024-03-01T23:45:00Z",
+              "submission_status": "late",
+              "score": 92.0,
+              "graded_at": "",
+              "workflow_state": "submitted"
+            }
+          },
+          "assign_301": {
+            "student_101": {
+              "student_id": "student_101",
+              "student_name": "Charlie Davis",
+              "submitted_at": "",
+              "submission_status": "not_submitted",
+              "score": 0.0,
+              "graded_at": "",
+              "workflow_state": "unsubmitted"
+            }
+          }
+        },
+        "files": {
+          "course_201": {
+            "file_201": "https://canvas.example.com/files/course_201/lecture_notes.pdf",
+            "file_202": "https://canvas.example.com/files/course_201/code_examples.zip"
+          },
+          "course_202": {
+            "file_301": "https://canvas.example.com/files/course_202/html_reference.pdf"
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Three courses with comprehensive module structures, multiple assignments with varied grading states, and diverse student enrollment patterns - tests scalability and complex interactions",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "courses": {
+          "course_301": {
+            "id": "course_301",
+            "name": "Machine Learning Fundamentals"
+          },
+          "course_302": {
+            "id": "course_302",
+            "name": "Database Systems"
+          },
+          "course_303": {
+            "id": "course_303",
+            "name": "Software Engineering"
+          }
+        },
+        "course_name_map": {
+          "Machine Learning Fundamentals": "course_301",
+          "Database Systems": "course_302",
+          "Software Engineering": "course_303"
+        },
+        "modules": {
+          "course_301": [
+            {
+              "module_id": "mod_401",
+              "name": "Introduction to ML",
+              "status": "completed"
+            },
+            {
+              "module_id": "mod_402",
+              "name": "Supervised Learning",
+              "status": "unlocked"
+            },
+            {
+              "module_id": "mod_403",
+              "name": "Neural Networks",
+              "status": "locked"
+            }
+          ],
+          "course_302": [
+            {
+              "module_id": "mod_501",
+              "name": "Relational Databases",
+              "status": "unlocked"
+            },
+            {
+              "module_id": "mod_502",
+              "name": "SQL Advanced",
+              "status": "unlocked"
+            }
+          ],
+          "course_303": [
+            {
+              "module_id": "mod_601",
+              "name": "Agile Methodologies",
+              "status": "completed"
+            },
+            {
+              "module_id": "mod_602",
+              "name": "Design Patterns",
+              "status": "unlocked"
+            }
+          ]
+        },
+        "module_items": {
+          "mod_401": [
+            {
+              "item_id": "item_401",
+              "title": "What is Machine Learning?",
+              "type": "Page",
+              "url": "https://canvas.example.com/courses/301/pages/intro-ml"
+            },
+            {
+              "item_id": "item_402",
+              "title": "ML Applications Video",
+              "type": "ExternalUrl",
+              "url": "https://youtube.com/watch?v=ml-intro"
+            }
+          ],
+          "mod_402": [
+            {
+              "item_id": "item_403",
+              "title": "Linear Regression Assignment",
+              "type": "Assignment",
+              "url": "https://canvas.example.com/courses/301/assignments/1"
+            },
+            {
+              "item_id": "item_404",
+              "title": "Classification Quiz",
+              "type": "Quiz",
+              "url": "https://canvas.example.com/courses/301/quizzes/1"
+            }
+          ],
+          "mod_501": [
+            {
+              "item_id": "item_501",
+              "title": "Database Design Principles",
+              "type": "File",
+              "url": "https://canvas.example.com/courses/302/files/201"
+            }
+          ],
+          "mod_502": [
+            {
+              "item_id": "item_502",
+              "title": "Complex Queries Lab",
+              "type": "Assignment",
+              "url": "https://canvas.example.com/courses/302/assignments/2"
+            }
+          ],
+          "mod_601": [
+            {
+              "item_id": "item_601",
+              "title": "Scrum Framework",
+              "type": "Page",
+              "url": "https://canvas.example.com/courses/303/pages/scrum"
+            }
+          ],
+          "mod_602": [
+            {
+              "item_id": "item_602",
+              "title": "Singleton Pattern Example",
+              "type": "File",
+              "url": "https://canvas.example.com/courses/303/files/301"
+            }
+          ]
+        },
+        "assignments": {
+          "course_301": [
+            {
+              "assignment_id": "assign_401",
+              "name": "Linear Regression Implementation",
+              "description": "Implement linear regression from scratch using NumPy",
+              "due_date": "2024-04-01T23:59:00Z",
+              "submission_status": "submitted"
+            },
+            {
+              "assignment_id": "assign_402",
+              "name": "Decision Trees Project",
+              "description": "Build and evaluate a decision tree classifier",
+              "due_date": "2024-04-15T23:59:00Z",
+              "submission_status": "not_submitted"
+            },
+            {
+              "assignment_id": "assign_403",
+              "name": "Neural Network Training",
+              "description": "Train a neural network on MNIST dataset",
+              "due_date": "2024-05-01T23:59:00Z",
+              "submission_status": "not_submitted"
+            }
+          ],
+          "course_302": [
+            {
+              "assignment_id": "assign_501",
+              "name": "Database Schema Design",
+              "description": "Design a normalized database schema for an e-commerce system",
+              "due_date": "2024-03-25T23:59:00Z",
+              "submission_status": "submitted"
+            },
+            {
+              "assignment_id": "assign_502",
+              "name": "SQL Query Optimization",
+              "description": "Optimize provided SQL queries for performance",
+              "due_date": "2024-04-10T23:59:00Z",
+              "submission_status": "not_submitted"
+            }
+          ],
+          "course_303": [
+            {
+              "assignment_id": "assign_601",
+              "name": "Sprint Planning Exercise",
+              "description": "Create a sprint plan for a hypothetical project",
+              "due_date": "2024-03-30T23:59:00Z",
+              "submission_status": "submitted"
+            },
+            {
+              "assignment_id": "assign_602",
+              "name": "Design Pattern Implementation",
+              "description": "Implement Factory and Observer patterns in Java",
+              "due_date": "2024-04-20T23:59:00Z",
+              "submission_status": "not_submitted"
+            }
+          ]
+        },
+        "students": {
+          "course_301": [
+            {
+              "student_id": "student_201",
+              "name": "Grace Lee",
+              "email": "grace.lee@university.edu",
+              "enrollment_status": "active"
+            },
+            {
+              "student_id": "student_202",
+              "name": "Henry Brown",
+              "email": "henry.brown@university.edu",
+              "enrollment_status": "active"
+            },
+            {
+              "student_id": "student_203",
+              "name": "Iris Wang",
+              "email": "iris.wang@university.edu",
+              "enrollment_status": "active"
+            }
+          ],
+          "course_302": [
+            {
+              "student_id": "student_201",
+              "name": "Grace Lee",
+              "email": "grace.lee@university.edu",
+              "enrollment_status": "active"
+            },
+            {
+              "student_id": "student_204",
+              "name": "Jack Thompson",
+              "email": "jack.thompson@university.edu",
+              "enrollment_status": "active"
+            }
+          ],
+          "course_303": [
+            {
+              "student_id": "student_202",
+              "name": "Henry Brown",
+              "email": "henry.brown@university.edu",
+              "enrollment_status": "active"
+            },
+            {
+              "student_id": "student_203",
+              "name": "Iris Wang",
+              "email": "iris.wang@university.edu",
+              "enrollment_status": "active"
+            },
+            {
+              "student_id": "student_205",
+              "name": "Kelly Rodriguez",
+              "email": "kelly.rodriguez@university.edu",
+              "enrollment_status": "invited"
+            }
+          ]
+        },
+        "submissions": {
+          "assign_401": {
+            "student_201": {
+              "student_id": "student_201",
+              "student_name": "Grace Lee",
+              "submitted_at": "2024-03-31T22:30:00Z",
+              "submission_status": "submitted",
+              "score": 97.5,
+              "graded_at": "2024-04-02T09:15:00Z",
+              "workflow_state": "graded"
+            },
+            "student_202": {
+              "student_id": "student_202",
+              "student_name": "Henry Brown",
+              "submitted_at": "2024-04-01T23:55:00Z",
+              "submission_status": "submitted",
+              "score": 85.0,
+              "graded_at": "2024-04-03T11:00:00Z",
+              "workflow_state": "graded"
+            },
+            "student_203": {
+              "student_id": "student_203",
+              "student_name": "Iris Wang",
+              "submitted_at": "2024-04-02T10:00:00Z",
+              "submission_status": "late",
+              "score": 78.0,
+              "graded_at": "2024-04-04T14:20:00Z",
+              "workflow_state": "graded"
+            }
+          },
+          "assign_501": {
+            "student_201": {
+              "student_id": "student_201",
+              "student_name": "Grace Lee",
+              "submitted_at": "2024-03-24T19:00:00Z",
+              "submission_status": "submitted",
+              "score": 100.0,
+              "graded_at": "2024-03-26T10:30:00Z",
+              "workflow_state": "graded"
+            },
+            "student_204": {
+              "student_id": "student_204",
+              "student_name": "Jack Thompson",
+              "submitted_at": "2024-03-25T23:30:00Z",
+              "submission_status": "submitted",
+              "score": 0.0,
+              "graded_at": "",
+              "workflow_state": "submitted"
+            }
+          },
+          "assign_601": {
+            "student_202": {
+              "student_id": "student_202",
+              "student_name": "Henry Brown",
+              "submitted_at": "2024-03-29T15:45:00Z",
+              "submission_status": "submitted",
+              "score": 90.0,
+              "graded_at": "2024-03-31T08:00:00Z",
+              "workflow_state": "graded"
+            },
+            "student_203": {
+              "student_id": "student_203",
+              "student_name": "Iris Wang",
+              "submitted_at": "",
+              "submission_status": "not_submitted",
+              "score": 0.0,
+              "graded_at": "",
+              "workflow_state": "unsubmitted"
+            }
+          }
+        },
+        "files": {
+          "course_301": {
+            "file_401": "https://canvas.example.com/files/course_301/ml_slides.pdf",
+            "file_402": "https://canvas.example.com/files/course_301/datasets.zip",
+            "file_403": "https://canvas.example.com/files/course_301/python_notebooks.zip"
+          },
+          "course_302": {
+            "file_501": "https://canvas.example.com/files/course_302/db_textbook.pdf",
+            "file_502": "https://canvas.example.com/files/course_302/sample_queries.sql"
+          },
+          "course_303": {
+            "file_601": "https://canvas.example.com/files/course_303/agile_guide.pdf",
+            "file_602": "https://canvas.example.com/files/course_303/design_patterns.pdf"
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty Canvas instance with no courses or data - tests handling of empty collections and edge cases",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "courses": {},
+        "course_name_map": {},
+        "modules": {},
+        "module_items": {},
+        "assignments": {},
+        "students": {},
+        "submissions": {},
+        "files": {}
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_courses",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - retrieve all courses",
+                    "input": {},
+                    "passed": true,
+                    "output": {
+                      "courses": {
+                        "Introduction to Python": "course_101"
+                      }
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_modules",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - retrieve modules for course_101",
+                    "input": {
+                      "course_id": "course_101"
+                    },
+                    "passed": true,
+                    "output": {
+                      "modules": [
+                        {
+                          "module_id": "mod_001",
+                          "name": "Week 1: Getting Started",
+                          "status": "unlocked"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Error case - empty course_id",
+                    "input": {
+                      "course_id": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Course ID must be a non-empty string",
+                    "note": "Expected validation error - tool correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_module_items",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - retrieve items for mod_001",
+                    "input": {
+                      "course_id": "course_101",
+                      "module_id": "mod_001"
+                    },
+                    "passed": true,
+                    "output": {
+                      "items": [
+                        {
+                          "item_id": "item_001",
+                          "title": "Python Basics Lecture",
+                          "type": "Page",
+                          "url": "https://canvas.example.com/courses/101/pages/python-basics"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Error case - empty module_id",
+                    "input": {
+                      "course_id": "course_101",
+                      "module_id": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Module ID must be a non-empty string",
+                    "note": "Expected validation error - tool correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_file_url",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - retrieve file URL",
+                    "input": {
+                      "file_id": "file_001",
+                      "course_id": "course_101"
+                    },
+                    "passed": true,
+                    "output": {
+                      "download_url": "https://canvas.example.com/files/course_101/syllabus.pdf"
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Error case - non-existent file",
+                    "input": {
+                      "file_id": "file_999",
+                      "course_id": "course_101"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "File file_999 not found in course course_101",
+                    "note": "Expected error - tool correctly handled missing file"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_course_assignments",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - retrieve all assignments",
+                    "input": {
+                      "course_id": "course_101"
+                    },
+                    "passed": true,
+                    "output": {
+                      "assignments": [
+                        {
+                          "assignment_id": "assign_001",
+                          "name": "Hello World Program",
+                          "description": "Write your first Python program",
+                          "due_date": "2024-02-15T23:59:00Z",
+                          "submission_status": "not_submitted"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - with bucket filter",
+                    "input": {
+                      "course_id": "course_101",
+                      "bucket": "upcoming"
+                    },
+                    "passed": true,
+                    "output": {
+                      "assignments": []
+                    },
+                    "error": null,
+                    "note": "Bucket filter working correctly - no upcoming assignments"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_assignments_by_course_name",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - exact course name match",
+                    "input": {
+                      "course_name": "Introduction to Python"
+                    },
+                    "passed": true,
+                    "output": {
+                      "assignments": [
+                        {
+                          "assignment_id": "assign_001",
+                          "name": "Hello World Program",
+                          "description": "Write your first Python program",
+                          "due_date": "2024-02-15T23:59:00Z",
+                          "submission_status": "not_submitted"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - partial course name match",
+                    "input": {
+                      "course_name": "Python"
+                    },
+                    "passed": true,
+                    "output": {
+                      "assignments": [
+                        {
+                          "assignment_id": "assign_001",
+                          "name": "Hello World Program",
+                          "description": "Write your first Python program",
+                          "due_date": "2024-02-15T23:59:00Z",
+                          "submission_status": "not_submitted"
+                        }
+                      ]
+                    },
+                    "error": null,
+                    "note": "Partial matching working correctly"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_students_in_course",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - retrieve all students",
+                    "input": {
+                      "course_id": "course_101"
+                    },
+                    "passed": true,
+                    "output": {
+                      "students": [
+                        {
+                          "student_id": "student_001",
+                          "name": "Alice Johnson",
+                          "email": "alice.johnson@university.edu",
+                          "enrollment_status": "active"
+                        },
+                        {
+                          "student_id": "student_002",
+                          "name": "Bob Smith",
+                          "email": "bob.smith@university.edu",
+                          "enrollment_status": "active"
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_submission_status",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - all students submissions",
+                    "input": {
+                      "course_id": "course_101",
+                      "assignment_id": "assign_001"
+                    },
+                    "passed": true,
+                    "output": {
+                      "submissions": {
+                        "student_001": {
+                          "student_id": "student_001",
+                          "student_name": "Alice Johnson",
+                          "submitted_at": "2024-02-14T18:30:00Z",
+                          "submission_status": "submitted",
+                          "score": 95.0,
+                          "graded_at": "2024-02-15T10:00:00Z",
+                          "workflow_state": "graded"
+                        },
+                        "student_002": {
+                          "student_id": "student_002",
+                          "student_name": "Bob Smith",
+                          "submitted_at": "",
+                          "submission_status": "not_submitted",
+                          "score": 0.0,
+                          "graded_at": "",
+                          "workflow_state": "unsubmitted"
+                        }
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - specific student submission",
+                    "input": {
+                      "course_id": "course_101",
+                      "assignment_id": "assign_001",
+                      "student_id": "student_001"
+                    },
+                    "passed": true,
+                    "output": {
+                      "submissions": {
+                        "student_001": {
+                          "student_id": "student_001",
+                          "student_name": "Alice Johnson",
+                          "submitted_at": "2024-02-14T18:30:00Z",
+                          "submission_status": "submitted",
+                          "score": 95.0,
+                          "graded_at": "2024-02-15T10:00:00Z",
+                          "workflow_state": "graded"
+                        }
+                      }
+                    },
+                    "error": null,
+                    "note": "Student-specific filtering working correctly"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "note": "Saved scenario matches original scenario exactly - state consistency verified"
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 91.80271220207214
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_courses",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Retrieve all courses",
+                    "input": {},
+                    "expected": "Dictionary with course name to ID mapping",
+                    "actual": "Successfully returned 2 courses: Data Structures and Web Development",
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_modules",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Get modules for course_201",
+                    "input": {
+                      "course_id": "course_201"
+                    },
+                    "expected": "List of 2 modules",
+                    "actual": "Successfully returned 2 modules: Arrays and Lists, Trees and Graphs",
+                    "passed": true
+                  },
+                  {
+                    "description": "Get modules for course_202",
+                    "input": {
+                      "course_id": "course_202"
+                    },
+                    "expected": "List of 1 module",
+                    "actual": "Successfully returned 1 module: HTML & CSS Fundamentals",
+                    "passed": true
+                  },
+                  {
+                    "description": "Get modules for non-existent course",
+                    "input": {
+                      "course_id": "course_999"
+                    },
+                    "expected": "Empty list",
+                    "actual": "Successfully returned empty list",
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_module_items",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Get items for mod_201 in course_201",
+                    "input": {
+                      "course_id": "course_201",
+                      "module_id": "mod_201"
+                    },
+                    "expected": "List of 2 items",
+                    "actual": "Successfully returned 2 items: Array Operations, Linked Lists Tutorial",
+                    "passed": true
+                  },
+                  {
+                    "description": "Get items for mod_301 in course_202",
+                    "input": {
+                      "course_id": "course_202",
+                      "module_id": "mod_301"
+                    },
+                    "expected": "List of 1 item",
+                    "actual": "Successfully returned 1 item: CSS Grid Layout",
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_file_url",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Get URL for file_201 in course_201",
+                    "input": {
+                      "file_id": "file_201",
+                      "course_id": "course_201"
+                    },
+                    "expected": "Download URL for lecture notes PDF",
+                    "actual": "Successfully returned URL: https://canvas.example.com/files/course_201/lecture_notes.pdf",
+                    "passed": true
+                  },
+                  {
+                    "description": "Get URL for file_301 in course_202",
+                    "input": {
+                      "file_id": "file_301",
+                      "course_id": "course_202"
+                    },
+                    "expected": "Download URL for HTML reference PDF",
+                    "actual": "Successfully returned URL: https://canvas.example.com/files/course_202/html_reference.pdf",
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_course_assignments",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Get all assignments for course_201",
+                    "input": {
+                      "course_id": "course_201"
+                    },
+                    "expected": "List of 2 assignments",
+                    "actual": "Successfully returned 2 assignments: Implement Stack, Graph Traversal",
+                    "passed": true
+                  },
+                  {
+                    "description": "Get assignments for course_202 with bucket filter",
+                    "input": {
+                      "course_id": "course_202",
+                      "bucket": "upcoming"
+                    },
+                    "expected": "Filtered list based on bucket",
+                    "actual": "Successfully returned empty list (no upcoming assignments match filter)",
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_assignments_by_course_name",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Get assignments by exact course name",
+                    "input": {
+                      "course_name": "Data Structures"
+                    },
+                    "expected": "List of 2 assignments for Data Structures course",
+                    "actual": "Successfully returned 2 assignments: Implement Stack, Graph Traversal",
+                    "passed": true
+                  },
+                  {
+                    "description": "Get assignments by partial course name",
+                    "input": {
+                      "course_name": "Web"
+                    },
+                    "expected": "List of 1 assignment for Web Development course",
+                    "actual": "Successfully returned 1 assignment: Portfolio Website",
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_students_in_course",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Get students in course_201",
+                    "input": {
+                      "course_id": "course_201"
+                    },
+                    "expected": "List of 3 students",
+                    "actual": "Successfully returned 3 students: Charlie Davis, Diana Martinez, Ethan Wilson",
+                    "passed": true
+                  },
+                  {
+                    "description": "Get students in course_202",
+                    "input": {
+                      "course_id": "course_202"
+                    },
+                    "expected": "List of 2 students",
+                    "actual": "Successfully returned 2 students: Charlie Davis, Fiona Chen",
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_submission_status",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Get all submissions for assign_201",
+                    "input": {
+                      "course_id": "course_201",
+                      "assignment_id": "assign_201"
+                    },
+                    "expected": "Dictionary with 2 student submissions",
+                    "actual": "Successfully returned submissions for student_101 (graded, 88.5) and student_102 (late, 92.0)",
+                    "passed": true
+                  },
+                  {
+                    "description": "Get specific student submission",
+                    "input": {
+                      "course_id": "course_201",
+                      "assignment_id": "assign_201",
+                      "student_id": "student_101"
+                    },
+                    "expected": "Dictionary with 1 student submission",
+                    "actual": "Successfully returned submission for student_101 only (graded, 88.5)",
+                    "passed": true
+                  }
+                ]
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All data structures preserved correctly including courses, modules, module_items, assignments, students, submissions, and files."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 93.56198501586914
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_courses",
+                "test_cases": [
+                  {
+                    "description": "Retrieve all courses",
+                    "input": {},
+                    "passed": true,
+                    "output": {
+                      "courses": {
+                        "Machine Learning Fundamentals": "course_301",
+                        "Database Systems": "course_302",
+                        "Software Engineering": "course_303"
+                      }
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_modules",
+                "test_cases": [
+                  {
+                    "description": "Valid course - course_301",
+                    "input": {
+                      "course_id": "course_301"
+                    },
+                    "passed": true,
+                    "output": {
+                      "modules": [
+                        {
+                          "module_id": "mod_401",
+                          "name": "Introduction to ML",
+                          "status": "completed"
+                        },
+                        {
+                          "module_id": "mod_402",
+                          "name": "Supervised Learning",
+                          "status": "unlocked"
+                        },
+                        {
+                          "module_id": "mod_403",
+                          "name": "Neural Networks",
+                          "status": "locked"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid course - course_302",
+                    "input": {
+                      "course_id": "course_302"
+                    },
+                    "passed": true,
+                    "output": {
+                      "modules": [
+                        {
+                          "module_id": "mod_501",
+                          "name": "Relational Databases",
+                          "status": "unlocked"
+                        },
+                        {
+                          "module_id": "mod_502",
+                          "name": "SQL Advanced",
+                          "status": "unlocked"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Invalid course ID",
+                    "input": {
+                      "course_id": "invalid_course"
+                    },
+                    "passed": true,
+                    "output": {
+                      "modules": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_module_items",
+                "test_cases": [
+                  {
+                    "description": "Valid module with assignments - mod_402",
+                    "input": {
+                      "course_id": "course_301",
+                      "module_id": "mod_402"
+                    },
+                    "passed": true,
+                    "output": {
+                      "items": [
+                        {
+                          "item_id": "item_403",
+                          "title": "Linear Regression Assignment",
+                          "type": "Assignment",
+                          "url": "https://canvas.example.com/courses/301/assignments/1"
+                        },
+                        {
+                          "item_id": "item_404",
+                          "title": "Classification Quiz",
+                          "type": "Quiz",
+                          "url": "https://canvas.example.com/courses/301/quizzes/1"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid module with file - mod_501",
+                    "input": {
+                      "course_id": "course_302",
+                      "module_id": "mod_501"
+                    },
+                    "passed": true,
+                    "output": {
+                      "items": [
+                        {
+                          "item_id": "item_501",
+                          "title": "Database Design Principles",
+                          "type": "File",
+                          "url": "https://canvas.example.com/courses/302/files/201"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Invalid module ID",
+                    "input": {
+                      "course_id": "course_301",
+                      "module_id": "invalid_module"
+                    },
+                    "passed": true,
+                    "output": {
+                      "items": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid module with pages - mod_401",
+                    "input": {
+                      "course_id": "course_301",
+                      "module_id": "mod_401"
+                    },
+                    "passed": true,
+                    "output": {
+                      "items": [
+                        {
+                          "item_id": "item_401",
+                          "title": "What is Machine Learning?",
+                          "type": "Page",
+                          "url": "https://canvas.example.com/courses/301/pages/intro-ml"
+                        },
+                        {
+                          "item_id": "item_402",
+                          "title": "ML Applications Video",
+                          "type": "ExternalUrl",
+                          "url": "https://youtube.com/watch?v=ml-intro"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid module - mod_602",
+                    "input": {
+                      "course_id": "course_303",
+                      "module_id": "mod_602"
+                    },
+                    "passed": true,
+                    "output": {
+                      "items": [
+                        {
+                          "item_id": "item_602",
+                          "title": "Singleton Pattern Example",
+                          "type": "File",
+                          "url": "https://canvas.example.com/courses/303/files/301"
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_file_url",
+                "test_cases": [
+                  {
+                    "description": "Valid file in course_301",
+                    "input": {
+                      "file_id": "file_401",
+                      "course_id": "course_301"
+                    },
+                    "passed": true,
+                    "output": {
+                      "download_url": "https://canvas.example.com/files/course_301/ml_slides.pdf"
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid file in course_302",
+                    "input": {
+                      "file_id": "file_502",
+                      "course_id": "course_302"
+                    },
+                    "passed": true,
+                    "output": {
+                      "download_url": "https://canvas.example.com/files/course_302/sample_queries.sql"
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Invalid file ID - expected error",
+                    "input": {
+                      "file_id": "invalid_file",
+                      "course_id": "course_301"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "File invalid_file not found in course course_301",
+                    "note": "Correctly rejected invalid file ID"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_course_assignments",
+                "test_cases": [
+                  {
+                    "description": "Get all assignments for course_301",
+                    "input": {
+                      "course_id": "course_301"
+                    },
+                    "passed": true,
+                    "output": {
+                      "assignments": [
+                        {
+                          "assignment_id": "assign_401",
+                          "name": "Linear Regression Implementation",
+                          "description": "Implement linear regression from scratch using NumPy",
+                          "due_date": "2024-04-01T23:59:00Z",
+                          "submission_status": "submitted"
+                        },
+                        {
+                          "assignment_id": "assign_402",
+                          "name": "Decision Trees Project",
+                          "description": "Build and evaluate a decision tree classifier",
+                          "due_date": "2024-04-15T23:59:00Z",
+                          "submission_status": "not_submitted"
+                        },
+                        {
+                          "assignment_id": "assign_403",
+                          "name": "Neural Network Training",
+                          "description": "Train a neural network on MNIST dataset",
+                          "due_date": "2024-05-01T23:59:00Z",
+                          "submission_status": "not_submitted"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Get assignments with bucket filter",
+                    "input": {
+                      "course_id": "course_302",
+                      "bucket": "upcoming"
+                    },
+                    "passed": true,
+                    "output": {
+                      "assignments": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_assignments_by_course_name",
+                "test_cases": [
+                  {
+                    "description": "Get assignments by exact course name",
+                    "input": {
+                      "course_name": "Machine Learning Fundamentals"
+                    },
+                    "passed": true,
+                    "output": {
+                      "assignments": [
+                        {
+                          "assignment_id": "assign_401",
+                          "name": "Linear Regression Implementation",
+                          "description": "Implement linear regression from scratch using NumPy",
+                          "due_date": "2024-04-01T23:59:00Z",
+                          "submission_status": "submitted"
+                        },
+                        {
+                          "assignment_id": "assign_402",
+                          "name": "Decision Trees Project",
+                          "description": "Build and evaluate a decision tree classifier",
+                          "due_date": "2024-04-15T23:59:00Z",
+                          "submission_status": "not_submitted"
+                        },
+                        {
+                          "assignment_id": "assign_403",
+                          "name": "Neural Network Training",
+                          "description": "Train a neural network on MNIST dataset",
+                          "due_date": "2024-05-01T23:59:00Z",
+                          "submission_status": "not_submitted"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Get assignments with bucket filter",
+                    "input": {
+                      "course_name": "Database Systems",
+                      "bucket": "past"
+                    },
+                    "passed": true,
+                    "output": {
+                      "assignments": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Get assignments by partial course name",
+                    "input": {
+                      "course_name": "Machine Learning"
+                    },
+                    "passed": true,
+                    "output": {
+                      "assignments": [
+                        {
+                          "assignment_id": "assign_401",
+                          "name": "Linear Regression Implementation",
+                          "description": "Implement linear regression from scratch using NumPy",
+                          "due_date": "2024-04-01T23:59:00Z",
+                          "submission_status": "submitted"
+                        },
+                        {
+                          "assignment_id": "assign_402",
+                          "name": "Decision Trees Project",
+                          "description": "Build and evaluate a decision tree classifier",
+                          "due_date": "2024-04-15T23:59:00Z",
+                          "submission_status": "not_submitted"
+                        },
+                        {
+                          "assignment_id": "assign_403",
+                          "name": "Neural Network Training",
+                          "description": "Train a neural network on MNIST dataset",
+                          "due_date": "2024-05-01T23:59:00Z",
+                          "submission_status": "not_submitted"
+                        }
+                      ]
+                    },
+                    "error": null,
+                    "note": "Partial name matching works correctly"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_students_in_course",
+                "test_cases": [
+                  {
+                    "description": "Get students in course_301",
+                    "input": {
+                      "course_id": "course_301"
+                    },
+                    "passed": true,
+                    "output": {
+                      "students": [
+                        {
+                          "student_id": "student_201",
+                          "name": "Grace Lee",
+                          "email": "grace.lee@university.edu",
+                          "enrollment_status": "active"
+                        },
+                        {
+                          "student_id": "student_202",
+                          "name": "Henry Brown",
+                          "email": "henry.brown@university.edu",
+                          "enrollment_status": "active"
+                        },
+                        {
+                          "student_id": "student_203",
+                          "name": "Iris Wang",
+                          "email": "iris.wang@university.edu",
+                          "enrollment_status": "active"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Get students in course_303 with invited status",
+                    "input": {
+                      "course_id": "course_303"
+                    },
+                    "passed": true,
+                    "output": {
+                      "students": [
+                        {
+                          "student_id": "student_202",
+                          "name": "Henry Brown",
+                          "email": "henry.brown@university.edu",
+                          "enrollment_status": "active"
+                        },
+                        {
+                          "student_id": "student_203",
+                          "name": "Iris Wang",
+                          "email": "iris.wang@university.edu",
+                          "enrollment_status": "active"
+                        },
+                        {
+                          "student_id": "student_205",
+                          "name": "Kelly Rodriguez",
+                          "email": "kelly.rodriguez@university.edu",
+                          "enrollment_status": "invited"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Invalid course ID",
+                    "input": {
+                      "course_id": "invalid_course"
+                    },
+                    "passed": true,
+                    "output": {
+                      "students": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_submission_status",
+                "test_cases": [
+                  {
+                    "description": "Get all submissions for assign_401",
+                    "input": {
+                      "course_id": "course_301",
+                      "assignment_id": "assign_401"
+                    },
+                    "passed": true,
+                    "output": {
+                      "submissions": {
+                        "student_201": {
+                          "student_id": "student_201",
+                          "student_name": "Grace Lee",
+                          "submitted_at": "2024-03-31T22:30:00Z",
+                          "submission_status": "submitted",
+                          "score": 97.5,
+                          "graded_at": "2024-04-02T09:15:00Z",
+                          "workflow_state": "graded"
+                        },
+                        "student_202": {
+                          "student_id": "student_202",
+                          "student_name": "Henry Brown",
+                          "submitted_at": "2024-04-01T23:55:00Z",
+                          "submission_status": "submitted",
+                          "score": 85.0,
+                          "graded_at": "2024-04-03T11:00:00Z",
+                          "workflow_state": "graded"
+                        },
+                        "student_203": {
+                          "student_id": "student_203",
+                          "student_name": "Iris Wang",
+                          "submitted_at": "2024-04-02T10:00:00Z",
+                          "submission_status": "late",
+                          "score": 78.0,
+                          "graded_at": "2024-04-04T14:20:00Z",
+                          "workflow_state": "graded"
+                        }
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Get specific student submission",
+                    "input": {
+                      "course_id": "course_301",
+                      "assignment_id": "assign_401",
+                      "student_id": "student_201"
+                    },
+                    "passed": true,
+                    "output": {
+                      "submissions": {
+                        "student_201": {
+                          "student_id": "student_201",
+                          "student_name": "Grace Lee",
+                          "submitted_at": "2024-03-31T22:30:00Z",
+                          "submission_status": "submitted",
+                          "score": 97.5,
+                          "graded_at": "2024-04-02T09:15:00Z",
+                          "workflow_state": "graded"
+                        }
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Get submissions with mixed states",
+                    "input": {
+                      "course_id": "course_302",
+                      "assignment_id": "assign_501"
+                    },
+                    "passed": true,
+                    "output": {
+                      "submissions": {
+                        "student_201": {
+                          "student_id": "student_201",
+                          "student_name": "Grace Lee",
+                          "submitted_at": "2024-03-24T19:00:00Z",
+                          "submission_status": "submitted",
+                          "score": 100.0,
+                          "graded_at": "2024-03-26T10:30:00Z",
+                          "workflow_state": "graded"
+                        },
+                        "student_204": {
+                          "student_id": "student_204",
+                          "student_name": "Jack Thompson",
+                          "submitted_at": "2024-03-25T23:30:00Z",
+                          "submission_status": "submitted",
+                          "score": 0.0,
+                          "graded_at": "",
+                          "workflow_state": "submitted"
+                        }
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Get submissions with not_submitted status",
+                    "input": {
+                      "course_id": "course_303",
+                      "assignment_id": "assign_601"
+                    },
+                    "passed": true,
+                    "output": {
+                      "submissions": {
+                        "student_202": {
+                          "student_id": "student_202",
+                          "student_name": "Henry Brown",
+                          "submitted_at": "2024-03-29T15:45:00Z",
+                          "submission_status": "submitted",
+                          "score": 90.0,
+                          "graded_at": "2024-03-31T08:00:00Z",
+                          "workflow_state": "graded"
+                        },
+                        "student_203": {
+                          "student_id": "student_203",
+                          "student_name": "Iris Wang",
+                          "submitted_at": "",
+                          "submission_status": "not_submitted",
+                          "score": 0.0,
+                          "graded_at": "",
+                          "workflow_state": "unsubmitted"
+                        }
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Assignment with no submissions",
+                    "input": {
+                      "course_id": "course_301",
+                      "assignment_id": "assign_402"
+                    },
+                    "passed": true,
+                    "output": {
+                      "submissions": {}
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "note": "Saved scenario matches original scenario data exactly"
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 134.99633264541626
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_courses",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get all courses from empty scenario",
+                    "input": {},
+                    "expected": "Empty courses dictionary",
+                    "actual": {
+                      "courses": {}
+                    },
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_modules",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get modules for non-existent course",
+                    "input": {
+                      "course_id": "course_123"
+                    },
+                    "expected": "Empty modules list",
+                    "actual": {
+                      "modules": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Error case: Empty course_id string",
+                    "input": {
+                      "course_id": ""
+                    },
+                    "expected": "Validation error",
+                    "actual": "Error: Course ID must be a non-empty string",
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_module_items",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get module items for non-existent course/module",
+                    "input": {
+                      "course_id": "course_123",
+                      "module_id": "module_456"
+                    },
+                    "expected": "Empty items list",
+                    "actual": {
+                      "items": []
+                    },
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_file_url",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get file URL for non-existent file",
+                    "input": {
+                      "file_id": "file_789",
+                      "course_id": "course_123"
+                    },
+                    "expected": "Error: File not found",
+                    "actual": "Error: File file_789 not found in course course_123",
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_course_assignments",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get assignments without bucket filter",
+                    "input": {
+                      "course_id": "course_123"
+                    },
+                    "expected": "Empty assignments list",
+                    "actual": {
+                      "assignments": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case: Get assignments with bucket filter",
+                    "input": {
+                      "course_id": "course_123",
+                      "bucket": "upcoming"
+                    },
+                    "expected": "Empty assignments list",
+                    "actual": {
+                      "assignments": []
+                    },
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_assignments_by_course_name",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get assignments by course name",
+                    "input": {
+                      "course_name": "Math 101"
+                    },
+                    "expected": "Empty assignments list",
+                    "actual": {
+                      "assignments": []
+                    },
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_students_in_course",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get students for non-existent course",
+                    "input": {
+                      "course_id": "course_123"
+                    },
+                    "expected": "Empty students list",
+                    "actual": {
+                      "students": []
+                    },
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_submission_status",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get submission status without student_id",
+                    "input": {
+                      "course_id": "course_123",
+                      "assignment_id": "assignment_456"
+                    },
+                    "expected": "Empty submissions dictionary",
+                    "actual": {
+                      "submissions": {}
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case: Get submission status with student_id",
+                    "input": {
+                      "course_id": "course_123",
+                      "assignment_id": "assignment_456",
+                      "student_id": "student_789"
+                    },
+                    "expected": "Empty submissions dictionary",
+                    "actual": {
+                      "submissions": {}
+                    },
+                    "passed": true
+                  }
+                ]
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All empty dictionaries preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 61.44881629943848
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_courses",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - retrieve all courses",
+                    "input": {},
+                    "passed": true,
+                    "output": {
+                      "courses": {
+                        "Introduction to Python": "course_101"
+                      }
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_modules",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - retrieve modules for course_101",
+                    "input": {
+                      "course_id": "course_101"
+                    },
+                    "passed": true,
+                    "output": {
+                      "modules": [
+                        {
+                          "module_id": "mod_001",
+                          "name": "Week 1: Getting Started",
+                          "status": "unlocked"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Error case - empty course_id",
+                    "input": {
+                      "course_id": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Course ID must be a non-empty string",
+                    "note": "Expected validation error - tool correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_module_items",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - retrieve items for mod_001",
+                    "input": {
+                      "course_id": "course_101",
+                      "module_id": "mod_001"
+                    },
+                    "passed": true,
+                    "output": {
+                      "items": [
+                        {
+                          "item_id": "item_001",
+                          "title": "Python Basics Lecture",
+                          "type": "Page",
+                          "url": "https://canvas.example.com/courses/101/pages/python-basics"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Error case - empty module_id",
+                    "input": {
+                      "course_id": "course_101",
+                      "module_id": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Module ID must be a non-empty string",
+                    "note": "Expected validation error - tool correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_file_url",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - retrieve file URL",
+                    "input": {
+                      "file_id": "file_001",
+                      "course_id": "course_101"
+                    },
+                    "passed": true,
+                    "output": {
+                      "download_url": "https://canvas.example.com/files/course_101/syllabus.pdf"
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Error case - non-existent file",
+                    "input": {
+                      "file_id": "file_999",
+                      "course_id": "course_101"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "File file_999 not found in course course_101",
+                    "note": "Expected error - tool correctly handled missing file"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_course_assignments",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - retrieve all assignments",
+                    "input": {
+                      "course_id": "course_101"
+                    },
+                    "passed": true,
+                    "output": {
+                      "assignments": [
+                        {
+                          "assignment_id": "assign_001",
+                          "name": "Hello World Program",
+                          "description": "Write your first Python program",
+                          "due_date": "2024-02-15T23:59:00Z",
+                          "submission_status": "not_submitted"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - with bucket filter",
+                    "input": {
+                      "course_id": "course_101",
+                      "bucket": "upcoming"
+                    },
+                    "passed": true,
+                    "output": {
+                      "assignments": []
+                    },
+                    "error": null,
+                    "note": "Bucket filter working correctly - no upcoming assignments"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_assignments_by_course_name",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - exact course name match",
+                    "input": {
+                      "course_name": "Introduction to Python"
+                    },
+                    "passed": true,
+                    "output": {
+                      "assignments": [
+                        {
+                          "assignment_id": "assign_001",
+                          "name": "Hello World Program",
+                          "description": "Write your first Python program",
+                          "due_date": "2024-02-15T23:59:00Z",
+                          "submission_status": "not_submitted"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - partial course name match",
+                    "input": {
+                      "course_name": "Python"
+                    },
+                    "passed": true,
+                    "output": {
+                      "assignments": [
+                        {
+                          "assignment_id": "assign_001",
+                          "name": "Hello World Program",
+                          "description": "Write your first Python program",
+                          "due_date": "2024-02-15T23:59:00Z",
+                          "submission_status": "not_submitted"
+                        }
+                      ]
+                    },
+                    "error": null,
+                    "note": "Partial matching working correctly"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_students_in_course",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - retrieve all students",
+                    "input": {
+                      "course_id": "course_101"
+                    },
+                    "passed": true,
+                    "output": {
+                      "students": [
+                        {
+                          "student_id": "student_001",
+                          "name": "Alice Johnson",
+                          "email": "alice.johnson@university.edu",
+                          "enrollment_status": "active"
+                        },
+                        {
+                          "student_id": "student_002",
+                          "name": "Bob Smith",
+                          "email": "bob.smith@university.edu",
+                          "enrollment_status": "active"
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_submission_status",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - all students submissions",
+                    "input": {
+                      "course_id": "course_101",
+                      "assignment_id": "assign_001"
+                    },
+                    "passed": true,
+                    "output": {
+                      "submissions": {
+                        "student_001": {
+                          "student_id": "student_001",
+                          "student_name": "Alice Johnson",
+                          "submitted_at": "2024-02-14T18:30:00Z",
+                          "submission_status": "submitted",
+                          "score": 95.0,
+                          "graded_at": "2024-02-15T10:00:00Z",
+                          "workflow_state": "graded"
+                        },
+                        "student_002": {
+                          "student_id": "student_002",
+                          "student_name": "Bob Smith",
+                          "submitted_at": "",
+                          "submission_status": "not_submitted",
+                          "score": 0.0,
+                          "graded_at": "",
+                          "workflow_state": "unsubmitted"
+                        }
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - specific student submission",
+                    "input": {
+                      "course_id": "course_101",
+                      "assignment_id": "assign_001",
+                      "student_id": "student_001"
+                    },
+                    "passed": true,
+                    "output": {
+                      "submissions": {
+                        "student_001": {
+                          "student_id": "student_001",
+                          "student_name": "Alice Johnson",
+                          "submitted_at": "2024-02-14T18:30:00Z",
+                          "submission_status": "submitted",
+                          "score": 95.0,
+                          "graded_at": "2024-02-15T10:00:00Z",
+                          "workflow_state": "graded"
+                        }
+                      }
+                    },
+                    "error": null,
+                    "note": "Student-specific filtering working correctly"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "note": "Saved scenario matches original scenario exactly - state consistency verified"
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 91.80271220207214
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_courses",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Retrieve all courses",
+                    "input": {},
+                    "expected": "Dictionary with course name to ID mapping",
+                    "actual": "Successfully returned 2 courses: Data Structures and Web Development",
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_modules",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Get modules for course_201",
+                    "input": {
+                      "course_id": "course_201"
+                    },
+                    "expected": "List of 2 modules",
+                    "actual": "Successfully returned 2 modules: Arrays and Lists, Trees and Graphs",
+                    "passed": true
+                  },
+                  {
+                    "description": "Get modules for course_202",
+                    "input": {
+                      "course_id": "course_202"
+                    },
+                    "expected": "List of 1 module",
+                    "actual": "Successfully returned 1 module: HTML & CSS Fundamentals",
+                    "passed": true
+                  },
+                  {
+                    "description": "Get modules for non-existent course",
+                    "input": {
+                      "course_id": "course_999"
+                    },
+                    "expected": "Empty list",
+                    "actual": "Successfully returned empty list",
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_module_items",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Get items for mod_201 in course_201",
+                    "input": {
+                      "course_id": "course_201",
+                      "module_id": "mod_201"
+                    },
+                    "expected": "List of 2 items",
+                    "actual": "Successfully returned 2 items: Array Operations, Linked Lists Tutorial",
+                    "passed": true
+                  },
+                  {
+                    "description": "Get items for mod_301 in course_202",
+                    "input": {
+                      "course_id": "course_202",
+                      "module_id": "mod_301"
+                    },
+                    "expected": "List of 1 item",
+                    "actual": "Successfully returned 1 item: CSS Grid Layout",
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_file_url",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Get URL for file_201 in course_201",
+                    "input": {
+                      "file_id": "file_201",
+                      "course_id": "course_201"
+                    },
+                    "expected": "Download URL for lecture notes PDF",
+                    "actual": "Successfully returned URL: https://canvas.example.com/files/course_201/lecture_notes.pdf",
+                    "passed": true
+                  },
+                  {
+                    "description": "Get URL for file_301 in course_202",
+                    "input": {
+                      "file_id": "file_301",
+                      "course_id": "course_202"
+                    },
+                    "expected": "Download URL for HTML reference PDF",
+                    "actual": "Successfully returned URL: https://canvas.example.com/files/course_202/html_reference.pdf",
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_course_assignments",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Get all assignments for course_201",
+                    "input": {
+                      "course_id": "course_201"
+                    },
+                    "expected": "List of 2 assignments",
+                    "actual": "Successfully returned 2 assignments: Implement Stack, Graph Traversal",
+                    "passed": true
+                  },
+                  {
+                    "description": "Get assignments for course_202 with bucket filter",
+                    "input": {
+                      "course_id": "course_202",
+                      "bucket": "upcoming"
+                    },
+                    "expected": "Filtered list based on bucket",
+                    "actual": "Successfully returned empty list (no upcoming assignments match filter)",
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_assignments_by_course_name",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Get assignments by exact course name",
+                    "input": {
+                      "course_name": "Data Structures"
+                    },
+                    "expected": "List of 2 assignments for Data Structures course",
+                    "actual": "Successfully returned 2 assignments: Implement Stack, Graph Traversal",
+                    "passed": true
+                  },
+                  {
+                    "description": "Get assignments by partial course name",
+                    "input": {
+                      "course_name": "Web"
+                    },
+                    "expected": "List of 1 assignment for Web Development course",
+                    "actual": "Successfully returned 1 assignment: Portfolio Website",
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_students_in_course",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Get students in course_201",
+                    "input": {
+                      "course_id": "course_201"
+                    },
+                    "expected": "List of 3 students",
+                    "actual": "Successfully returned 3 students: Charlie Davis, Diana Martinez, Ethan Wilson",
+                    "passed": true
+                  },
+                  {
+                    "description": "Get students in course_202",
+                    "input": {
+                      "course_id": "course_202"
+                    },
+                    "expected": "List of 2 students",
+                    "actual": "Successfully returned 2 students: Charlie Davis, Fiona Chen",
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_submission_status",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Get all submissions for assign_201",
+                    "input": {
+                      "course_id": "course_201",
+                      "assignment_id": "assign_201"
+                    },
+                    "expected": "Dictionary with 2 student submissions",
+                    "actual": "Successfully returned submissions for student_101 (graded, 88.5) and student_102 (late, 92.0)",
+                    "passed": true
+                  },
+                  {
+                    "description": "Get specific student submission",
+                    "input": {
+                      "course_id": "course_201",
+                      "assignment_id": "assign_201",
+                      "student_id": "student_101"
+                    },
+                    "expected": "Dictionary with 1 student submission",
+                    "actual": "Successfully returned submission for student_101 only (graded, 88.5)",
+                    "passed": true
+                  }
+                ]
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All data structures preserved correctly including courses, modules, module_items, assignments, students, submissions, and files."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 93.56198501586914
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_courses",
+                "test_cases": [
+                  {
+                    "description": "Retrieve all courses",
+                    "input": {},
+                    "passed": true,
+                    "output": {
+                      "courses": {
+                        "Machine Learning Fundamentals": "course_301",
+                        "Database Systems": "course_302",
+                        "Software Engineering": "course_303"
+                      }
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_modules",
+                "test_cases": [
+                  {
+                    "description": "Valid course - course_301",
+                    "input": {
+                      "course_id": "course_301"
+                    },
+                    "passed": true,
+                    "output": {
+                      "modules": [
+                        {
+                          "module_id": "mod_401",
+                          "name": "Introduction to ML",
+                          "status": "completed"
+                        },
+                        {
+                          "module_id": "mod_402",
+                          "name": "Supervised Learning",
+                          "status": "unlocked"
+                        },
+                        {
+                          "module_id": "mod_403",
+                          "name": "Neural Networks",
+                          "status": "locked"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid course - course_302",
+                    "input": {
+                      "course_id": "course_302"
+                    },
+                    "passed": true,
+                    "output": {
+                      "modules": [
+                        {
+                          "module_id": "mod_501",
+                          "name": "Relational Databases",
+                          "status": "unlocked"
+                        },
+                        {
+                          "module_id": "mod_502",
+                          "name": "SQL Advanced",
+                          "status": "unlocked"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Invalid course ID",
+                    "input": {
+                      "course_id": "invalid_course"
+                    },
+                    "passed": true,
+                    "output": {
+                      "modules": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_module_items",
+                "test_cases": [
+                  {
+                    "description": "Valid module with assignments - mod_402",
+                    "input": {
+                      "course_id": "course_301",
+                      "module_id": "mod_402"
+                    },
+                    "passed": true,
+                    "output": {
+                      "items": [
+                        {
+                          "item_id": "item_403",
+                          "title": "Linear Regression Assignment",
+                          "type": "Assignment",
+                          "url": "https://canvas.example.com/courses/301/assignments/1"
+                        },
+                        {
+                          "item_id": "item_404",
+                          "title": "Classification Quiz",
+                          "type": "Quiz",
+                          "url": "https://canvas.example.com/courses/301/quizzes/1"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid module with file - mod_501",
+                    "input": {
+                      "course_id": "course_302",
+                      "module_id": "mod_501"
+                    },
+                    "passed": true,
+                    "output": {
+                      "items": [
+                        {
+                          "item_id": "item_501",
+                          "title": "Database Design Principles",
+                          "type": "File",
+                          "url": "https://canvas.example.com/courses/302/files/201"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Invalid module ID",
+                    "input": {
+                      "course_id": "course_301",
+                      "module_id": "invalid_module"
+                    },
+                    "passed": true,
+                    "output": {
+                      "items": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid module with pages - mod_401",
+                    "input": {
+                      "course_id": "course_301",
+                      "module_id": "mod_401"
+                    },
+                    "passed": true,
+                    "output": {
+                      "items": [
+                        {
+                          "item_id": "item_401",
+                          "title": "What is Machine Learning?",
+                          "type": "Page",
+                          "url": "https://canvas.example.com/courses/301/pages/intro-ml"
+                        },
+                        {
+                          "item_id": "item_402",
+                          "title": "ML Applications Video",
+                          "type": "ExternalUrl",
+                          "url": "https://youtube.com/watch?v=ml-intro"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid module - mod_602",
+                    "input": {
+                      "course_id": "course_303",
+                      "module_id": "mod_602"
+                    },
+                    "passed": true,
+                    "output": {
+                      "items": [
+                        {
+                          "item_id": "item_602",
+                          "title": "Singleton Pattern Example",
+                          "type": "File",
+                          "url": "https://canvas.example.com/courses/303/files/301"
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_file_url",
+                "test_cases": [
+                  {
+                    "description": "Valid file in course_301",
+                    "input": {
+                      "file_id": "file_401",
+                      "course_id": "course_301"
+                    },
+                    "passed": true,
+                    "output": {
+                      "download_url": "https://canvas.example.com/files/course_301/ml_slides.pdf"
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid file in course_302",
+                    "input": {
+                      "file_id": "file_502",
+                      "course_id": "course_302"
+                    },
+                    "passed": true,
+                    "output": {
+                      "download_url": "https://canvas.example.com/files/course_302/sample_queries.sql"
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Invalid file ID - expected error",
+                    "input": {
+                      "file_id": "invalid_file",
+                      "course_id": "course_301"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "File invalid_file not found in course course_301",
+                    "note": "Correctly rejected invalid file ID"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_course_assignments",
+                "test_cases": [
+                  {
+                    "description": "Get all assignments for course_301",
+                    "input": {
+                      "course_id": "course_301"
+                    },
+                    "passed": true,
+                    "output": {
+                      "assignments": [
+                        {
+                          "assignment_id": "assign_401",
+                          "name": "Linear Regression Implementation",
+                          "description": "Implement linear regression from scratch using NumPy",
+                          "due_date": "2024-04-01T23:59:00Z",
+                          "submission_status": "submitted"
+                        },
+                        {
+                          "assignment_id": "assign_402",
+                          "name": "Decision Trees Project",
+                          "description": "Build and evaluate a decision tree classifier",
+                          "due_date": "2024-04-15T23:59:00Z",
+                          "submission_status": "not_submitted"
+                        },
+                        {
+                          "assignment_id": "assign_403",
+                          "name": "Neural Network Training",
+                          "description": "Train a neural network on MNIST dataset",
+                          "due_date": "2024-05-01T23:59:00Z",
+                          "submission_status": "not_submitted"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Get assignments with bucket filter",
+                    "input": {
+                      "course_id": "course_302",
+                      "bucket": "upcoming"
+                    },
+                    "passed": true,
+                    "output": {
+                      "assignments": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_assignments_by_course_name",
+                "test_cases": [
+                  {
+                    "description": "Get assignments by exact course name",
+                    "input": {
+                      "course_name": "Machine Learning Fundamentals"
+                    },
+                    "passed": true,
+                    "output": {
+                      "assignments": [
+                        {
+                          "assignment_id": "assign_401",
+                          "name": "Linear Regression Implementation",
+                          "description": "Implement linear regression from scratch using NumPy",
+                          "due_date": "2024-04-01T23:59:00Z",
+                          "submission_status": "submitted"
+                        },
+                        {
+                          "assignment_id": "assign_402",
+                          "name": "Decision Trees Project",
+                          "description": "Build and evaluate a decision tree classifier",
+                          "due_date": "2024-04-15T23:59:00Z",
+                          "submission_status": "not_submitted"
+                        },
+                        {
+                          "assignment_id": "assign_403",
+                          "name": "Neural Network Training",
+                          "description": "Train a neural network on MNIST dataset",
+                          "due_date": "2024-05-01T23:59:00Z",
+                          "submission_status": "not_submitted"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Get assignments with bucket filter",
+                    "input": {
+                      "course_name": "Database Systems",
+                      "bucket": "past"
+                    },
+                    "passed": true,
+                    "output": {
+                      "assignments": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Get assignments by partial course name",
+                    "input": {
+                      "course_name": "Machine Learning"
+                    },
+                    "passed": true,
+                    "output": {
+                      "assignments": [
+                        {
+                          "assignment_id": "assign_401",
+                          "name": "Linear Regression Implementation",
+                          "description": "Implement linear regression from scratch using NumPy",
+                          "due_date": "2024-04-01T23:59:00Z",
+                          "submission_status": "submitted"
+                        },
+                        {
+                          "assignment_id": "assign_402",
+                          "name": "Decision Trees Project",
+                          "description": "Build and evaluate a decision tree classifier",
+                          "due_date": "2024-04-15T23:59:00Z",
+                          "submission_status": "not_submitted"
+                        },
+                        {
+                          "assignment_id": "assign_403",
+                          "name": "Neural Network Training",
+                          "description": "Train a neural network on MNIST dataset",
+                          "due_date": "2024-05-01T23:59:00Z",
+                          "submission_status": "not_submitted"
+                        }
+                      ]
+                    },
+                    "error": null,
+                    "note": "Partial name matching works correctly"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_students_in_course",
+                "test_cases": [
+                  {
+                    "description": "Get students in course_301",
+                    "input": {
+                      "course_id": "course_301"
+                    },
+                    "passed": true,
+                    "output": {
+                      "students": [
+                        {
+                          "student_id": "student_201",
+                          "name": "Grace Lee",
+                          "email": "grace.lee@university.edu",
+                          "enrollment_status": "active"
+                        },
+                        {
+                          "student_id": "student_202",
+                          "name": "Henry Brown",
+                          "email": "henry.brown@university.edu",
+                          "enrollment_status": "active"
+                        },
+                        {
+                          "student_id": "student_203",
+                          "name": "Iris Wang",
+                          "email": "iris.wang@university.edu",
+                          "enrollment_status": "active"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Get students in course_303 with invited status",
+                    "input": {
+                      "course_id": "course_303"
+                    },
+                    "passed": true,
+                    "output": {
+                      "students": [
+                        {
+                          "student_id": "student_202",
+                          "name": "Henry Brown",
+                          "email": "henry.brown@university.edu",
+                          "enrollment_status": "active"
+                        },
+                        {
+                          "student_id": "student_203",
+                          "name": "Iris Wang",
+                          "email": "iris.wang@university.edu",
+                          "enrollment_status": "active"
+                        },
+                        {
+                          "student_id": "student_205",
+                          "name": "Kelly Rodriguez",
+                          "email": "kelly.rodriguez@university.edu",
+                          "enrollment_status": "invited"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Invalid course ID",
+                    "input": {
+                      "course_id": "invalid_course"
+                    },
+                    "passed": true,
+                    "output": {
+                      "students": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_submission_status",
+                "test_cases": [
+                  {
+                    "description": "Get all submissions for assign_401",
+                    "input": {
+                      "course_id": "course_301",
+                      "assignment_id": "assign_401"
+                    },
+                    "passed": true,
+                    "output": {
+                      "submissions": {
+                        "student_201": {
+                          "student_id": "student_201",
+                          "student_name": "Grace Lee",
+                          "submitted_at": "2024-03-31T22:30:00Z",
+                          "submission_status": "submitted",
+                          "score": 97.5,
+                          "graded_at": "2024-04-02T09:15:00Z",
+                          "workflow_state": "graded"
+                        },
+                        "student_202": {
+                          "student_id": "student_202",
+                          "student_name": "Henry Brown",
+                          "submitted_at": "2024-04-01T23:55:00Z",
+                          "submission_status": "submitted",
+                          "score": 85.0,
+                          "graded_at": "2024-04-03T11:00:00Z",
+                          "workflow_state": "graded"
+                        },
+                        "student_203": {
+                          "student_id": "student_203",
+                          "student_name": "Iris Wang",
+                          "submitted_at": "2024-04-02T10:00:00Z",
+                          "submission_status": "late",
+                          "score": 78.0,
+                          "graded_at": "2024-04-04T14:20:00Z",
+                          "workflow_state": "graded"
+                        }
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Get specific student submission",
+                    "input": {
+                      "course_id": "course_301",
+                      "assignment_id": "assign_401",
+                      "student_id": "student_201"
+                    },
+                    "passed": true,
+                    "output": {
+                      "submissions": {
+                        "student_201": {
+                          "student_id": "student_201",
+                          "student_name": "Grace Lee",
+                          "submitted_at": "2024-03-31T22:30:00Z",
+                          "submission_status": "submitted",
+                          "score": 97.5,
+                          "graded_at": "2024-04-02T09:15:00Z",
+                          "workflow_state": "graded"
+                        }
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Get submissions with mixed states",
+                    "input": {
+                      "course_id": "course_302",
+                      "assignment_id": "assign_501"
+                    },
+                    "passed": true,
+                    "output": {
+                      "submissions": {
+                        "student_201": {
+                          "student_id": "student_201",
+                          "student_name": "Grace Lee",
+                          "submitted_at": "2024-03-24T19:00:00Z",
+                          "submission_status": "submitted",
+                          "score": 100.0,
+                          "graded_at": "2024-03-26T10:30:00Z",
+                          "workflow_state": "graded"
+                        },
+                        "student_204": {
+                          "student_id": "student_204",
+                          "student_name": "Jack Thompson",
+                          "submitted_at": "2024-03-25T23:30:00Z",
+                          "submission_status": "submitted",
+                          "score": 0.0,
+                          "graded_at": "",
+                          "workflow_state": "submitted"
+                        }
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Get submissions with not_submitted status",
+                    "input": {
+                      "course_id": "course_303",
+                      "assignment_id": "assign_601"
+                    },
+                    "passed": true,
+                    "output": {
+                      "submissions": {
+                        "student_202": {
+                          "student_id": "student_202",
+                          "student_name": "Henry Brown",
+                          "submitted_at": "2024-03-29T15:45:00Z",
+                          "submission_status": "submitted",
+                          "score": 90.0,
+                          "graded_at": "2024-03-31T08:00:00Z",
+                          "workflow_state": "graded"
+                        },
+                        "student_203": {
+                          "student_id": "student_203",
+                          "student_name": "Iris Wang",
+                          "submitted_at": "",
+                          "submission_status": "not_submitted",
+                          "score": 0.0,
+                          "graded_at": "",
+                          "workflow_state": "unsubmitted"
+                        }
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Assignment with no submissions",
+                    "input": {
+                      "course_id": "course_301",
+                      "assignment_id": "assign_402"
+                    },
+                    "passed": true,
+                    "output": {
+                      "submissions": {}
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "note": "Saved scenario matches original scenario data exactly"
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 134.99633264541626
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_courses",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get all courses from empty scenario",
+                    "input": {},
+                    "expected": "Empty courses dictionary",
+                    "actual": {
+                      "courses": {}
+                    },
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_modules",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get modules for non-existent course",
+                    "input": {
+                      "course_id": "course_123"
+                    },
+                    "expected": "Empty modules list",
+                    "actual": {
+                      "modules": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Error case: Empty course_id string",
+                    "input": {
+                      "course_id": ""
+                    },
+                    "expected": "Validation error",
+                    "actual": "Error: Course ID must be a non-empty string",
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_module_items",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get module items for non-existent course/module",
+                    "input": {
+                      "course_id": "course_123",
+                      "module_id": "module_456"
+                    },
+                    "expected": "Empty items list",
+                    "actual": {
+                      "items": []
+                    },
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_file_url",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get file URL for non-existent file",
+                    "input": {
+                      "file_id": "file_789",
+                      "course_id": "course_123"
+                    },
+                    "expected": "Error: File not found",
+                    "actual": "Error: File file_789 not found in course course_123",
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_course_assignments",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get assignments without bucket filter",
+                    "input": {
+                      "course_id": "course_123"
+                    },
+                    "expected": "Empty assignments list",
+                    "actual": {
+                      "assignments": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case: Get assignments with bucket filter",
+                    "input": {
+                      "course_id": "course_123",
+                      "bucket": "upcoming"
+                    },
+                    "expected": "Empty assignments list",
+                    "actual": {
+                      "assignments": []
+                    },
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_assignments_by_course_name",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get assignments by course name",
+                    "input": {
+                      "course_name": "Math 101"
+                    },
+                    "expected": "Empty assignments list",
+                    "actual": {
+                      "assignments": []
+                    },
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_students_in_course",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get students for non-existent course",
+                    "input": {
+                      "course_id": "course_123"
+                    },
+                    "expected": "Empty students list",
+                    "actual": {
+                      "students": []
+                    },
+                    "passed": true
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_submission_status",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get submission status without student_id",
+                    "input": {
+                      "course_id": "course_123",
+                      "assignment_id": "assignment_456"
+                    },
+                    "expected": "Empty submissions dictionary",
+                    "actual": {
+                      "submissions": {}
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case: Get submission status with student_id",
+                    "input": {
+                      "course_id": "course_123",
+                      "assignment_id": "assignment_456",
+                      "student_id": "student_789"
+                    },
+                    "expected": "Empty submissions dictionary",
+                    "actual": {
+                      "submissions": {}
+                    },
+                    "passed": true
+                  }
+                ]
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All empty dictionaries preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 61.44881629943848
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/Canvas.py"
+  }
+}

@@ -1,0 +1,748 @@
+{
+  "class_name": "Posting",
+  "description": "A social media posting server that manages user authentication, tweet creation and management, social interactions (retweets, comments), and user follow relationships.",
+  "tools": [
+    {
+      "name": "login",
+      "description": "Authenticate a user with credentials and establish an active session for performing posting operations.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "The username credential for authentication"
+          },
+          "password": {
+            "type": "string",
+            "description": "The password credential for authentication"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the login attempt was successful"
+          },
+          "session_token": {
+            "type": "string",
+            "description": "Session token for maintaining authenticated state, returned only if login is successful"
+          },
+          "username": {
+            "type": "string",
+            "description": "The username of the authenticated user account, returned only if login is successful"
+          }
+        }
+      }
+    },
+    {
+      "name": "logout",
+      "description": "Terminate the current user session and invalidate the authentication token.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the logout operation completed successfully"
+          }
+        }
+      }
+    },
+    {
+      "name": "check_login_status",
+      "description": "Verify whether a user session is currently active and authenticated.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "is_authenticated": {
+            "type": "boolean",
+            "description": "Indicates whether a user is currently authenticated with an active session"
+          },
+          "username": {
+            "type": "string",
+            "description": "The username of the authenticated user account, returned only if a session is active"
+          }
+        }
+      }
+    },
+    {
+      "name": "create_tweet",
+      "description": "Publish a new tweet with optional hashtags and user mentions for the authenticated user.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "The text content of the tweet to be published"
+          },
+          "hashtags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional list of hashtags to include in the tweet. Each hashtag must start with # (e.g., ['#python', '#coding']). If not provided, no hashtags are added."
+          },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional list of usernames to mention in the tweet. Each mention must start with @ (e.g., ['@alice', '@bob']). If not provided, no mentions are added."
+          }
+        },
+        "required": [
+          "content"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "tweet_id": {
+            "type": "integer",
+            "description": "The unique identifier of the created tweet, used for subsequent operations like retrieval, updates, or deletion"
+          },
+          "username": {
+            "type": "string",
+            "description": "The username of the authenticated user account who authored the tweet"
+          },
+          "content": {
+            "type": "string",
+            "description": "The text content of the published tweet"
+          },
+          "hashtags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of hashtags included in the tweet"
+          },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of usernames mentioned in the tweet"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Timestamp when the tweet was created, in ISO 8601 format"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_tweet",
+      "description": "Retrieve detailed information about a specific tweet including engagement metrics.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tweet_id": {
+            "type": "integer",
+            "description": "The unique identifier of the tweet to retrieve. Can be obtained from create_tweet, list_tweets, or search_tweets operations."
+          }
+        },
+        "required": [
+          "tweet_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "tweet_id": {
+            "type": "integer",
+            "description": "The unique identifier of the tweet"
+          },
+          "username": {
+            "type": "string",
+            "description": "The username of the authenticated user account who authored the tweet"
+          },
+          "content": {
+            "type": "string",
+            "description": "The text content of the tweet"
+          },
+          "hashtags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of hashtags included in the tweet"
+          },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of usernames mentioned in the tweet"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Timestamp when the tweet was created, in ISO 8601 format"
+          },
+          "retweet_count": {
+            "type": "integer",
+            "description": "Total number of times this tweet has been retweeted by other users"
+          },
+          "comment_count": {
+            "type": "integer",
+            "description": "Total number of comments posted on this tweet"
+          }
+        }
+      }
+    },
+    {
+      "name": "list_tweets",
+      "description": "Retrieve a paginated list of tweets with optional filtering by username or followed users.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Optional username to filter tweets by a specific author. If not provided and user is authenticated, returns tweets from followed users. If not authenticated, returns public tweets."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of tweets to return in the response. Defaults to 5."
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Number of tweets to skip for pagination, enabling retrieval of subsequent pages. Defaults to 0."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "tweets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tweet_id": {
+                  "type": "integer",
+                  "description": "The unique identifier of the tweet, used for subsequent operations like retrieval, updates, or deletion"
+                },
+                "username": {
+                  "type": "string",
+                  "description": "The username of the authenticated user account who authored the tweet"
+                },
+                "content": {
+                  "type": "string",
+                  "description": "The text content of the tweet"
+                },
+                "created_at": {
+                  "type": "string",
+                  "description": "Timestamp when the tweet was created, in ISO 8601 format"
+                },
+                "retweet_count": {
+                  "type": "integer",
+                  "description": "Total number of times this tweet has been retweeted by other users"
+                },
+                "comment_count": {
+                  "type": "integer",
+                  "description": "Total number of comments posted on this tweet"
+                }
+              }
+            },
+            "description": "List of tweet summaries matching the filter criteria. Tweet IDs can be used with get_tweet for full details."
+          }
+        }
+      }
+    },
+    {
+      "name": "search_tweets",
+      "description": "Search for tweets containing a specific keyword in their content or hashtags.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The search keyword to match against tweet content or hashtags"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of matching tweets to return in the response. Defaults to 5."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "tweets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tweet_id": {
+                  "type": "integer",
+                  "description": "The unique identifier of the tweet, used for subsequent operations like retrieval, updates, or deletion"
+                },
+                "username": {
+                  "type": "string",
+                  "description": "The username of the authenticated user account who authored the tweet"
+                },
+                "content": {
+                  "type": "string",
+                  "description": "The text content of the tweet"
+                },
+                "hashtags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "List of hashtags included in the tweet"
+                },
+                "created_at": {
+                  "type": "string",
+                  "description": "Timestamp when the tweet was created, in ISO 8601 format"
+                },
+                "retweet_count": {
+                  "type": "integer",
+                  "description": "Total number of times this tweet has been retweeted by other users"
+                },
+                "comment_count": {
+                  "type": "integer",
+                  "description": "Total number of comments posted on this tweet"
+                }
+              }
+            },
+            "description": "List of tweets matching the search query. Tweet IDs can be used with get_tweet for full details."
+          }
+        }
+      }
+    },
+    {
+      "name": "update_tweet",
+      "description": "Modify an existing tweet's content, hashtags, or mentions. Only the original author can update their own tweets.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tweet_id": {
+            "type": "integer",
+            "description": "The unique identifier of the tweet to update. Can be obtained from create_tweet, list_tweets, or search_tweets operations."
+          },
+          "content": {
+            "type": "string",
+            "description": "Optional new text content to replace the existing tweet content"
+          },
+          "hashtags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional new list of hashtags to replace existing hashtags. Each hashtag must start with #."
+          },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional new list of usernames to replace existing mentions. Each mention must start with @."
+          }
+        },
+        "required": [
+          "tweet_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "tweet_id": {
+            "type": "integer",
+            "description": "The unique identifier of the updated tweet"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the update operation completed successfully"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "Timestamp when the tweet was last updated, in ISO 8601 format"
+          },
+          "updated_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of field names that were modified in this update operation"
+          }
+        }
+      }
+    },
+    {
+      "name": "delete_tweet",
+      "description": "Permanently remove a tweet from the system. Only the original author can delete their own tweets.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tweet_id": {
+            "type": "integer",
+            "description": "The unique identifier of the tweet to delete. Can be obtained from create_tweet, list_tweets, or search_tweets operations."
+          }
+        },
+        "required": [
+          "tweet_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "tweet_id": {
+            "type": "integer",
+            "description": "The unique identifier of the deleted tweet"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the deletion operation completed successfully"
+          },
+          "message": {
+            "type": "string",
+            "description": "Confirmation message describing the result of the deletion operation"
+          }
+        }
+      }
+    },
+    {
+      "name": "retweet",
+      "description": "Share an existing tweet to the authenticated user's followers by retweeting it.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tweet_id": {
+            "type": "integer",
+            "description": "The unique identifier of the tweet to retweet. Can be obtained from get_tweet, list_tweets, or search_tweets operations."
+          }
+        },
+        "required": [
+          "tweet_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the retweet operation completed successfully"
+          },
+          "message": {
+            "type": "string",
+            "description": "Status message describing the result (e.g., 'Successfully retweeted' or 'Already retweeted')"
+          },
+          "retweeted_at": {
+            "type": "string",
+            "description": "Timestamp when the retweet was created, in ISO 8601 format. Only returned if the retweet was successful."
+          }
+        }
+      }
+    },
+    {
+      "name": "add_comment",
+      "description": "Post a comment on an existing tweet for the authenticated user.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tweet_id": {
+            "type": "integer",
+            "description": "The unique identifier of the tweet to comment on. Can be obtained from get_tweet, list_tweets, or search_tweets operations."
+          },
+          "comment_content": {
+            "type": "string",
+            "description": "The text content of the comment to be posted"
+          }
+        },
+        "required": [
+          "tweet_id",
+          "comment_content"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "comment_id": {
+            "type": "integer",
+            "description": "The unique identifier of the created comment"
+          },
+          "tweet_id": {
+            "type": "integer",
+            "description": "The unique identifier of the tweet that was commented on"
+          },
+          "username": {
+            "type": "string",
+            "description": "The username of the authenticated user account who authored the comment"
+          },
+          "comment_content": {
+            "type": "string",
+            "description": "The text content of the posted comment"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Timestamp when the comment was created, in ISO 8601 format"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_tweet_comments",
+      "description": "Retrieve all comments posted on a specific tweet with pagination support.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tweet_id": {
+            "type": "integer",
+            "description": "The unique identifier of the tweet to retrieve comments for. Can be obtained from get_tweet, list_tweets, or search_tweets operations."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of comments to return in the response. Defaults to 50."
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Number of comments to skip for pagination, enabling retrieval of subsequent pages. Defaults to 0."
+          }
+        },
+        "required": [
+          "tweet_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "comments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "comment_id": {
+                  "type": "integer",
+                  "description": "The unique identifier of the comment"
+                },
+                "tweet_id": {
+                  "type": "integer",
+                  "description": "The unique identifier of the tweet that was commented on"
+                },
+                "username": {
+                  "type": "string",
+                  "description": "The username of the authenticated user account who authored the comment"
+                },
+                "comment_content": {
+                  "type": "string",
+                  "description": "The text content of the comment"
+                },
+                "created_at": {
+                  "type": "string",
+                  "description": "Timestamp when the comment was created, in ISO 8601 format"
+                }
+              }
+            },
+            "description": "List of all comments posted on the specified tweet"
+          }
+        }
+      }
+    },
+    {
+      "name": "follow_user",
+      "description": "Establish a following relationship with another user to see their tweets in your feed.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "The username of the user account to follow"
+          }
+        },
+        "required": [
+          "username"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the follow operation completed successfully"
+          },
+          "message": {
+            "type": "string",
+            "description": "Status message describing the result (e.g., 'Successfully followed' or 'Already following')"
+          },
+          "followed_at": {
+            "type": "string",
+            "description": "Timestamp when the follow relationship was established, in ISO 8601 format. Only returned if the follow was successful."
+          }
+        }
+      }
+    },
+    {
+      "name": "unfollow_user",
+      "description": "Remove an existing following relationship with another user.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "The username of the user account to unfollow"
+          }
+        },
+        "required": [
+          "username"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the unfollow operation completed successfully"
+          },
+          "message": {
+            "type": "string",
+            "description": "Status message describing the result (e.g., 'Successfully unfollowed' or 'Not following')"
+          }
+        }
+      }
+    },
+    {
+      "name": "list_following",
+      "description": "Retrieve a paginated list of all users that a specific user or the authenticated user is following.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Optional username to retrieve the following list for. If not provided, returns the following list for the current authenticated user."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of users to return in the response. Defaults to 50."
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Number of users to skip for pagination, enabling retrieval of subsequent pages. Defaults to 0."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "following": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string",
+                  "description": "The username of the user account being followed"
+                },
+                "followed_at": {
+                  "type": "string",
+                  "description": "Timestamp when the follow relationship was established, in ISO 8601 format"
+                }
+              }
+            },
+            "description": "List of all users that the specified user is following"
+          }
+        }
+      }
+    },
+    {
+      "name": "list_followers",
+      "description": "Retrieve a paginated list of all users that follow a specific user or the authenticated user.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Optional username to retrieve the followers list for. If not provided, returns the followers list for the current authenticated user."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of users to return in the response. Defaults to 50."
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Number of users to skip for pagination, enabling retrieval of subsequent pages. Defaults to 0."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "followers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string",
+                  "description": "The username of the user account that is following"
+                },
+                "followed_at": {
+                  "type": "string",
+                  "description": "Timestamp when the follow relationship was established, in ISO 8601 format"
+                }
+              }
+            },
+            "description": "List of all users that follow the specified user"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_user_stats",
+      "description": "Retrieve comprehensive statistics and metrics for a specific user or the authenticated user.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Optional username to retrieve statistics for. If not provided, returns statistics for the current authenticated user."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "The username of the user account for which statistics are provided"
+          },
+          "tweet_count": {
+            "type": "integer",
+            "description": "Total number of tweets posted by the user"
+          },
+          "following_count": {
+            "type": "integer",
+            "description": "Total number of users that this user is following"
+          },
+          "followers_count": {
+            "type": "integer",
+            "description": "Total number of users that follow this user"
+          },
+          "retweet_count": {
+            "type": "integer",
+            "description": "Total number of retweets made by the user"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,263 @@
+{
+  "class_name": "AirtableMcpServer",
+  "description": "MCP server exposing Airtable workspace, base, table, and record CRUD operations with optional filtering, pagination, and formula-based queries.",
+  "tools": [
+    {
+      "name": "list_bases",
+      "description": "Retrieve all bases accessible to the authenticated Airtable workspace.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "bases": {
+            "type": "array",
+            "description": "List of bases in the workspace.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The unique identifier of the Airtable base."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The display name of the Airtable base."
+                },
+                "permissionLevel": {
+                  "type": "string",
+                  "description": "Access level granted to the caller within this base."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "list_tables",
+      "description": "Fetch schema and metadata for every table inside a specified base.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "base_id": {
+            "type": "string",
+            "description": "The unique identifier of the Airtable base whose tables are to be listed."
+          }
+        },
+        "required": [
+          "base_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "base_id": {
+            "type": "string",
+            "description": "The unique identifier of the Airtable base whose tables are returned."
+          },
+          "tables": {
+            "type": "array",
+            "description": "Collection of tables defined in the base.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The unique identifier of the table."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The display name of the table."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Optional summary or purpose of the table."
+                },
+                "fields": {
+                  "type": "array",
+                  "description": "List of field schemas (name, type, options) within the table.",
+                  "items": {
+                    "type": "object"
+                  }
+                },
+                "views": {
+                  "type": "array",
+                  "description": "List of views (grid, form, gallery, etc.) configured for the table.",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "list_records",
+      "description": "Query and paginate through records in a table, optionally filtered by a view or Airtable formula.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "base_id": {
+            "type": "string",
+            "description": "The unique identifier of the Airtable base containing the table."
+          },
+          "table_id": {
+            "type": "string",
+            "description": "The table ID or table name whose records are to be listed."
+          },
+          "view": {
+            "type": "string",
+            "description": "Optional view name or ID that pre-orders or pre-filters the records."
+          },
+          "filter_by_formula": {
+            "type": "string",
+            "description": "Optional Airtable formula string used to filter the returned records."
+          },
+          "max_records": {
+            "type": "integer",
+            "description": "Maximum number of records to return (default 100, max 100)."
+          },
+          "page_size": {
+            "type": "integer",
+            "description": "Number of records per page (default 100)."
+          },
+          "offset": {
+            "type": "string",
+            "description": "Pagination cursor returned from a previous call to fetch the next page."
+          }
+        },
+        "required": [
+          "base_id",
+          "table_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "description": "Array of record objects returned by the query.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The unique identifier of the record."
+                },
+                "createdTime": {
+                  "type": "string",
+                  "description": "ISO 8601 timestamp indicating when the record was created."
+                },
+                "fields": {
+                  "type": "object",
+                  "description": "Key-value map of field names or IDs to their respective values for this record."
+                }
+              }
+            }
+          },
+          "offset": {
+            "type": "string",
+            "description": "Cursor for retrieving the next page of results; absent when no further pages exist."
+          }
+        }
+      }
+    },
+    {
+      "name": "create_record",
+      "description": "Insert a new record into the specified table with the provided field values.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "base_id": {
+            "type": "string",
+            "description": "The unique identifier of the Airtable base containing the table."
+          },
+          "table_id": {
+            "type": "string",
+            "description": "The table ID or table name where the new record will be created."
+          },
+          "fields": {
+            "type": "object",
+            "description": "Map of field names or IDs to the values assigned to the new record."
+          }
+        },
+        "required": [
+          "base_id",
+          "table_id",
+          "fields"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the newly created record."
+          },
+          "createdTime": {
+            "type": "string",
+            "description": "ISO 8601 timestamp indicating when the record was created."
+          },
+          "fields": {
+            "type": "object",
+            "description": "Complete set of field values as stored for the new record."
+          }
+        }
+      }
+    },
+    {
+      "name": "update_record",
+      "description": "Modify specific fields of an existing record without altering others.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "base_id": {
+            "type": "string",
+            "description": "The unique identifier of the Airtable base containing the table."
+          },
+          "table_id": {
+            "type": "string",
+            "description": "The table ID or table name that holds the record to update."
+          },
+          "record_id": {
+            "type": "string",
+            "description": "The unique identifier of the record to be updated."
+          },
+          "fields": {
+            "type": "object",
+            "description": "Map of field names or IDs to the new values; omitted fields remain unchanged."
+          }
+        },
+        "required": [
+          "base_id",
+          "table_id",
+          "record_id",
+          "fields"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the updated record."
+          },
+          "createdTime": {
+            "type": "string",
+            "description": "ISO 8601 timestamp indicating when the record was originally created."
+          },
+          "fields": {
+            "type": "object",
+            "description": "Full set of field values reflecting the update."
+          }
+        }
+      }
+    }
+  ]
+}

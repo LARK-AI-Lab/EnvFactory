@@ -1,0 +1,1722 @@
+{
+  "metadata": {
+    "class_name": "SimpleArxiv",
+    "metadata_path": "envs\\metadata\\SimpleArxiv_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-03T23:31:40.179859",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "SimpleArxiv",
+    "description": "A server for searching and retrieving academic papers from the arXiv preprint repository, supporting queries with category filtering and detailed paper information retrieval.",
+    "tools": [
+      {
+        "name": "search_arxiv",
+        "description": "Search for papers on arXiv using a query string, optionally filtered by categories, returning results grouped by category.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Search query for finding papers on arXiv (e.g., 'large language models', 'quantum computing')."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of results to return from the search."
+            },
+            "categories": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter results by arXiv categories (e.g., ['cs.AI', 'cs.LG'])."
+            },
+            "sub_categories": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter results by arXiv subcategories for more granular filtering (e.g., ['cs.AI.ML', 'cs.LG.NE'])."
+            }
+          },
+          "required": [
+            "query"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "results_by_category": {
+              "type": "object",
+              "description": "Search results grouped by arXiv category name, where each key is a category and the value is a list of matching papers.",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "arxiv_id": {
+                      "type": "string",
+                      "description": "The unique arXiv identifier for the paper (e.g., '2103.08220')."
+                    },
+                    "title": {
+                      "type": "string",
+                      "description": "The title of the arXiv paper."
+                    },
+                    "authors": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "List of author names for the paper."
+                    },
+                    "published_date": {
+                      "type": "string",
+                      "description": "The date the paper was originally published on arXiv, in YYYY-MM-DD format."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "search_metadata",
+        "description": "Search for papers on arXiv and return only lightweight metadata including title, authors, and abstract.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Search query for finding papers on arXiv (e.g., 'large language models', 'quantum computing')."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of results to return from the search."
+            },
+            "categories": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter results by arXiv categories (e.g., ['cs.AI', 'cs.LG'])."
+            },
+            "sub_categories": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter results by arXiv subcategories for more granular filtering (e.g., ['cs.AI.ML', 'cs.LG.NE'])."
+            }
+          },
+          "required": [
+            "query"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "papers": {
+              "type": "array",
+              "description": "List of papers with minimal metadata information.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "The title of the arXiv paper."
+                  },
+                  "authors": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of author names for the paper."
+                  },
+                  "abstract": {
+                    "type": "string",
+                    "description": "The abstract summarizing the paper's content and contributions."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_paper_details",
+        "description": "Retrieve detailed information for a specific arXiv paper by its identifier, including full metadata and PDF link.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "arxiv_id": {
+              "type": "string",
+              "description": "The unique arXiv identifier for the paper (e.g., '2103.08220')."
+            }
+          },
+          "required": [
+            "arxiv_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "arxiv_id": {
+              "type": "string",
+              "description": "The unique arXiv identifier for the paper (e.g., '2103.08220')."
+            },
+            "title": {
+              "type": "string",
+              "description": "The title of the arXiv paper."
+            },
+            "authors": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of author names for the paper."
+            },
+            "published_date": {
+              "type": "string",
+              "description": "The date the paper was originally published on arXiv, in YYYY-MM-DD format."
+            },
+            "updated_date": {
+              "type": "string",
+              "description": "The date the paper was last updated on arXiv, in YYYY-MM-DD format."
+            },
+            "journal_ref": {
+              "type": "string",
+              "description": "Journal reference if the paper has been published in a peer-reviewed venue."
+            },
+            "abstract": {
+              "type": "string",
+              "description": "The abstract summarizing the paper's content and contributions."
+            },
+            "pdf_url": {
+              "type": "string",
+              "description": "Direct URL to download the PDF version of the paper."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\nimport datetime\n\n# Section 1: Schema\nclass Paper(BaseModel):\n    \"\"\"Represents an arXiv paper with basic metadata.\"\"\"\n    arxiv_id: str = Field(..., description=\"The unique arXiv identifier for the paper\")\n    title: str = Field(..., description=\"The title of the arXiv paper\")\n    authors: List[str] = Field(..., description=\"List of author names for the paper\")\n    published_date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"The date the paper was originally published on arXiv, in YYYY-MM-DD format\")\n    abstract: Optional[str] = Field(default=None, description=\"The abstract summarizing the paper's content\")\n    updated_date: Optional[str] = Field(default=None, pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"The date the paper was last updated on arXiv, in YYYY-MM-DD format\")\n    journal_ref: Optional[str] = Field(default=None, description=\"Journal reference if the paper has been published in a peer-reviewed venue\")\n    pdf_url: Optional[str] = Field(default=None, description=\"Direct URL to download the PDF version of the paper\")\n\nclass ArxivScenario(BaseModel):\n    \"\"\"Main scenario model for arXiv paper management.\"\"\"\n    papers: Dict[str, Paper] = Field(default={}, description=\"Dictionary of arXiv papers indexed by arXiv ID\")\n    categoryMap: Dict[str, str] = Field(default={\n        \"cs.AI\": \"Artificial Intelligence\",\n        \"cs.LG\": \"Machine Learning\",\n        \"cs.CL\": \"Computation and Language\",\n        \"cs.CV\": \"Computer Vision and Pattern Recognition\",\n        \"cs.RO\": \"Robotics\",\n        \"cs.CR\": \"Cryptography and Security\",\n        \"cs.DB\": \"Databases\",\n        \"cs.DC\": \"Distributed, Parallel, and Cluster Computing\",\n        \"cs.DS\": \"Data Structures and Algorithms\",\n        \"cs.GT\": \"Computer Science and Game Theory\",\n        \"cs.HC\": \"Human-Computer Interaction\",\n        \"cs.IR\": \"Information Retrieval\",\n        \"cs.MA\": \"Multiagent Systems\",\n        \"cs.MM\": \"Multimedia\",\n        \"cs.NE\": \"Neural and Evolutionary Computing\",\n        \"cs.NI\": \"Networking and Internet Architecture\",\n        \"cs.OS\": \"Operating Systems\",\n        \"cs.PF\": \"Performance\",\n        \"cs.PL\": \"Programming Languages\",\n        \"cs.SC\": \"Symbolic Computation\"\n    }, description=\"Mapping of arXiv category codes to full names\")\n    subCategoryMap: Dict[str, str] = Field(default={\n        \"cs.AI.ML\": \"Machine Learning in AI\",\n        \"cs.LG.NE\": \"Neural Networks in Machine Learning\",\n        \"cs.CV.OD\": \"Object Detection in Computer Vision\",\n        \"cs.CL.NLP\": \"Natural Language Processing\",\n        \"cs.RO.MA\": \"Mobile Robotics\",\n        \"cs.CR.CY\": \"Cryptography\",\n        \"cs.DB.DM\": \"Data Mining in Databases\",\n        \"cs.DC.CC\": \"Cloud Computing\",\n        \"cs.DS.AG\": \"Algorithms and Graph Theory\",\n        \"cs.GT.EG\": \"Economic Games\",\n        \"cs.HC.UI\": \"User Interfaces\",\n        \"cs.IR.SE\": \"Search Engines\",\n        \"cs.MA.CO\": \"Coordination in Multiagent Systems\",\n        \"cs.MM.VD\": \"Video Processing\",\n        \"cs.NE.GA\": \"Genetic Algorithms\",\n        \"cs.NI.WN\": \"Wireless Networks\",\n        \"cs.OS.VM\": \"Virtual Machines\",\n        \"cs.PF.PM\": \"Performance Modeling\",\n        \"cs.PL.FP\": \"Functional Programming\",\n        \"cs.SC.AM\": \"Algebraic Manipulation\"\n    }, description=\"Mapping of arXiv subcategory codes to full names\")\n\nScenario_Schema = [Paper, ArxivScenario]\n\n# Section 2: Class\nclass ArxivAPI:\n    def __init__(self):\n        \"\"\"Initialize arXiv API with empty state.\"\"\"\n        self.papers: Dict[str, Paper] = {}\n        self.categoryMap: Dict[str, str] = {}\n        self.subCategoryMap: Dict[str, str] = {}\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = ArxivScenario(**scenario)\n        self.papers = model.papers\n        self.categoryMap = model.categoryMap\n        self.subCategoryMap = model.subCategoryMap\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"papers\": {arxiv_id: paper.dict() for arxiv_id, paper in self.papers.items()},\n            \"categoryMap\": self.categoryMap,\n            \"subCategoryMap\": self.subCategoryMap\n        }\n\n    def search_arxiv(self, query: str, limit: Optional[int] = 10, categories: Optional[List[str]] = None, sub_categories: Optional[List[str]] = None) -> dict:\n        \"\"\"Search for papers on arXiv using query and filters.\"\"\"\n        matching_papers = []\n        \n        for paper in self.papers.values():\n            # Check if query matches title or abstract\n            query_lower = query.lower()\n            if query_lower in paper.title.lower() or (paper.abstract and query_lower in paper.abstract.lower()):\n                matching_papers.append(paper)\n        \n        # Apply category filters if provided\n        if categories:\n            matching_papers = [p for p in matching_papers if any(cat in p.arxiv_id for cat in categories)]\n        \n        # Apply subcategory filters if provided\n        if sub_categories:\n            matching_papers = [p for p in matching_papers if any(sub in p.arxiv_id for sub in sub_categories)]\n        \n        # Apply limit\n        if limit:\n            matching_papers = matching_papers[:limit]\n        \n        # Group by category\n        results_by_category = {}\n        for paper in matching_papers:\n            # Extract category from arxiv_id (assuming format like cs.AI/2103.08220)\n            category = paper.arxiv_id.split('/')[0] if '/' in paper.arxiv_id else 'unknown'\n            category_name = self.categoryMap.get(category, category)\n            \n            if category_name not in results_by_category:\n                results_by_category[category_name] = []\n            \n            results_by_category[category_name].append({\n                \"arxiv_id\": paper.arxiv_id,\n                \"title\": paper.title,\n                \"authors\": paper.authors,\n                \"published_date\": paper.published_date\n            })\n        \n        return {\"results_by_category\": results_by_category}\n\n    def search_metadata(self, query: str, limit: Optional[int] = 10, categories: Optional[List[str]] = None, sub_categories: Optional[List[str]] = None) -> dict:\n        \"\"\"Search for papers and return lightweight metadata.\"\"\"\n        matching_papers = []\n        \n        for paper in self.papers.values():\n            # Check if query matches title or abstract\n            query_lower = query.lower()\n            if query_lower in paper.title.lower() or (paper.abstract and query_lower in paper.abstract.lower()):\n                matching_papers.append(paper)\n        \n        # Apply category filters if provided\n        if categories:\n            matching_papers = [p for p in matching_papers if any(cat in p.arxiv_id for cat in categories)]\n        \n        # Apply subcategory filters if provided\n        if sub_categories:\n            matching_papers = [p for p in matching_papers if any(sub in p.arxiv_id for sub in sub_categories)]\n        \n        # Apply limit\n        if limit:\n            matching_papers = matching_papers[:limit]\n        \n        papers = [{\n            \"title\": paper.title,\n            \"authors\": paper.authors,\n            \"abstract\": paper.abstract or \"\"\n        } for paper in matching_papers]\n        \n        return {\"papers\": papers}\n\n    def get_paper_details(self, arxiv_id: str) -> dict:\n        \"\"\"Retrieve detailed information for a specific arXiv paper.\"\"\"\n        paper = self.papers[arxiv_id]\n        return {\n            \"arxiv_id\": paper.arxiv_id,\n            \"title\": paper.title,\n            \"authors\": paper.authors,\n            \"published_date\": paper.published_date,\n            \"updated_date\": paper.updated_date or paper.published_date,\n            \"journal_ref\": paper.journal_ref or \"\",\n            \"abstract\": paper.abstract or \"\",\n            \"pdf_url\": paper.pdf_url or f\"https://arxiv.org/pdf/{arxiv_id}.pdf\"\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"SimpleArxiv\")\napi = ArxivAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"Load scenario data into the arXiv API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching ArxivScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"Save current arXiv state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_arxiv(query: str, limit: Optional[int] = 10, categories: Optional[List[str]] = None, sub_categories: Optional[List[str]] = None) -> dict:\n    \"\"\"Search for papers on arXiv using a query string, optionally filtered by categories.\n    \n    Args:\n        query (str): Search query for finding papers on arXiv.\n        limit (int) [Optional]: Maximum number of results to return. Defaults to 10.\n        categories (List[str]) [Optional]: Filter results by arXiv categories.\n        sub_categories (List[str]) [Optional]: Filter results by arXiv subcategories.\n    \n    Returns:\n        results_by_category (dict): Search results grouped by arXiv category name.\n    \"\"\"\n    try:\n        if not query or not isinstance(query, str):\n            raise ValueError(\"Query must be a non-empty string\")\n        return api.search_arxiv(query, limit, categories, sub_categories)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_metadata(query: str, limit: Optional[int] = 10, categories: Optional[List[str]] = None, sub_categories: Optional[List[str]] = None) -> dict:\n    \"\"\"Search for papers on arXiv and return only lightweight metadata.\n    \n    Args:\n        query (str): Search query for finding papers on arXiv.\n        limit (int) [Optional]: Maximum number of results to return. Defaults to 10.\n        categories (List[str]) [Optional]: Filter results by arXiv categories.\n        sub_categories (List[str]) [Optional]: Filter results by arXiv subcategories.\n    \n    Returns:\n        papers (List[dict]): List of papers with minimal metadata information.\n    \"\"\"\n    try:\n        if not query or not isinstance(query, str):\n            raise ValueError(\"Query must be a non-empty string\")\n        return api.search_metadata(query, limit, categories, sub_categories)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_paper_details(arxiv_id: str) -> dict:\n    \"\"\"Retrieve detailed information for a specific arXiv paper by its identifier.\n    \n    Args:\n        arxiv_id (str): The unique arXiv identifier for the paper.\n    \n    Returns:\n        paper_details (dict): Dictionary containing full metadata and PDF link.\n    \"\"\"\n    try:\n        if not arxiv_id or not isinstance(arxiv_id, str):\n            raise ValueError(\"arXiv ID must be a non-empty string\")\n        if arxiv_id not in api.papers:\n            raise ValueError(f\"Paper {arxiv_id} not found\")\n        return api.get_paper_details(arxiv_id)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-03T23:31:40.179859",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with a single AI paper to test fundamental paper management functionality",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "papers": {
+          "2301.00001": {
+            "arxiv_id": "2301.00001",
+            "title": "Attention Is All You Need: A Retrospective",
+            "authors": [
+              "John Smith",
+              "Jane Doe"
+            ],
+            "published_date": "2023-01-01",
+            "abstract": "This paper revisits the transformer architecture and its impact on modern deep learning.",
+            "updated_date": "2023-01-15",
+            "journal_ref": "ICML 2023",
+            "pdf_url": "https://arxiv.org/pdf/2301.00001.pdf"
+          }
+        },
+        "categoryMap": {
+          "cs.AI": "Artificial Intelligence",
+          "cs.LG": "Machine Learning",
+          "cs.CL": "Computation and Language",
+          "cs.CV": "Computer Vision and Pattern Recognition",
+          "cs.RO": "Robotics"
+        },
+        "subCategoryMap": {
+          "cs.AI.ML": "Machine Learning in AI",
+          "cs.LG.NE": "Neural Networks in Machine Learning",
+          "cs.CL.NLP": "Natural Language Processing"
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Moderate scenario with multiple papers across different categories, including papers with missing optional fields",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "papers": {
+          "2203.15556": {
+            "arxiv_id": "2203.15556",
+            "title": "Deep Reinforcement Learning for Autonomous Navigation",
+            "authors": [
+              "Alice Johnson",
+              "Bob Williams",
+              "Carol Martinez"
+            ],
+            "published_date": "2022-03-29",
+            "abstract": "We present a novel approach to autonomous navigation using deep reinforcement learning techniques.",
+            "updated_date": "2022-04-10",
+            "journal_ref": "IEEE Robotics and Automation Letters",
+            "pdf_url": "https://arxiv.org/pdf/2203.15556.pdf"
+          },
+          "2112.09332": {
+            "arxiv_id": "2112.09332",
+            "title": "Efficient Object Detection in Real-Time Systems",
+            "authors": [
+              "David Chen",
+              "Emma Wilson"
+            ],
+            "published_date": "2021-12-17",
+            "abstract": null,
+            "updated_date": null,
+            "journal_ref": null,
+            "pdf_url": "https://arxiv.org/pdf/2112.09332.pdf"
+          },
+          "2304.08485": {
+            "arxiv_id": "2304.08485",
+            "title": "Large Language Models and Code Generation",
+            "authors": [
+              "Frank Zhang",
+              "Grace Lee",
+              "Henry Brown",
+              "Iris Taylor"
+            ],
+            "published_date": "2023-04-17",
+            "abstract": "An empirical study on the capabilities of large language models for automated code generation tasks.",
+            "updated_date": "2023-05-02",
+            "journal_ref": null,
+            "pdf_url": null
+          },
+          "2201.11903": {
+            "arxiv_id": "2201.11903",
+            "title": "Cryptographic Protocols for Secure Multi-Party Computation",
+            "authors": [
+              "Jack Anderson"
+            ],
+            "published_date": "2022-01-28",
+            "abstract": "This work explores novel cryptographic protocols designed for secure computation across multiple parties.",
+            "updated_date": null,
+            "journal_ref": "ACM CCS 2022",
+            "pdf_url": "https://arxiv.org/pdf/2201.11903.pdf"
+          }
+        },
+        "categoryMap": {
+          "cs.AI": "Artificial Intelligence",
+          "cs.LG": "Machine Learning",
+          "cs.CL": "Computation and Language",
+          "cs.CV": "Computer Vision and Pattern Recognition",
+          "cs.RO": "Robotics",
+          "cs.CR": "Cryptography and Security",
+          "cs.PL": "Programming Languages"
+        },
+        "subCategoryMap": {
+          "cs.AI.ML": "Machine Learning in AI",
+          "cs.RO.MA": "Mobile Robotics",
+          "cs.CV.OD": "Object Detection in Computer Vision",
+          "cs.CL.NLP": "Natural Language Processing",
+          "cs.CR.CY": "Cryptography",
+          "cs.PL.FP": "Functional Programming"
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich scenario with diverse papers spanning multiple categories, various author counts, and comprehensive metadata to test complex queries and filtering",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "papers": {
+          "2305.10403": {
+            "arxiv_id": "2305.10403",
+            "title": "Tree of Thoughts: Deliberate Problem Solving with Large Language Models",
+            "authors": [
+              "Shunyu Yao",
+              "Dian Yu",
+              "Jeffrey Zhao",
+              "Izhak Shafran",
+              "Thomas L. Griffiths",
+              "Yuan Cao",
+              "Karthik Narasimhan"
+            ],
+            "published_date": "2023-05-17",
+            "abstract": "Language models are increasingly being deployed for general problem solving across a wide range of tasks, but are still confined to token-level, left-to-right decision-making processes during inference.",
+            "updated_date": "2023-05-25",
+            "journal_ref": "NeurIPS 2023",
+            "pdf_url": "https://arxiv.org/pdf/2305.10403.pdf"
+          },
+          "2204.02311": {
+            "arxiv_id": "2204.02311",
+            "title": "PaLM: Scaling Language Modeling with Pathways",
+            "authors": [
+              "Aakanksha Chowdhery",
+              "Sharan Narang",
+              "Jacob Devlin",
+              "Maarten Bosma",
+              "Gaurav Mishra"
+            ],
+            "published_date": "2022-04-05",
+            "abstract": "Large language models have been shown to achieve remarkable performance across a variety of natural language tasks using few-shot learning.",
+            "updated_date": "2022-10-10",
+            "journal_ref": "JMLR 2023",
+            "pdf_url": "https://arxiv.org/pdf/2204.02311.pdf"
+          },
+          "2303.08774": {
+            "arxiv_id": "2303.08774",
+            "title": "GPT-4 Technical Report",
+            "authors": [
+              "OpenAI"
+            ],
+            "published_date": "2023-03-15",
+            "abstract": "We report the development of GPT-4, a large-scale, multimodal model which can accept image and text inputs and produce text outputs.",
+            "updated_date": "2023-03-27",
+            "journal_ref": null,
+            "pdf_url": "https://arxiv.org/pdf/2303.08774.pdf"
+          },
+          "2106.09685": {
+            "arxiv_id": "2106.09685",
+            "title": "LoRA: Low-Rank Adaptation of Large Language Models",
+            "authors": [
+              "Edward Hu",
+              "Yelong Shen",
+              "Phillip Wallis",
+              "Zeyuan Allen-Zhu",
+              "Yuanzhi Li",
+              "Shean Wang"
+            ],
+            "published_date": "2021-06-17",
+            "abstract": "An important paradigm of natural language processing consists of large-scale pre-training on general domain data and adaptation to particular tasks or domains.",
+            "updated_date": "2021-10-16",
+            "journal_ref": "ICLR 2022",
+            "pdf_url": "https://arxiv.org/pdf/2106.09685.pdf"
+          },
+          "2212.08073": {
+            "arxiv_id": "2212.08073",
+            "title": "Constitutional AI: Harmlessness from AI Feedback",
+            "authors": [
+              "Yuntao Bai",
+              "Saurav Kadavath",
+              "Sandipan Kundu",
+              "Amanda Askell"
+            ],
+            "published_date": "2022-12-15",
+            "abstract": "As AI systems become more capable, we would like to enlist their help to supervise other AIs.",
+            "updated_date": null,
+            "journal_ref": null,
+            "pdf_url": "https://arxiv.org/pdf/2212.08073.pdf"
+          },
+          "2307.09288": {
+            "arxiv_id": "2307.09288",
+            "title": "Llama 2: Open Foundation and Fine-Tuned Chat Models",
+            "authors": [
+              "Hugo Touvron",
+              "Louis Martin",
+              "Kevin Stone",
+              "Peter Albert",
+              "Amjad Almahairi"
+            ],
+            "published_date": "2023-07-18",
+            "abstract": "In this work, we develop and release Llama 2, a collection of pretrained and fine-tuned large language models ranging in scale from 7 billion to 70 billion parameters.",
+            "updated_date": "2023-07-19",
+            "journal_ref": null,
+            "pdf_url": "https://arxiv.org/pdf/2307.09288.pdf"
+          },
+          "2005.14165": {
+            "arxiv_id": "2005.14165",
+            "title": "Language Models are Few-Shot Learners",
+            "authors": [
+              "Tom Brown",
+              "Benjamin Mann",
+              "Nick Ryder",
+              "Melanie Subbiah",
+              "Jared Kaplan"
+            ],
+            "published_date": "2020-05-28",
+            "abstract": "Recent work has demonstrated substantial gains on many NLP tasks and benchmarks by pre-training on a large corpus of text followed by fine-tuning on a specific task.",
+            "updated_date": "2020-07-22",
+            "journal_ref": "NeurIPS 2020",
+            "pdf_url": "https://arxiv.org/pdf/2005.14165.pdf"
+          }
+        },
+        "categoryMap": {
+          "cs.AI": "Artificial Intelligence",
+          "cs.LG": "Machine Learning",
+          "cs.CL": "Computation and Language",
+          "cs.CV": "Computer Vision and Pattern Recognition",
+          "cs.RO": "Robotics",
+          "cs.CR": "Cryptography and Security",
+          "cs.DB": "Databases",
+          "cs.DC": "Distributed, Parallel, and Cluster Computing",
+          "cs.DS": "Data Structures and Algorithms",
+          "cs.HC": "Human-Computer Interaction"
+        },
+        "subCategoryMap": {
+          "cs.AI.ML": "Machine Learning in AI",
+          "cs.LG.NE": "Neural Networks in Machine Learning",
+          "cs.CV.OD": "Object Detection in Computer Vision",
+          "cs.CL.NLP": "Natural Language Processing",
+          "cs.RO.MA": "Mobile Robotics",
+          "cs.CR.CY": "Cryptography",
+          "cs.DB.DM": "Data Mining in Databases",
+          "cs.DC.CC": "Cloud Computing"
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Edge case scenario with empty papers collection and minimal category mappings to test handling of empty datasets",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "papers": {},
+        "categoryMap": {
+          "cs.AI": "Artificial Intelligence",
+          "cs.LG": "Machine Learning"
+        },
+        "subCategoryMap": {
+          "cs.AI.ML": "Machine Learning in AI"
+        }
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search_arxiv",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Basic search with query 'transformer'",
+                    "input": {
+                      "query": "transformer",
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Returned results grouped by category (unknown category)",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Search with category filter",
+                    "input": {
+                      "query": "attention",
+                      "limit": 5,
+                      "categories": [
+                        "cs.AI"
+                      ]
+                    },
+                    "passed": true,
+                    "output": "Returned empty results (no papers match category filter)",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Search with subcategory filter",
+                    "input": {
+                      "query": "deep learning",
+                      "limit": 1,
+                      "sub_categories": [
+                        "cs.AI.ML"
+                      ]
+                    },
+                    "passed": true,
+                    "output": "Returned empty results (no papers match subcategory filter)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_metadata",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Basic metadata search",
+                    "input": {
+                      "query": "transformer",
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Returned 1 paper with lightweight metadata",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Metadata search with category filter",
+                    "input": {
+                      "query": "attention",
+                      "limit": 5,
+                      "categories": [
+                        "cs.LG"
+                      ]
+                    },
+                    "passed": true,
+                    "output": "Returned empty results (no papers match filter)",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Empty query string",
+                    "input": {
+                      "query": "",
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Query must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_paper_details",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get details for existing paper",
+                    "input": {
+                      "arxiv_id": "2301.00001"
+                    },
+                    "passed": true,
+                    "output": "Returned complete paper details with all fields",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Non-existent paper ID",
+                    "input": {
+                      "arxiv_id": "9999.99999"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with not found error",
+                    "error": "Paper 9999.99999 not found",
+                    "expected_error": true
+                  },
+                  {
+                    "description": "Error case: Empty arxiv_id",
+                    "input": {
+                      "arxiv_id": ""
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "arXiv ID must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All fields preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 50.78697848320007
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search_arxiv",
+                "test_cases": [
+                  {
+                    "test_name": "Valid search query",
+                    "input": {
+                      "query": "learning",
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Found 1 paper matching 'learning' in unknown category",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Search with category filter",
+                    "input": {
+                      "query": "cryptographic",
+                      "limit": 5,
+                      "categories": [
+                        "cs.CR"
+                      ]
+                    },
+                    "passed": true,
+                    "output": "No results found (expected - papers don't have category assignments in this scenario)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Empty query string (error case)",
+                    "input": {
+                      "query": ""
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Query must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_metadata",
+                "test_cases": [
+                  {
+                    "test_name": "Valid search for language models",
+                    "input": {
+                      "query": "language models",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Found 1 paper with metadata",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Search with limit boundary (1)",
+                    "input": {
+                      "query": "detection",
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Found 1 paper respecting limit",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Empty query string (error case)",
+                    "input": {
+                      "query": "",
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Query must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_paper_details",
+                "test_cases": [
+                  {
+                    "test_name": "Get details for paper 2203.15556",
+                    "input": {
+                      "arxiv_id": "2203.15556"
+                    },
+                    "passed": true,
+                    "output": "Retrieved full paper details with all fields populated",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Get details for paper with null fields (2112.09332)",
+                    "input": {
+                      "arxiv_id": "2112.09332"
+                    },
+                    "passed": true,
+                    "output": "Retrieved paper details, null fields converted to empty strings",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Get details for paper 2304.08485",
+                    "input": {
+                      "arxiv_id": "2304.08485"
+                    },
+                    "passed": true,
+                    "output": "Retrieved paper details with mixed null/populated fields",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Get details for paper 2201.11903",
+                    "input": {
+                      "arxiv_id": "2201.11903"
+                    },
+                    "passed": true,
+                    "output": "Retrieved paper details successfully",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Non-existent paper ID (error case)",
+                    "input": {
+                      "arxiv_id": "9999.99999"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with not found error",
+                    "error": "Paper 9999.99999 not found"
+                  },
+                  {
+                    "test_name": "Empty arxiv_id (error case)",
+                    "input": {
+                      "arxiv_id": ""
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "arXiv ID must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario data exactly. All papers, categoryMap, and subCategoryMap preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 78.82792520523071
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search_arxiv",
+                "test_cases": [
+                  {
+                    "test_case": "Valid case - search with query and limit",
+                    "input": {
+                      "query": "language models",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returned 5 papers grouped by category (all in 'unknown' category)",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid case - search with category filter",
+                    "input": {
+                      "query": "GPT",
+                      "limit": 3,
+                      "categories": [
+                        "cs.AI"
+                      ]
+                    },
+                    "passed": true,
+                    "output": "Returned empty results (no papers matched category filter)",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid case - search with different query",
+                    "input": {
+                      "query": "AI",
+                      "limit": 2
+                    },
+                    "passed": true,
+                    "output": "Returned 2 papers matching 'AI' in title/abstract",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Error case - empty query string",
+                    "input": {
+                      "query": "",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Query must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_metadata",
+                "test_cases": [
+                  {
+                    "test_case": "Valid case - search metadata with query",
+                    "input": {
+                      "query": "language models",
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Returned 3 papers with lightweight metadata (title, authors, abstract only)",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid case - search for specific paper",
+                    "input": {
+                      "query": "GPT-4",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returned 1 paper matching GPT-4",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Error case - empty query string",
+                    "input": {
+                      "query": "",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Query must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_paper_details",
+                "test_cases": [
+                  {
+                    "test_case": "Valid case - get details for Tree of Thoughts paper",
+                    "input": {
+                      "arxiv_id": "2305.10403"
+                    },
+                    "passed": true,
+                    "output": "Returned complete paper details including all metadata fields",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid case - get details for GPT-4 paper with null journal_ref",
+                    "input": {
+                      "arxiv_id": "2303.08774"
+                    },
+                    "passed": true,
+                    "output": "Returned complete paper details, null journal_ref converted to empty string",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid case - get details for Constitutional AI paper with null fields",
+                    "input": {
+                      "arxiv_id": "2212.08073"
+                    },
+                    "passed": true,
+                    "output": "Returned complete paper details, null fields handled correctly",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Error case - non-existent paper ID",
+                    "input": {
+                      "arxiv_id": "9999.99999"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with not found error",
+                    "error": "Paper 9999.99999 not found",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario data exactly. All 7 papers, categoryMap, and subCategoryMap preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 87.70814204216003
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search_arxiv",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Search with query and category filter",
+                    "input": {
+                      "query": "neural networks",
+                      "limit": 10,
+                      "categories": [
+                        "cs.AI"
+                      ]
+                    },
+                    "passed": true,
+                    "output": {
+                      "results_by_category": {}
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Search with query only",
+                    "input": {
+                      "query": "machine learning",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": {
+                      "results_by_category": {}
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Empty query string",
+                    "input": {
+                      "query": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Query must be a non-empty string",
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_metadata",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Search with query and limit",
+                    "input": {
+                      "query": "deep learning",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": {
+                      "papers": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Search with category filter",
+                    "input": {
+                      "query": "AI",
+                      "limit": 10,
+                      "categories": [
+                        "cs.LG"
+                      ]
+                    },
+                    "passed": true,
+                    "output": {
+                      "papers": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Empty query string",
+                    "input": {
+                      "query": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Query must be a non-empty string",
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_paper_details",
+                "test_cases": [
+                  {
+                    "description": "Error case: Non-existent paper ID",
+                    "input": {
+                      "arxiv_id": "1234.5678"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Paper 1234.5678 not found",
+                    "note": "Correctly rejected non-existent paper"
+                  },
+                  {
+                    "description": "Error case: Empty arxiv_id",
+                    "input": {
+                      "arxiv_id": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "arXiv ID must be a non-empty string",
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "saved_scenario": {
+                "papers": {},
+                "categoryMap": {
+                  "cs.AI": "Artificial Intelligence",
+                  "cs.LG": "Machine Learning"
+                },
+                "subCategoryMap": {
+                  "cs.AI.ML": "Machine Learning in AI"
+                }
+              },
+              "matches_original": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 44.56775164604187
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search_arxiv",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Basic search with query 'transformer'",
+                    "input": {
+                      "query": "transformer",
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Returned results grouped by category (unknown category)",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Search with category filter",
+                    "input": {
+                      "query": "attention",
+                      "limit": 5,
+                      "categories": [
+                        "cs.AI"
+                      ]
+                    },
+                    "passed": true,
+                    "output": "Returned empty results (no papers match category filter)",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Search with subcategory filter",
+                    "input": {
+                      "query": "deep learning",
+                      "limit": 1,
+                      "sub_categories": [
+                        "cs.AI.ML"
+                      ]
+                    },
+                    "passed": true,
+                    "output": "Returned empty results (no papers match subcategory filter)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_metadata",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Basic metadata search",
+                    "input": {
+                      "query": "transformer",
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Returned 1 paper with lightweight metadata",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Metadata search with category filter",
+                    "input": {
+                      "query": "attention",
+                      "limit": 5,
+                      "categories": [
+                        "cs.LG"
+                      ]
+                    },
+                    "passed": true,
+                    "output": "Returned empty results (no papers match filter)",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Empty query string",
+                    "input": {
+                      "query": "",
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Query must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_paper_details",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get details for existing paper",
+                    "input": {
+                      "arxiv_id": "2301.00001"
+                    },
+                    "passed": true,
+                    "output": "Returned complete paper details with all fields",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Non-existent paper ID",
+                    "input": {
+                      "arxiv_id": "9999.99999"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with not found error",
+                    "error": "Paper 9999.99999 not found",
+                    "expected_error": true
+                  },
+                  {
+                    "description": "Error case: Empty arxiv_id",
+                    "input": {
+                      "arxiv_id": ""
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "arXiv ID must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All fields preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 50.78697848320007
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search_arxiv",
+                "test_cases": [
+                  {
+                    "test_name": "Valid search query",
+                    "input": {
+                      "query": "learning",
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Found 1 paper matching 'learning' in unknown category",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Search with category filter",
+                    "input": {
+                      "query": "cryptographic",
+                      "limit": 5,
+                      "categories": [
+                        "cs.CR"
+                      ]
+                    },
+                    "passed": true,
+                    "output": "No results found (expected - papers don't have category assignments in this scenario)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Empty query string (error case)",
+                    "input": {
+                      "query": ""
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Query must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_metadata",
+                "test_cases": [
+                  {
+                    "test_name": "Valid search for language models",
+                    "input": {
+                      "query": "language models",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Found 1 paper with metadata",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Search with limit boundary (1)",
+                    "input": {
+                      "query": "detection",
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Found 1 paper respecting limit",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Empty query string (error case)",
+                    "input": {
+                      "query": "",
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Query must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_paper_details",
+                "test_cases": [
+                  {
+                    "test_name": "Get details for paper 2203.15556",
+                    "input": {
+                      "arxiv_id": "2203.15556"
+                    },
+                    "passed": true,
+                    "output": "Retrieved full paper details with all fields populated",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Get details for paper with null fields (2112.09332)",
+                    "input": {
+                      "arxiv_id": "2112.09332"
+                    },
+                    "passed": true,
+                    "output": "Retrieved paper details, null fields converted to empty strings",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Get details for paper 2304.08485",
+                    "input": {
+                      "arxiv_id": "2304.08485"
+                    },
+                    "passed": true,
+                    "output": "Retrieved paper details with mixed null/populated fields",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Get details for paper 2201.11903",
+                    "input": {
+                      "arxiv_id": "2201.11903"
+                    },
+                    "passed": true,
+                    "output": "Retrieved paper details successfully",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Non-existent paper ID (error case)",
+                    "input": {
+                      "arxiv_id": "9999.99999"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with not found error",
+                    "error": "Paper 9999.99999 not found"
+                  },
+                  {
+                    "test_name": "Empty arxiv_id (error case)",
+                    "input": {
+                      "arxiv_id": ""
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "arXiv ID must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario data exactly. All papers, categoryMap, and subCategoryMap preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 78.82792520523071
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search_arxiv",
+                "test_cases": [
+                  {
+                    "test_case": "Valid case - search with query and limit",
+                    "input": {
+                      "query": "language models",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returned 5 papers grouped by category (all in 'unknown' category)",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid case - search with category filter",
+                    "input": {
+                      "query": "GPT",
+                      "limit": 3,
+                      "categories": [
+                        "cs.AI"
+                      ]
+                    },
+                    "passed": true,
+                    "output": "Returned empty results (no papers matched category filter)",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid case - search with different query",
+                    "input": {
+                      "query": "AI",
+                      "limit": 2
+                    },
+                    "passed": true,
+                    "output": "Returned 2 papers matching 'AI' in title/abstract",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Error case - empty query string",
+                    "input": {
+                      "query": "",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Query must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_metadata",
+                "test_cases": [
+                  {
+                    "test_case": "Valid case - search metadata with query",
+                    "input": {
+                      "query": "language models",
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Returned 3 papers with lightweight metadata (title, authors, abstract only)",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid case - search for specific paper",
+                    "input": {
+                      "query": "GPT-4",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returned 1 paper matching GPT-4",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Error case - empty query string",
+                    "input": {
+                      "query": "",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Query must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_paper_details",
+                "test_cases": [
+                  {
+                    "test_case": "Valid case - get details for Tree of Thoughts paper",
+                    "input": {
+                      "arxiv_id": "2305.10403"
+                    },
+                    "passed": true,
+                    "output": "Returned complete paper details including all metadata fields",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid case - get details for GPT-4 paper with null journal_ref",
+                    "input": {
+                      "arxiv_id": "2303.08774"
+                    },
+                    "passed": true,
+                    "output": "Returned complete paper details, null journal_ref converted to empty string",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid case - get details for Constitutional AI paper with null fields",
+                    "input": {
+                      "arxiv_id": "2212.08073"
+                    },
+                    "passed": true,
+                    "output": "Returned complete paper details, null fields handled correctly",
+                    "error": null
+                  },
+                  {
+                    "test_case": "Error case - non-existent paper ID",
+                    "input": {
+                      "arxiv_id": "9999.99999"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with not found error",
+                    "error": "Paper 9999.99999 not found",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario data exactly. All 7 papers, categoryMap, and subCategoryMap preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 87.70814204216003
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search_arxiv",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Search with query and category filter",
+                    "input": {
+                      "query": "neural networks",
+                      "limit": 10,
+                      "categories": [
+                        "cs.AI"
+                      ]
+                    },
+                    "passed": true,
+                    "output": {
+                      "results_by_category": {}
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Search with query only",
+                    "input": {
+                      "query": "machine learning",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": {
+                      "results_by_category": {}
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Empty query string",
+                    "input": {
+                      "query": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Query must be a non-empty string",
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_metadata",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Search with query and limit",
+                    "input": {
+                      "query": "deep learning",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": {
+                      "papers": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Search with category filter",
+                    "input": {
+                      "query": "AI",
+                      "limit": 10,
+                      "categories": [
+                        "cs.LG"
+                      ]
+                    },
+                    "passed": true,
+                    "output": {
+                      "papers": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Empty query string",
+                    "input": {
+                      "query": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Query must be a non-empty string",
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_paper_details",
+                "test_cases": [
+                  {
+                    "description": "Error case: Non-existent paper ID",
+                    "input": {
+                      "arxiv_id": "1234.5678"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Paper 1234.5678 not found",
+                    "note": "Correctly rejected non-existent paper"
+                  },
+                  {
+                    "description": "Error case: Empty arxiv_id",
+                    "input": {
+                      "arxiv_id": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "arXiv ID must be a non-empty string",
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "saved_scenario": {
+                "papers": {},
+                "categoryMap": {
+                  "cs.AI": "Artificial Intelligence",
+                  "cs.LG": "Machine Learning"
+                },
+                "subCategoryMap": {
+                  "cs.AI.ML": "Machine Learning in AI"
+                }
+              },
+              "matches_original": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 44.56775164604187
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/SimpleArxiv.py"
+  }
+}

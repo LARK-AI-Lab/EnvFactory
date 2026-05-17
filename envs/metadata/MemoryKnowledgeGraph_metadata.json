@@ -1,0 +1,288 @@
+{
+  "class_name": "MemoryKnowledgeGraph",
+  "description": "A persistent knowledge-graph memory service that lets you create, relate, and query entities and their observations.",
+  "tools": [
+    {
+      "name": "create_entities",
+      "description": "Insert multiple entities into the knowledge graph, each with a name, type, and list of observations.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "entities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The unique name of the entity to be created."
+                },
+                "entityType": {
+                  "type": "string",
+                  "description": "The category or class of the entity (e.g., Person, Location, Event)."
+                },
+                "observations": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "List of factual statements or notes attached to this entity."
+                }
+              },
+              "required": [
+                "name",
+                "entityType",
+                "observations"
+              ]
+            },
+            "description": "Entity objects to insert into the graph."
+          }
+        },
+        "required": [
+          "entities"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "created": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the successfully created entity."
+                },
+                "entityType": {
+                  "type": "string",
+                  "description": "Type of the created entity."
+                },
+                "observations": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Observations stored for this entity."
+                }
+              }
+            },
+            "description": "Entities that were successfully created."
+          },
+          "skipped": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Names of entities that already existed and were skipped."
+          }
+        }
+      }
+    },
+    {
+      "name": "create_relations",
+      "description": "Create directed relationships between existing entities in the knowledge graph.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "relations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "type": "string",
+                  "description": "Name of the source entity where the relation starts."
+                },
+                "to": {
+                  "type": "string",
+                  "description": "Name of the target entity where the relation ends."
+                },
+                "relationType": {
+                  "type": "string",
+                  "description": "Label describing the nature of the relation (e.g., worksFor, locatedIn)."
+                }
+              },
+              "required": [
+                "from",
+                "to",
+                "relationType"
+              ]
+            },
+            "description": "Relation objects to insert into the graph."
+          }
+        },
+        "required": [
+          "relations"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "created": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "type": "string",
+                  "description": "Source entity name of the created relation."
+                },
+                "to": {
+                  "type": "string",
+                  "description": "Target entity name of the created relation."
+                },
+                "relationType": {
+                  "type": "string",
+                  "description": "Label of the created relation."
+                }
+              }
+            },
+            "description": "Relations that were successfully created."
+          },
+          "skipped": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Relations that could not be created (e.g., missing entities)."
+          }
+        }
+      }
+    },
+    {
+      "name": "add_observations",
+      "description": "Append new observations to existing entities in the knowledge graph.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "observations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entityName": {
+                  "type": "string",
+                  "description": "Name of the entity to which observations will be added."
+                },
+                "contents": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "List of observation strings to append."
+                }
+              },
+              "required": [
+                "entityName",
+                "contents"
+              ]
+            },
+            "description": "Observation objects specifying target entity and new facts."
+          }
+        },
+        "required": [
+          "observations"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "added": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entityName": {
+                  "type": "string",
+                  "description": "Entity that received new observations."
+                },
+                "contents": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Observation strings that were successfully added."
+                }
+              }
+            },
+            "description": "Records confirming which observations were appended."
+          }
+        }
+      }
+    },
+    {
+      "name": "search_nodes",
+      "description": "Search the knowledge graph for entities and relations matching a text query.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Text to match against entity names, types, and observation contents."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "entities": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Entities whose name, type, or observations contain the query text."
+          },
+          "relations": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Relations connected to matched entities."
+          }
+        }
+      }
+    },
+    {
+      "name": "open_nodes",
+      "description": "Retrieve full details of specific entities and any relations between them.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of entity names to fetch."
+          }
+        },
+        "required": [
+          "names"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "entities": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Detailed objects for each requested entity."
+          },
+          "relations": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Relations that exist among the requested entities."
+          }
+        }
+      }
+    }
+  ]
+}

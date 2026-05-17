@@ -1,0 +1,819 @@
+{
+  "class_name": "TicketManagementSystem",
+  "description": "A comprehensive support ticket management system that handles user authentication, ticket lifecycle operations, commenting, and analytics for customer support workflows.",
+  "tools": [
+    {
+      "name": "login",
+      "description": "Authenticate a user with credentials and establish an active session for accessing ticket system operations.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "The username credential for authenticating the user account"
+          },
+          "password": {
+            "type": "string",
+            "description": "The password credential for authenticating the user account"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the authentication attempt was successful"
+          },
+          "session_token": {
+            "type": "string",
+            "description": "The session token issued upon successful authentication, used for subsequent authenticated requests"
+          },
+          "username": {
+            "type": "string",
+            "description": "The username of the successfully authenticated user account"
+          }
+        }
+      }
+    },
+    {
+      "name": "logout",
+      "description": "Terminate the current user session and invalidate the authentication token.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the logout operation completed successfully"
+          }
+        }
+      }
+    },
+    {
+      "name": "check_login_status",
+      "description": "Verify the current authentication state and retrieve active session information.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "is_authenticated": {
+            "type": "boolean",
+            "description": "Indicates whether a valid user session is currently active"
+          },
+          "username": {
+            "type": "string",
+            "description": "The username of the currently authenticated user account, if a session is active"
+          }
+        }
+      }
+    },
+    {
+      "name": "create_ticket",
+      "description": "Create a new support ticket with specified details, priority, and optional assignment. Requires an authenticated session.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title or subject line summarizing the ticket issue or request"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description of the issue, request, or context for the ticket. Defaults to empty string if not provided."
+          },
+          "priority": {
+            "type": "integer",
+            "description": "Priority level of the ticket ranging from 1 (lowest) to 5 (highest priority). Defaults to 1 if not specified.",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "technical",
+              "billing",
+              "general",
+              "feature_request",
+              "bug_report"
+            ],
+            "description": "The category classifying the type of ticket. Valid values are: technical, billing, general, feature_request, or bug_report. Defaults to 'general' if not provided."
+          },
+          "assignee": {
+            "type": "string",
+            "description": "The username of the staff member to assign this ticket to. If not provided, the ticket remains unassigned."
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "ticket_id": {
+            "type": "integer",
+            "description": "The unique identifier assigned to the newly created ticket"
+          },
+          "title": {
+            "type": "string",
+            "description": "The title or subject line of the created ticket"
+          },
+          "description": {
+            "type": "string",
+            "description": "The detailed description of the ticket issue or request"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open"
+            ],
+            "description": "The current status of the ticket, which is 'open' for newly created tickets"
+          },
+          "priority": {
+            "type": "integer",
+            "description": "The priority level assigned to the ticket, ranging from 1 (lowest) to 5 (highest)"
+          },
+          "category": {
+            "type": "string",
+            "description": "The category classifying the type of ticket"
+          },
+          "created_by": {
+            "type": "string",
+            "description": "The username of the authenticated user who created the ticket"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "The timestamp when the ticket was created, in YYYY-MM-DD HH:MM:SS format"
+          },
+          "assignee": {
+            "type": "string",
+            "description": "The username of the staff member assigned to the ticket, if an assignee was specified"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_ticket",
+      "description": "Retrieve comprehensive details about a specific ticket using its unique identifier.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "ticket_id": {
+            "type": "integer",
+            "description": "The unique identifier of the ticket to retrieve"
+          }
+        },
+        "required": [
+          "ticket_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "ticket_id": {
+            "type": "integer",
+            "description": "The unique identifier of the ticket"
+          },
+          "title": {
+            "type": "string",
+            "description": "The title or subject line of the ticket"
+          },
+          "description": {
+            "type": "string",
+            "description": "The detailed description of the ticket issue or request"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "in_progress",
+              "resolved",
+              "closed"
+            ],
+            "description": "The current status of the ticket in its lifecycle. Valid values are: open, in_progress, resolved, or closed."
+          },
+          "priority": {
+            "type": "integer",
+            "description": "The priority level assigned to the ticket, ranging from 1 (lowest) to 5 (highest)"
+          },
+          "category": {
+            "type": "string",
+            "description": "The category classifying the type of ticket"
+          },
+          "created_by": {
+            "type": "string",
+            "description": "The username of the user who created the ticket"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "The timestamp when the ticket was created, in YYYY-MM-DD HH:MM:SS format"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "The timestamp of the most recent update to the ticket, in YYYY-MM-DD HH:MM:SS format"
+          },
+          "assignee": {
+            "type": "string",
+            "description": "The username of the staff member assigned to the ticket, if assigned"
+          },
+          "resolution": {
+            "type": "string",
+            "description": "Detailed description of how the ticket was resolved or the solution provided, if the ticket has been resolved"
+          }
+        }
+      }
+    },
+    {
+      "name": "list_tickets",
+      "description": "Retrieve a paginated list of tickets with optional filtering by status, priority, category, or assignee. Requires an authenticated session.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "in_progress",
+              "resolved",
+              "closed"
+            ],
+            "description": "Filter tickets by their current status. Valid values are: open, in_progress, resolved, or closed. If not provided, returns tickets of all statuses."
+          },
+          "priority": {
+            "type": "integer",
+            "description": "Filter tickets by priority level, ranging from 1 (lowest) to 5 (highest). If not provided, returns tickets of all priority levels.",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "technical",
+              "billing",
+              "general",
+              "feature_request",
+              "bug_report"
+            ],
+            "description": "Filter tickets by category. Valid values are: technical, billing, general, feature_request, or bug_report. If not provided, returns tickets of all categories."
+          },
+          "assignee": {
+            "type": "string",
+            "description": "Filter tickets by the username of the assigned staff member. If not provided, returns tickets for all assignees including unassigned tickets."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of tickets to return in the result set. Defaults to 5 if not specified."
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Number of tickets to skip before returning results, used for pagination. Defaults to 0 if not specified."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "tickets": {
+            "type": "array",
+            "description": "A list of ticket summaries matching the specified filters",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ticket_id": {
+                  "type": "integer",
+                  "description": "The unique identifier of the ticket, which can be used with get_ticket to retrieve full details"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The title or subject line of the ticket"
+                },
+                "status": {
+                  "type": "string",
+                  "description": "The current status of the ticket in its lifecycle"
+                },
+                "priority": {
+                  "type": "integer",
+                  "description": "The priority level assigned to the ticket, ranging from 1 (lowest) to 5 (highest)"
+                },
+                "category": {
+                  "type": "string",
+                  "description": "The category classifying the type of ticket"
+                },
+                "created_by": {
+                  "type": "string",
+                  "description": "The username of the user who created the ticket"
+                },
+                "created_at": {
+                  "type": "string",
+                  "description": "The timestamp when the ticket was created, in YYYY-MM-DD HH:MM:SS format"
+                },
+                "assignee": {
+                  "type": "string",
+                  "description": "The username of the staff member assigned to the ticket, if assigned"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "search_tickets",
+      "description": "Search for tickets by matching keywords in their title or description fields. Requires an authenticated session.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The search keyword or phrase to match against ticket titles and descriptions"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "in_progress",
+              "resolved",
+              "closed"
+            ],
+            "description": "Filter search results by ticket status. Valid values are: open, in_progress, resolved, or closed. If not provided, searches across all statuses."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of matching tickets to return in the result set. Defaults to 5 if not specified."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "tickets": {
+            "type": "array",
+            "description": "A list of tickets matching the search query",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ticket_id": {
+                  "type": "integer",
+                  "description": "The unique identifier of the ticket, which can be used with get_ticket to retrieve full details"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The title or subject line of the ticket"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "The detailed description of the ticket issue or request"
+                },
+                "status": {
+                  "type": "string",
+                  "description": "The current status of the ticket in its lifecycle"
+                },
+                "priority": {
+                  "type": "integer",
+                  "description": "The priority level assigned to the ticket, ranging from 1 (lowest) to 5 (highest)"
+                },
+                "created_by": {
+                  "type": "string",
+                  "description": "The username of the user who created the ticket"
+                },
+                "created_at": {
+                  "type": "string",
+                  "description": "The timestamp when the ticket was created, in YYYY-MM-DD HH:MM:SS format"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "update_ticket",
+      "description": "Modify one or more fields of an existing ticket with partial update support. Requires an authenticated session.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "ticket_id": {
+            "type": "integer",
+            "description": "The unique identifier of the ticket to update"
+          },
+          "title": {
+            "type": "string",
+            "description": "New title or subject line for the ticket"
+          },
+          "description": {
+            "type": "string",
+            "description": "New detailed description for the ticket"
+          },
+          "priority": {
+            "type": "integer",
+            "description": "New priority level for the ticket, ranging from 1 (lowest) to 5 (highest)",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "technical",
+              "billing",
+              "general",
+              "feature_request",
+              "bug_report"
+            ],
+            "description": "New category for the ticket. Valid values are: technical, billing, general, feature_request, or bug_report."
+          },
+          "assignee": {
+            "type": "string",
+            "description": "New assignee username for the ticket. Provide an empty string to remove the current assignee."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "in_progress",
+              "resolved",
+              "closed"
+            ],
+            "description": "New status for the ticket. Valid values are: open, in_progress, resolved, or closed."
+          }
+        },
+        "required": [
+          "ticket_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "ticket_id": {
+            "type": "integer",
+            "description": "The unique identifier of the updated ticket"
+          },
+          "status": {
+            "type": "string",
+            "description": "Confirmation message indicating the update operation was successful"
+          },
+          "updated_fields": {
+            "type": "array",
+            "description": "List of field names that were modified during the update operation",
+            "items": {
+              "type": "string"
+            }
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "The timestamp when the ticket was updated, in YYYY-MM-DD HH:MM:SS format"
+          }
+        }
+      }
+    },
+    {
+      "name": "close_ticket",
+      "description": "Mark a ticket as closed without providing resolution details. Requires an authenticated session.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "ticket_id": {
+            "type": "integer",
+            "description": "The unique identifier of the ticket to close"
+          }
+        },
+        "required": [
+          "ticket_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "ticket_id": {
+            "type": "integer",
+            "description": "The unique identifier of the closed ticket"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "closed"
+            ],
+            "description": "The updated status of the ticket, which is 'closed'"
+          },
+          "message": {
+            "type": "string",
+            "description": "Confirmation message indicating the ticket was successfully closed"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "The timestamp when the ticket was closed, in YYYY-MM-DD HH:MM:SS format"
+          }
+        }
+      }
+    },
+    {
+      "name": "resolve_ticket",
+      "description": "Mark a ticket as resolved and record the resolution details explaining how the issue was addressed. Requires an authenticated session.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "ticket_id": {
+            "type": "integer",
+            "description": "The unique identifier of the ticket to resolve"
+          },
+          "resolution": {
+            "type": "string",
+            "description": "Detailed description of how the ticket was resolved or the solution provided to address the issue"
+          }
+        },
+        "required": [
+          "ticket_id",
+          "resolution"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "ticket_id": {
+            "type": "integer",
+            "description": "The unique identifier of the resolved ticket"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "resolved"
+            ],
+            "description": "The updated status of the ticket, which is 'resolved'"
+          },
+          "resolution": {
+            "type": "string",
+            "description": "The detailed description of how the ticket was resolved or the solution provided"
+          },
+          "resolved_at": {
+            "type": "string",
+            "description": "The timestamp when the ticket was marked as resolved, in YYYY-MM-DD HH:MM:SS format"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "The timestamp when the ticket was updated, in YYYY-MM-DD HH:MM:SS format"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_user_tickets",
+      "description": "Retrieve all tickets created by a specific user or the currently authenticated user. Requires an authenticated session.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "The username to filter tickets by. If not provided, returns tickets created by the currently authenticated user."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "in_progress",
+              "resolved",
+              "closed"
+            ],
+            "description": "Filter tickets by their current status. Valid values are: open, in_progress, resolved, or closed. If not provided, returns tickets of all statuses."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of tickets to return in the result set. Defaults to 5 if not specified."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "tickets": {
+            "type": "array",
+            "description": "A list of tickets created by the specified user",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ticket_id": {
+                  "type": "integer",
+                  "description": "The unique identifier of the ticket, which can be used with get_ticket to retrieve full details"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The title or subject line of the ticket"
+                },
+                "status": {
+                  "type": "string",
+                  "description": "The current status of the ticket in its lifecycle"
+                },
+                "priority": {
+                  "type": "integer",
+                  "description": "The priority level assigned to the ticket, ranging from 1 (lowest) to 5 (highest)"
+                },
+                "category": {
+                  "type": "string",
+                  "description": "The category classifying the type of ticket"
+                },
+                "created_at": {
+                  "type": "string",
+                  "description": "The timestamp when the ticket was created, in YYYY-MM-DD HH:MM:SS format"
+                },
+                "assignee": {
+                  "type": "string",
+                  "description": "The username of the staff member assigned to the ticket, if assigned"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "add_comment",
+      "description": "Add a comment to a ticket, with support for public or internal (staff-only) visibility. Requires an authenticated session.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "ticket_id": {
+            "type": "integer",
+            "description": "The unique identifier of the ticket to add a comment to"
+          },
+          "comment": {
+            "type": "string",
+            "description": "The text content of the comment to add to the ticket"
+          },
+          "is_internal": {
+            "type": "boolean",
+            "description": "If true, the comment is marked as internal and visible only to staff members. If false, the comment is public. Defaults to false."
+          }
+        },
+        "required": [
+          "ticket_id",
+          "comment"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "comment_id": {
+            "type": "integer",
+            "description": "The unique identifier assigned to the newly created comment"
+          },
+          "ticket_id": {
+            "type": "integer",
+            "description": "The unique identifier of the ticket the comment was added to"
+          },
+          "comment": {
+            "type": "string",
+            "description": "The text content of the comment"
+          },
+          "author": {
+            "type": "string",
+            "description": "The username of the authenticated user who authored the comment"
+          },
+          "is_internal": {
+            "type": "boolean",
+            "description": "Indicates whether the comment is internal (staff-only) or public"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "The timestamp when the comment was created, in YYYY-MM-DD HH:MM:SS format"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_ticket_comments",
+      "description": "Retrieve all comments associated with a specific ticket, with optional inclusion of internal staff-only comments. Requires an authenticated session.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "ticket_id": {
+            "type": "integer",
+            "description": "The unique identifier of the ticket to retrieve comments for"
+          },
+          "include_internal": {
+            "type": "boolean",
+            "description": "If true, includes internal staff-only comments in the results (requires staff privileges). If false, returns only public comments. Defaults to false."
+          }
+        },
+        "required": [
+          "ticket_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "comments": {
+            "type": "array",
+            "description": "A list of comments associated with the ticket",
+            "items": {
+              "type": "object",
+              "properties": {
+                "comment_id": {
+                  "type": "integer",
+                  "description": "The unique identifier of the comment"
+                },
+                "ticket_id": {
+                  "type": "integer",
+                  "description": "The unique identifier of the ticket the comment belongs to"
+                },
+                "comment": {
+                  "type": "string",
+                  "description": "The text content of the comment"
+                },
+                "author": {
+                  "type": "string",
+                  "description": "The username of the user who authored the comment"
+                },
+                "is_internal": {
+                  "type": "boolean",
+                  "description": "Indicates whether the comment is internal (staff-only) or public"
+                },
+                "created_at": {
+                  "type": "string",
+                  "description": "The timestamp when the comment was created, in YYYY-MM-DD HH:MM:SS format"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_ticket_statistics",
+      "description": "Retrieve aggregated statistics and metrics about tickets in the system for a specified time period. Requires an authenticated session.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "time_period": {
+            "type": "string",
+            "enum": [
+              "today",
+              "week",
+              "month",
+              "year",
+              "all"
+            ],
+            "description": "The time period to calculate statistics for. Valid values are: today, week, month, year, or all. Defaults to 'all' if not specified."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "total_tickets": {
+            "type": "integer",
+            "description": "The total count of tickets in the system for the specified time period"
+          },
+          "open_tickets": {
+            "type": "integer",
+            "description": "The count of tickets with 'open' status"
+          },
+          "in_progress_tickets": {
+            "type": "integer",
+            "description": "The count of tickets with 'in_progress' status"
+          },
+          "resolved_tickets": {
+            "type": "integer",
+            "description": "The count of tickets with 'resolved' status"
+          },
+          "closed_tickets": {
+            "type": "integer",
+            "description": "The count of tickets with 'closed' status"
+          },
+          "average_resolution_time": {
+            "type": "number",
+            "description": "The average time in hours taken to resolve tickets during the specified time period"
+          },
+          "tickets_by_category": {
+            "type": "object",
+            "description": "A breakdown of ticket counts grouped by category (technical, billing, general, feature_request, bug_report)",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "tickets_by_priority": {
+            "type": "object",
+            "description": "A breakdown of ticket counts grouped by priority level (1 through 5)",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

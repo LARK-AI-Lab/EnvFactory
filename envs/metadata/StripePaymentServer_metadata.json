@@ -1,0 +1,275 @@
+{
+  "class_name": "StripePaymentServer",
+  "description": "Payment processing server for creating payment intents, managing customers, processing refunds, and retrieving charge history through the Stripe API.",
+  "tools": [
+    {
+      "name": "create_payment_intent",
+      "description": "Create a PaymentIntent to collect payment from a customer.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "description": "Amount to charge in the smallest currency unit (e.g., cents for USD, yen for JPY)."
+          },
+          "currency": {
+            "type": "string",
+            "description": "Three-letter ISO 4217 currency code in lowercase (e.g., 'usd', 'eur', 'gbp')."
+          },
+          "customer_id": {
+            "type": "string",
+            "description": "The unique identifier of an existing Stripe customer to associate with this payment."
+          },
+          "payment_method_id": {
+            "type": "string",
+            "description": "The unique identifier of a saved payment method to use for this payment."
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Custom key-value pairs to attach additional information to this payment intent."
+          }
+        },
+        "required": [
+          "amount",
+          "currency"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the created PaymentIntent."
+          },
+          "client_secret": {
+            "type": "string",
+            "description": "Secret key used by the client to confirm the payment on the frontend."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the payment intent (e.g., 'requires_payment_method', 'succeeded', 'canceled')."
+          },
+          "amount": {
+            "type": "integer",
+            "description": "Amount to charge in the smallest currency unit (e.g., cents for USD, yen for JPY)."
+          },
+          "currency": {
+            "type": "string",
+            "description": "Three-letter ISO 4217 currency code in lowercase (e.g., 'usd', 'eur', 'gbp')."
+          },
+          "created": {
+            "type": "integer",
+            "description": "Unix timestamp indicating when the PaymentIntent was created."
+          }
+        }
+      }
+    },
+    {
+      "name": "retrieve_payment_intent",
+      "description": "Retrieve the complete details of an existing PaymentIntent.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "payment_intent_id": {
+            "type": "string",
+            "description": "The unique identifier of the PaymentIntent to retrieve."
+          }
+        },
+        "required": [
+          "payment_intent_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the PaymentIntent."
+          },
+          "client_secret": {
+            "type": "string",
+            "description": "Secret key used by the client to confirm the payment on the frontend."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the payment intent (e.g., 'requires_payment_method', 'succeeded', 'canceled')."
+          },
+          "amount": {
+            "type": "integer",
+            "description": "Amount to charge in the smallest currency unit (e.g., cents for USD, yen for JPY)."
+          },
+          "currency": {
+            "type": "string",
+            "description": "Three-letter ISO 4217 currency code in lowercase (e.g., 'usd', 'eur', 'gbp')."
+          },
+          "customer": {
+            "type": "string",
+            "description": "The unique identifier of the Stripe customer associated with this payment."
+          },
+          "payment_method": {
+            "type": "string",
+            "description": "The unique identifier of the payment method used for this payment."
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Custom key-value pairs attached to this payment intent."
+          },
+          "created": {
+            "type": "integer",
+            "description": "Unix timestamp indicating when the PaymentIntent was created."
+          }
+        }
+      }
+    },
+    {
+      "name": "create_customer",
+      "description": "Create a new customer record for storing payment methods and managing recurring billing.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "The email address of the customer."
+          },
+          "name": {
+            "type": "string",
+            "description": "The full name of the customer."
+          },
+          "phone": {
+            "type": "string",
+            "description": "The phone number of the customer."
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Custom key-value pairs to attach additional information to this customer."
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the created Stripe customer."
+          },
+          "email": {
+            "type": "string",
+            "description": "The email address of the customer."
+          },
+          "name": {
+            "type": "string",
+            "description": "The full name of the customer."
+          },
+          "created": {
+            "type": "integer",
+            "description": "Unix timestamp indicating when the customer was created."
+          }
+        }
+      }
+    },
+    {
+      "name": "create_refund",
+      "description": "Create a refund for a previously completed payment.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "payment_intent_id": {
+            "type": "string",
+            "description": "The unique identifier of the PaymentIntent to refund."
+          },
+          "amount": {
+            "type": "integer",
+            "description": "Amount to refund in the smallest currency unit. If omitted, the full payment amount will be refunded."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason for the refund. Must be one of: 'duplicate', 'fraudulent', or 'requested_by_customer'."
+          }
+        },
+        "required": [
+          "payment_intent_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the created refund."
+          },
+          "amount": {
+            "type": "integer",
+            "description": "Amount refunded in the smallest currency unit (e.g., cents for USD, yen for JPY)."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the refund (e.g., 'pending', 'succeeded', 'failed')."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason for the refund ('duplicate', 'fraudulent', or 'requested_by_customer')."
+          }
+        }
+      }
+    },
+    {
+      "name": "list_charges",
+      "description": "Retrieve a list of payment charges with optional filtering by customer.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of charge records to return (1-100, defaults to 10)."
+          },
+          "customer_id": {
+            "type": "string",
+            "description": "The unique identifier of an existing Stripe customer to filter charges by."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "charges": {
+            "type": "array",
+            "description": "List of charge objects matching the specified filters.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The unique identifier of the charge."
+                },
+                "amount": {
+                  "type": "integer",
+                  "description": "Amount charged in the smallest currency unit (e.g., cents for USD, yen for JPY)."
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "Three-letter ISO 4217 currency code in lowercase (e.g., 'usd', 'eur', 'gbp')."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "Current status of the charge (e.g., 'succeeded', 'pending', 'failed')."
+                },
+                "customer": {
+                  "type": "string",
+                  "description": "The unique identifier of the Stripe customer associated with this charge."
+                },
+                "created": {
+                  "type": "integer",
+                  "description": "Unix timestamp indicating when the charge was created."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,1622 @@
+{
+  "metadata": {
+    "class_name": "HugeiconsServer",
+    "metadata_path": "envs\\metadata\\HugeiconsServer_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-03T23:50:14.732812",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "HugeiconsServer",
+    "description": "A server for browsing, searching, and retrieving Hugeicons icon library assets including icon metadata and glyph characters.",
+    "tools": [
+      {
+        "name": "list_icons",
+        "description": "Retrieve a paginated list of all available icons in the Hugeicons library.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of icons to return in the response."
+            },
+            "offset": {
+              "type": "integer",
+              "description": "Pagination offset to skip a number of results for paginated retrieval."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "icons": {
+              "type": "array",
+              "description": "List of icon objects from the Hugeicons library.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "icon_name": {
+                    "type": "string",
+                    "description": "The unique name identifier of the icon."
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "The category classification of the icon (e.g., 'arrows', 'communication')."
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Descriptive tags associated with the icon for search and filtering purposes."
+                  },
+                  "styles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Available visual styles for the icon (e.g., 'outline', 'solid', 'duotone')."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "search_icons",
+        "description": "Search for icons by name keyword or filter by associated tags.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Search keyword to match against icon names."
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter results by specific tags (e.g., ['social', 'media'])."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of icons to return in the response."
+            }
+          },
+          "required": [
+            "query"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "icons": {
+              "type": "array",
+              "description": "List of icon objects matching the search criteria.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "icon_name": {
+                    "type": "string",
+                    "description": "The unique name identifier of the icon."
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "The category classification of the icon (e.g., 'arrows', 'communication')."
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Descriptive tags associated with the icon for search and filtering purposes."
+                  },
+                  "styles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Available visual styles for the icon (e.g., 'outline', 'solid', 'duotone')."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_icon_glyph_by_style",
+        "description": "Retrieve the unicode glyph character for a specific icon in a particular visual style.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "icon_name": {
+              "type": "string",
+              "description": "The unique name identifier of the icon (as returned by list_icons or search_icons)."
+            },
+            "style": {
+              "type": "string",
+              "enum": [
+                "outline",
+                "solid",
+                "duotone"
+              ],
+              "description": "The visual style variant of the icon. If not provided, glyphs for all available styles are returned."
+            }
+          },
+          "required": [
+            "icon_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "icon_name": {
+              "type": "string",
+              "description": "The unique name identifier of the icon."
+            },
+            "style": {
+              "type": "string",
+              "description": "The visual style variant of the returned glyph."
+            },
+            "glyph": {
+              "type": "string",
+              "description": "The unicode character representing the icon glyph for use in font-based icon rendering."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Union, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Icon(BaseModel):\n    \"\"\"Represents an icon in the Hugeicons library.\"\"\"\n    icon_name: str = Field(..., description=\"The unique name identifier of the icon\")\n    category: str = Field(..., description=\"The category classification of the icon\")\n    tags: List[str] = Field(default=[], description=\"Descriptive tags associated with the icon\")\n    styles: List[str] = Field(default=[], description=\"Available visual styles for the icon\")\n\nclass IconGlyph(BaseModel):\n    \"\"\"Represents an icon glyph for a specific style.\"\"\"\n    icon_name: str = Field(..., description=\"The unique name identifier of the icon\")\n    style: str = Field(..., description=\"The visual style variant of the icon\")\n    glyph: str = Field(..., description=\"The unicode character representing the icon glyph\")\n\nclass HugeiconsScenario(BaseModel):\n    \"\"\"Main scenario model for Hugeicons icon library.\"\"\"\n    icons: List[Icon] = Field(default=[], description=\"List of all available icons\")\n    iconGlyphsMap: Dict[str, Dict[str, str]] = Field(default_factory=lambda: {\n        \"home\": {\"outline\": \"\\ue900\", \"solid\": \"\\ue901\", \"duotone\": \"\\ue902\"},\n        \"user\": {\"outline\": \"\\ue903\", \"solid\": \"\\ue904\", \"duotone\": \"\\ue905\"},\n        \"search\": {\"outline\": \"\\ue906\", \"solid\": \"\\ue907\", \"duotone\": \"\\ue908\"},\n        \"heart\": {\"outline\": \"\\ue909\", \"solid\": \"\\ue90a\", \"duotone\": \"\\ue90b\"},\n        \"star\": {\"outline\": \"\\ue90c\", \"solid\": \"\\ue90d\", \"duotone\": \"\\ue90e\"},\n        \"settings\": {\"outline\": \"\\ue90f\", \"solid\": \"\\ue910\", \"duotone\": \"\\ue911\"},\n        \"mail\": {\"outline\": \"\\ue912\", \"solid\": \"\\ue913\", \"duotone\": \"\\ue914\"},\n        \"phone\": {\"outline\": \"\\ue915\", \"solid\": \"\\ue916\", \"duotone\": \"\\ue917\"},\n        \"calendar\": {\"outline\": \"\\ue918\", \"solid\": \"\\ue919\", \"duotone\": \"\\ue91a\"},\n        \"camera\": {\"outline\": \"\\ue91b\", \"solid\": \"\\ue91c\", \"duotone\": \"\\ue91d\"},\n        \"arrow-right\": {\"outline\": \"\\ue91e\", \"solid\": \"\\ue91f\", \"duotone\": \"\\ue920\"},\n        \"arrow-left\": {\"outline\": \"\\ue921\", \"solid\": \"\\ue922\", \"duotone\": \"\\ue923\"},\n        \"arrow-up\": {\"outline\": \"\\ue924\", \"solid\": \"\\ue925\", \"duotone\": \"\\ue926\"},\n        \"arrow-down\": {\"outline\": \"\\ue927\", \"solid\": \"\\ue928\", \"duotone\": \"\\ue929\"},\n        \"plus\": {\"outline\": \"\\ue92a\", \"solid\": \"\\ue92b\", \"duotone\": \"\\ue92c\"},\n        \"minus\": {\"outline\": \"\\ue92d\", \"solid\": \"\\ue92e\", \"duotone\": \"\\ue92f\"},\n        \"check\": {\"outline\": \"\\ue930\", \"solid\": \"\\ue931\", \"duotone\": \"\\ue932\"},\n        \"close\": {\"outline\": \"\\ue933\", \"solid\": \"\\ue934\", \"duotone\": \"\\ue935\"},\n        \"menu\": {\"outline\": \"\\ue936\", \"solid\": \"\\ue937\", \"duotone\": \"\\ue938\"},\n        \"download\": {\"outline\": \"\\ue939\", \"solid\": \"\\ue93a\", \"duotone\": \"\\ue93b\"}\n    }, description=\"Mapping of icon names to their glyph characters by style\")\n    \nScenario_Schema = [Icon, IconGlyph, HugeiconsScenario]\n\n# Section 2: Class\nclass HugeiconsAPI:\n    def __init__(self):\n        \"\"\"Initialize Hugeicons API with empty state.\"\"\"\n        self.icons: List[Icon] = []\n        self.iconGlyphsMap: Dict[str, Dict[str, str]] = {}\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = HugeiconsScenario(**scenario)\n        self.icons = model.icons\n        self.iconGlyphsMap = model.iconGlyphsMap\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"icons\": [icon.dict() for icon in self.icons],\n            \"iconGlyphsMap\": self.iconGlyphsMap\n        }\n\n    def list_icons(self, limit: Optional[int] = None, offset: Optional[int] = None) -> dict:\n        \"\"\"Retrieve a paginated list of all available icons.\"\"\"\n        if offset is None:\n            offset = 0\n        if limit is None:\n            limit = len(self.icons)\n        \n        paginated_icons = self.icons[offset:offset + limit]\n        return {\"icons\": [icon.dict() for icon in paginated_icons]}\n\n    def search_icons(self, query: str, tags: Optional[List[str]] = None, limit: Optional[int] = None) -> dict:\n        \"\"\"Search for icons by name keyword or filter by associated tags.\"\"\"\n        filtered_icons = []\n        \n        for icon in self.icons:\n            # Check if query matches icon name\n            if query.lower() in icon.icon_name.lower():\n                # If tags provided, check if icon has all specified tags\n                if tags:\n                    if all(tag.lower() in [t.lower() for t in icon.tags] for tag in tags):\n                        filtered_icons.append(icon)\n                else:\n                    filtered_icons.append(icon)\n        \n        if limit is not None:\n            filtered_icons = filtered_icons[:limit]\n        \n        return {\"icons\": [icon.dict() for icon in filtered_icons]}\n\n    def get_icon_glyph_by_style(self, icon_name: str, style: Optional[str] = None) -> dict:\n        \"\"\"Retrieve the unicode glyph character for a specific icon in a particular visual style.\"\"\"\n        if icon_name not in self.iconGlyphsMap:\n            raise ValueError(f\"Icon '{icon_name}' not found\")\n        \n        glyph_data = self.iconGlyphsMap[icon_name]\n        \n        if style is not None:\n            if style not in glyph_data:\n                raise ValueError(f\"Style '{style}' not available for icon '{icon_name}'\")\n            return {\n                \"icon_name\": icon_name,\n                \"style\": style,\n                \"glyph\": glyph_data[style]\n            }\n        else:\n            # Return first available style if no specific style requested\n            first_style = list(glyph_data.keys())[0]\n            return {\n                \"icon_name\": icon_name,\n                \"style\": first_style,\n                \"glyph\": glyph_data[first_style]\n            }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"HugeiconsServer\")\napi = HugeiconsAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Hugeicons API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching HugeiconsScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Hugeicons state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef list_icons(limit: Optional[int] = None, offset: Optional[int] = None) -> dict:\n    \"\"\"\n    Retrieve a paginated list of all available icons in the Hugeicons library.\n    \n    Args:\n        limit (int): [Optional] Maximum number of icons to return.\n        offset (int): [Optional] Pagination offset to skip results.\n    \n    Returns:\n        icons (list): List of icon objects with name, category, tags, and styles.\n    \"\"\"\n    try:\n        return api.list_icons(limit, offset)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_icons(query: str, tags: Optional[List[str]] = None, limit: Optional[int] = None) -> dict:\n    \"\"\"\n    Search for icons by name keyword or filter by associated tags.\n    \n    Args:\n        query (str): Search keyword to match against icon names.\n        tags (list): [Optional] Filter results by specific tags.\n        limit (int): [Optional] Maximum number of icons to return.\n    \n    Returns:\n        icons (list): List of icon objects matching the search criteria.\n    \"\"\"\n    try:\n        if not query or not isinstance(query, str):\n            raise ValueError(\"Query must be a non-empty string\")\n        return api.search_icons(query, tags, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_icon_glyph_by_style(icon_name: str, style: Optional[str] = None) -> dict:\n    \"\"\"\n    Retrieve the unicode glyph character for a specific icon in a particular visual style.\n    \n    Args:\n        icon_name (str): The unique name identifier of the icon.\n        style (str): [Optional] The visual style variant ('outline', 'solid', 'duotone').\n    \n    Returns:\n        icon_name (str): The icon name.\n        style (str): The visual style variant.\n        glyph (str): The unicode character for the icon glyph.\n    \"\"\"\n    try:\n        # Basic parameter checks only - format validation handled by Pydantic models\n        if not icon_name or not isinstance(icon_name, str):\n            raise ValueError(\"Icon name must be a non-empty string\")\n        if style is not None and not isinstance(style, str):\n            raise ValueError(\"Style must be a string\")\n        return api.get_icon_glyph_by_style(icon_name, style)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-03T23:50:14.732812",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic icon library with minimal icons covering essential UI elements",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "icons": [
+          {
+            "icon_name": "home",
+            "category": "navigation",
+            "tags": [
+              "house",
+              "main",
+              "dashboard"
+            ],
+            "styles": [
+              "outline",
+              "solid",
+              "duotone"
+            ]
+          },
+          {
+            "icon_name": "user",
+            "category": "people",
+            "tags": [
+              "profile",
+              "account",
+              "person"
+            ],
+            "styles": [
+              "outline",
+              "solid",
+              "duotone"
+            ]
+          }
+        ],
+        "iconGlyphsMap": {
+          "home": {
+            "outline": "",
+            "solid": "",
+            "duotone": ""
+          },
+          "user": {
+            "outline": "",
+            "solid": "",
+            "duotone": ""
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Moderate icon library with varied categories and mixed style availability",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "icons": [
+          {
+            "icon_name": "search",
+            "category": "actions",
+            "tags": [
+              "find",
+              "magnify",
+              "lookup"
+            ],
+            "styles": [
+              "outline",
+              "solid"
+            ]
+          },
+          {
+            "icon_name": "heart",
+            "category": "social",
+            "tags": [
+              "like",
+              "favorite",
+              "love"
+            ],
+            "styles": [
+              "outline",
+              "solid",
+              "duotone"
+            ]
+          },
+          {
+            "icon_name": "settings",
+            "category": "system",
+            "tags": [
+              "gear",
+              "preferences",
+              "config"
+            ],
+            "styles": [
+              "outline",
+              "duotone"
+            ]
+          },
+          {
+            "icon_name": "mail",
+            "category": "communication",
+            "tags": [
+              "email",
+              "message",
+              "envelope"
+            ],
+            "styles": [
+              "outline",
+              "solid",
+              "duotone"
+            ]
+          },
+          {
+            "icon_name": "calendar",
+            "category": "productivity",
+            "tags": [],
+            "styles": [
+              "outline"
+            ]
+          }
+        ],
+        "iconGlyphsMap": {
+          "search": {
+            "outline": "",
+            "solid": ""
+          },
+          "heart": {
+            "outline": "",
+            "solid": "",
+            "duotone": ""
+          },
+          "settings": {
+            "outline": "",
+            "duotone": ""
+          },
+          "mail": {
+            "outline": "",
+            "solid": "",
+            "duotone": ""
+          },
+          "calendar": {
+            "outline": ""
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Comprehensive icon library with diverse categories, rich tagging, and full style coverage",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "icons": [
+          {
+            "icon_name": "arrow-right",
+            "category": "navigation",
+            "tags": [
+              "next",
+              "forward",
+              "direction",
+              "chevron"
+            ],
+            "styles": [
+              "outline",
+              "solid",
+              "duotone"
+            ]
+          },
+          {
+            "icon_name": "arrow-left",
+            "category": "navigation",
+            "tags": [
+              "back",
+              "previous",
+              "direction",
+              "chevron"
+            ],
+            "styles": [
+              "outline",
+              "solid",
+              "duotone"
+            ]
+          },
+          {
+            "icon_name": "star",
+            "category": "social",
+            "tags": [
+              "favorite",
+              "rating",
+              "bookmark",
+              "featured"
+            ],
+            "styles": [
+              "outline",
+              "solid",
+              "duotone"
+            ]
+          },
+          {
+            "icon_name": "camera",
+            "category": "media",
+            "tags": [
+              "photo",
+              "picture",
+              "snapshot",
+              "photography"
+            ],
+            "styles": [
+              "outline",
+              "solid",
+              "duotone"
+            ]
+          },
+          {
+            "icon_name": "phone",
+            "category": "communication",
+            "tags": [
+              "call",
+              "telephone",
+              "contact",
+              "mobile"
+            ],
+            "styles": [
+              "outline",
+              "solid",
+              "duotone"
+            ]
+          },
+          {
+            "icon_name": "plus",
+            "category": "actions",
+            "tags": [
+              "add",
+              "create",
+              "new",
+              "increase"
+            ],
+            "styles": [
+              "outline",
+              "solid",
+              "duotone"
+            ]
+          },
+          {
+            "icon_name": "check",
+            "category": "actions",
+            "tags": [
+              "done",
+              "complete",
+              "success",
+              "confirm",
+              "tick"
+            ],
+            "styles": [
+              "outline",
+              "solid",
+              "duotone"
+            ]
+          },
+          {
+            "icon_name": "download",
+            "category": "actions",
+            "tags": [
+              "save",
+              "export",
+              "get",
+              "arrow-down"
+            ],
+            "styles": [
+              "outline",
+              "solid",
+              "duotone"
+            ]
+          }
+        ],
+        "iconGlyphsMap": {
+          "arrow-right": {
+            "outline": "",
+            "solid": "",
+            "duotone": ""
+          },
+          "arrow-left": {
+            "outline": "",
+            "solid": "",
+            "duotone": ""
+          },
+          "star": {
+            "outline": "",
+            "solid": "",
+            "duotone": ""
+          },
+          "camera": {
+            "outline": "",
+            "solid": "",
+            "duotone": ""
+          },
+          "phone": {
+            "outline": "",
+            "solid": "",
+            "duotone": ""
+          },
+          "plus": {
+            "outline": "",
+            "solid": "",
+            "duotone": ""
+          },
+          "check": {
+            "outline": "",
+            "solid": "",
+            "duotone": ""
+          },
+          "download": {
+            "outline": "",
+            "solid": "",
+            "duotone": ""
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty icon library to test handling of no icons available",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "icons": [],
+        "iconGlyphsMap": {}
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_icons",
+                "test_cases": [
+                  {
+                    "description": "List all icons without pagination",
+                    "input": {},
+                    "passed": true,
+                    "output": "Successfully returned 2 icons (home, user)",
+                    "error": null
+                  },
+                  {
+                    "description": "List icons with limit=1",
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Successfully returned 1 icon (home)",
+                    "error": null
+                  },
+                  {
+                    "description": "List icons with limit=1 and offset=1",
+                    "input": {
+                      "limit": 1,
+                      "offset": 1
+                    },
+                    "passed": true,
+                    "output": "Successfully returned 1 icon (user)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_icons",
+                "test_cases": [
+                  {
+                    "description": "Search for 'home' icon",
+                    "input": {
+                      "query": "home"
+                    },
+                    "passed": true,
+                    "output": "Successfully found 1 icon matching 'home'",
+                    "error": null
+                  },
+                  {
+                    "description": "Search for 'user' with tag filter 'profile'",
+                    "input": {
+                      "query": "user",
+                      "tags": [
+                        "profile"
+                      ]
+                    },
+                    "passed": true,
+                    "output": "Successfully found 1 icon matching 'user' with tag 'profile'",
+                    "error": null
+                  },
+                  {
+                    "description": "Search for non-existent icon",
+                    "input": {
+                      "query": "nonexistent"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned empty list for non-matching query",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_icon_glyph_by_style",
+                "test_cases": [
+                  {
+                    "description": "Get home icon glyph with outline style",
+                    "input": {
+                      "icon_name": "home",
+                      "style": "outline"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned glyph for home/outline",
+                    "error": null
+                  },
+                  {
+                    "description": "Get user icon glyph with solid style",
+                    "input": {
+                      "icon_name": "user",
+                      "style": "solid"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned glyph for user/solid",
+                    "error": null
+                  },
+                  {
+                    "description": "Get home icon glyph with default style",
+                    "input": {
+                      "icon_name": "home"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned glyph for home with default style (outline)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All icons and iconGlyphsMap data preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 48.24415969848633
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_icons",
+                "test_cases": [
+                  {
+                    "description": "List all icons without pagination",
+                    "input": {},
+                    "passed": true,
+                    "output": "Returned all 5 icons successfully"
+                  },
+                  {
+                    "description": "List icons with limit",
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Returned first 3 icons as expected"
+                  },
+                  {
+                    "description": "List icons with limit and offset",
+                    "input": {
+                      "limit": 2,
+                      "offset": 2
+                    },
+                    "passed": true,
+                    "output": "Returned 2 icons starting from offset 2 (settings and mail)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_icons",
+                "test_cases": [
+                  {
+                    "description": "Search by icon name with limit",
+                    "input": {
+                      "query": "search",
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Found 'search' icon successfully"
+                  },
+                  {
+                    "description": "Search by icon name without limit",
+                    "input": {
+                      "query": "heart"
+                    },
+                    "passed": true,
+                    "output": "Found 'heart' icon successfully"
+                  },
+                  {
+                    "description": "Search by icon name with tag filter",
+                    "input": {
+                      "query": "mail",
+                      "tags": [
+                        "email"
+                      ]
+                    },
+                    "passed": true,
+                    "output": "Found 'mail' icon with matching tag 'email'"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_icon_glyph_by_style",
+                "test_cases": [
+                  {
+                    "description": "Get glyph for search icon with outline style",
+                    "input": {
+                      "icon_name": "search",
+                      "style": "outline"
+                    },
+                    "passed": true,
+                    "output": "Returned glyph for search-outline"
+                  },
+                  {
+                    "description": "Get glyph for heart icon with duotone style",
+                    "input": {
+                      "icon_name": "heart",
+                      "style": "duotone"
+                    },
+                    "passed": true,
+                    "output": "Returned glyph for heart-duotone"
+                  },
+                  {
+                    "description": "Get glyph without specifying style (default)",
+                    "input": {
+                      "icon_name": "calendar"
+                    },
+                    "passed": true,
+                    "output": "Returned glyph for calendar with default style (outline)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario perfectly. All 5 icons with their categories, tags, styles, and iconGlyphsMap are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 48.98798584938049
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_icons",
+                "test_cases": [
+                  {
+                    "description": "List all icons without pagination",
+                    "input": {},
+                    "passed": true,
+                    "output": "Successfully returned all 8 icons",
+                    "error": null
+                  },
+                  {
+                    "description": "List icons with limit",
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Successfully returned 3 icons (arrow-right, arrow-left, star)",
+                    "error": null
+                  },
+                  {
+                    "description": "List icons with limit and offset",
+                    "input": {
+                      "limit": 5,
+                      "offset": 3
+                    },
+                    "passed": true,
+                    "output": "Successfully returned 5 icons starting from offset 3 (camera, phone, plus, check, download)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_icons",
+                "test_cases": [
+                  {
+                    "description": "Search icons by query 'arrow'",
+                    "input": {
+                      "query": "arrow",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Successfully found 2 icons matching 'arrow' (arrow-right, arrow-left)",
+                    "error": null
+                  },
+                  {
+                    "description": "Search icons by query 'star' with tag filters",
+                    "input": {
+                      "query": "star",
+                      "tags": [
+                        "favorite",
+                        "rating"
+                      ]
+                    },
+                    "passed": true,
+                    "output": "Successfully found 1 icon matching 'star' with specified tags",
+                    "error": null
+                  },
+                  {
+                    "description": "Search icons by query 'phone'",
+                    "input": {
+                      "query": "phone"
+                    },
+                    "passed": true,
+                    "output": "Successfully found 1 icon matching 'phone'",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_icon_glyph_by_style",
+                "test_cases": [
+                  {
+                    "description": "Get glyph for 'star' icon with 'solid' style",
+                    "input": {
+                      "icon_name": "star",
+                      "style": "solid"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned glyph for star/solid",
+                    "error": null
+                  },
+                  {
+                    "description": "Get glyph for 'arrow-right' icon with 'outline' style",
+                    "input": {
+                      "icon_name": "arrow-right",
+                      "style": "outline"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned glyph for arrow-right/outline",
+                    "error": null
+                  },
+                  {
+                    "description": "Get glyph for 'camera' icon with 'duotone' style",
+                    "input": {
+                      "icon_name": "camera",
+                      "style": "duotone"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned glyph for camera/duotone",
+                    "error": null
+                  },
+                  {
+                    "description": "Get glyph for 'check' icon without specifying style (default)",
+                    "input": {
+                      "icon_name": "check"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned glyph for check with default style 'outline'",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario data exactly. All 8 icons and their glyph mappings are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 62.71964383125305
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_icons",
+                "test_cases": [
+                  {
+                    "description": "Valid case: List icons with limit and offset",
+                    "input": {
+                      "limit": 10,
+                      "offset": 0
+                    },
+                    "passed": true,
+                    "output": {
+                      "icons": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Boundary case: List icons with zero limit",
+                    "input": {
+                      "limit": 0,
+                      "offset": 0
+                    },
+                    "passed": true,
+                    "output": {
+                      "icons": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: List icons without parameters",
+                    "input": {},
+                    "passed": true,
+                    "output": {
+                      "icons": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_icons",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Search with query and limit",
+                    "input": {
+                      "query": "home",
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": {
+                      "icons": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Search with query and tags",
+                    "input": {
+                      "query": "search",
+                      "tags": [
+                        "ui",
+                        "navigation"
+                      ]
+                    },
+                    "passed": true,
+                    "output": {
+                      "icons": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Empty query string (validation test)",
+                    "input": {
+                      "query": "",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Query must be a non-empty string",
+                    "note": "Expected validation error - tool correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_icon_glyph_by_style",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get glyph for non-existent icon (empty scenario)",
+                    "input": {
+                      "icon_name": "home",
+                      "style": "outline"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Icon 'home' not found",
+                    "note": "Expected behavior - icon doesn't exist in empty scenario"
+                  },
+                  {
+                    "description": "Error case: Empty icon name (validation test)",
+                    "input": {
+                      "icon_name": "",
+                      "style": "outline"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Icon name must be a non-empty string",
+                    "note": "Expected validation error - tool correctly rejected invalid input"
+                  },
+                  {
+                    "description": "Valid case: Get glyph without style parameter",
+                    "input": {
+                      "icon_name": "test_icon"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Icon 'test_icon' not found",
+                    "note": "Expected behavior - icon doesn't exist in empty scenario"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "saved_scenario": {
+                "icons": [],
+                "iconGlyphsMap": {}
+              },
+              "original_scenario": {
+                "icons": [],
+                "iconGlyphsMap": {}
+              },
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 48.99980092048645
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_icons",
+                "test_cases": [
+                  {
+                    "description": "List all icons without pagination",
+                    "input": {},
+                    "passed": true,
+                    "output": "Successfully returned 2 icons (home, user)",
+                    "error": null
+                  },
+                  {
+                    "description": "List icons with limit=1",
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Successfully returned 1 icon (home)",
+                    "error": null
+                  },
+                  {
+                    "description": "List icons with limit=1 and offset=1",
+                    "input": {
+                      "limit": 1,
+                      "offset": 1
+                    },
+                    "passed": true,
+                    "output": "Successfully returned 1 icon (user)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_icons",
+                "test_cases": [
+                  {
+                    "description": "Search for 'home' icon",
+                    "input": {
+                      "query": "home"
+                    },
+                    "passed": true,
+                    "output": "Successfully found 1 icon matching 'home'",
+                    "error": null
+                  },
+                  {
+                    "description": "Search for 'user' with tag filter 'profile'",
+                    "input": {
+                      "query": "user",
+                      "tags": [
+                        "profile"
+                      ]
+                    },
+                    "passed": true,
+                    "output": "Successfully found 1 icon matching 'user' with tag 'profile'",
+                    "error": null
+                  },
+                  {
+                    "description": "Search for non-existent icon",
+                    "input": {
+                      "query": "nonexistent"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned empty list for non-matching query",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_icon_glyph_by_style",
+                "test_cases": [
+                  {
+                    "description": "Get home icon glyph with outline style",
+                    "input": {
+                      "icon_name": "home",
+                      "style": "outline"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned glyph for home/outline",
+                    "error": null
+                  },
+                  {
+                    "description": "Get user icon glyph with solid style",
+                    "input": {
+                      "icon_name": "user",
+                      "style": "solid"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned glyph for user/solid",
+                    "error": null
+                  },
+                  {
+                    "description": "Get home icon glyph with default style",
+                    "input": {
+                      "icon_name": "home"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned glyph for home with default style (outline)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All icons and iconGlyphsMap data preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 48.24415969848633
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_icons",
+                "test_cases": [
+                  {
+                    "description": "List all icons without pagination",
+                    "input": {},
+                    "passed": true,
+                    "output": "Returned all 5 icons successfully"
+                  },
+                  {
+                    "description": "List icons with limit",
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Returned first 3 icons as expected"
+                  },
+                  {
+                    "description": "List icons with limit and offset",
+                    "input": {
+                      "limit": 2,
+                      "offset": 2
+                    },
+                    "passed": true,
+                    "output": "Returned 2 icons starting from offset 2 (settings and mail)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_icons",
+                "test_cases": [
+                  {
+                    "description": "Search by icon name with limit",
+                    "input": {
+                      "query": "search",
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Found 'search' icon successfully"
+                  },
+                  {
+                    "description": "Search by icon name without limit",
+                    "input": {
+                      "query": "heart"
+                    },
+                    "passed": true,
+                    "output": "Found 'heart' icon successfully"
+                  },
+                  {
+                    "description": "Search by icon name with tag filter",
+                    "input": {
+                      "query": "mail",
+                      "tags": [
+                        "email"
+                      ]
+                    },
+                    "passed": true,
+                    "output": "Found 'mail' icon with matching tag 'email'"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_icon_glyph_by_style",
+                "test_cases": [
+                  {
+                    "description": "Get glyph for search icon with outline style",
+                    "input": {
+                      "icon_name": "search",
+                      "style": "outline"
+                    },
+                    "passed": true,
+                    "output": "Returned glyph for search-outline"
+                  },
+                  {
+                    "description": "Get glyph for heart icon with duotone style",
+                    "input": {
+                      "icon_name": "heart",
+                      "style": "duotone"
+                    },
+                    "passed": true,
+                    "output": "Returned glyph for heart-duotone"
+                  },
+                  {
+                    "description": "Get glyph without specifying style (default)",
+                    "input": {
+                      "icon_name": "calendar"
+                    },
+                    "passed": true,
+                    "output": "Returned glyph for calendar with default style (outline)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario perfectly. All 5 icons with their categories, tags, styles, and iconGlyphsMap are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 48.98798584938049
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_icons",
+                "test_cases": [
+                  {
+                    "description": "List all icons without pagination",
+                    "input": {},
+                    "passed": true,
+                    "output": "Successfully returned all 8 icons",
+                    "error": null
+                  },
+                  {
+                    "description": "List icons with limit",
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Successfully returned 3 icons (arrow-right, arrow-left, star)",
+                    "error": null
+                  },
+                  {
+                    "description": "List icons with limit and offset",
+                    "input": {
+                      "limit": 5,
+                      "offset": 3
+                    },
+                    "passed": true,
+                    "output": "Successfully returned 5 icons starting from offset 3 (camera, phone, plus, check, download)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_icons",
+                "test_cases": [
+                  {
+                    "description": "Search icons by query 'arrow'",
+                    "input": {
+                      "query": "arrow",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Successfully found 2 icons matching 'arrow' (arrow-right, arrow-left)",
+                    "error": null
+                  },
+                  {
+                    "description": "Search icons by query 'star' with tag filters",
+                    "input": {
+                      "query": "star",
+                      "tags": [
+                        "favorite",
+                        "rating"
+                      ]
+                    },
+                    "passed": true,
+                    "output": "Successfully found 1 icon matching 'star' with specified tags",
+                    "error": null
+                  },
+                  {
+                    "description": "Search icons by query 'phone'",
+                    "input": {
+                      "query": "phone"
+                    },
+                    "passed": true,
+                    "output": "Successfully found 1 icon matching 'phone'",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_icon_glyph_by_style",
+                "test_cases": [
+                  {
+                    "description": "Get glyph for 'star' icon with 'solid' style",
+                    "input": {
+                      "icon_name": "star",
+                      "style": "solid"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned glyph for star/solid",
+                    "error": null
+                  },
+                  {
+                    "description": "Get glyph for 'arrow-right' icon with 'outline' style",
+                    "input": {
+                      "icon_name": "arrow-right",
+                      "style": "outline"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned glyph for arrow-right/outline",
+                    "error": null
+                  },
+                  {
+                    "description": "Get glyph for 'camera' icon with 'duotone' style",
+                    "input": {
+                      "icon_name": "camera",
+                      "style": "duotone"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned glyph for camera/duotone",
+                    "error": null
+                  },
+                  {
+                    "description": "Get glyph for 'check' icon without specifying style (default)",
+                    "input": {
+                      "icon_name": "check"
+                    },
+                    "passed": true,
+                    "output": "Successfully returned glyph for check with default style 'outline'",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario data exactly. All 8 icons and their glyph mappings are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 62.71964383125305
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_icons",
+                "test_cases": [
+                  {
+                    "description": "Valid case: List icons with limit and offset",
+                    "input": {
+                      "limit": 10,
+                      "offset": 0
+                    },
+                    "passed": true,
+                    "output": {
+                      "icons": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Boundary case: List icons with zero limit",
+                    "input": {
+                      "limit": 0,
+                      "offset": 0
+                    },
+                    "passed": true,
+                    "output": {
+                      "icons": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: List icons without parameters",
+                    "input": {},
+                    "passed": true,
+                    "output": {
+                      "icons": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_icons",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Search with query and limit",
+                    "input": {
+                      "query": "home",
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": {
+                      "icons": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Search with query and tags",
+                    "input": {
+                      "query": "search",
+                      "tags": [
+                        "ui",
+                        "navigation"
+                      ]
+                    },
+                    "passed": true,
+                    "output": {
+                      "icons": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Empty query string (validation test)",
+                    "input": {
+                      "query": "",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Query must be a non-empty string",
+                    "note": "Expected validation error - tool correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_icon_glyph_by_style",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get glyph for non-existent icon (empty scenario)",
+                    "input": {
+                      "icon_name": "home",
+                      "style": "outline"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Icon 'home' not found",
+                    "note": "Expected behavior - icon doesn't exist in empty scenario"
+                  },
+                  {
+                    "description": "Error case: Empty icon name (validation test)",
+                    "input": {
+                      "icon_name": "",
+                      "style": "outline"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Icon name must be a non-empty string",
+                    "note": "Expected validation error - tool correctly rejected invalid input"
+                  },
+                  {
+                    "description": "Valid case: Get glyph without style parameter",
+                    "input": {
+                      "icon_name": "test_icon"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Icon 'test_icon' not found",
+                    "note": "Expected behavior - icon doesn't exist in empty scenario"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "saved_scenario": {
+                "icons": [],
+                "iconGlyphsMap": {}
+              },
+              "original_scenario": {
+                "icons": [],
+                "iconGlyphsMap": {}
+              },
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 48.99980092048645
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/HugeiconsServer.py"
+  }
+}

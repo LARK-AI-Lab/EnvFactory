@@ -1,0 +1,305 @@
+{
+  "class_name": "GoogleDrive",
+  "description": "Manage files and permissions in Google Drive, including upload, download, listing, metadata retrieval, and sharing operations.",
+  "tools": [
+    {
+      "name": "upload_file",
+      "description": "Upload a new file to Google Drive with optional parent folder assignment.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name to assign to the uploaded file in Google Drive."
+          },
+          "content": {
+            "type": "string",
+            "description": "The file content as bytes to be uploaded."
+          },
+          "mime_type": {
+            "type": "string",
+            "description": "The MIME type of the file (e.g., 'image/jpeg', 'application/pdf'). Auto-detected if not provided."
+          },
+          "parents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of parent folder IDs where the file should be placed in Google Drive."
+          }
+        },
+        "required": [
+          "name",
+          "content"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the uploaded file in Google Drive."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the uploaded file."
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "The MIME type of the uploaded file."
+          },
+          "size": {
+            "type": "string",
+            "description": "The size of the uploaded file in bytes, represented as a string."
+          },
+          "createdTime": {
+            "type": "string",
+            "description": "The creation timestamp of the file in RFC 3339 format."
+          },
+          "parents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of parent folder IDs where the file is located in Google Drive."
+          }
+        }
+      }
+    },
+    {
+      "name": "download_file",
+      "description": "Download a file's content and metadata from Google Drive by its file ID.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_id": {
+            "type": "string",
+            "description": "The unique identifier of the file to download from Google Drive."
+          },
+          "acknowledge_abuse": {
+            "type": "boolean",
+            "description": "Whether to acknowledge the abuse warning for files flagged by Google Drive (default: false)."
+          }
+        },
+        "required": [
+          "file_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "The file content as bytes."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the downloaded file."
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "The MIME type of the downloaded file."
+          },
+          "size": {
+            "type": "string",
+            "description": "The size of the downloaded file in bytes, represented as a string."
+          }
+        }
+      }
+    },
+    {
+      "name": "list_files",
+      "description": "List files in Google Drive with optional filtering, sorting, and pagination.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "page_size": {
+            "type": "integer",
+            "description": "Maximum number of files to return per page (default: 100)."
+          },
+          "q": {
+            "type": "string",
+            "description": "Query string for filtering files using Google Drive query syntax (e.g., \"mimeType='image/jpeg'\" or \"name contains 'report'\")."
+          },
+          "order_by": {
+            "type": "string",
+            "description": "Sort order for the file list (e.g., 'modifiedTime desc', 'name', 'createdTime'). Default: 'modifiedTime desc'."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The unique identifier of the file in Google Drive."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The name of the file."
+                },
+                "mimeType": {
+                  "type": "string",
+                  "description": "The MIME type of the file."
+                },
+                "size": {
+                  "type": "string",
+                  "description": "The size of the file in bytes, represented as a string."
+                },
+                "modifiedTime": {
+                  "type": "string",
+                  "description": "The last modification timestamp of the file in RFC 3339 format."
+                },
+                "parents": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "List of parent folder IDs where the file is located in Google Drive."
+                }
+              }
+            },
+            "description": "Array of file objects matching the query criteria."
+          },
+          "nextPageToken": {
+            "type": "string",
+            "description": "Token for retrieving the next page of results in paginated queries."
+          },
+          "incompleteSearch": {
+            "type": "boolean",
+            "description": "Indicates whether the search results are incomplete due to query limitations."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_file",
+      "description": "Retrieve detailed metadata for a specific file in Google Drive.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_id": {
+            "type": "string",
+            "description": "The unique identifier of the file to retrieve metadata for."
+          },
+          "fields": {
+            "type": "string",
+            "description": "Comma-separated list of metadata fields to return (e.g., 'id,name,mimeType'). Use '*' to return all fields (default: '*')."
+          }
+        },
+        "required": [
+          "file_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the file in Google Drive."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the file."
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "The MIME type of the file."
+          },
+          "description": {
+            "type": "string",
+            "description": "The user-provided description of the file."
+          },
+          "size": {
+            "type": "string",
+            "description": "The size of the file in bytes, represented as a string."
+          },
+          "createdTime": {
+            "type": "string",
+            "description": "The creation timestamp of the file in RFC 3339 format."
+          },
+          "modifiedTime": {
+            "type": "string",
+            "description": "The last modification timestamp of the file in RFC 3339 format."
+          },
+          "parents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of parent folder IDs where the file is located in Google Drive."
+          },
+          "webViewLink": {
+            "type": "string",
+            "description": "URL to view the file in the Google Drive web interface."
+          },
+          "webContentLink": {
+            "type": "string",
+            "description": "Direct download URL for the file content."
+          }
+        }
+      }
+    },
+    {
+      "name": "create_permission",
+      "description": "Create a sharing permission for a file in Google Drive to grant access to users, groups, domains, or anyone.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_id": {
+            "type": "string",
+            "description": "The unique identifier of the file to share."
+          },
+          "role": {
+            "type": "string",
+            "description": "The permission role to grant: 'owner', 'organizer', 'fileOrganizer', 'writer', 'commenter', or 'reader'."
+          },
+          "type": {
+            "type": "string",
+            "description": "The type of grantee: 'user' (specific user), 'group' (Google Group), 'domain' (entire domain), or 'anyone' (public access)."
+          },
+          "email_address": {
+            "type": "string",
+            "description": "The email address of the user or group to grant permission to. Required when type is 'user' or 'group'."
+          }
+        },
+        "required": [
+          "file_id",
+          "role",
+          "type"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the created permission."
+          },
+          "role": {
+            "type": "string",
+            "description": "The permission role that was granted."
+          },
+          "type": {
+            "type": "string",
+            "description": "The type of grantee for this permission."
+          },
+          "emailAddress": {
+            "type": "string",
+            "description": "The email address of the user or group that was granted permission."
+          },
+          "link": {
+            "type": "string",
+            "description": "The shareable link for the file when permission type is 'anyone'."
+          }
+        }
+      }
+    }
+  ]
+}

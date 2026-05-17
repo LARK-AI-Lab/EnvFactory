@@ -1,0 +1,1051 @@
+{
+  "metadata": {
+    "class_name": "RentCast",
+    "metadata_path": "envs\\metadata\\RentCast_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-03-05T20:19:29.739901",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "RentCast",
+    "description": "Real estate data platform providing property details, valuations, sale and rental listings, and market analytics.",
+    "tools": [
+      {
+        "name": "get_property_by_address",
+        "description": "Retrieve comprehensive property details including ownership, physical characteristics, and location information for a specific address.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "The complete street address of the property to retrieve (e.g., '123 Main St, Austin, TX 78701')."
+            }
+          },
+          "required": [
+            "address"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier for the property in the RentCast system."
+            },
+            "address": {
+              "type": "string",
+              "description": "The complete street address of the property."
+            },
+            "city": {
+              "type": "string",
+              "description": "The city where the property is located."
+            },
+            "state": {
+              "type": "string",
+              "description": "The state abbreviation where the property is located."
+            },
+            "zipcode": {
+              "type": "string",
+              "description": "The postal ZIP code of the property location."
+            },
+            "bedrooms": {
+              "type": "integer",
+              "description": "The number of bedrooms in the property."
+            },
+            "bathrooms": {
+              "type": "number",
+              "description": "The number of bathrooms in the property (may include half-baths as decimals)."
+            },
+            "sqft": {
+              "type": "integer",
+              "description": "The total living area of the property in square feet."
+            },
+            "year_built": {
+              "type": "integer",
+              "description": "The year the property was originally constructed."
+            },
+            "property_type": {
+              "type": "string",
+              "description": "The classification of the property (e.g., 'Single Family', 'Condo', 'Townhouse')."
+            },
+            "owner_name": {
+              "type": "string",
+              "description": "The name of the current property owner on record."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_property_valuation",
+        "description": "Obtain an automated valuation model (AVM) estimate for a property, including value range and confidence metrics.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "The complete street address of the property to value (e.g., '123 Main St, Austin, TX 78701')."
+            }
+          },
+          "required": [
+            "address"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "estimated_value": {
+              "type": "number",
+              "description": "The estimated current market value of the property in USD."
+            },
+            "value_range_low": {
+              "type": "number",
+              "description": "The lower bound of the estimated value range in USD."
+            },
+            "value_range_high": {
+              "type": "number",
+              "description": "The upper bound of the estimated value range in USD."
+            },
+            "confidence_score": {
+              "type": "number",
+              "description": "The confidence level of the valuation estimate, ranging from 0.0 to 1.0, where higher values indicate greater accuracy."
+            },
+            "valuation_date": {
+              "type": "string",
+              "description": "The date when this valuation was calculated, in ISO 8601 format (YYYY-MM-DD)."
+            }
+          }
+        }
+      },
+      {
+        "name": "search_sale_listings",
+        "description": "Search for active properties listed for sale within a specified city and state, with optional price filtering.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string",
+              "description": "The city where the property is located."
+            },
+            "state": {
+              "type": "string",
+              "description": "The state abbreviation where the property is located."
+            },
+            "min_price": {
+              "type": "integer",
+              "description": "The minimum listing price in USD to filter results (optional)."
+            },
+            "max_price": {
+              "type": "integer",
+              "description": "The maximum listing price in USD to filter results (optional)."
+            }
+          },
+          "required": [
+            "city",
+            "state"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "listings": {
+              "type": "array",
+              "description": "Collection of active sale listings matching the search criteria.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The unique identifier for the property in the RentCast system."
+                  },
+                  "address": {
+                    "type": "string",
+                    "description": "The complete street address of the property."
+                  },
+                  "list_price": {
+                    "type": "number",
+                    "description": "The current asking price for the property in USD."
+                  },
+                  "bedrooms": {
+                    "type": "integer",
+                    "description": "The number of bedrooms in the property."
+                  },
+                  "bathrooms": {
+                    "type": "number",
+                    "description": "The number of bathrooms in the property (may include half-baths as decimals)."
+                  },
+                  "sqft": {
+                    "type": "integer",
+                    "description": "The total living area of the property in square feet."
+                  },
+                  "days_on_market": {
+                    "type": "integer",
+                    "description": "The number of days the property has been actively listed for sale."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "search_rental_listings",
+        "description": "Search for available long-term rental properties within a specified city and state, with optional rent filtering.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string",
+              "description": "The city where the property is located."
+            },
+            "state": {
+              "type": "string",
+              "description": "The state abbreviation where the property is located."
+            },
+            "min_rent": {
+              "type": "integer",
+              "description": "The minimum monthly rent in USD to filter results (optional)."
+            },
+            "max_rent": {
+              "type": "integer",
+              "description": "The maximum monthly rent in USD to filter results (optional)."
+            }
+          },
+          "required": [
+            "city",
+            "state"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "listings": {
+              "type": "array",
+              "description": "Collection of available rental listings matching the search criteria.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The unique identifier for the property in the RentCast system."
+                  },
+                  "address": {
+                    "type": "string",
+                    "description": "The complete street address of the property."
+                  },
+                  "monthly_rent": {
+                    "type": "number",
+                    "description": "The monthly rental price for the property in USD."
+                  },
+                  "bedrooms": {
+                    "type": "integer",
+                    "description": "The number of bedrooms in the property."
+                  },
+                  "bathrooms": {
+                    "type": "number",
+                    "description": "The number of bathrooms in the property (may include half-baths as decimals)."
+                  },
+                  "available_date": {
+                    "type": "string",
+                    "description": "The date when the property becomes available for occupancy, in ISO 8601 format (YYYY-MM-DD)."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_market_data",
+        "description": "Retrieve aggregated real estate market statistics and trends for a specific ZIP code area.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "zip_code": {
+              "type": "string",
+              "description": "The postal ZIP code of the market area to analyze."
+            }
+          },
+          "required": [
+            "zip_code"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "average_sale_price": {
+              "type": "number",
+              "description": "The average sale price of properties in the ZIP code area in USD."
+            },
+            "average_rent": {
+              "type": "number",
+              "description": "The average monthly rent for properties in the ZIP code area in USD."
+            },
+            "price_per_sqft": {
+              "type": "number",
+              "description": "The average price per square foot for properties in the ZIP code area in USD."
+            },
+            "inventory_count": {
+              "type": "integer",
+              "description": "The total number of active listings currently available in the ZIP code area."
+            },
+            "days_on_market_avg": {
+              "type": "integer",
+              "description": "The average number of days properties remain listed before sale or lease in the ZIP code area."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Property(BaseModel):\n    \"\"\"Represents a property with detailed information.\"\"\"\n    id: str = Field(..., description=\"Unique property identifier\")\n    address: str = Field(..., description=\"Complete street address\")\n    city: str = Field(..., description=\"City name\")\n    state: str = Field(..., description=\"State abbreviation\")\n    zipcode: str = Field(..., pattern=r\"^\\d{5}$\", description=\"5-digit ZIP code\")\n    bedrooms: int = Field(..., ge=0, description=\"Number of bedrooms\")\n    bathrooms: float = Field(..., ge=0, description=\"Number of bathrooms\")\n    sqft: int = Field(..., ge=0, description=\"Living area in square feet\")\n    year_built: int = Field(..., ge=1800, le=2100, description=\"Year constructed\")\n    property_type: str = Field(..., description=\"Property classification\")\n    owner_name: str = Field(..., description=\"Current owner name\")\n\nclass Valuation(BaseModel):\n    \"\"\"Represents a property valuation.\"\"\"\n    property_id: str = Field(..., description=\"Property identifier\")\n    estimated_value: float = Field(..., ge=0, description=\"Estimated market value\")\n    value_range_low: float = Field(..., ge=0, description=\"Lower value bound\")\n    value_range_high: float = Field(..., ge=0, description=\"Upper value bound\")\n    confidence_score: float = Field(..., ge=0, le=1, description=\"Confidence level\")\n    valuation_date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Valuation date\")\n\nclass SaleListing(BaseModel):\n    \"\"\"Represents a property for sale.\"\"\"\n    id: str = Field(..., description=\"Property identifier\")\n    address: str = Field(..., description=\"Complete street address\")\n    city: str = Field(..., description=\"City name\")\n    state: str = Field(..., description=\"State abbreviation\")\n    list_price: float = Field(..., ge=0, description=\"Asking price\")\n    bedrooms: int = Field(..., ge=0, description=\"Number of bedrooms\")\n    bathrooms: float = Field(..., ge=0, description=\"Number of bathrooms\")\n    sqft: int = Field(..., ge=0, description=\"Living area in square feet\")\n    days_on_market: int = Field(..., ge=0, description=\"Days listed\")\n\nclass RentalListing(BaseModel):\n    \"\"\"Represents a rental property.\"\"\"\n    id: str = Field(..., description=\"Property identifier\")\n    address: str = Field(..., description=\"Complete street address\")\n    city: str = Field(..., description=\"City name\")\n    state: str = Field(..., description=\"State abbreviation\")\n    monthly_rent: float = Field(..., ge=0, description=\"Monthly rent\")\n    bedrooms: int = Field(..., ge=0, description=\"Number of bedrooms\")\n    bathrooms: float = Field(..., ge=0, description=\"Number of bathrooms\")\n    available_date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Availability date\")\n\nclass MarketData(BaseModel):\n    \"\"\"Represents market statistics for a ZIP code.\"\"\"\n    zip_code: str = Field(..., pattern=r\"^\\d{5}$\", description=\"5-digit ZIP code\")\n    average_sale_price: float = Field(..., ge=0, description=\"Average sale price\")\n    average_rent: float = Field(..., ge=0, description=\"Average monthly rent\")\n    price_per_sqft: float = Field(..., ge=0, description=\"Price per square foot\")\n    inventory_count: int = Field(..., ge=0, description=\"Active listings count\")\n    days_on_market_avg: int = Field(..., ge=0, description=\"Average days on market\")\n\nclass RentCastScenario(BaseModel):\n    \"\"\"Main scenario model for RentCast real estate data.\"\"\"\n    properties: Dict[str, Property] = Field(default={}, description=\"Properties by ID\")\n    valuations: Dict[str, Valuation] = Field(default={}, description=\"Valuations by property ID\")\n    sale_listings: List[SaleListing] = Field(default=[], description=\"Active sale listings\")\n    rental_listings: List[RentalListing] = Field(default=[], description=\"Active rental listings\")\n    market_data: Dict[str, MarketData] = Field(default={}, description=\"Market data by ZIP code\")\n\nScenario_Schema = [Property, Valuation, SaleListing, RentalListing, MarketData, RentCastScenario]\n\n# Section 2: Class\nclass RentCastAPI:\n    def __init__(self):\n        \"\"\"Initialize RentCast API with empty state.\"\"\"\n        self.properties: Dict[str, Property] = {}\n        self.valuations: Dict[str, Valuation] = {}\n        self.sale_listings: List[SaleListing] = []\n        self.rental_listings: List[RentalListing] = []\n        self.market_data: Dict[str, MarketData] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = RentCastScenario(**scenario)\n        self.properties = model.properties\n        self.valuations = model.valuations\n        self.sale_listings = model.sale_listings\n        self.rental_listings = model.rental_listings\n        self.market_data = model.market_data\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"properties\": {pid: prop.model_dump() for pid, prop in self.properties.items()},\n            \"valuations\": {pid: val.model_dump() for pid, val in self.valuations.items()},\n            \"sale_listings\": [listing.model_dump() for listing in self.sale_listings],\n            \"rental_listings\": [listing.model_dump() for listing in self.rental_listings],\n            \"market_data\": {zc: md.model_dump() for zc, md in self.market_data.items()}\n        }\n\n    def get_property_by_address(self, address: str) -> dict:\n        \"\"\"Retrieve property details by address.\"\"\"\n        for prop in self.properties.values():\n            if prop.address.lower() == address.lower():\n                return {\n                    \"id\": prop.id,\n                    \"address\": prop.address,\n                    \"city\": prop.city,\n                    \"state\": prop.state,\n                    \"zipcode\": prop.zipcode,\n                    \"bedrooms\": prop.bedrooms,\n                    \"bathrooms\": prop.bathrooms,\n                    \"sqft\": prop.sqft,\n                    \"year_built\": prop.year_built,\n                    \"property_type\": prop.property_type,\n                    \"owner_name\": prop.owner_name\n                }\n        return {}\n\n    def get_property_valuation(self, address: str) -> dict:\n        \"\"\"Obtain valuation estimate for a property.\"\"\"\n        for prop in self.properties.values():\n            if prop.address.lower() == address.lower():\n                if prop.id in self.valuations:\n                    val = self.valuations[prop.id]\n                    return {\n                        \"estimated_value\": val.estimated_value,\n                        \"value_range_low\": val.value_range_low,\n                        \"value_range_high\": val.value_range_high,\n                        \"confidence_score\": val.confidence_score,\n                        \"valuation_date\": val.valuation_date\n                    }\n        return {}\n\n    def search_sale_listings(self, city: str, state: str, min_price: Optional[int], max_price: Optional[int]) -> dict:\n        \"\"\"Search for active sale listings.\"\"\"\n        results = []\n        for listing in self.sale_listings:\n            if listing.city.lower() == city.lower() and listing.state.upper() == state.upper():\n                if min_price is not None and listing.list_price < min_price:\n                    continue\n                if max_price is not None and listing.list_price > max_price:\n                    continue\n                results.append({\n                    \"id\": listing.id,\n                    \"address\": listing.address,\n                    \"list_price\": listing.list_price,\n                    \"bedrooms\": listing.bedrooms,\n                    \"bathrooms\": listing.bathrooms,\n                    \"sqft\": listing.sqft,\n                    \"days_on_market\": listing.days_on_market\n                })\n        return {\"listings\": results}\n\n    def search_rental_listings(self, city: str, state: str, min_rent: Optional[int], max_rent: Optional[int]) -> dict:\n        \"\"\"Search for available rental listings.\"\"\"\n        results = []\n        for listing in self.rental_listings:\n            if listing.city.lower() == city.lower() and listing.state.upper() == state.upper():\n                if min_rent is not None and listing.monthly_rent < min_rent:\n                    continue\n                if max_rent is not None and listing.monthly_rent > max_rent:\n                    continue\n                results.append({\n                    \"id\": listing.id,\n                    \"address\": listing.address,\n                    \"monthly_rent\": listing.monthly_rent,\n                    \"bedrooms\": listing.bedrooms,\n                    \"bathrooms\": listing.bathrooms,\n                    \"available_date\": listing.available_date\n                })\n        return {\"listings\": results}\n\n    def get_market_data(self, zip_code: str) -> dict:\n        \"\"\"Retrieve market statistics for a ZIP code.\"\"\"\n        if zip_code in self.market_data:\n            md = self.market_data[zip_code]\n            return {\n                \"average_sale_price\": md.average_sale_price,\n                \"average_rent\": md.average_rent,\n                \"price_per_sqft\": md.price_per_sqft,\n                \"inventory_count\": md.inventory_count,\n                \"days_on_market_avg\": md.days_on_market_avg\n            }\n        return {}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"RentCast\")\napi = RentCastAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the RentCast API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching RentCastScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current RentCast state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_property_by_address(address: str) -> dict:\n    \"\"\"\n    Retrieve comprehensive property details by address.\n\n    Args:\n        address (str): Complete street address of the property.\n\n    Returns:\n        id (str): Unique property identifier.\n        address (str): Complete street address.\n        city (str): City name.\n        state (str): State abbreviation.\n        zipcode (str): 5-digit ZIP code.\n        bedrooms (int): Number of bedrooms.\n        bathrooms (float): Number of bathrooms.\n        sqft (int): Living area in square feet.\n        year_built (int): Year constructed.\n        property_type (str): Property classification.\n        owner_name (str): Current owner name.\n    \"\"\"\n    try:\n        if not address or not isinstance(address, str):\n            raise ValueError(\"Address must be a non-empty string\")\n        result = api.get_property_by_address(address)\n        if not result:\n            raise ValueError(f\"Property not found at address: {address}\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_property_valuation(address: str) -> dict:\n    \"\"\"\n    Obtain automated valuation estimate for a property.\n\n    Args:\n        address (str): Complete street address of the property.\n\n    Returns:\n        estimated_value (float): Estimated market value in USD.\n        value_range_low (float): Lower value bound in USD.\n        value_range_high (float): Upper value bound in USD.\n        confidence_score (float): Confidence level (0.0 to 1.0).\n        valuation_date (str): Valuation date in ISO 8601 format.\n    \"\"\"\n    try:\n        if not address or not isinstance(address, str):\n            raise ValueError(\"Address must be a non-empty string\")\n        result = api.get_property_valuation(address)\n        if not result:\n            raise ValueError(f\"Valuation not found for address: {address}\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_sale_listings(city: str, state: str, min_price: Optional[int] = None, max_price: Optional[int] = None) -> dict:\n    \"\"\"\n    Search for active properties listed for sale.\n\n    Args:\n        city (str): City name.\n        state (str): State abbreviation.\n        min_price (int): [Optional] Minimum listing price in USD.\n        max_price (int): [Optional] Maximum listing price in USD.\n\n    Returns:\n        listings (list): Collection of sale listings with id, address, list_price, bedrooms, bathrooms, sqft, days_on_market.\n    \"\"\"\n    try:\n        if not city or not isinstance(city, str):\n            raise ValueError(\"City must be a non-empty string\")\n        if not state or not isinstance(state, str):\n            raise ValueError(\"State must be a non-empty string\")\n        return api.search_sale_listings(city, state, min_price, max_price)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_rental_listings(city: str, state: str, min_rent: Optional[int] = None, max_rent: Optional[int] = None) -> dict:\n    \"\"\"\n    Search for available long-term rental properties.\n\n    Args:\n        city (str): City name.\n        state (str): State abbreviation.\n        min_rent (int): [Optional] Minimum monthly rent in USD.\n        max_rent (int): [Optional] Maximum monthly rent in USD.\n\n    Returns:\n        listings (list): Collection of rental listings with id, address, monthly_rent, bedrooms, bathrooms, available_date.\n    \"\"\"\n    try:\n        if not city or not isinstance(city, str):\n            raise ValueError(\"City must be a non-empty string\")\n        if not state or not isinstance(state, str):\n            raise ValueError(\"State must be a non-empty string\")\n        return api.search_rental_listings(city, state, min_rent, max_rent)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_market_data(zip_code: str) -> dict:\n    \"\"\"\n    Retrieve aggregated market statistics for a ZIP code area.\n\n    Args:\n        zip_code (str): 5-digit ZIP code.\n\n    Returns:\n        average_sale_price (float): Average sale price in USD.\n        average_rent (float): Average monthly rent in USD.\n        price_per_sqft (float): Average price per square foot in USD.\n        inventory_count (int): Total active listings count.\n        days_on_market_avg (int): Average days on market.\n    \"\"\"\n    try:\n        if not zip_code or not isinstance(zip_code, str):\n            raise ValueError(\"ZIP code must be a non-empty string\")\n        result = api.get_market_data(zip_code)\n        if not result:\n            raise ValueError(f\"Market data not found for ZIP code: {zip_code}\")\n        return result\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-03-05T20:19:29.739901",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Single property with valuation in one ZIP code",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "properties": {
+          "P001": {
+            "id": "P001",
+            "address": "123 Main St",
+            "city": "Austin",
+            "state": "TX",
+            "zipcode": "78701",
+            "bedrooms": 3,
+            "bathrooms": 2.0,
+            "sqft": 1800,
+            "year_built": 2010,
+            "property_type": "Single Family",
+            "owner_name": "John Smith"
+          }
+        },
+        "valuations": {
+          "P001": {
+            "property_id": "P001",
+            "estimated_value": 450000.0,
+            "value_range_low": 420000.0,
+            "value_range_high": 480000.0,
+            "confidence_score": 0.85,
+            "valuation_date": "2026-03-01"
+          }
+        },
+        "sale_listings": [],
+        "rental_listings": [],
+        "market_data": {
+          "78701": {
+            "zip_code": "78701",
+            "average_sale_price": 475000.0,
+            "average_rent": 2200.0,
+            "price_per_sqft": 250.0,
+            "inventory_count": 15,
+            "days_on_market_avg": 30
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple properties with mixed sale and rental listings across two ZIP codes",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "properties": {
+          "P001": {
+            "id": "P001",
+            "address": "456 Oak Ave",
+            "city": "Seattle",
+            "state": "WA",
+            "zipcode": "98101",
+            "bedrooms": 2,
+            "bathrooms": 1.5,
+            "sqft": 1200,
+            "year_built": 1995,
+            "property_type": "Condo",
+            "owner_name": "Jane Doe"
+          },
+          "P002": {
+            "id": "P002",
+            "address": "789 Pine St",
+            "city": "Seattle",
+            "state": "WA",
+            "zipcode": "98102",
+            "bedrooms": 4,
+            "bathrooms": 3.0,
+            "sqft": 2500,
+            "year_built": 2018,
+            "property_type": "Single Family",
+            "owner_name": "Bob Johnson"
+          },
+          "P003": {
+            "id": "P003",
+            "address": "321 Elm Dr",
+            "city": "Seattle",
+            "state": "WA",
+            "zipcode": "98101",
+            "bedrooms": 1,
+            "bathrooms": 1.0,
+            "sqft": 750,
+            "year_built": 2005,
+            "property_type": "Apartment",
+            "owner_name": "Alice Brown"
+          }
+        },
+        "valuations": {
+          "P001": {
+            "property_id": "P001",
+            "estimated_value": 380000.0,
+            "value_range_low": 360000.0,
+            "value_range_high": 400000.0,
+            "confidence_score": 0.78,
+            "valuation_date": "2026-02-15"
+          },
+          "P002": {
+            "property_id": "P002",
+            "estimated_value": 725000.0,
+            "value_range_low": 690000.0,
+            "value_range_high": 760000.0,
+            "confidence_score": 0.92,
+            "valuation_date": "2026-03-01"
+          }
+        },
+        "sale_listings": [
+          {
+            "id": "P001",
+            "address": "456 Oak Ave",
+            "city": "Seattle",
+            "state": "WA",
+            "list_price": 395000.0,
+            "bedrooms": 2,
+            "bathrooms": 1.5,
+            "sqft": 1200,
+            "days_on_market": 12
+          }
+        ],
+        "rental_listings": [
+          {
+            "id": "P003",
+            "address": "321 Elm Dr",
+            "city": "Seattle",
+            "state": "WA",
+            "monthly_rent": 1800.0,
+            "bedrooms": 1,
+            "bathrooms": 1.0,
+            "available_date": "2026-04-01"
+          }
+        ],
+        "market_data": {
+          "98101": {
+            "zip_code": "98101",
+            "average_sale_price": 520000.0,
+            "average_rent": 2400.0,
+            "price_per_sqft": 380.0,
+            "inventory_count": 42,
+            "days_on_market_avg": 25
+          },
+          "98102": {
+            "zip_code": "98102",
+            "average_sale_price": 680000.0,
+            "average_rent": 2800.0,
+            "price_per_sqft": 420.0,
+            "inventory_count": 28,
+            "days_on_market_avg": 18
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Diverse property portfolio with comprehensive market data across multiple ZIP codes",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "properties": {
+          "P001": {
+            "id": "P001",
+            "address": "100 Beach Blvd",
+            "city": "Miami",
+            "state": "FL",
+            "zipcode": "33139",
+            "bedrooms": 3,
+            "bathrooms": 2.5,
+            "sqft": 2200,
+            "year_built": 2015,
+            "property_type": "Townhouse",
+            "owner_name": "Carlos Martinez"
+          },
+          "P002": {
+            "id": "P002",
+            "address": "250 Ocean Dr",
+            "city": "Miami",
+            "state": "FL",
+            "zipcode": "33139",
+            "bedrooms": 5,
+            "bathrooms": 4.0,
+            "sqft": 3800,
+            "year_built": 2020,
+            "property_type": "Single Family",
+            "owner_name": "Maria Garcia"
+          },
+          "P003": {
+            "id": "P003",
+            "address": "75 Sunset Ave",
+            "city": "Miami",
+            "state": "FL",
+            "zipcode": "33140",
+            "bedrooms": 2,
+            "bathrooms": 2.0,
+            "sqft": 1400,
+            "year_built": 2012,
+            "property_type": "Condo",
+            "owner_name": "David Lee"
+          },
+          "P004": {
+            "id": "P004",
+            "address": "500 Park Ln",
+            "city": "Miami",
+            "state": "FL",
+            "zipcode": "33141",
+            "bedrooms": 4,
+            "bathrooms": 3.5,
+            "sqft": 3000,
+            "year_built": 2008,
+            "property_type": "Single Family",
+            "owner_name": "Sarah Wilson"
+          },
+          "P005": {
+            "id": "P005",
+            "address": "88 Bay St",
+            "city": "Miami",
+            "state": "FL",
+            "zipcode": "33140",
+            "bedrooms": 1,
+            "bathrooms": 1.0,
+            "sqft": 650,
+            "year_built": 2000,
+            "property_type": "Studio",
+            "owner_name": "Tom Anderson"
+          }
+        },
+        "valuations": {
+          "P001": {
+            "property_id": "P001",
+            "estimated_value": 580000.0,
+            "value_range_low": 550000.0,
+            "value_range_high": 610000.0,
+            "confidence_score": 0.88,
+            "valuation_date": "2026-02-28"
+          },
+          "P002": {
+            "property_id": "P002",
+            "estimated_value": 1250000.0,
+            "value_range_low": 1180000.0,
+            "value_range_high": 1320000.0,
+            "confidence_score": 0.95,
+            "valuation_date": "2026-03-03"
+          },
+          "P003": {
+            "property_id": "P003",
+            "estimated_value": 425000.0,
+            "value_range_low": 400000.0,
+            "value_range_high": 450000.0,
+            "confidence_score": 0.82,
+            "valuation_date": "2026-02-20"
+          },
+          "P004": {
+            "property_id": "P004",
+            "estimated_value": 875000.0,
+            "value_range_low": 830000.0,
+            "value_range_high": 920000.0,
+            "confidence_score": 0.9,
+            "valuation_date": "2026-03-01"
+          },
+          "P005": {
+            "property_id": "P005",
+            "estimated_value": 220000.0,
+            "value_range_low": 200000.0,
+            "value_range_high": 240000.0,
+            "confidence_score": 0.75,
+            "valuation_date": "2026-02-10"
+          }
+        },
+        "sale_listings": [
+          {
+            "id": "P001",
+            "address": "100 Beach Blvd",
+            "city": "Miami",
+            "state": "FL",
+            "list_price": 599000.0,
+            "bedrooms": 3,
+            "bathrooms": 2.5,
+            "sqft": 2200,
+            "days_on_market": 8
+          },
+          {
+            "id": "P004",
+            "address": "500 Park Ln",
+            "city": "Miami",
+            "state": "FL",
+            "list_price": 895000.0,
+            "bedrooms": 4,
+            "bathrooms": 3.5,
+            "sqft": 3000,
+            "days_on_market": 22
+          }
+        ],
+        "rental_listings": [
+          {
+            "id": "P003",
+            "address": "75 Sunset Ave",
+            "city": "Miami",
+            "state": "FL",
+            "monthly_rent": 2500.0,
+            "bedrooms": 2,
+            "bathrooms": 2.0,
+            "available_date": "2026-03-15"
+          },
+          {
+            "id": "P005",
+            "address": "88 Bay St",
+            "city": "Miami",
+            "state": "FL",
+            "monthly_rent": 1600.0,
+            "bedrooms": 1,
+            "bathrooms": 1.0,
+            "available_date": "2026-04-01"
+          }
+        ],
+        "market_data": {
+          "33139": {
+            "zip_code": "33139",
+            "average_sale_price": 850000.0,
+            "average_rent": 3200.0,
+            "price_per_sqft": 450.0,
+            "inventory_count": 65,
+            "days_on_market_avg": 15
+          },
+          "33140": {
+            "zip_code": "33140",
+            "average_sale_price": 520000.0,
+            "average_rent": 2400.0,
+            "price_per_sqft": 350.0,
+            "inventory_count": 48,
+            "days_on_market_avg": 20
+          },
+          "33141": {
+            "zip_code": "33141",
+            "average_sale_price": 720000.0,
+            "average_rent": 2900.0,
+            "price_per_sqft": 380.0,
+            "inventory_count": 35,
+            "days_on_market_avg": 18
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Edge cases: empty collections, minimum values, and invalid ZIP code format",
+      "expected_behavior": "validation_error",
+      "scenario_data": {
+        "properties": {
+          "P001": {
+            "id": "P001",
+            "address": "999 Test St",
+            "city": "Boston",
+            "state": "MA",
+            "zipcode": "0210",
+            "bedrooms": 0,
+            "bathrooms": 0.0,
+            "sqft": 0,
+            "year_built": 1800,
+            "property_type": "Land",
+            "owner_name": "Test Owner"
+          }
+        },
+        "valuations": {},
+        "sale_listings": [],
+        "rental_listings": [],
+        "market_data": {}
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_property_by_address",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_property_valuation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_sale_listings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_rental_listings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_market_data",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [
+            {
+              "type": "Expected Failure",
+              "location": "get_property_valuation for P003",
+              "details": "Valuation not found for address: 321 Elm Dr",
+              "expected_vs_actual": "P003 has no valuation in the scenario data, so this failure is expected",
+              "root_cause": "Property P003 exists in properties but has no corresponding valuation entry",
+              "expected_error": true
+            },
+            {
+              "type": "Expected Failure",
+              "location": "get_market_data for 98103",
+              "details": "Market data not found for ZIP code: 98103",
+              "expected_vs_actual": "ZIP code 98103 has no market data in the scenario, so this failure is expected",
+              "root_cause": "Market data only exists for ZIP codes 98101 and 98102 in the scenario",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_property_by_address",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_property_valuation",
+                "passed": false,
+                "error": "Valuation not found for address: 321 Elm Dr"
+              },
+              {
+                "tool_name": "search_sale_listings",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "search_rental_listings",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_market_data",
+                "passed": false,
+                "error": "Market data not found for ZIP code: 98103"
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_property_by_address",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_property_valuation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_sale_listings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_rental_listings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_market_data",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "1 validation error for RentCastScenario\nproperties.P001.zipcode\n  String should match pattern '^\\d{5}$' [type=string_pattern_mismatch, input_value='0210', input_type=str]"
+            },
+            "tool_execution": [],
+            "save_scenario": {
+              "success": false,
+              "consistency_check": false,
+              "error": "Skipped due to load_scenario failure"
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_property_by_address",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_property_valuation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_sale_listings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_rental_listings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_market_data",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [
+            {
+              "type": "Expected Failure",
+              "location": "get_property_valuation for P003",
+              "details": "Valuation not found for address: 321 Elm Dr",
+              "expected_vs_actual": "P003 has no valuation in the scenario data, so this failure is expected",
+              "root_cause": "Property P003 exists in properties but has no corresponding valuation entry",
+              "expected_error": true
+            },
+            {
+              "type": "Expected Failure",
+              "location": "get_market_data for 98103",
+              "details": "Market data not found for ZIP code: 98103",
+              "expected_vs_actual": "ZIP code 98103 has no market data in the scenario, so this failure is expected",
+              "root_cause": "Market data only exists for ZIP codes 98101 and 98102 in the scenario",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_property_by_address",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_property_valuation",
+                "passed": false,
+                "error": "Valuation not found for address: 321 Elm Dr"
+              },
+              {
+                "tool_name": "search_sale_listings",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "search_rental_listings",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_market_data",
+                "passed": false,
+                "error": "Market data not found for ZIP code: 98103"
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_property_by_address",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_property_valuation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_sale_listings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_rental_listings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_market_data",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "1 validation error for RentCastScenario\nproperties.P001.zipcode\n  String should match pattern '^\\d{5}$' [type=string_pattern_mismatch, input_value='0210', input_type=str]"
+            },
+            "tool_execution": [],
+            "save_scenario": {
+              "success": false,
+              "consistency_check": false,
+              "error": "Skipped due to load_scenario failure"
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/RentCast.py"
+  }
+}

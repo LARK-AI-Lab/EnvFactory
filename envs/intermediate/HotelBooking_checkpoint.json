@@ -1,0 +1,1145 @@
+{
+  "metadata": {
+    "class_name": "HotelBooking",
+    "metadata_path": "envs\\metadata\\HotelBooking_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-03T00:54:42.992841",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "HotelBooking",
+    "description": "End-to-end hotel search and reservation server: find destinations, browse hotels, retrieve details, book rooms, and cancel reservations.",
+    "tools": [
+      {
+        "name": "search_destinations",
+        "description": "Search for travel destinations by city name and retrieve location details.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string",
+              "description": "The city name to search for (e.g., \"Paris\", \"New York\")."
+            }
+          },
+          "required": [
+            "city"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "destinations": {
+              "type": "array",
+              "description": "List of matching destinations.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "destination_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the destination."
+                  },
+                  "city_name": {
+                    "type": "string",
+                    "description": "The name of the city."
+                  },
+                  "country": {
+                    "type": "string",
+                    "description": "The country where the city is located."
+                  },
+                  "location": {
+                    "type": "object",
+                    "description": "Additional location information for the destination."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_hotels",
+        "description": "Retrieve available hotels at a destination for specific check-in and check-out dates.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "destination_id": {
+              "type": "string",
+              "description": "The unique identifier of the destination returned by search_destinations."
+            },
+            "checkin_date": {
+              "type": "string",
+              "description": "Check-in date in ISO 8601 format (YYYY-MM-DD). Must be a valid future date."
+            },
+            "checkout_date": {
+              "type": "string",
+              "description": "Check-out date in ISO 8601 format (YYYY-MM-DD). Must be after checkin_date."
+            },
+            "adults": {
+              "type": "integer",
+              "description": "Number of adults staying, defaults to 2."
+            },
+            "kids": {
+              "type": "integer",
+              "description": "Number of kids staying, defaults to 0."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of hotels to return, defaults to 20."
+            }
+          },
+          "required": [
+            "destination_id",
+            "checkin_date",
+            "checkout_date"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "hotels": {
+              "type": "array",
+              "description": "List of available hotels matching the criteria.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "hotel_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the hotel."
+                  },
+                  "hotel_name": {
+                    "type": "string",
+                    "description": "The name of the hotel."
+                  },
+                  "star_rating": {
+                    "type": "integer",
+                    "description": "The star rating of the hotel (1-5)."
+                  },
+                  "checkin_date": {
+                    "type": "string",
+                    "description": "The check-in date in ISO 8601 format (YYYY-MM-DD)."
+                  },
+                  "checkout_date": {
+                    "type": "string",
+                    "description": "The check-out date in ISO 8601 format (YYYY-MM-DD)."
+                  },
+                  "price_per_night": {
+                    "type": "number",
+                    "description": "The price per night for the room in the hotel's local currency."
+                  },
+                  "total_price": {
+                    "type": "number",
+                    "description": "The total price for the entire stay in the hotel's local currency."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "book_hotel",
+        "description": "Create a hotel room reservation for specified guests and dates.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "hotel_id": {
+              "type": "string",
+              "description": "The unique identifier of the hotel returned by get_hotels."
+            },
+            "checkin_date": {
+              "type": "string",
+              "description": "Check-in date in ISO 8601 format (YYYY-MM-DD). Must match the dates used in get_hotels."
+            },
+            "checkout_date": {
+              "type": "string",
+              "description": "Check-out date in ISO 8601 format (YYYY-MM-DD). Must match the dates used in get_hotels."
+            },
+            "room_type_id": {
+              "type": "string",
+              "description": "The unique identifier of the room type selected from get_hotel_details room_types list."
+            },
+            "adults": {
+              "type": "integer",
+              "description": "Number of adults staying."
+            },
+            "kids": {
+              "type": "integer",
+              "description": "Number of kids staying, defaults to 0."
+            },
+            "guest_info": {
+              "type": "array",
+              "description": "List of guest information required for identity verification. Each guest must have name, phone, and id_number.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Full name of the guest as it appears on the ID."
+                  },
+                  "phone": {
+                    "type": "string",
+                    "description": "Contact phone number of the guest."
+                  },
+                  "id_number": {
+                    "type": "string",
+                    "description": "Government-issued ID number for identity verification."
+                  }
+                }
+              }
+            }
+          },
+          "required": [
+            "hotel_id",
+            "checkin_date",
+            "checkout_date",
+            "room_type_id",
+            "adults",
+            "guest_info"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "booking_confirmation": {
+              "type": "object",
+              "description": "Details of the confirmed hotel booking.",
+              "properties": {
+                "booking_id": {
+                  "type": "string",
+                  "description": "The unique identifier of the booking."
+                },
+                "hotel_name": {
+                  "type": "string",
+                  "description": "The name of the booked hotel."
+                },
+                "checkin_date": {
+                  "type": "string",
+                  "description": "The check-in date in ISO 8601 format (YYYY-MM-DD)."
+                },
+                "checkout_date": {
+                  "type": "string",
+                  "description": "The check-out date in ISO 8601 format (YYYY-MM-DD)."
+                },
+                "total_price": {
+                  "type": "number",
+                  "description": "The total price paid for the booking in the hotel's local currency."
+                },
+                "booking_status": {
+                  "type": "string",
+                  "description": "The current status of the booking (e.g., confirmed, pending)."
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_hotel_details",
+        "description": "Retrieve comprehensive information about a specific hotel including room types and amenities.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "hotel_id": {
+              "type": "string",
+              "description": "The unique identifier of the hotel returned by get_hotels."
+            }
+          },
+          "required": [
+            "hotel_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "hotel_details": {
+              "type": "object",
+              "description": "Detailed information about the hotel.",
+              "properties": {
+                "hotel_name": {
+                  "type": "string",
+                  "description": "The name of the hotel."
+                },
+                "address": {
+                  "type": "string",
+                  "description": "The full street address of the hotel."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "A descriptive overview of the hotel and its amenities."
+                },
+                "room_types": {
+                  "type": "array",
+                  "description": "List of available room types offered by the hotel.",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "room_type_id": {
+                        "type": "string",
+                        "description": "The unique identifier of the room type."
+                      },
+                      "room_name": {
+                        "type": "string",
+                        "description": "The name of the room type (e.g., Deluxe Double, Suite)."
+                      },
+                      "price": {
+                        "type": "number",
+                        "description": "The price per night for this room type in the hotel's local currency."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "cancel_booking",
+        "description": "Cancel an existing hotel booking subject to the hotel's cancellation policy and deadlines.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "booking_id": {
+              "type": "string",
+              "description": "The unique identifier of the booking returned by book_hotel."
+            }
+          },
+          "required": [
+            "booking_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\nfrom datetime import datetime, date\n\n# Section 1: Schema\nclass Destination(BaseModel):\n    \"\"\"Represents a travel destination.\"\"\"\n    destination_id: str = Field(..., description=\"Unique identifier of the destination\")\n    city_name: str = Field(..., description=\"Name of the city\")\n    country: str = Field(..., description=\"Country where the city is located\")\n    location: Dict[str, Any] = Field(default={}, description=\"Additional location information\")\n\nclass Hotel(BaseModel):\n    \"\"\"Represents a hotel listing.\"\"\"\n    hotel_id: str = Field(..., description=\"Unique identifier of the hotel\")\n    hotel_name: str = Field(..., description=\"Name of the hotel\")\n    star_rating: int = Field(..., ge=1, le=5, description=\"Star rating of the hotel (1-5)\")\n    checkin_date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Check-in date in ISO 8601 format\")\n    checkout_date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Check-out date in ISO 8601 format\")\n    price_per_night: float = Field(..., ge=0, description=\"Price per night in hotel's local currency\")\n    total_price: float = Field(..., ge=0, description=\"Total price for entire stay\")\n\nclass RoomType(BaseModel):\n    \"\"\"Represents a hotel room type.\"\"\"\n    room_type_id: str = Field(..., description=\"Unique identifier of the room type\")\n    room_name: str = Field(..., description=\"Name of the room type\")\n    price: float = Field(..., ge=0, description=\"Price per night for this room type\")\n\nclass GuestInfo(BaseModel):\n    \"\"\"Represents guest information for booking.\"\"\"\n    name: str = Field(..., description=\"Full name of the guest\")\n    phone: str = Field(..., description=\"Contact phone number\")\n    id_number: str = Field(..., description=\"Government-issued ID number\")\n\nclass Booking(BaseModel):\n    \"\"\"Represents a hotel booking.\"\"\"\n    booking_id: str = Field(..., description=\"Unique identifier of the booking\")\n    hotel_id: str = Field(..., description=\"Hotel ID for the booking\")\n    hotel_name: str = Field(..., description=\"Name of the booked hotel\")\n    checkin_date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Check-in date\")\n    checkout_date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Check-out date\")\n    total_price: float = Field(..., ge=0, description=\"Total price paid\")\n    booking_status: str = Field(default=\"confirmed\", description=\"Current status of the booking\")\n\nclass HotelDetails(BaseModel):\n    \"\"\"Represents detailed hotel information.\"\"\"\n    hotel_name: str = Field(..., description=\"Name of the hotel\")\n    address: str = Field(..., description=\"Full street address\")\n    description: str = Field(..., description=\"Descriptive overview of the hotel\")\n    room_types: List[RoomType] = Field(default=[], description=\"List of available room types\")\n\nclass HotelBookingScenario(BaseModel):\n    \"\"\"Main scenario model for hotel booking system.\"\"\"\n    destinations: Dict[str, Destination] = Field(default={}, description=\"Available destinations\")\n    hotels: Dict[str, Hotel] = Field(default={}, description=\"Available hotels\")\n    hotel_details_map: Dict[str, HotelDetails] = Field(default={}, description=\"Detailed hotel information\")\n    bookings: Dict[str, Booking] = Field(default={}, description=\"Active bookings\")\n    booking_counter: int = Field(default=1000, description=\"Counter for generating booking IDs\")\n\nScenario_Schema = [Destination, Hotel, RoomType, GuestInfo, Booking, HotelDetails, HotelBookingScenario]\n\n# Section 2: Class\nclass HotelBookingAPI:\n    def __init__(self):\n        \"\"\"Initialize hotel booking API with empty state.\"\"\"\n        self.destinations: Dict[str, Destination] = {}\n        self.hotels: Dict[str, Hotel] = {}\n        self.hotel_details_map: Dict[str, HotelDetails] = {}\n        self.bookings: Dict[str, Booking] = {}\n        self.booking_counter: int = 1000\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = HotelBookingScenario(**scenario)\n        self.destinations = model.destinations\n        self.hotels = model.hotels\n        self.hotel_details_map = model.hotel_details_map\n        self.bookings = model.bookings\n        self.booking_counter = model.booking_counter\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"destinations\": {k: v.dict() for k, v in self.destinations.items()},\n            \"hotels\": {k: v.dict() for k, v in self.hotels.items()},\n            \"hotel_details_map\": {k: v.dict() for k, v in self.hotel_details_map.items()},\n            \"bookings\": {k: v.dict() for k, v in self.bookings.items()},\n            \"booking_counter\": self.booking_counter\n        }\n\n    def search_destinations(self, city: str) -> dict:\n        \"\"\"Search for destinations by city name.\"\"\"\n        matching_destinations = []\n        for dest in self.destinations.values():\n            if city.lower() in dest.city_name.lower():\n                matching_destinations.append(dest.dict())\n        return {\"destinations\": matching_destinations}\n\n    def get_hotels(self, destination_id: str, checkin_date: str, checkout_date: str, adults: int = 2, kids: int = 0, limit: int = 20) -> dict:\n        \"\"\"Retrieve available hotels for specified dates.\"\"\"\n        available_hotels = []\n        count = 0\n        for hotel in self.hotels.values():\n            if count >= limit:\n                break\n            if hotel.checkin_date == checkin_date and hotel.checkout_date == checkout_date:\n                available_hotels.append(hotel.dict())\n                count += 1\n        return {\"hotels\": available_hotels}\n\n    def get_hotel_details(self, hotel_id: str) -> dict:\n        \"\"\"Retrieve detailed information about a specific hotel.\"\"\"\n        if hotel_id in self.hotel_details_map:\n            return {\"hotel_details\": self.hotel_details_map[hotel_id].dict()}\n        return {\"hotel_details\": {}}\n\n    def book_hotel(self, hotel_id: str, checkin_date: str, checkout_date: str, room_type_id: str, adults: int, guest_info: List[dict]) -> dict:\n        \"\"\"Create a hotel reservation.\"\"\"\n        if hotel_id not in self.hotels:\n            return {\"booking_confirmation\": {}}\n        \n        hotel = self.hotels[hotel_id]\n        booking_id = f\"BK{self.booking_counter}\"\n        self.booking_counter += 1\n        \n        booking = Booking(\n            booking_id=booking_id,\n            hotel_id=hotel_id,\n            hotel_name=hotel.hotel_name,\n            checkin_date=checkin_date,\n            checkout_date=checkout_date,\n            total_price=hotel.total_price\n        )\n        \n        self.bookings[booking_id] = booking\n        \n        return {\n            \"booking_confirmation\": {\n                \"booking_id\": booking_id,\n                \"hotel_name\": hotel.hotel_name,\n                \"checkin_date\": checkin_date,\n                \"checkout_date\": checkout_date,\n                \"total_price\": hotel.total_price,\n                \"booking_status\": \"confirmed\"\n            }\n        }\n\n    def cancel_booking(self, booking_id: str) -> None:\n        \"\"\"Cancel an existing hotel booking.\"\"\"\n        if booking_id in self.bookings:\n            del self.bookings[booking_id]\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"HotelBooking\")\napi = HotelBookingAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the hotel booking API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching HotelBookingScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current hotel booking state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_destinations(city: str) -> dict:\n    \"\"\"\n    Search for travel destinations by city name.\n    \n    Args:\n        city (str): The city name to search for.\n    \n    Returns:\n        destinations (list): List of matching destinations with ID, city name, country, and location info.\n    \"\"\"\n    try:\n        if not city or not isinstance(city, str):\n            raise ValueError(\"City must be a non-empty string\")\n        return api.search_destinations(city)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_hotels(destination_id: str, checkin_date: str, checkout_date: str, adults: int = 2, kids: int = 0, limit: int = 20) -> dict:\n    \"\"\"\n    Retrieve available hotels at a destination for specific dates.\n    \n    Args:\n        destination_id (str): Destination ID from search_destinations.\n        checkin_date (str): Check-in date in ISO 8601 format (YYYY-MM-DD).\n        checkout_date (str): Check-out date in ISO 8601 format (YYYY-MM-DD).\n        adults (int): [Optional] Number of adults, defaults to 2.\n        kids (int): [Optional] Number of kids, defaults to 0.\n        limit (int): [Optional] Maximum hotels to return, defaults to 20.\n    \n    Returns:\n        hotels (list): List of available hotels with ID, name, rating, dates, and pricing.\n    \"\"\"\n    try:\n        if not destination_id or not isinstance(destination_id, str):\n            raise ValueError(\"Destination ID must be a non-empty string\")\n        if not checkin_date or not isinstance(checkin_date, str):\n            raise ValueError(\"Check-in date must be a non-empty string\")\n        if not checkout_date or not isinstance(checkout_date, str):\n            raise ValueError(\"Check-out date must be a non-empty string\")\n        if not isinstance(adults, int) or adults <= 0:\n            raise ValueError(\"Adults must be a positive integer\")\n        if not isinstance(kids, int) or kids < 0:\n            raise ValueError(\"Kids must be a non-negative integer\")\n        if not isinstance(limit, int) or limit <= 0:\n            raise ValueError(\"Limit must be a positive integer\")\n        return api.get_hotels(destination_id, checkin_date, checkout_date, adults, kids, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_hotel_details(hotel_id: str) -> dict:\n    \"\"\"\n    Retrieve comprehensive information about a specific hotel.\n    \n    Args:\n        hotel_id (str): Hotel ID from get_hotels.\n    \n    Returns:\n        hotel_details (dict): Detailed hotel info including name, address, description, and room types.\n    \"\"\"\n    try:\n        if not hotel_id or not isinstance(hotel_id, str):\n            raise ValueError(\"Hotel ID must be a non-empty string\")\n        return api.get_hotel_details(hotel_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef book_hotel(hotel_id: str, checkin_date: str, checkout_date: str, room_type_id: str, adults: int, guest_info: List[dict]) -> dict:\n    \"\"\"\n    Create a hotel room reservation for specified guests and dates.\n    \n    Args:\n        hotel_id (str): Hotel ID from get_hotels.\n        checkin_date (str): Check-in date in ISO 8601 format.\n        checkout_date (str): Check-out date in ISO 8601 format.\n        room_type_id (str): Room type ID from get_hotel_details.\n        adults (int): Number of adults staying.\n        guest_info (list): List of guest info dicts with name, phone, and id_number.\n    \n    Returns:\n        booking_confirmation (dict): Confirmed booking details with ID, hotel name, dates, price, and status.\n    \"\"\"\n    try:\n        if not hotel_id or not isinstance(hotel_id, str):\n            raise ValueError(\"Hotel ID must be a non-empty string\")\n        if not checkin_date or not isinstance(checkin_date, str):\n            raise ValueError(\"Check-in date must be a non-empty string\")\n        if not checkout_date or not isinstance(checkout_date, str):\n            raise ValueError(\"Check-out date must be a non-empty string\")\n        if not room_type_id or not isinstance(room_type_id, str):\n            raise ValueError(\"Room type ID must be a non-empty string\")\n        if not isinstance(adults, int) or adults <= 0:\n            raise ValueError(\"Adults must be a positive integer\")\n        if not guest_info or not isinstance(guest_info, list) or len(guest_info) == 0:\n            raise ValueError(\"Guest info must be a non-empty list\")\n        return api.book_hotel(hotel_id, checkin_date, checkout_date, room_type_id, adults, guest_info)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef cancel_booking(booking_id: str) -> dict:\n    \"\"\"\n    Cancel an existing hotel booking.\n    \n    Args:\n        booking_id (str): Booking ID from book_hotel.\n    \n    Returns:\n        empty_dict (dict): Empty dictionary on success.\n    \"\"\"\n    try:\n        if not booking_id or not isinstance(booking_id, str):\n            raise ValueError(\"Booking ID must be a non-empty string\")\n        api.cancel_booking(booking_id)\n        return {}\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-03T00:54:42.992841",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with minimal data - one destination, one hotel, and one booking",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "destinations": {
+          "D001": {
+            "destination_id": "D001",
+            "city_name": "New York",
+            "country": "USA",
+            "location": {}
+          }
+        },
+        "hotels": {
+          "H001": {
+            "hotel_id": "H001",
+            "hotel_name": "Grand Central Hotel",
+            "star_rating": 4,
+            "checkin_date": "2024-06-15",
+            "checkout_date": "2024-06-20",
+            "price_per_night": 250.0,
+            "total_price": 1250.0
+          }
+        },
+        "hotel_details_map": {
+          "H001": {
+            "hotel_name": "Grand Central Hotel",
+            "address": "123 Park Avenue, New York, NY 10017",
+            "description": "Luxury hotel in the heart of Manhattan",
+            "room_types": [
+              {
+                "room_type_id": "RT001",
+                "room_name": "Deluxe King Room",
+                "price": 250.0
+              }
+            ]
+          }
+        },
+        "bookings": {
+          "B1000": {
+            "booking_id": "B1000",
+            "hotel_id": "H001",
+            "hotel_name": "Grand Central Hotel",
+            "checkin_date": "2024-06-15",
+            "checkout_date": "2024-06-20",
+            "total_price": 1250.0,
+            "booking_status": "confirmed"
+          }
+        },
+        "booking_counter": 1001
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple destinations and hotels with varied attributes, some optional fields empty",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "destinations": {
+          "D001": {
+            "destination_id": "D001",
+            "city_name": "Paris",
+            "country": "France",
+            "location": {
+              "latitude": 48.8566,
+              "longitude": 2.3522,
+              "timezone": "CET"
+            }
+          },
+          "D002": {
+            "destination_id": "D002",
+            "city_name": "Tokyo",
+            "country": "Japan",
+            "location": {}
+          },
+          "D003": {
+            "destination_id": "D003",
+            "city_name": "Sydney",
+            "country": "Australia",
+            "location": {
+              "continent": "Oceania"
+            }
+          }
+        },
+        "hotels": {
+          "H001": {
+            "hotel_id": "H001",
+            "hotel_name": "Paris Luxury Suites",
+            "star_rating": 5,
+            "checkin_date": "2024-07-01",
+            "checkout_date": "2024-07-07",
+            "price_per_night": 450.0,
+            "total_price": 2700.0
+          },
+          "H002": {
+            "hotel_id": "H002",
+            "hotel_name": "Tokyo Business Hotel",
+            "star_rating": 3,
+            "checkin_date": "2024-08-10",
+            "checkout_date": "2024-08-15",
+            "price_per_night": 120.0,
+            "total_price": 600.0
+          },
+          "H003": {
+            "hotel_id": "H003",
+            "hotel_name": "Sydney Beach Resort",
+            "star_rating": 4,
+            "checkin_date": "2024-09-20",
+            "checkout_date": "2024-09-25",
+            "price_per_night": 180.0,
+            "total_price": 900.0
+          }
+        },
+        "hotel_details_map": {
+          "H001": {
+            "hotel_name": "Paris Luxury Suites",
+            "address": "1 Avenue des Champs-Élysées, 75008 Paris",
+            "description": "5-star luxury hotel with Eiffel Tower views",
+            "room_types": [
+              {
+                "room_type_id": "RT001",
+                "room_name": "Presidential Suite",
+                "price": 800.0
+              },
+              {
+                "room_type_id": "RT002",
+                "room_name": "Deluxe Room",
+                "price": 450.0
+              }
+            ]
+          },
+          "H002": {
+            "hotel_name": "Tokyo Business Hotel",
+            "address": "2-1-1 Marunouchi, Chiyoda, Tokyo",
+            "description": "Convenient business hotel near Tokyo Station",
+            "room_types": [
+              {
+                "room_type_id": "RT003",
+                "room_name": "Standard Single",
+                "price": 120.0
+              }
+            ]
+          }
+        },
+        "bookings": {
+          "B1000": {
+            "booking_id": "B1000",
+            "hotel_id": "H001",
+            "hotel_name": "Paris Luxury Suites",
+            "checkin_date": "2024-07-01",
+            "checkout_date": "2024-07-07",
+            "total_price": 2700.0,
+            "booking_status": "confirmed"
+          },
+          "B1001": {
+            "booking_id": "B1001",
+            "hotel_id": "H002",
+            "hotel_name": "Tokyo Business Hotel",
+            "checkin_date": "2024-08-10",
+            "checkout_date": "2024-08-15",
+            "total_price": 600.0,
+            "booking_status": "pending"
+          }
+        },
+        "booking_counter": 1002
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Comprehensive scenario with multiple destinations, hotels, detailed information, and various bookings",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "destinations": {
+          "D001": {
+            "destination_id": "D001",
+            "city_name": "London",
+            "country": "United Kingdom",
+            "location": {
+              "currency": "GBP",
+              "language": "English"
+            }
+          },
+          "D002": {
+            "destination_id": "D002",
+            "city_name": "Dubai",
+            "country": "UAE",
+            "location": {
+              "currency": "AED",
+              "temperature": "hot"
+            }
+          },
+          "D003": {
+            "destination_id": "D003",
+            "city_name": "Singapore",
+            "country": "Singapore",
+            "location": {
+              "area": "728.6 km²",
+              "population": "5.7M"
+            }
+          },
+          "D004": {
+            "destination_id": "D004",
+            "city_name": "Barcelona",
+            "country": "Spain",
+            "location": {
+              "region": "Catalonia"
+            }
+          }
+        },
+        "hotels": {
+          "H001": {
+            "hotel_id": "H001",
+            "hotel_name": "The Ritz London",
+            "star_rating": 5,
+            "checkin_date": "2024-10-01",
+            "checkout_date": "2024-10-05",
+            "price_per_night": 600.0,
+            "total_price": 2400.0
+          },
+          "H002": {
+            "hotel_id": "H002",
+            "hotel_name": "Burj Al Arab",
+            "star_rating": 5,
+            "checkin_date": "2024-11-15",
+            "checkout_date": "2024-11-20",
+            "price_per_night": 1200.0,
+            "total_price": 6000.0
+          },
+          "H003": {
+            "hotel_id": "H003",
+            "hotel_name": "Marina Bay Sands",
+            "star_rating": 5,
+            "checkin_date": "2024-12-01",
+            "checkout_date": "2024-12-07",
+            "price_per_night": 400.0,
+            "total_price": 2400.0
+          },
+          "H004": {
+            "hotel_id": "H004",
+            "hotel_name": "Hotel Arts Barcelona",
+            "star_rating": 5,
+            "checkin_date": "2025-01-10",
+            "checkout_date": "2025-01-15",
+            "price_per_night": 350.0,
+            "total_price": 1750.0
+          },
+          "H005": {
+            "hotel_id": "H005",
+            "hotel_name": "London Budget Inn",
+            "star_rating": 2,
+            "checkin_date": "2024-10-10",
+            "checkout_date": "2024-10-12",
+            "price_per_night": 80.0,
+            "total_price": 160.0
+          }
+        },
+        "hotel_details_map": {
+          "H001": {
+            "hotel_name": "The Ritz London",
+            "address": "150 Piccadilly, London W1J 9BR, UK",
+            "description": "Iconic 5-star luxury hotel in the heart of London",
+            "room_types": [
+              {
+                "room_type_id": "RT001",
+                "room_name": "Ritz Suite",
+                "price": 1200.0
+              },
+              {
+                "room_type_id": "RT002",
+                "room_name": "Deluxe Room",
+                "price": 600.0
+              },
+              {
+                "room_type_id": "RT003",
+                "room_name": "Superior Room",
+                "price": 450.0
+              }
+            ]
+          },
+          "H002": {
+            "hotel_name": "Burj Al Arab",
+            "address": "Jumeirah St - Umm Suqeim 3 - Dubai - UAE",
+            "description": "Luxury hotel known for its distinctive sail-shaped silhouette",
+            "room_types": [
+              {
+                "room_type_id": "RT004",
+                "room_name": "Royal Suite",
+                "price": 24000.0
+              },
+              {
+                "room_type_id": "RT005",
+                "room_name": "Deluxe Suite",
+                "price": 1200.0
+              }
+            ]
+          },
+          "H003": {
+            "hotel_name": "Marina Bay Sands",
+            "address": "10 Bayfront Avenue, Singapore 018956",
+            "description": "Integrated resort famous for its infinity pool",
+            "room_types": [
+              {
+                "room_type_id": "RT006",
+                "room_name": "SkyView Suite",
+                "price": 800.0
+              },
+              {
+                "room_type_id": "RT007",
+                "room_name": "Deluxe Room",
+                "price": 400.0
+              }
+            ]
+          }
+        },
+        "bookings": {
+          "B1000": {
+            "booking_id": "B1000",
+            "hotel_id": "H001",
+            "hotel_name": "The Ritz London",
+            "checkin_date": "2024-10-01",
+            "checkout_date": "2024-10-05",
+            "total_price": 2400.0,
+            "booking_status": "confirmed"
+          },
+          "B1001": {
+            "booking_id": "B1001",
+            "hotel_id": "H002",
+            "hotel_name": "Burj Al Arab",
+            "checkin_date": "2024-11-15",
+            "checkout_date": "2024-11-20",
+            "total_price": 6000.0,
+            "booking_status": "confirmed"
+          },
+          "B1002": {
+            "booking_id": "B1002",
+            "hotel_id": "H003",
+            "hotel_name": "Marina Bay Sands",
+            "checkin_date": "2024-12-01",
+            "checkout_date": "2024-12-07",
+            "total_price": 2400.0,
+            "booking_status": "pending"
+          },
+          "B1003": {
+            "booking_id": "B1003",
+            "hotel_id": "H005",
+            "hotel_name": "London Budget Inn",
+            "checkin_date": "2024-10-10",
+            "checkout_date": "2024-10-12",
+            "total_price": 160.0,
+            "booking_status": "cancelled"
+          }
+        },
+        "booking_counter": 1004
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Test edge cases including empty collections, minimum star rating, zero price, and invalid date format",
+      "expected_behavior": "validation_error",
+      "scenario_data": {
+        "destinations": {},
+        "hotels": {
+          "H001": {
+            "hotel_id": "H001",
+            "hotel_name": "Test Hotel",
+            "star_rating": 0,
+            "checkin_date": "2024-13-45",
+            "checkout_date": "2024-12-32",
+            "price_per_night": -50.0,
+            "total_price": -250.0
+          }
+        },
+        "hotel_details_map": {
+          "H001": {
+            "hotel_name": "Test Hotel",
+            "address": "",
+            "description": "",
+            "room_types": [
+              {
+                "room_type_id": "RT001",
+                "room_name": "Test Room",
+                "price": -100.0
+              }
+            ]
+          }
+        },
+        "bookings": {
+          "B1000": {
+            "booking_id": "B1000",
+            "hotel_id": "H001",
+            "hotel_name": "Test Hotel",
+            "checkin_date": "invalid-date",
+            "checkout_date": "also-invalid",
+            "total_price": -300.0,
+            "booking_status": "invalid_status"
+          }
+        },
+        "booking_counter": -100
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search_destinations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_hotels",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_hotel_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "book_hotel",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_booking",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 117.91633534431458
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search_destinations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_hotels",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_hotel_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "book_hotel",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_booking",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 116.21193432807922
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search_destinations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_hotels",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_hotel_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "book_hotel",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_booking",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 142.65557432174683
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "error_type": "Validation Error",
+              "error_location": "load_scenario",
+              "error_details": "7 validation errors for HotelBookingScenario\nhotels.H001.star_rating\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal\nhotels.H001.price_per_night\n  Input should be greater than or equal to 0 [type=greater_than_equal, input_value=-50.0, input_type=float]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal\nhotels.H001.total_price\n  Input should be greater than or equal to 0 [type=greater_than_equal, input_value=-250.0, input_type=float]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal\nhotel_details_map.H001.room_types.0.price\n  Input should be greater than or equal to 0 [type=greater_than_equal, input_value=-100.0, input_type=float]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal\nbookings.B1000.checkin_date\n  String should match pattern '^\\d{4}-\\d{2}-\\d{2}$' [type=string_pattern_mismatch, input_value='invalid-date', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_pattern_mismatch\nbookings.B1000.checkout_date\n  String should match pattern '^\\d{4}-\\d{2}-\\d{2}$' [type=string_pattern_mismatch, input_value='also-invalid', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_pattern_mismatch\nbookings.B1000.total_price\n  Input should be greater than or equal to 0 [type=greater_than_equal, input_value=-300.0, input_type=float]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal",
+              "expected_vs_actual": "Expected: validation_error (scenario should be rejected due to invalid data)\nActual: validation_error occurred (scenario was correctly rejected)",
+              "root_cause": "Scenario contains multiple invalid values: star_rating=0 (should be ≥1), negative prices, invalid date formats, and negative booking_counter",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "7 validation errors for HotelBookingScenario\nhotels.H001.star_rating\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal\nhotels.H001.price_per_night\n  Input should be greater than or equal to 0 [type=greater_than_equal, input_value=-50.0, input_type=float]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal\nhotels.H001.total_price\n  Input should be greater than or equal to 0 [type=greater_than_equal, input_value=-250.0, input_type=float]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal\nhotel_details_map.H001.room_types.0.price\n  Input should be greater than or equal to 0 [type=greater_than_equal, input_value=-100.0, input_type=float]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal\nbookings.B1000.checkin_date\n  String should match pattern '^\\d{4}-\\d{2}-\\d{2}$' [type=string_pattern_mismatch, input_value='invalid-date', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_pattern_mismatch\nbookings.B1000.checkout_date\n  String should match pattern '^\\d{4}-\\d{2}-\\d{2}$' [type=string_pattern_mismatch, input_value='also-invalid', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_pattern_mismatch\nbookings.B1000.total_price\n  Input should be greater than or equal to 0 [type=greater_than_equal, input_value=-300.0, input_type=float]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal"
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search_destinations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_hotels",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_hotel_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "book_hotel",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_booking",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 105.9685926437378
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search_destinations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_hotels",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_hotel_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "book_hotel",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_booking",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 117.91633534431458
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search_destinations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_hotels",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_hotel_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "book_hotel",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_booking",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 116.21193432807922
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search_destinations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_hotels",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_hotel_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "book_hotel",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_booking",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 142.65557432174683
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "error_type": "Validation Error",
+              "error_location": "load_scenario",
+              "error_details": "7 validation errors for HotelBookingScenario\nhotels.H001.star_rating\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal\nhotels.H001.price_per_night\n  Input should be greater than or equal to 0 [type=greater_than_equal, input_value=-50.0, input_type=float]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal\nhotels.H001.total_price\n  Input should be greater than or equal to 0 [type=greater_than_equal, input_value=-250.0, input_type=float]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal\nhotel_details_map.H001.room_types.0.price\n  Input should be greater than or equal to 0 [type=greater_than_equal, input_value=-100.0, input_type=float]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal\nbookings.B1000.checkin_date\n  String should match pattern '^\\d{4}-\\d{2}-\\d{2}$' [type=string_pattern_mismatch, input_value='invalid-date', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_pattern_mismatch\nbookings.B1000.checkout_date\n  String should match pattern '^\\d{4}-\\d{2}-\\d{2}$' [type=string_pattern_mismatch, input_value='also-invalid', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_pattern_mismatch\nbookings.B1000.total_price\n  Input should be greater than or equal to 0 [type=greater_than_equal, input_value=-300.0, input_type=float]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal",
+              "expected_vs_actual": "Expected: validation_error (scenario should be rejected due to invalid data)\nActual: validation_error occurred (scenario was correctly rejected)",
+              "root_cause": "Scenario contains multiple invalid values: star_rating=0 (should be ≥1), negative prices, invalid date formats, and negative booking_counter",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "7 validation errors for HotelBookingScenario\nhotels.H001.star_rating\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal\nhotels.H001.price_per_night\n  Input should be greater than or equal to 0 [type=greater_than_equal, input_value=-50.0, input_type=float]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal\nhotels.H001.total_price\n  Input should be greater than or equal to 0 [type=greater_than_equal, input_value=-250.0, input_type=float]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal\nhotel_details_map.H001.room_types.0.price\n  Input should be greater than or equal to 0 [type=greater_than_equal, input_value=-100.0, input_type=float]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal\nbookings.B1000.checkin_date\n  String should match pattern '^\\d{4}-\\d{2}-\\d{2}$' [type=string_pattern_mismatch, input_value='invalid-date', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_pattern_mismatch\nbookings.B1000.checkout_date\n  String should match pattern '^\\d{4}-\\d{2}-\\d{2}$' [type=string_pattern_mismatch, input_value='also-invalid', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_pattern_mismatch\nbookings.B1000.total_price\n  Input should be greater than or equal to 0 [type=greater_than_equal, input_value=-300.0, input_type=float]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal"
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search_destinations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_hotels",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_hotel_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "book_hotel",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_booking",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 105.9685926437378
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/HotelBooking.py"
+  }
+}

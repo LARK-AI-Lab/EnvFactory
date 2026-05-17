@@ -1,0 +1,1205 @@
+{
+  "metadata": {
+    "class_name": "Maps",
+    "metadata_path": "envs\\metadata\\Maps_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-02T17:35:35.088179",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "Maps",
+    "description": "Provides geospatial services including geocoding, reverse geocoding, place details, distance matrices, elevation data, and turn-by-turn directions.",
+    "tools": [
+      {
+        "name": "maps_geocode",
+        "description": "Convert a city name into geographic coordinates (latitude and longitude) at city-level precision.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string",
+              "description": "The city name to geocode (e.g., \"New York\", \"Beijing\", \"Tokyo\", \"London\"). Must be a valid city name only, no street addresses or detailed locations. Minimum 2 characters."
+            },
+            "country": {
+              "type": "string",
+              "description": "Optional ISO 3166-1 alpha-2 country code (e.g., \"US\", \"CN\", \"GB\", \"JP\") to disambiguate cities with the same name. If provided, results will be prioritized for the specified country."
+            }
+          },
+          "required": [
+            "city"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "description": "The latitude coordinate of the city center."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "The longitude coordinate of the city center."
+                }
+              },
+              "description": "Geographic coordinates representing the center of the specified city."
+            },
+            "formatted_address": {
+              "type": "string",
+              "description": "Human-readable address string for the geocoded city."
+            },
+            "place_id": {
+              "type": "string",
+              "description": "The unique identifier of the geocoded place."
+            }
+          }
+        }
+      },
+      {
+        "name": "maps_reverse_geocode",
+        "description": "Convert geographic coordinates into a human-readable address.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "latitude": {
+              "type": "number",
+              "description": "The latitude of the location."
+            },
+            "longitude": {
+              "type": "number",
+              "description": "The longitude of the location."
+            }
+          },
+          "required": [
+            "latitude",
+            "longitude"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "formatted_address": {
+              "type": "string",
+              "description": "Human-readable address string for the provided coordinates."
+            },
+            "place_id": {
+              "type": "string",
+              "description": "The unique identifier of the reverse-geocoded place."
+            },
+            "coordinates": {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "description": "The latitude coordinate of the location."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "The longitude coordinate of the location."
+                }
+              },
+              "description": "Geographic coordinates corresponding to the reverse-geocoded address."
+            }
+          }
+        }
+      },
+      {
+        "name": "maps_place_details",
+        "description": "Retrieve comprehensive information about a specific place including contact details, ratings, reviews, and business hours.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "place_id": {
+              "type": "string",
+              "description": "The unique identifier of the place."
+            }
+          },
+          "required": [
+            "place_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The name of the place."
+            },
+            "formatted_address": {
+              "type": "string",
+              "description": "Human-readable address string of the place."
+            },
+            "location": {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "description": "The latitude coordinate of the place."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "The longitude coordinate of the place."
+                }
+              },
+              "description": "Geographic coordinates of the place."
+            },
+            "place_id": {
+              "type": "string",
+              "description": "The unique identifier of the place."
+            },
+            "phone_number": {
+              "type": "string",
+              "description": "Contact phone number of the place."
+            },
+            "website": {
+              "type": "string",
+              "description": "Official website URL of the place."
+            },
+            "rating": {
+              "type": "number",
+              "description": "Average rating score of the place."
+            }
+          }
+        }
+      },
+      {
+        "name": "maps_distance_matrix",
+        "description": "Calculate distance and travel time between multiple origin and destination points, returning a matrix of distances and durations for all origin-destination pairs.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "origins": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "latitude": {
+                    "type": "number",
+                    "description": "The latitude of the origin location."
+                  },
+                  "longitude": {
+                    "type": "number",
+                    "description": "The longitude of the origin location."
+                  }
+                },
+                "required": [
+                  "latitude",
+                  "longitude"
+                ],
+                "description": "Origin location dictionary containing latitude and longitude. Maximum 25 origins."
+              },
+              "description": "List of origin location dictionaries."
+            },
+            "destinations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "latitude": {
+                    "type": "number",
+                    "description": "The latitude of the destination location."
+                  },
+                  "longitude": {
+                    "type": "number",
+                    "description": "The longitude of the destination location."
+                  }
+                },
+                "required": [
+                  "latitude",
+                  "longitude"
+                ],
+                "description": "Destination location dictionary containing latitude and longitude. Maximum 25 destinations."
+              },
+              "description": "List of destination location dictionaries."
+            },
+            "mode": {
+              "type": "string",
+              "description": "Travel mode: \"driving\" (default), \"bicycling\", or \"transit\".",
+              "default": "driving"
+            }
+          },
+          "required": [
+            "origins",
+            "destinations"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "elements": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "distance": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "type": "integer",
+                              "description": "Distance in meters between the origin and destination."
+                            }
+                          },
+                          "description": "Distance information for the origin-destination pair."
+                        }
+                      }
+                    },
+                    "description": "List of distance elements for each origin-destination pair."
+                  }
+                }
+              },
+              "description": "List of rows representing origins, each containing distance elements to destinations."
+            }
+          }
+        }
+      },
+      {
+        "name": "maps_elevation",
+        "description": "Retrieve elevation data above sea level for specific geographic locations.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "locations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "latitude": {
+                    "type": "number",
+                    "description": "The latitude of the location."
+                  },
+                  "longitude": {
+                    "type": "number",
+                    "description": "The longitude of the location."
+                  }
+                },
+                "required": [
+                  "latitude",
+                  "longitude"
+                ],
+                "description": "Location dictionary containing latitude and longitude. Maximum 512 locations per request."
+              },
+              "description": "List of location dictionaries for which to retrieve elevation data."
+            }
+          },
+          "required": [
+            "locations"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "elevation_data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "location": {
+                    "type": "object",
+                    "properties": {
+                      "latitude": {
+                        "type": "number",
+                        "description": "The latitude coordinate of the location."
+                      },
+                      "longitude": {
+                        "type": "number",
+                        "description": "The longitude coordinate of the location."
+                      }
+                    },
+                    "description": "Geographic coordinates of the location."
+                  },
+                  "elevation": {
+                    "type": "number",
+                    "description": "Elevation above sea level in meters."
+                  },
+                  "resolution": {
+                    "type": "number",
+                    "description": "Accuracy of the elevation data in meters."
+                  }
+                }
+              },
+              "description": "List of elevation results for each provided location."
+            }
+          }
+        }
+      },
+      {
+        "name": "maps_directions",
+        "description": "Get detailed turn-by-turn directions between two locations with step-by-step navigation instructions, distance, and duration.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "origin_location": {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "description": "The latitude of the origin location."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "The longitude of the origin location."
+                }
+              },
+              "required": [
+                "latitude",
+                "longitude"
+              ],
+              "description": "Origin location dictionary containing latitude and longitude."
+            },
+            "destination_location": {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "description": "The latitude of the destination location."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "The longitude of the destination location."
+                }
+              },
+              "required": [
+                "latitude",
+                "longitude"
+              ],
+              "description": "Destination location dictionary containing latitude and longitude."
+            },
+            "mode": {
+              "type": "string",
+              "description": "Travel mode: \"driving\" (default), \"bicycling\", or \"transit\".",
+              "default": "driving"
+            }
+          },
+          "required": [
+            "origin_location",
+            "destination_location"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "routes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "bounds": {
+                    "type": "object",
+                    "properties": {
+                      "northeast": {
+                        "type": "object",
+                        "properties": {
+                          "latitude": {
+                            "type": "number",
+                            "description": "The latitude of the northeast bound."
+                          },
+                          "longitude": {
+                            "type": "number",
+                            "description": "The longitude of the northeast bound."
+                          }
+                        },
+                        "description": "Northeast corner of the bounding box."
+                      },
+                      "southwest": {
+                        "type": "object",
+                        "properties": {
+                          "latitude": {
+                            "type": "number",
+                            "description": "The latitude of the southwest bound."
+                          },
+                          "longitude": {
+                            "type": "number",
+                            "description": "The longitude of the southwest bound."
+                          }
+                        },
+                        "description": "Southwest corner of the bounding box."
+                      }
+                    },
+                    "description": "Bounding box containing the route."
+                  },
+                  "legs": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "distance": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "type": "integer",
+                              "description": "Distance of the leg in meters."
+                            }
+                          },
+                          "description": "Distance information for the leg."
+                        },
+                        "duration": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "type": "integer",
+                              "description": "Duration of the leg in seconds."
+                            }
+                          },
+                          "description": "Duration information for the leg."
+                        },
+                        "steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "distance": {
+                                "type": "object",
+                                "properties": {
+                                  "value": {
+                                    "type": "integer",
+                                    "description": "Distance of the step in meters."
+                                  }
+                                },
+                                "description": "Distance information for the step."
+                              },
+                              "duration": {
+                                "type": "object",
+                                "properties": {
+                                  "value": {
+                                    "type": "integer",
+                                    "description": "Duration of the step in seconds."
+                                  }
+                                },
+                                "description": "Duration information for the step."
+                              },
+                              "start_location": {
+                                "type": "object",
+                                "properties": {
+                                  "latitude": {
+                                    "type": "number",
+                                    "description": "The latitude of the start location of the step."
+                                  },
+                                  "longitude": {
+                                    "type": "number",
+                                    "description": "The longitude of the start location of the step."
+                                  }
+                                },
+                                "description": "Starting geographic coordinates of the step."
+                              },
+                              "end_location": {
+                                "type": "object",
+                                "properties": {
+                                  "latitude": {
+                                    "type": "number",
+                                    "description": "The latitude of the end location of the step."
+                                  },
+                                  "longitude": {
+                                    "type": "number",
+                                    "description": "The longitude of the end location of the step."
+                                  }
+                                },
+                                "description": "Ending geographic coordinates of the step."
+                              },
+                              "travel_mode": {
+                                "type": "string",
+                                "description": "Mode of travel for the step (e.g., driving, bicycling, transit)."
+                              }
+                            }
+                          },
+                          "description": "List of turn-by-turn steps for the leg."
+                        }
+                      }
+                    },
+                    "description": "List of route legs between waypoints."
+                  }
+                }
+              },
+              "description": "List of possible routes between origin and destination."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Union, Any\nfrom mcp.server.fastmcp import FastMCP\nimport math\n\n# Section 1: Schema\nclass Location(BaseModel):\n    \"\"\"Represents a geographic location with latitude and longitude.\"\"\"\n    latitude: float = Field(..., ge=-90, le=90, description=\"Latitude coordinate (-90 to 90)\")\n    longitude: float = Field(..., ge=-180, le=180, description=\"Longitude coordinate (-180 to 180)\")\n\nclass Place(BaseModel):\n    \"\"\"Represents a place with detailed information.\"\"\"\n    place_id: str = Field(..., description=\"Unique identifier of the place\")\n    name: str = Field(..., description=\"Name of the place\")\n    formatted_address: str = Field(..., description=\"Human-readable address string\")\n    location: Location = Field(..., description=\"Geographic coordinates of the place\")\n    phone_number: Optional[str] = Field(default=None, description=\"Contact phone number\")\n    website: Optional[str] = Field(default=None, description=\"Official website URL\")\n    rating: Optional[float] = Field(default=None, ge=0, le=5, description=\"Average rating score (0-5)\")\n\nclass GeocodedLocation(BaseModel):\n    \"\"\"Represents a geocoded location result.\"\"\"\n    place_id: str = Field(..., description=\"Unique identifier of the geocoded place\")\n    formatted_address: str = Field(..., description=\"Human-readable address string\")\n    location: Location = Field(..., description=\"Geographic coordinates\")\n\nclass DistanceElement(BaseModel):\n    \"\"\"Represents distance information for an origin-destination pair.\"\"\"\n    distance: Dict[str, int] = Field(..., description=\"Distance information with value in meters\")\n\nclass DistanceRow(BaseModel):\n    \"\"\"Represents a row of distance elements for an origin.\"\"\"\n    elements: List[DistanceElement] = Field(..., description=\"List of distance elements\")\n\nclass ElevationData(BaseModel):\n    \"\"\"Represents elevation data for a location.\"\"\"\n    location: Location = Field(..., description=\"Geographic coordinates of the location\")\n    elevation: float = Field(..., description=\"Elevation above sea level in meters\")\n    resolution: float = Field(..., description=\"Accuracy of elevation data in meters\")\n\nclass RouteStep(BaseModel):\n    \"\"\"Represents a turn-by-turn step in a route.\"\"\"\n    distance: Dict[str, int] = Field(..., description=\"Distance information with value in meters\")\n    duration: Dict[str, int] = Field(..., description=\"Duration information with value in seconds\")\n    start_location: Location = Field(..., description=\"Starting geographic coordinates\")\n    end_location: Location = Field(..., description=\"Ending geographic coordinates\")\n    travel_mode: str = Field(..., description=\"Mode of travel for the step\")\n\nclass RouteLeg(BaseModel):\n    \"\"\"Represents a leg of a route between waypoints.\"\"\"\n    distance: Dict[str, int] = Field(..., description=\"Distance information with value in meters\")\n    duration: Dict[str, int] = Field(..., description=\"Duration information with value in seconds\")\n    steps: List[RouteStep] = Field(..., description=\"List of turn-by-turn steps\")\n\nclass Route(BaseModel):\n    \"\"\"Represents a complete route with bounds and legs.\"\"\"\n    bounds: Dict[str, Location] = Field(..., description=\"Bounding box containing the route\")\n    legs: List[RouteLeg] = Field(..., description=\"List of route legs\")\n\nclass MapsScenario(BaseModel):\n    \"\"\"Main scenario model for maps services.\"\"\"\n    places: Dict[str, Place] = Field(default={}, description=\"Dictionary of places by place_id\")\n    cityCoordinates: Dict[str, Location] = Field(default={\n        \"New York\": {\"latitude\": 40.7128, \"longitude\": -74.0060},\n        \"Los Angeles\": {\"latitude\": 34.0522, \"longitude\": -118.2437},\n        \"Chicago\": {\"latitude\": 41.8781, \"longitude\": -87.6298},\n        \"Houston\": {\"latitude\": 29.7604, \"longitude\": -95.3698},\n        \"Phoenix\": {\"latitude\": 33.4484, \"longitude\": -112.0740},\n        \"Philadelphia\": {\"latitude\": 39.9526, \"longitude\": -75.1652},\n        \"San Antonio\": {\"latitude\": 29.4241, \"longitude\": -98.4936},\n        \"San Diego\": {\"latitude\": 32.7157, \"longitude\": -117.1611},\n        \"Dallas\": {\"latitude\": 32.7767, \"longitude\": -96.7970},\n        \"San Jose\": {\"latitude\": 37.3382, \"longitude\": -121.8863},\n        \"Austin\": {\"latitude\": 30.2672, \"longitude\": -97.7431},\n        \"Jacksonville\": {\"latitude\": 30.3322, \"longitude\": -81.6557},\n        \"Fort Worth\": {\"latitude\": 32.7555, \"longitude\": -97.3308},\n        \"Columbus\": {\"latitude\": 39.9612, \"longitude\": -82.9988},\n        \"Charlotte\": {\"latitude\": 35.2271, \"longitude\": -80.8431},\n        \"San Francisco\": {\"latitude\": 37.7749, \"longitude\": -122.4194},\n        \"Indianapolis\": {\"latitude\": 39.7684, \"longitude\": -86.1581},\n        \"Seattle\": {\"latitude\": 47.6062, \"longitude\": -122.3321},\n        \"Denver\": {\"latitude\": 39.7392, \"longitude\": -104.9903},\n        \"Boston\": {\"latitude\": 42.3601, \"longitude\": -71.0589}\n    }, description=\"Predefined coordinates for major cities\")\n    elevationData: Dict[str, float] = Field(default={\n        \"40.7128,-74.0060\": 10.0,\n        \"34.0522,-118.2437\": 92.0,\n        \"41.8781,-87.6298\": 181.0,\n        \"29.7604,-95.3698\": 32.0,\n        \"33.4484,-112.0740\": 331.0,\n        \"39.9526,-75.1652\": 12.0,\n        \"29.4241,-98.4936\": 198.0,\n        \"32.7157,-117.1611\": 18.0,\n        \"32.7767,-96.7970\": 131.0,\n        \"37.3382,-121.8863\": 25.0,\n        \"30.2672,-97.7431\": 149.0,\n        \"30.3322,-81.6557\": 5.0,\n        \"32.7555,-97.3308\": 183.0,\n        \"39.9612,-82.9988\": 275.0,\n        \"35.2271,-80.8431\": 229.0,\n        \"37.7749,-122.4194\": 52.0,\n        \"39.7684,-86.1581\": 218.0,\n        \"47.6062,-122.3321\": 56.0,\n        \"39.7392,-104.9903\": 1609.0,\n        \"42.3601,-71.0589\": 43.0\n    }, description=\"Elevation data for predefined coordinates\")\n\nScenario_Schema = [Location, Place, GeocodedLocation, DistanceElement, DistanceRow, ElevationData, RouteStep, RouteLeg, Route, MapsScenario]\n\n# Section 2: Class\nclass MapsAPI:\n    def __init__(self):\n        \"\"\"Initialize maps API with empty state.\"\"\"\n        self.places: Dict[str, Place] = {}\n        self.cityCoordinates: Dict[str, Location] = {}\n        self.elevationData: Dict[str, float] = {}\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = MapsScenario(**scenario)\n        self.places = model.places\n        self.cityCoordinates = model.cityCoordinates\n        self.elevationData = model.elevationData\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"places\": {place_id: place.dict() for place_id, place in self.places.items()},\n            \"cityCoordinates\": {city: location.dict() for city, location in self.cityCoordinates.items()},\n            \"elevationData\": self.elevationData\n        }\n\n    def maps_geocode(self, city: str, country: Optional[str] = None) -> dict:\n        \"\"\"Convert a city name into geographic coordinates.\"\"\"\n        city_key = city.title()\n        if city_key not in self.cityCoordinates:\n            # Generate coordinates for unknown cities\n            import hashlib\n            hash_val = int(hashlib.md5(city.encode()).hexdigest(), 16)\n            lat = (hash_val % 1800) / 10.0 - 90\n            lng = ((hash_val // 1800) % 3600) / 10.0 - 180\n            self.cityCoordinates[city_key] = Location(latitude=lat, longitude=lng)\n        \n        location = self.cityCoordinates[city_key]\n        place_id = f\"geocode_{city_key.replace(' ', '_')}\"\n        formatted_address = f\"{city_key}, {country}\" if country else city_key\n        \n        return {\n            \"location\": location.dict(),\n            \"formatted_address\": formatted_address,\n            \"place_id\": place_id\n        }\n\n    def maps_reverse_geocode(self, latitude: float, longitude: float) -> dict:\n        \"\"\"Convert geographic coordinates into a human-readable address.\"\"\"\n        coord_key = f\"{latitude:.4f},{longitude:.4f}\"\n        \n        # Find closest city\n        closest_city = \"Unknown Location\"\n        min_distance = float('inf')\n        \n        for city, loc in self.cityCoordinates.items():\n            distance = math.sqrt((latitude - loc.latitude)**2 + (longitude - loc.longitude)**2)\n            if distance < min_distance:\n                min_distance = distance\n                closest_city = city\n        \n        place_id = f\"reverse_{coord_key.replace(',', '_')}\"\n        formatted_address = f\"{closest_city} ({latitude:.4f}, {longitude:.4f})\"\n        \n        return {\n            \"formatted_address\": formatted_address,\n            \"place_id\": place_id,\n            \"coordinates\": {\"latitude\": latitude, \"longitude\": longitude}\n        }\n\n    def maps_place_details(self, place_id: str) -> dict:\n        \"\"\"Retrieve comprehensive information about a specific place.\"\"\"\n        if place_id in self.places:\n            place = self.places[place_id]\n            return {\n                \"name\": place.name,\n                \"formatted_address\": place.formatted_address,\n                \"location\": place.location.dict(),\n                \"place_id\": place.place_id,\n                \"phone_number\": place.phone_number,\n                \"website\": place.website,\n                \"rating\": place.rating\n            }\n        else:\n            # Return default place info\n            return {\n                \"name\": \"Unknown Place\",\n                \"formatted_address\": \"Unknown Address\",\n                \"location\": {\"latitude\": 0.0, \"longitude\": 0.0},\n                \"place_id\": place_id,\n                \"phone_number\": None,\n                \"website\": None,\n                \"rating\": None\n            }\n\n    def maps_distance_matrix(self, origins: List[dict], destinations: List[dict], mode: str = \"driving\") -> dict:\n        \"\"\"Calculate distance and travel time between multiple points.\"\"\"\n        rows = []\n        \n        for origin in origins:\n            elements = []\n            for dest in destinations:\n                # Calculate distance using haversine formula\n                lat1, lng1 = origin[\"latitude\"], origin[\"longitude\"]\n                lat2, lng2 = dest[\"latitude\"], dest[\"longitude\"]\n                \n                # Haversine distance\n                R = 6371000  # Earth radius in meters\n                phi1 = math.radians(lat1)\n                phi2 = math.radians(lat2)\n                delta_phi = math.radians(lat2 - lat1)\n                delta_lambda = math.radians(lng2 - lng1)\n                \n                a = math.sin(delta_phi/2)**2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda/2)**2\n                c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))\n                distance = int(R * c)\n                \n                elements.append({\"distance\": {\"value\": distance}})\n            \n            rows.append({\"elements\": elements})\n        \n        return {\"rows\": rows}\n\n    def maps_elevation(self, locations: List[dict]) -> dict:\n        \"\"\"Retrieve elevation data for specific geographic locations.\"\"\"\n        elevation_data = []\n        \n        for loc in locations:\n            lat_key = f\"{loc['latitude']:.4f}\"\n            lng_key = f\"{loc['longitude']:.4f}\"\n            coord_key = f\"{lat_key},{lng_key}\"\n            \n            if coord_key in self.elevationData:\n                elevation = self.elevationData[coord_key]\n            else:\n                # Generate elevation for unknown locations\n                elevation = int((hash(coord_key) % 2000) + 1)\n                self.elevationData[coord_key] = elevation\n            \n            elevation_data.append({\n                \"location\": loc,\n                \"elevation\": float(elevation),\n                \"resolution\": 10.0\n            })\n        \n        return {\"elevation_data\": elevation_data}\n\n    def maps_directions(self, origin_location: dict, destination_location: dict, mode: str = \"driving\") -> dict:\n        \"\"\"Get detailed turn-by-turn directions between two locations.\"\"\"\n        # Calculate route bounds\n        lat_min = min(origin_location[\"latitude\"], destination_location[\"latitude\"])\n        lat_max = max(origin_location[\"latitude\"], destination_location[\"latitude\"])\n        lng_min = min(origin_location[\"longitude\"], destination_location[\"longitude\"])\n        lng_max = max(origin_location[\"longitude\"], destination_location[\"longitude\"])\n        \n        # Create a simple route with one leg and a few steps\n        distance_value = 1000  # Default 1km\n        duration_value = 300   # Default 5 minutes\n        \n        steps = [\n            {\n                \"distance\": {\"value\": distance_value // 3},\n                \"duration\": {\"value\": duration_value // 3},\n                \"start_location\": origin_location,\n                \"end_location\": {\n                    \"latitude\": (origin_location[\"latitude\"] + destination_location[\"latitude\"]) / 2,\n                    \"longitude\": (origin_location[\"longitude\"] + destination_location[\"longitude\"]) / 2\n                },\n                \"travel_mode\": mode\n            },\n            {\n                \"distance\": {\"value\": distance_value * 2 // 3},\n                \"duration\": {\"value\": duration_value * 2 // 3},\n                \"start_location\": {\n                    \"latitude\": (origin_location[\"latitude\"] + destination_location[\"latitude\"]) / 2,\n                    \"longitude\": (origin_location[\"longitude\"] + destination_location[\"longitude\"]) / 2\n                },\n                \"end_location\": destination_location,\n                \"travel_mode\": mode\n            }\n        ]\n        \n        legs = [{\n            \"distance\": {\"value\": distance_value},\n            \"duration\": {\"value\": duration_value},\n            \"steps\": steps\n        }]\n        \n        routes = [{\n            \"bounds\": {\n                \"northeast\": {\"latitude\": lat_max, \"longitude\": lng_max},\n                \"southwest\": {\"latitude\": lat_min, \"longitude\": lng_min}\n            },\n            \"legs\": legs\n        }]\n        \n        return {\"routes\": routes}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"Maps\")\napi = MapsAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the maps API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching MapsScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current maps state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef maps_geocode(city: str, country: Optional[str] = None) -> dict:\n    \"\"\"\n    Convert a city name into geographic coordinates.\n    \n    Args:\n        city (str): The city name to geocode.\n        country (str): [Optional] ISO country code for disambiguation.\n    \n    Returns:\n        location (dict): Geographic coordinates with latitude and longitude.\n        formatted_address (str): Human-readable address string.\n        place_id (str): Unique identifier of the geocoded place.\n    \"\"\"\n    try:\n        if not city or not isinstance(city, str) or len(city) < 2:\n            raise ValueError(\"City must be a non-empty string with at least 2 characters\")\n        return api.maps_geocode(city, country)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef maps_reverse_geocode(latitude: float, longitude: float) -> dict:\n    \"\"\"\n    Convert geographic coordinates into a human-readable address.\n    \n    Args:\n        latitude (float): The latitude of the location.\n        longitude (float): The longitude of the location.\n    \n    Returns:\n        formatted_address (str): Human-readable address string.\n        place_id (str): Unique identifier of the reverse-geocoded place.\n        coordinates (dict): Geographic coordinates of the location.\n    \"\"\"\n    try:\n        # Basic type checks - range validation handled by Pydantic Location model\n        if not isinstance(latitude, (int, float)) or not isinstance(longitude, (int, float)):\n            raise ValueError(\"Latitude and longitude must be numeric\")\n        return api.maps_reverse_geocode(latitude, longitude)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef maps_place_details(place_id: str) -> dict:\n    \"\"\"\n    Retrieve comprehensive information about a specific place.\n    \n    Args:\n        place_id (str): The unique identifier of the place.\n    \n    Returns:\n        name (str): The name of the place.\n        formatted_address (str): Human-readable address string.\n        location (dict): Geographic coordinates of the place.\n        place_id (str): The unique identifier of the place.\n        phone_number (str): Contact phone number.\n        website (str): Official website URL.\n        rating (float): Average rating score.\n    \"\"\"\n    try:\n        if not place_id or not isinstance(place_id, str):\n            raise ValueError(\"Place ID must be a non-empty string\")\n        return api.maps_place_details(place_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef maps_distance_matrix(origins: List[dict], destinations: List[dict], mode: str = \"driving\") -> dict:\n    \"\"\"\n    Calculate distance and travel time between multiple points.\n    \n    Args:\n        origins (List[dict]): List of origin location dictionaries with latitude and longitude.\n        destinations (List[dict]): List of destination location dictionaries with latitude and longitude.\n        mode (str): [Optional] Travel mode: \"driving\", \"bicycling\", or \"transit\".\n    \n    Returns:\n        rows (List[dict]): List of rows with distance elements for each origin-destination pair.\n    \"\"\"\n    try:\n        if not isinstance(origins, list) or len(origins) == 0:\n            raise ValueError(\"Origins must be a non-empty list\")\n        if not isinstance(destinations, list) or len(destinations) == 0:\n            raise ValueError(\"Destinations must be a non-empty list\")\n        if len(origins) > 25:\n            raise ValueError(\"Maximum 25 origins allowed\")\n        if len(destinations) > 25:\n            raise ValueError(\"Maximum 25 destinations allowed\")\n        if mode not in [\"driving\", \"bicycling\", \"transit\"]:\n            raise ValueError(\"Mode must be one of: driving, bicycling, transit\")\n        return api.maps_distance_matrix(origins, destinations, mode)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef maps_elevation(locations: List[dict]) -> dict:\n    \"\"\"\n    Retrieve elevation data for specific geographic locations.\n    \n    Args:\n        locations (List[dict]): List of location dictionaries with latitude and longitude.\n    \n    Returns:\n        elevation_data (List[dict]): List of elevation results for each location.\n    \"\"\"\n    try:\n        if not isinstance(locations, list) or len(locations) == 0:\n            raise ValueError(\"Locations must be a non-empty list\")\n        if len(locations) > 512:\n            raise ValueError(\"Maximum 512 locations per request\")\n        return api.maps_elevation(locations)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef maps_directions(origin_location: dict, destination_location: dict, mode: str = \"driving\") -> dict:\n    \"\"\"\n    Get detailed turn-by-turn directions between two locations.\n    \n    Args:\n        origin_location (dict): Origin location dictionary with latitude and longitude.\n        destination_location (dict): Destination location dictionary with latitude and longitude.\n        mode (str): [Optional] Travel mode: \"driving\", \"bicycling\", or \"transit\".\n    \n    Returns:\n        routes (List[dict]): List of possible routes with bounds and legs.\n    \"\"\"\n    try:\n        if not isinstance(origin_location, dict):\n            raise ValueError(\"Origin location must be a dictionary\")\n        if not isinstance(destination_location, dict):\n            raise ValueError(\"Destination location must be a dictionary\")\n        if mode not in [\"driving\", \"bicycling\", \"transit\"]:\n            raise ValueError(\"Mode must be one of: driving, bicycling, transit\")\n        return api.maps_directions(origin_location, destination_location, mode)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-02T17:35:35.088179",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with one place and minimal data to test core functionality",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "places": {
+          "place_001": {
+            "place_id": "place_001",
+            "name": "Central Park",
+            "formatted_address": "Central Park, New York, NY, USA",
+            "location": {
+              "latitude": 40.7829,
+              "longitude": -73.9654
+            }
+          }
+        },
+        "cityCoordinates": {
+          "New York": {
+            "latitude": 40.7128,
+            "longitude": -74.006
+          }
+        },
+        "elevationData": {
+          "40.7829,-73.9654": 50.0
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Moderate scenario with multiple places, varied attributes, and optional fields populated",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "places": {
+          "place_001": {
+            "place_id": "place_001",
+            "name": "Empire State Building",
+            "formatted_address": "350 5th Ave, New York, NY 10118, USA",
+            "location": {
+              "latitude": 40.7484,
+              "longitude": -73.9857
+            },
+            "phone_number": "+1 212-736-3100",
+            "website": "https://www.esbnyc.com",
+            "rating": 4.5
+          },
+          "place_002": {
+            "place_id": "place_002",
+            "name": "Golden Gate Bridge",
+            "formatted_address": "Golden Gate Bridge, San Francisco, CA, USA",
+            "location": {
+              "latitude": 37.8199,
+              "longitude": -122.4783
+            },
+            "website": "https://www.goldengate.org",
+            "rating": 4.8
+          },
+          "place_003": {
+            "place_id": "place_003",
+            "name": "Sears Tower",
+            "formatted_address": "233 S Wacker Dr, Chicago, IL 60606, USA",
+            "location": {
+              "latitude": 41.8789,
+              "longitude": -87.6359
+            },
+            "phone_number": "+1 312-875-9696"
+          }
+        },
+        "cityCoordinates": {
+          "New York": {
+            "latitude": 40.7128,
+            "longitude": -74.006
+          },
+          "San Francisco": {
+            "latitude": 37.7749,
+            "longitude": -122.4194
+          },
+          "Chicago": {
+            "latitude": 41.8781,
+            "longitude": -87.6298
+          }
+        },
+        "elevationData": {
+          "40.7484,-73.9857": 35.0,
+          "37.8199,-122.4783": 67.0,
+          "41.8789,-87.6359": 181.0
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Complex scenario with multiple places across different cities, all fields populated with realistic data",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "places": {
+          "place_001": {
+            "place_id": "place_001",
+            "name": "Statue of Liberty",
+            "formatted_address": "Liberty Island, New York, NY 10004, USA",
+            "location": {
+              "latitude": 40.6892,
+              "longitude": -74.0445
+            },
+            "phone_number": "+1 212-363-3200",
+            "website": "https://www.nps.gov/stli",
+            "rating": 4.7
+          },
+          "place_002": {
+            "place_id": "place_002",
+            "name": "Hollywood Sign",
+            "formatted_address": "Los Angeles, CA 90068, USA",
+            "location": {
+              "latitude": 34.1341,
+              "longitude": -118.3215
+            },
+            "website": "https://hollywoodsign.org",
+            "rating": 4.6
+          },
+          "place_003": {
+            "place_id": "place_003",
+            "name": "Millennium Park",
+            "formatted_address": "201 E Randolph St, Chicago, IL 60602, USA",
+            "location": {
+              "latitude": 41.8826,
+              "longitude": -87.6226
+            },
+            "phone_number": "+1 312-742-1168",
+            "website": "https://www.cityofchicago.org",
+            "rating": 4.8
+          },
+          "place_004": {
+            "place_id": "place_004",
+            "name": "Space Needle",
+            "formatted_address": "400 Broad St, Seattle, WA 98109, USA",
+            "location": {
+              "latitude": 47.6205,
+              "longitude": -122.3493
+            },
+            "phone_number": "+1 206-905-2100",
+            "website": "https://www.spaceneedle.com",
+            "rating": 4.5
+          },
+          "place_005": {
+            "place_id": "place_005",
+            "name": "Fenway Park",
+            "formatted_address": "4 Jersey St, Boston, MA 02215, USA",
+            "location": {
+              "latitude": 42.3467,
+              "longitude": -71.0972
+            },
+            "phone_number": "+1 877-733-7699",
+            "website": "https://www.mlb.com/redsox/ballpark",
+            "rating": 4.7
+          }
+        },
+        "cityCoordinates": {
+          "New York": {
+            "latitude": 40.7128,
+            "longitude": -74.006
+          },
+          "Los Angeles": {
+            "latitude": 34.0522,
+            "longitude": -118.2437
+          },
+          "Chicago": {
+            "latitude": 41.8781,
+            "longitude": -87.6298
+          },
+          "Seattle": {
+            "latitude": 47.6062,
+            "longitude": -122.3321
+          },
+          "Boston": {
+            "latitude": 42.3601,
+            "longitude": -71.0589
+          }
+        },
+        "elevationData": {
+          "40.6892,-74.0445": 3.0,
+          "34.1341,-118.3215": 260.0,
+          "41.8826,-87.6226": 181.0,
+          "47.6205,-122.3493": 56.0,
+          "42.3467,-71.0972": 13.0
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Boundary scenario testing edge cases with extreme coordinates and empty collections",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "places": {
+          "place_001": {
+            "place_id": "place_001",
+            "name": "North Pole Research Station",
+            "formatted_address": "North Pole, Arctic Ocean",
+            "location": {
+              "latitude": 90.0,
+              "longitude": 0.0
+            },
+            "rating": 0.0
+          },
+          "place_002": {
+            "place_id": "place_002",
+            "name": "Antarctica Research Base",
+            "formatted_address": "South Pole, Antarctica",
+            "location": {
+              "latitude": -90.0,
+              "longitude": 180.0
+            },
+            "rating": 5.0
+          },
+          "place_003": {
+            "place_id": "place_003",
+            "name": "International Date Line Marker",
+            "formatted_address": "180° Meridian, Pacific Ocean",
+            "location": {
+              "latitude": 0.0,
+              "longitude": 180.0
+            }
+          }
+        },
+        "cityCoordinates": {},
+        "elevationData": {
+          "90.0,0.0": -4300.0,
+          "-90.0,180.0": 2835.0,
+          "0.0,180.0": 0.0
+        }
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "maps_geocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_reverse_geocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_place_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_distance_matrix",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_elevation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_directions",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 140.24940991401672
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "maps_geocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_reverse_geocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_place_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_distance_matrix",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_elevation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_directions",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 190.13186812400818
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "maps_geocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_reverse_geocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_place_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_distance_matrix",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_elevation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_directions",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 226.93227434158325
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "maps_geocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_reverse_geocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_place_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_distance_matrix",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_elevation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_directions",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 154.82515335083008
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "maps_geocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_reverse_geocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_place_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_distance_matrix",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_elevation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_directions",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 140.24940991401672
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "maps_geocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_reverse_geocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_place_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_distance_matrix",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_elevation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_directions",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 190.13186812400818
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "maps_geocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_reverse_geocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_place_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_distance_matrix",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_elevation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_directions",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 226.93227434158325
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "maps_geocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_reverse_geocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_place_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_distance_matrix",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_elevation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_directions",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 154.82515335083008
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/Maps.py"
+  }
+}

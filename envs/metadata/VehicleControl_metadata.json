@@ -1,0 +1,1006 @@
+{
+  "class_name": "VehicleControl",
+  "description": "Comprehensive vehicle control system for managing engine operations, climate control, door locks, lighting, braking systems, cruise control, tire monitoring, and navigation features.",
+  "tools": [
+    {
+      "name": "get_engine_status",
+      "description": "Retrieve the current operational status of the vehicle engine, including running state, fuel level, and battery voltage.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "engine_state": {
+            "type": "string",
+            "enum": [
+              "running",
+              "stopped"
+            ],
+            "description": "The current operational state of the vehicle engine."
+          },
+          "fuel_level": {
+            "type": "number",
+            "description": "The current amount of fuel in the vehicle tank, measured in gallons."
+          },
+          "battery_voltage": {
+            "type": "number",
+            "description": "The current electrical voltage of the vehicle battery, measured in volts."
+          }
+        }
+      }
+    },
+    {
+      "name": "start_engine",
+      "description": "Start the vehicle engine. This operation requires all doors to be locked and the brake pedal to be fully pressed as safety prerequisites.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "engine_state": {
+            "type": "string",
+            "enum": [
+              "running",
+              "stopped"
+            ],
+            "description": "The current operational state of the vehicle engine."
+          },
+          "fuel_level": {
+            "type": "number",
+            "description": "The current amount of fuel in the vehicle tank, measured in gallons."
+          },
+          "battery_voltage": {
+            "type": "number",
+            "description": "The current electrical voltage of the vehicle battery, measured in volts."
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message if prerequisites (locked doors and pressed brake pedal) are not met."
+          }
+        }
+      }
+    },
+    {
+      "name": "stop_engine",
+      "description": "Stop the vehicle engine and transition it to a stopped state.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "engine_state": {
+            "type": "string",
+            "enum": [
+              "stopped"
+            ],
+            "description": "The current operational state of the vehicle engine."
+          },
+          "fuel_level": {
+            "type": "number",
+            "description": "The current amount of fuel in the vehicle tank, measured in gallons."
+          },
+          "battery_voltage": {
+            "type": "number",
+            "description": "The current electrical voltage of the vehicle battery, measured in volts."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_fuel_level",
+      "description": "Retrieve the current fuel level in the vehicle tank.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "fuel_level": {
+            "type": "number",
+            "description": "The current amount of fuel in the vehicle tank, measured in gallons (range: 0-50)."
+          }
+        }
+      }
+    },
+    {
+      "name": "fill_fuel_tank",
+      "description": "Add a specified amount of fuel to the vehicle tank. The tank has a maximum capacity of 50 gallons.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "fuel_amount": {
+            "type": "number",
+            "description": "The amount of fuel to add to the tank, measured in gallons. Must be positive and the total fuel level must not exceed 50 gallons."
+          }
+        },
+        "required": [
+          "fuel_amount"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "fuel_level": {
+            "type": "number",
+            "description": "The current amount of fuel in the vehicle tank after filling, measured in gallons."
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message if the fuel amount is invalid or would exceed the 50-gallon tank capacity."
+          }
+        }
+      }
+    },
+    {
+      "name": "estimate_drive_feasibility",
+      "description": "Estimate whether the vehicle has sufficient fuel to complete a specified distance based on current fuel level and fuel efficiency.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "distance": {
+            "type": "number",
+            "description": "The distance to travel for which feasibility is being estimated."
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "miles",
+              "kilometers"
+            ],
+            "description": "The unit of measurement for the distance. Defaults to 'miles' if not specified."
+          }
+        },
+        "required": [
+          "distance"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "can_drive": {
+            "type": "boolean",
+            "description": "Indicates whether the vehicle has sufficient fuel to complete the specified distance."
+          },
+          "current_fuel_level": {
+            "type": "number",
+            "description": "The current amount of fuel in the vehicle tank, measured in gallons."
+          },
+          "estimated_range": {
+            "type": "number",
+            "description": "The estimated maximum distance the vehicle can travel with current fuel, measured in the specified unit."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_door_status",
+      "description": "Retrieve the lock status of vehicle doors, either for a specific door or all doors.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "door_position": {
+            "type": "string",
+            "enum": [
+              "driver",
+              "passenger",
+              "rear_left",
+              "rear_right"
+            ],
+            "description": "The specific door position to query. If not provided, returns status for all doors."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "door_status": {
+            "type": "object",
+            "description": "A mapping of door positions to their current lock status (locked or unlocked).",
+            "additionalProperties": {
+              "type": "string",
+              "enum": [
+                "locked",
+                "unlocked"
+              ]
+            }
+          },
+          "remaining_unlocked_doors": {
+            "type": "integer",
+            "description": "The count of doors that are currently in an unlocked state."
+          }
+        }
+      }
+    },
+    {
+      "name": "lock_doors",
+      "description": "Lock one or more vehicle doors at specified positions.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "door_positions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "driver",
+                "passenger",
+                "rear_left",
+                "rear_right"
+              ]
+            },
+            "description": "List of door positions to lock. Valid positions are driver, passenger, rear_left, and rear_right."
+          }
+        },
+        "required": [
+          "door_positions"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "lock_status": {
+            "type": "string",
+            "enum": [
+              "locked"
+            ],
+            "description": "Confirmation that the specified doors have been locked."
+          },
+          "door_status": {
+            "type": "object",
+            "description": "A mapping of door positions to their updated lock status after the operation.",
+            "additionalProperties": {
+              "type": "string",
+              "enum": [
+                "locked",
+                "unlocked"
+              ]
+            }
+          },
+          "remaining_unlocked_doors": {
+            "type": "integer",
+            "description": "The count of doors that are currently in an unlocked state."
+          }
+        }
+      }
+    },
+    {
+      "name": "unlock_doors",
+      "description": "Unlock one or more vehicle doors at specified positions.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "door_positions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "driver",
+                "passenger",
+                "rear_left",
+                "rear_right"
+              ]
+            },
+            "description": "List of door positions to unlock. Valid positions are driver, passenger, rear_left, and rear_right."
+          }
+        },
+        "required": [
+          "door_positions"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "lock_status": {
+            "type": "string",
+            "enum": [
+              "unlocked"
+            ],
+            "description": "Confirmation that the specified doors have been unlocked."
+          },
+          "door_status": {
+            "type": "object",
+            "description": "A mapping of door positions to their updated lock status after the operation.",
+            "additionalProperties": {
+              "type": "string",
+              "enum": [
+                "locked",
+                "unlocked"
+              ]
+            }
+          },
+          "remaining_unlocked_doors": {
+            "type": "integer",
+            "description": "The count of doors that are currently in an unlocked state."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_climate_status",
+      "description": "Retrieve the current climate control settings and environmental status inside the vehicle.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "temperature": {
+            "type": "number",
+            "description": "The current target temperature setting for the climate control system, measured in Celsius."
+          },
+          "fan_speed": {
+            "type": "integer",
+            "description": "The current fan speed setting, ranging from 0 (off) to 100 (maximum)."
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "cool",
+              "heat",
+              "defrost"
+            ],
+            "description": "The current operational mode of the climate control system."
+          },
+          "humidity_level": {
+            "type": "number",
+            "description": "The current humidity level inside the vehicle cabin, expressed as a percentage."
+          }
+        }
+      }
+    },
+    {
+      "name": "set_climate_control",
+      "description": "Adjust the climate control settings of the vehicle, including temperature, fan speed, and operational mode.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "temperature": {
+            "type": "number",
+            "description": "The target temperature to set for the climate control system."
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "celsius",
+              "fahrenheit"
+            ],
+            "description": "The unit of measurement for the temperature. Defaults to 'celsius' if not specified."
+          },
+          "fan_speed": {
+            "type": "integer",
+            "description": "The fan speed to set, ranging from 0 (off) to 100 (maximum). If not provided, the current setting is maintained."
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "cool",
+              "heat",
+              "defrost"
+            ],
+            "description": "The operational mode to set for the climate control system. If not provided, the current mode is maintained."
+          }
+        },
+        "required": [
+          "temperature"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "current_temperature": {
+            "type": "number",
+            "description": "The current target temperature setting for the climate control system, measured in Celsius."
+          },
+          "climate_mode": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "cool",
+              "heat",
+              "defrost"
+            ],
+            "description": "The current operational mode of the climate control system."
+          },
+          "fan_speed": {
+            "type": "integer",
+            "description": "The current fan speed setting, ranging from 0 (off) to 100 (maximum)."
+          },
+          "humidity_level": {
+            "type": "number",
+            "description": "The current humidity level inside the vehicle cabin, expressed as a percentage."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_outside_temperature",
+      "description": "Retrieve the current outside ambient temperature from the weather service.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "outside_temperature": {
+            "type": "number",
+            "description": "The current ambient temperature outside the vehicle, measured in Celsius."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_headlight_status",
+      "description": "Retrieve the current operational status of the vehicle headlights.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "headlight_status": {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "auto"
+            ],
+            "description": "The current operational mode of the vehicle headlights."
+          }
+        }
+      }
+    },
+    {
+      "name": "set_headlights",
+      "description": "Set the operational mode of the vehicle headlights.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "auto"
+            ],
+            "description": "The operational mode to set for the vehicle headlights. Options are on (always on), off (always off), or auto (automatic based on ambient light)."
+          }
+        },
+        "required": [
+          "mode"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "headlight_status": {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "auto"
+            ],
+            "description": "The current operational mode of the vehicle headlights."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_brake_status",
+      "description": "Retrieve the current status of both the parking brake and brake pedal, including engagement state and applied force.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "parking_brake_status": {
+            "type": "string",
+            "enum": [
+              "engaged",
+              "released"
+            ],
+            "description": "The current engagement state of the parking brake."
+          },
+          "parking_brake_force": {
+            "type": "number",
+            "description": "The current force applied by the parking brake, measured in Newtons."
+          },
+          "slope_angle": {
+            "type": "number",
+            "description": "The current angle of the vehicle's slope or incline, measured in degrees."
+          },
+          "brake_pedal_status": {
+            "type": "string",
+            "enum": [
+              "pressed",
+              "released"
+            ],
+            "description": "The current state of the brake pedal indicating whether it is pressed or released."
+          },
+          "brake_pedal_force": {
+            "type": "number",
+            "description": "The current force applied to the brake pedal, measured in Newtons."
+          }
+        }
+      }
+    },
+    {
+      "name": "set_parking_brake",
+      "description": "Engage or release the parking brake.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "engage",
+              "release"
+            ],
+            "description": "The action to perform on the parking brake. Use 'engage' to activate or 'release' to deactivate."
+          }
+        },
+        "required": [
+          "action"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "parking_brake_status": {
+            "type": "string",
+            "enum": [
+              "engaged",
+              "released"
+            ],
+            "description": "The current engagement state of the parking brake."
+          },
+          "parking_brake_force": {
+            "type": "number",
+            "description": "The current force applied by the parking brake, measured in Newtons."
+          },
+          "slope_angle": {
+            "type": "number",
+            "description": "The current angle of the vehicle's slope or incline, measured in degrees."
+          }
+        }
+      }
+    },
+    {
+      "name": "press_brake_pedal",
+      "description": "Press the brake pedal to a specified position. The pedal will remain at this position until explicitly released.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "pedal_position": {
+            "type": "number",
+            "description": "The position to press the brake pedal to, ranging from 0 (not pressed) to 1 (fully pressed)."
+          }
+        },
+        "required": [
+          "pedal_position"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "brake_pedal_status": {
+            "type": "string",
+            "enum": [
+              "pressed",
+              "released"
+            ],
+            "description": "The current state of the brake pedal indicating whether it is pressed or released."
+          },
+          "brake_pedal_force": {
+            "type": "number",
+            "description": "The current force applied to the brake pedal, measured in Newtons."
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message if the pedal position is invalid (not between 0 and 1)."
+          }
+        }
+      }
+    },
+    {
+      "name": "release_brake_pedal",
+      "description": "Release the brake pedal completely, returning it to the unpressed position.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "brake_pedal_status": {
+            "type": "string",
+            "enum": [
+              "released"
+            ],
+            "description": "The current state of the brake pedal indicating whether it is pressed or released."
+          },
+          "brake_pedal_force": {
+            "type": "number",
+            "description": "The current force applied to the brake pedal, measured in Newtons. Should be 0.0 when released."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_cruise_status",
+      "description": "Retrieve the current status of the cruise control system, including activation state and target speed.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "cruise_status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ],
+            "description": "The current activation state of the cruise control system."
+          },
+          "current_speed": {
+            "type": "number",
+            "description": "The current speed of the vehicle, measured in kilometers per hour (km/h)."
+          },
+          "distance_to_next_vehicle": {
+            "type": "number",
+            "description": "The distance to the next vehicle ahead, measured in meters."
+          }
+        }
+      }
+    },
+    {
+      "name": "set_cruise_control",
+      "description": "Activate or deactivate cruise control with a specified target speed. The engine must be running to activate cruise control.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "speed": {
+            "type": "number",
+            "description": "The target speed to set for cruise control, measured in kilometers per hour (km/h). Must be between 0 and 120 and a multiple of 5 when activating."
+          },
+          "activate": {
+            "type": "boolean",
+            "description": "Set to true to activate cruise control, or false to deactivate it."
+          },
+          "distance_to_next_vehicle": {
+            "type": "number",
+            "description": "The distance to maintain from the next vehicle ahead, measured in meters. Required when activating cruise control."
+          }
+        },
+        "required": [
+          "speed",
+          "activate"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "cruise_status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ],
+            "description": "The current activation state of the cruise control system."
+          },
+          "current_speed": {
+            "type": "number",
+            "description": "The current speed of the vehicle, measured in kilometers per hour (km/h)."
+          },
+          "distance_to_next_vehicle": {
+            "type": "number",
+            "description": "The distance to the next vehicle ahead, measured in meters."
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message if the engine is stopped or the speed is invalid (not between 0-120 or not a multiple of 5)."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_current_speed",
+      "description": "Retrieve the current speed of the vehicle.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "current_speed": {
+            "type": "number",
+            "description": "The current speed of the vehicle, measured in kilometers per hour (km/h)."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_tire_pressure",
+      "description": "Retrieve the tire pressure for a specific tire or all tires, along with health status.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tire_position": {
+            "type": "string",
+            "enum": [
+              "front_left",
+              "front_right",
+              "rear_left",
+              "rear_right"
+            ],
+            "description": "The specific tire position to query. If not provided, returns pressure for all tires."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "tire_pressure": {
+            "type": "object",
+            "description": "A mapping of tire positions to their current pressure values, measured in PSI.",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "healthy_tire_pressure": {
+            "type": "boolean",
+            "description": "Indicates whether all tires are within the healthy pressure range (30-35 PSI average)."
+          }
+        }
+      }
+    },
+    {
+      "name": "check_tire_pressure",
+      "description": "Check the pressure of all tires and determine if maintenance is needed based on healthy pressure ranges.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "front_left_tire_pressure": {
+            "type": "number",
+            "description": "The current pressure of the front left tire, measured in PSI."
+          },
+          "front_right_tire_pressure": {
+            "type": "number",
+            "description": "The current pressure of the front right tire, measured in PSI."
+          },
+          "rear_left_tire_pressure": {
+            "type": "number",
+            "description": "The current pressure of the rear left tire, measured in PSI."
+          },
+          "rear_right_tire_pressure": {
+            "type": "number",
+            "description": "The current pressure of the rear right tire, measured in PSI."
+          },
+          "healthy_tire_pressure": {
+            "type": "boolean",
+            "description": "Indicates whether all tires are within the healthy pressure range (30-35 PSI average)."
+          }
+        }
+      }
+    },
+    {
+      "name": "find_nearest_tire_shop",
+      "description": "Locate the nearest tire shop for maintenance or repair services.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "shop_location": {
+            "type": "string",
+            "description": "The address of the nearest tire shop available for maintenance services."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_navigation_status",
+      "description": "Retrieve the current navigation destination and activation status.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "destination": {
+            "type": "string",
+            "description": "The current destination address set in the navigation system."
+          },
+          "navigation_status": {
+            "type": "string",
+            "description": "Indicates whether the navigation system is currently active and providing directions."
+          }
+        }
+      }
+    },
+    {
+      "name": "set_navigation_destination",
+      "description": "Set a destination address for the navigation system and activate navigation guidance.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "destination": {
+            "type": "string",
+            "description": "The destination address to navigate to, in the format 'street, city, state' or similar standard address format."
+          }
+        },
+        "required": [
+          "destination"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "destination": {
+            "type": "string",
+            "description": "The current destination address set in the navigation system."
+          },
+          "navigation_status": {
+            "type": "string",
+            "description": "Indicates whether the navigation system is currently active and providing directions."
+          }
+        }
+      }
+    },
+    {
+      "name": "convert_liter_to_gallon",
+      "description": "Convert a volume measurement from liters to gallons.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "liters": {
+            "type": "number",
+            "description": "The volume in liters to convert to gallons."
+          }
+        },
+        "required": [
+          "liters"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "gallons": {
+            "type": "number",
+            "description": "The converted volume measurement in gallons."
+          }
+        }
+      }
+    },
+    {
+      "name": "convert_gallon_to_liter",
+      "description": "Convert a volume measurement from gallons to liters.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "gallons": {
+            "type": "number",
+            "description": "The volume in gallons to convert to liters."
+          }
+        },
+        "required": [
+          "gallons"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "liters": {
+            "type": "number",
+            "description": "The converted volume measurement in liters."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_city_zipcode",
+      "description": "Retrieve the zipcode for a specified city name. Returns '00000' if the city is not found in the database.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "city_name": {
+            "type": "string",
+            "description": "The name of the city for which to retrieve the zipcode."
+          }
+        },
+        "required": [
+          "city_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "city_zipcode": {
+            "type": "string",
+            "description": "The zipcode of the specified city."
+          }
+        }
+      }
+    },
+    {
+      "name": "estimate_distance_between_cities",
+      "description": "Estimate the driving distance between two cities using their zipcodes, including intermediary cities along the route.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "city_a_zipcode": {
+            "type": "string",
+            "description": "The zipcode of the first city."
+          },
+          "city_b_zipcode": {
+            "type": "string",
+            "description": "The zipcode of the second city."
+          }
+        },
+        "required": [
+          "city_a_zipcode",
+          "city_b_zipcode"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "distance": {
+            "type": "number",
+            "description": "The estimated driving distance between the two cities, measured in kilometers."
+          },
+          "intermediary_cities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional list of cities along the route between the two specified cities."
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message if the distance is not found in the database for the specified zipcodes."
+          }
+        }
+      }
+    }
+  ]
+}

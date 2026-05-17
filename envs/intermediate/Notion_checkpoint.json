@@ -1,0 +1,3347 @@
+{
+  "metadata": {
+    "class_name": "Notion",
+    "metadata_path": "envs\\metadata\\Notion_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-04T01:36:32.272792",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "Notion",
+    "description": "Unified gateway for manipulating pages, databases, blocks, comments, and users inside a Notion workspace. Supports full CRUD, search, and pagination while maintaining consistent ISO-8601 timestamps and shared formatting options.",
+    "tools": [
+      {
+        "name": "notion_append_block_children",
+        "description": "Append one or more child blocks to an existing parent block.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "block_id": {
+              "type": "string",
+              "description": "The unique identifier of the parent block that will receive the children."
+            },
+            "children": {
+              "type": "array",
+              "description": "Array of block objects to append under the parent."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "block_id",
+            "children"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "block_id": {
+              "type": "string",
+              "description": "The unique identifier of the parent block that now contains the new children."
+            },
+            "children_count": {
+              "type": "integer",
+              "description": "Total number of child blocks now present under the parent."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_retrieve_block_children",
+        "description": "Fetch the child blocks contained within a given parent block with optional pagination.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "block_id": {
+              "type": "string",
+              "description": "The unique identifier of the parent block whose children are requested."
+            },
+            "start_cursor": {
+              "type": "string",
+              "description": "Opaque cursor for retrieving the next page of results."
+            },
+            "page_size": {
+              "type": "integer",
+              "maximum": 100,
+              "default": 100,
+              "description": "Maximum number of child blocks to return in this page."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "block_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "results": {
+              "type": "array",
+              "description": "List of child block objects each containing block_id, type, and content."
+            },
+            "next_cursor": {
+              "type": "string",
+              "description": "Cursor for retrieving the next page of children; null when no more pages exist."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_create_block",
+        "description": "Create a single new block and attach it to the specified parent page or block.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "parent_id": {
+              "type": "string",
+              "description": "The unique identifier of the parent page or block that will contain the new block."
+            },
+            "block_type": {
+              "type": "string",
+              "description": "Notion block type such as paragraph, heading_1, bulleted_list_item, etc."
+            },
+            "content": {
+              "type": "object",
+              "description": "Structure matching the chosen block_type that defines the block’s content."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "parent_id",
+            "block_type",
+            "content"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "block_id": {
+              "type": "string",
+              "description": "The unique identifier assigned to the newly created block."
+            },
+            "type": {
+              "type": "string",
+              "description": "The block type as stored in Notion."
+            },
+            "content": {
+              "type": "object",
+              "description": "The content payload persisted for this block."
+            },
+            "created_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp marking block creation."
+            },
+            "last_edited_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp of the most recent edit."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_update_block",
+        "description": "Modify the type, content, or archived status of an existing block.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "block_id": {
+              "type": "string",
+              "description": "The unique identifier of the block to update."
+            },
+            "block_type": {
+              "type": "string",
+              "description": "New block type if changing the type."
+            },
+            "content": {
+              "type": "object",
+              "description": "Updated content structure matching the block type."
+            },
+            "archived": {
+              "type": "boolean",
+              "description": "Whether to archive (true) or restore (false) the block."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "block_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "block_id": {
+              "type": "string",
+              "description": "The unique identifier of the updated block."
+            },
+            "type": {
+              "type": "string",
+              "description": "The block type after the update."
+            },
+            "content": {
+              "type": "object",
+              "description": "The content payload after the update."
+            },
+            "last_edited_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp of the most recent edit."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_delete_block",
+        "description": "Delete (archive) a specific block.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "block_id": {
+              "type": "string",
+              "description": "The unique identifier of the block to delete."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "block_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "block_id": {
+              "type": "string",
+              "description": "The unique identifier of the deleted block."
+            },
+            "deleted": {
+              "type": "boolean",
+              "description": "True if the block was successfully archived."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_retrieve_page",
+        "description": "Fetch metadata and properties of a specific page.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "page_id": {
+              "type": "string",
+              "description": "The unique identifier of the page to retrieve."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "page_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "page_id": {
+              "type": "string",
+              "description": "The unique identifier of the retrieved page."
+            },
+            "title": {
+              "type": "string",
+              "description": "Plain-text title of the page."
+            },
+            "properties": {
+              "type": "object",
+              "description": "Key-value property map as defined in the page’s parent database."
+            },
+            "created_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp marking page creation."
+            },
+            "last_edited_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp of the most recent edit."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_create_page",
+        "description": "Create a new page inside a specified parent page or database.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "parent": {
+              "type": "object",
+              "description": "Parent descriptor containing either page_id or database_id."
+            },
+            "properties": {
+              "type": "object",
+              "description": "Initial property values when the parent is a database."
+            },
+            "children": {
+              "type": "array",
+              "description": "Optional blocks to populate the new page body."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "parent"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "page_id": {
+              "type": "string",
+              "description": "The unique identifier assigned to the newly created page."
+            },
+            "parent": {
+              "type": "object",
+              "description": "Parent descriptor as stored in Notion."
+            },
+            "properties": {
+              "type": "object",
+              "description": "Properties of the page after creation."
+            },
+            "created_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp marking page creation."
+            },
+            "last_edited_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp of the most recent edit."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_delete_page",
+        "description": "Delete (archive) a specific page.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "page_id": {
+              "type": "string",
+              "description": "The unique identifier of the page to delete."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "page_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "page_id": {
+              "type": "string",
+              "description": "The unique identifier of the deleted page."
+            },
+            "deleted": {
+              "type": "boolean",
+              "description": "True if the page was successfully archived."
+            },
+            "archived": {
+              "type": "boolean",
+              "description": "Mirrors deleted status; true when the page is in the archive."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_update_page_properties",
+        "description": "Update property values of an existing page.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "page_id": {
+              "type": "string",
+              "description": "The unique identifier of the page whose properties will be updated."
+            },
+            "properties": {
+              "type": "object",
+              "description": "Map of property names to updated values."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "page_id",
+            "properties"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "page_id": {
+              "type": "string",
+              "description": "The unique identifier of the updated page."
+            },
+            "updated_properties": {
+              "type": "array",
+              "description": "List of property keys that were modified."
+            },
+            "last_edited_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp of the most recent edit."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_update_page_content",
+        "description": "Append or replace content blocks within an existing page.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "page_id": {
+              "type": "string",
+              "description": "The unique identifier of the page whose content will be updated."
+            },
+            "children": {
+              "type": "array",
+              "description": "Array of block objects to append to the page."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "page_id",
+            "children"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "page_id": {
+              "type": "string",
+              "description": "The unique identifier of the updated page."
+            },
+            "children_count": {
+              "type": "integer",
+              "description": "Total number of child blocks now present on the page."
+            },
+            "last_edited_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp of the most recent edit."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_create_database",
+        "description": "Create a new database inside a specified parent page or workspace.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "parent": {
+              "type": "object",
+              "description": "Parent descriptor containing either page_id or workspace flag."
+            },
+            "title": {
+              "type": "array",
+              "description": "Rich-text array representing the database title."
+            },
+            "properties": {
+              "type": "object",
+              "description": "Schema definition for database properties."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "parent",
+            "title",
+            "properties"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "database_id": {
+              "type": "string",
+              "description": "The unique identifier assigned to the newly created database."
+            },
+            "title": {
+              "type": "string",
+              "description": "Plain-text title of the database."
+            },
+            "properties": {
+              "type": "object",
+              "description": "Property schema as stored in Notion."
+            },
+            "created_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp marking database creation."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_query_database",
+        "description": "Query a database and retrieve pages that match optional filter and sort criteria.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "database_id": {
+              "type": "string",
+              "description": "The unique identifier of the database to query."
+            },
+            "filter": {
+              "type": "object",
+              "description": "Notion filter object to constrain results."
+            },
+            "sorts": {
+              "type": "array",
+              "description": "List of sort objects to order results."
+            },
+            "start_cursor": {
+              "type": "string",
+              "description": "Opaque cursor for retrieving the next page of results."
+            },
+            "page_size": {
+              "type": "integer",
+              "maximum": 100,
+              "default": 100,
+              "description": "Maximum number of results to return in this page."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "database_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "results": {
+              "type": "array",
+              "description": "List of page objects each containing page_id and properties."
+            },
+            "next_cursor": {
+              "type": "string",
+              "description": "Cursor for retrieving the next page; null when no more pages exist."
+            },
+            "has_more": {
+              "type": "boolean",
+              "description": "True when additional result pages are available."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_retrieve_database",
+        "description": "Fetch metadata and property schema of a specific database.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "database_id": {
+              "type": "string",
+              "description": "The unique identifier of the database to retrieve."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "database_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "database_id": {
+              "type": "string",
+              "description": "The unique identifier of the retrieved database."
+            },
+            "title": {
+              "type": "string",
+              "description": "Plain-text title of the database."
+            },
+            "properties": {
+              "type": "object",
+              "description": "Property schema defining columns and types."
+            },
+            "created_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp marking database creation."
+            },
+            "last_edited_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp of the most recent edit."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_update_database",
+        "description": "Modify title, description, or property schema of an existing database.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "database_id": {
+              "type": "string",
+              "description": "The unique identifier of the database to update."
+            },
+            "title": {
+              "type": "array",
+              "description": "New rich-text title for the database."
+            },
+            "description": {
+              "type": "array",
+              "description": "New rich-text description for the database."
+            },
+            "properties": {
+              "type": "object",
+              "description": "Updated property schema."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "database_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "database_id": {
+              "type": "string",
+              "description": "The unique identifier of the updated database."
+            },
+            "last_edited_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp of the most recent edit."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_delete_database",
+        "description": "Delete (archive) a specific database.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "database_id": {
+              "type": "string",
+              "description": "The unique identifier of the database to delete."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "database_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "database_id": {
+              "type": "string",
+              "description": "The unique identifier of the deleted database."
+            },
+            "deleted": {
+              "type": "boolean",
+              "description": "True if the database was successfully archived."
+            },
+            "archived": {
+              "type": "boolean",
+              "description": "Mirrors deleted status; true when the database is in the archive."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_create_database_item",
+        "description": "Add a new row (page) to a database with the provided properties.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "database_id": {
+              "type": "string",
+              "description": "The unique identifier of the database that will contain the new item."
+            },
+            "properties": {
+              "type": "object",
+              "description": "Property values matching the database schema."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "database_id",
+            "properties"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "page_id": {
+              "type": "string",
+              "description": "The unique identifier assigned to the newly created page (database row)."
+            },
+            "database_id": {
+              "type": "string",
+              "description": "The unique identifier of the database containing this item."
+            },
+            "properties": {
+              "type": "object",
+              "description": "Property values as stored after creation."
+            },
+            "created_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp marking item creation."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_search",
+        "description": "Global search across pages and databases by title with optional filtering and sorting.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Text to search for within titles."
+            },
+            "filter": {
+              "type": "object",
+              "description": "Restrict results to only pages or only databases."
+            },
+            "sort": {
+              "type": "object",
+              "description": "Sort criteria for the returned list."
+            },
+            "start_cursor": {
+              "type": "string",
+              "description": "Opaque cursor for retrieving the next page of results."
+            },
+            "page_size": {
+              "type": "integer",
+              "maximum": 100,
+              "default": 100,
+              "description": "Maximum number of results to return in this page."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "results": {
+              "type": "array",
+              "description": "List of objects each containing object_id, object_type, and title."
+            },
+            "next_cursor": {
+              "type": "string",
+              "description": "Cursor for retrieving the next page; null when no more pages exist."
+            },
+            "has_more": {
+              "type": "boolean",
+              "description": "True when additional result pages are available."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_list_all_users",
+        "description": "List every user in the workspace with optional pagination.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "start_cursor": {
+              "type": "string",
+              "description": "Opaque cursor for retrieving the next page of users."
+            },
+            "page_size": {
+              "type": "integer",
+              "maximum": 100,
+              "description": "Maximum number of users to return in this page."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "results": {
+              "type": "array",
+              "description": "List of user objects each containing user_id, name, and email."
+            },
+            "next_cursor": {
+              "type": "string",
+              "description": "Cursor for retrieving the next page; null when no more pages exist."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_retrieve_user",
+        "description": "Fetch detailed information about a specific user.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "user_id": {
+              "type": "string",
+              "description": "The unique identifier of the user to retrieve."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "user_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "user_id": {
+              "type": "string",
+              "description": "The unique identifier of the retrieved user."
+            },
+            "name": {
+              "type": "string",
+              "description": "Display name of the user."
+            },
+            "email": {
+              "type": "string",
+              "description": "Email address associated with the user account."
+            },
+            "type": {
+              "type": "string",
+              "description": "User type such as person or bot."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_retrieve_bot_user",
+        "description": "Fetch information about the bot user associated with the current integration token.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "user_id": {
+              "type": "string",
+              "description": "The unique identifier of the bot user."
+            },
+            "name": {
+              "type": "string",
+              "description": "Display name of the bot."
+            },
+            "owner": {
+              "type": "object",
+              "description": "Owner information for this bot integration."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_create_comment",
+        "description": "Add a new comment to a page or an existing discussion thread.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "rich_text": {
+              "type": "array",
+              "description": "Rich-text array representing the body of the comment."
+            },
+            "parent": {
+              "type": "object",
+              "description": "Must contain page_id when starting a new thread."
+            },
+            "discussion_id": {
+              "type": "string",
+              "description": "Existing discussion thread ID when replying to a thread."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "rich_text"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "comment_id": {
+              "type": "string",
+              "description": "The unique identifier assigned to the newly created comment."
+            },
+            "rich_text": {
+              "type": "array",
+              "description": "The rich-text content as stored after creation."
+            },
+            "created_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp marking comment creation."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_retrieve_comments",
+        "description": "Fetch unresolved comments attached to a page or block with optional pagination.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "block_id": {
+              "type": "string",
+              "description": "The unique identifier of the page or block whose comments are requested."
+            },
+            "start_cursor": {
+              "type": "string",
+              "description": "Opaque cursor for retrieving the next page of comments."
+            },
+            "page_size": {
+              "type": "integer",
+              "maximum": 100,
+              "description": "Maximum number of comments to return in this page."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "block_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "results": {
+              "type": "array",
+              "description": "List of comment objects each containing comment_id, rich_text, and created_time."
+            },
+            "next_cursor": {
+              "type": "string",
+              "description": "Cursor for retrieving the next page; null when no more pages exist."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_update_comment",
+        "description": "Modify the rich-text content of an existing comment.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "comment_id": {
+              "type": "string",
+              "description": "The unique identifier of the comment to update."
+            },
+            "rich_text": {
+              "type": "array",
+              "description": "New rich-text array replacing the previous content."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "comment_id",
+            "rich_text"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "comment_id": {
+              "type": "string",
+              "description": "The unique identifier of the updated comment."
+            },
+            "rich_text": {
+              "type": "array",
+              "description": "The rich-text content after the update."
+            },
+            "last_edited_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp of the most recent edit."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_delete_comment",
+        "description": "Delete a specific comment.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "comment_id": {
+              "type": "string",
+              "description": "The unique identifier of the comment to delete."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "comment_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "comment_id": {
+              "type": "string",
+              "description": "The unique identifier of the deleted comment."
+            },
+            "deleted": {
+              "type": "boolean",
+              "description": "True if the comment was successfully removed."
+            }
+          }
+        }
+      },
+      {
+        "name": "notion_resolve_comment",
+        "description": "Mark a comment as resolved or unresolved.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "comment_id": {
+              "type": "string",
+              "description": "The unique identifier of the comment to resolve or unresolve."
+            },
+            "resolved": {
+              "type": "boolean",
+              "default": true,
+              "description": "True to mark as resolved; false to reopen."
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "default": "markdown",
+              "description": "Response format selector applied across all tools."
+            }
+          },
+          "required": [
+            "comment_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "comment_id": {
+              "type": "string",
+              "description": "The unique identifier of the resolved comment."
+            },
+            "resolved": {
+              "type": "boolean",
+              "description": "Resolution status after the operation."
+            },
+            "resolved_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp when the comment was resolved; absent when unresolved."
+            },
+            "resolved_by": {
+              "type": "object",
+              "description": "User who resolved the comment; absent when unresolved."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\nfrom datetime import datetime\nimport uuid\n\n# Section 1: Schema\nclass Block(BaseModel):\n    \"\"\"Represents a Notion block.\"\"\"\n    block_id: str = Field(..., description=\"Unique identifier of the block\")\n    type: str = Field(..., description=\"Block type\")\n    content: Dict[str, Any] = Field(default={}, description=\"Block content\")\n    created_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"ISO 8601 timestamp\")\n    last_edited_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"ISO 8601 timestamp\")\n    parent_id: Optional[str] = Field(default=None, description=\"Parent block/page ID\")\n    archived: bool = Field(default=False, description=\"Whether block is archived\")\n\nclass Page(BaseModel):\n    \"\"\"Represents a Notion page.\"\"\"\n    page_id: str = Field(..., description=\"Unique identifier of the page\")\n    title: str = Field(..., description=\"Page title\")\n    properties: Dict[str, Any] = Field(default={}, description=\"Page properties\")\n    created_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"ISO 8601 timestamp\")\n    last_edited_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"ISO 8601 timestamp\")\n    parent: Optional[Dict[str, Any]] = Field(default=None, description=\"Parent descriptor\")\n    archived: bool = Field(default=False, description=\"Whether page is archived\")\n\nclass Database(BaseModel):\n    \"\"\"Represents a Notion database.\"\"\"\n    database_id: str = Field(..., description=\"Unique identifier of the database\")\n    title: str = Field(..., description=\"Database title\")\n    properties: Dict[str, Any] = Field(default={}, description=\"Database property schema\")\n    created_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"ISO 8601 timestamp\")\n    last_edited_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"ISO 8601 timestamp\")\n    parent: Optional[Dict[str, Any]] = Field(default=None, description=\"Parent descriptor\")\n    archived: bool = Field(default=False, description=\"Whether database is archived\")\n\nclass User(BaseModel):\n    \"\"\"Represents a Notion user.\"\"\"\n    user_id: str = Field(..., description=\"Unique identifier of the user\")\n    name: str = Field(..., description=\"User name\")\n    email: Optional[str] = Field(default=None, description=\"User email\")\n    type: str = Field(default=\"person\", description=\"User type\")\n\nclass Comment(BaseModel):\n    \"\"\"Represents a Notion comment.\"\"\"\n    comment_id: str = Field(..., description=\"Unique identifier of the comment\")\n    rich_text: List[Dict[str, Any]] = Field(..., description=\"Comment content\")\n    created_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"ISO 8601 timestamp\")\n    last_edited_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"ISO 8601 timestamp\")\n    parent_id: str = Field(..., description=\"Parent page/block ID\")\n    discussion_id: Optional[str] = Field(default=None, description=\"Discussion thread ID\")\n    resolved: bool = Field(default=False, description=\"Whether comment is resolved\")\n    resolved_time: Optional[str] = Field(default=None, pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"ISO 8601 timestamp\")\n    resolved_by: Optional[Dict[str, Any]] = Field(default=None, description=\"User who resolved\")\n\nclass NotionScenario(BaseModel):\n    \"\"\"Main scenario model for Notion workspace.\"\"\"\n    blocks: Dict[str, Block] = Field(default={}, description=\"All blocks in workspace\")\n    pages: Dict[str, Page] = Field(default={}, description=\"All pages in workspace\")\n    databases: Dict[str, Database] = Field(default={}, description=\"All databases in workspace\")\n    users: Dict[str, User] = Field(default={}, description=\"All users in workspace\")\n    comments: Dict[str, Comment] = Field(default={}, description=\"All comments in workspace\")\n    blockChildren: Dict[str, List[str]] = Field(default={}, description=\"Mapping of block ID to child block IDs\")\n    pageChildren: Dict[str, List[str]] = Field(default={}, description=\"Mapping of page ID to child block IDs\")\n    databaseItems: Dict[str, List[str]] = Field(default={}, description=\"Mapping of database ID to page IDs\")\n    commentThreads: Dict[str, List[str]] = Field(default={}, description=\"Mapping of parent ID to comment IDs\")\n\nScenario_Schema = [Block, Page, Database, User, Comment, NotionScenario]\n\n# Section 2: Class\nclass NotionAPI:\n    def __init__(self):\n        \"\"\"Initialize Notion API with empty state.\"\"\"\n        self.blocks: Dict[str, Block] = {}\n        self.pages: Dict[str, Page] = {}\n        self.databases: Dict[str, Database] = {}\n        self.users: Dict[str, User] = {}\n        self.comments: Dict[str, Comment] = {}\n        self.blockChildren: Dict[str, List[str]] = {}\n        self.pageChildren: Dict[str, List[str]] = {}\n        self.databaseItems: Dict[str, List[str]] = {}\n        self.commentThreads: Dict[str, List[str]] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = NotionScenario(**scenario)\n        self.blocks = model.blocks\n        self.pages = model.pages\n        self.databases = model.databases\n        self.users = model.users\n        self.comments = model.comments\n        self.blockChildren = model.blockChildren\n        self.pageChildren = model.pageChildren\n        self.databaseItems = model.databaseItems\n        self.commentThreads = model.commentThreads\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"blocks\": {block_id: block.dict() for block_id, block in self.blocks.items()},\n            \"pages\": {page_id: page.dict() for page_id, page in self.pages.items()},\n            \"databases\": {db_id: db.dict() for db_id, db in self.databases.items()},\n            \"users\": {user_id: user.dict() for user_id, user in self.users.items()},\n            \"comments\": {comment_id: comment.dict() for comment_id, comment in self.comments.items()},\n            \"blockChildren\": self.blockChildren,\n            \"pageChildren\": self.pageChildren,\n            \"databaseItems\": self.databaseItems,\n            \"commentThreads\": self.commentThreads\n        }\n\n    def _generate_timestamp(self) -> str:\n        \"\"\"Generate ISO 8601 timestamp.\"\"\"\n        return datetime.utcnow().strftime(\"%Y-%m-%dT%H:%M:%S\")\n\n    def _generate_id(self) -> str:\n        \"\"\"Generate unique ID.\"\"\"\n        return str(uuid.uuid4())\n\n    def notion_append_block_children(self, block_id: str, children: List[Dict[str, Any]], format: str = \"markdown\") -> dict:\n        \"\"\"Append one or more child blocks to an existing parent block.\"\"\"\n        if block_id not in self.blocks:\n            raise ValueError(f\"Block {block_id} not found\")\n        \n        child_ids = []\n        for child_data in children:\n            child_id = self._generate_id()\n            block = Block(\n                block_id=child_id,\n                type=child_data.get(\"type\", \"paragraph\"),\n                content=child_data.get(\"content\", {}),\n                created_time=self._generate_timestamp(),\n                last_edited_time=self._generate_timestamp(),\n                parent_id=block_id\n            )\n            self.blocks[child_id] = block\n            child_ids.append(child_id)\n        \n        if block_id not in self.blockChildren:\n            self.blockChildren[block_id] = []\n        self.blockChildren[block_id].extend(child_ids)\n        \n        return {\n            \"block_id\": block_id,\n            \"children_count\": len(self.blockChildren[block_id])\n        }\n\n    def notion_retrieve_block_children(self, block_id: str, start_cursor: Optional[str] = None, page_size: int = 100, format: str = \"markdown\") -> dict:\n        \"\"\"Fetch the child blocks contained within a given parent block with optional pagination.\"\"\"\n        if block_id not in self.blocks:\n            raise ValueError(f\"Block {block_id} not found\")\n        \n        children = self.blockChildren.get(block_id, [])\n        results = []\n        \n        start_idx = 0\n        if start_cursor:\n            try:\n                start_idx = children.index(start_cursor) + 1\n            except ValueError:\n                start_idx = 0\n        \n        end_idx = min(start_idx + page_size, len(children))\n        page_children = children[start_idx:end_idx]\n        \n        for child_id in page_children:\n            if child_id in self.blocks:\n                block = self.blocks[child_id]\n                results.append({\n                    \"block_id\": block.block_id,\n                    \"type\": block.type,\n                    \"content\": block.content\n                })\n        \n        next_cursor = None\n        if end_idx < len(children):\n            next_cursor = children[end_idx - 1] if end_idx > 0 else None\n        \n        return {\n            \"results\": results,\n            \"next_cursor\": next_cursor\n        }\n\n    def notion_create_block(self, parent_id: str, block_type: str, content: Dict[str, Any], format: str = \"markdown\") -> dict:\n        \"\"\"Create a single new block and attach it to the specified parent page or block.\"\"\"\n        block_id = self._generate_id()\n        timestamp = self._generate_timestamp()\n        \n        block = Block(\n            block_id=block_id,\n            type=block_type,\n            content=content,\n            created_time=timestamp,\n            last_edited_time=timestamp,\n            parent_id=parent_id\n        )\n        self.blocks[block_id] = block\n        \n        if parent_id in self.blocks:\n            if parent_id not in self.blockChildren:\n                self.blockChildren[parent_id] = []\n            self.blockChildren[parent_id].append(block_id)\n        elif parent_id in self.pages:\n            if parent_id not in self.pageChildren:\n                self.pageChildren[parent_id] = []\n            self.pageChildren[parent_id].append(block_id)\n        \n        return {\n            \"block_id\": block_id,\n            \"type\": block_type,\n            \"content\": content,\n            \"created_time\": timestamp,\n            \"last_edited_time\": timestamp\n        }\n\n    def notion_update_block(self, block_id: str, block_type: Optional[str] = None, content: Optional[Dict[str, Any]] = None, archived: Optional[bool] = None, format: str = \"markdown\") -> dict:\n        \"\"\"Modify the type, content, or archived status of an existing block.\"\"\"\n        if block_id not in self.blocks:\n            raise ValueError(f\"Block {block_id} not found\")\n        \n        block = self.blocks[block_id]\n        if block_type is not None:\n            block.type = block_type\n        if content is not None:\n            block.content = content\n        if archived is not None:\n            block.archived = archived\n        block.last_edited_time = self._generate_timestamp()\n        \n        return {\n            \"block_id\": block_id,\n            \"type\": block.type,\n            \"content\": block.content,\n            \"last_edited_time\": block.last_edited_time\n        }\n\n    def notion_delete_block(self, block_id: str, format: str = \"markdown\") -> dict:\n        \"\"\"Delete (archive) a specific block.\"\"\"\n        if block_id not in self.blocks:\n            raise ValueError(f\"Block {block_id} not found\")\n        \n        self.blocks[block_id].archived = True\n        self.blocks[block_id].last_edited_time = self._generate_timestamp()\n        \n        return {\n            \"block_id\": block_id,\n            \"deleted\": True\n        }\n\n    def notion_retrieve_page(self, page_id: str, format: str = \"markdown\") -> dict:\n        \"\"\"Fetch metadata and properties of a specific page.\"\"\"\n        if page_id not in self.pages:\n            raise ValueError(f\"Page {page_id} not found\")\n        \n        page = self.pages[page_id]\n        return {\n            \"page_id\": page.page_id,\n            \"title\": page.title,\n            \"properties\": page.properties,\n            \"created_time\": page.created_time,\n            \"last_edited_time\": page.last_edited_time\n        }\n\n    def notion_create_page(self, parent: Dict[str, Any], properties: Optional[Dict[str, Any]] = None, children: Optional[List[Dict[str, Any]]] = None, format: str = \"markdown\") -> dict:\n        \"\"\"Create a new page inside a specified parent page or database.\"\"\"\n        page_id = self._generate_id()\n        timestamp = self._generate_timestamp()\n        \n        page = Page(\n            page_id=page_id,\n            title=\"New Page\",\n            properties=properties or {},\n            created_time=timestamp,\n            last_edited_time=timestamp,\n            parent=parent\n        )\n        self.pages[page_id] = page\n        \n        if children:\n            for child_data in children:\n                child_id = self._generate_id()\n                block = Block(\n                    block_id=child_id,\n                    type=child_data.get(\"type\", \"paragraph\"),\n                    content=child_data.get(\"content\", {}),\n                    created_time=timestamp,\n                    last_edited_time=timestamp,\n                    parent_id=page_id\n                )\n                self.blocks[child_id] = block\n                if page_id not in self.pageChildren:\n                    self.pageChildren[page_id] = []\n                self.pageChildren[page_id].append(child_id)\n        \n        return {\n            \"page_id\": page_id,\n            \"parent\": parent,\n            \"properties\": page.properties,\n            \"created_time\": timestamp,\n            \"last_edited_time\": timestamp\n        }\n\n    def notion_delete_page(self, page_id: str, format: str = \"markdown\") -> dict:\n        \"\"\"Delete (archive) a specific page.\"\"\"\n        if page_id not in self.pages:\n            raise ValueError(f\"Page {page_id} not found\")\n        \n        self.pages[page_id].archived = True\n        self.pages[page_id].last_edited_time = self._generate_timestamp()\n        \n        return {\n            \"page_id\": page_id,\n            \"deleted\": True,\n            \"archived\": True\n        }\n\n    def notion_update_page_properties(self, page_id: str, properties: Dict[str, Any], format: str = \"markdown\") -> dict:\n        \"\"\"Update property values of an existing page.\"\"\"\n        if page_id not in self.pages:\n            raise ValueError(f\"Page {page_id} not found\")\n        \n        page = self.pages[page_id]\n        updated_keys = []\n        for key, value in properties.items():\n            if key in page.properties:\n                if page.properties[key] != value:\n                    updated_keys.append(key)\n            else:\n                updated_keys.append(key)\n            page.properties[key] = value\n        \n        page.last_edited_time = self._generate_timestamp()\n        \n        return {\n            \"page_id\": page_id,\n            \"updated_properties\": updated_keys,\n            \"last_edited_time\": page.last_edited_time\n        }\n\n    def notion_update_page_content(self, page_id: str, children: List[Dict[str, Any]], format: str = \"markdown\") -> dict:\n        \"\"\"Append or replace content blocks within an existing page.\"\"\"\n        if page_id not in self.pages:\n            raise ValueError(f\"Page {page_id} not found\")\n        \n        timestamp = self._generate_timestamp()\n        \n        for child_data in children:\n            child_id = self._generate_id()\n            block = Block(\n                block_id=child_id,\n                type=child_data.get(\"type\", \"paragraph\"),\n                content=child_data.get(\"content\", {}),\n                created_time=timestamp,\n                last_edited_time=timestamp,\n                parent_id=page_id\n            )\n            self.blocks[child_id] = block\n            if page_id not in self.pageChildren:\n                self.pageChildren[page_id] = []\n            self.pageChildren[page_id].append(child_id)\n        \n        self.pages[page_id].last_edited_time = timestamp\n        \n        return {\n            \"page_id\": page_id,\n            \"children_count\": len(self.pageChildren.get(page_id, [])),\n            \"last_edited_time\": timestamp\n        }\n\n    def notion_create_database(self, parent: Dict[str, Any], title: List[Dict[str, Any]], properties: Dict[str, Any], format: str = \"markdown\") -> dict:\n        \"\"\"Create a new database inside a specified parent page or workspace.\"\"\"\n        database_id = self._generate_id()\n        timestamp = self._generate_timestamp()\n        \n        db = Database(\n            database_id=database_id,\n            title=\"New Database\",\n            properties=properties,\n            created_time=timestamp,\n            last_edited_time=timestamp,\n            parent=parent\n        )\n        self.databases[database_id] = db\n        \n        return {\n            \"database_id\": database_id,\n            \"title\": \"New Database\",\n            \"properties\": properties,\n            \"created_time\": timestamp\n        }\n\n    def notion_query_database(self, database_id: str, filter: Optional[Dict[str, Any]] = None, sorts: Optional[List[Dict[str, Any]]] = None, start_cursor: Optional[str] = None, page_size: int = 100, format: str = \"markdown\") -> dict:\n        \"\"\"Query a database and retrieve pages that match optional filter and sort criteria.\"\"\"\n        if database_id not in self.databases:\n            raise ValueError(f\"Database {database_id} not found\")\n        \n        items = self.databaseItems.get(database_id, [])\n        results = []\n        \n        start_idx = 0\n        if start_cursor:\n            try:\n                start_idx = items.index(start_cursor) + 1\n            except ValueError:\n                start_idx = 0\n        \n        end_idx = min(start_idx + page_size, len(items))\n        page_items = items[start_idx:end_idx]\n        \n        for page_id in page_items:\n            if page_id in self.pages:\n                page = self.pages[page_id]\n                results.append({\n                    \"page_id\": page.page_id,\n                    \"properties\": page.properties\n                })\n        \n        next_cursor = None\n        if end_idx < len(items):\n            next_cursor = items[end_idx - 1] if end_idx > 0 else None\n        \n        return {\n            \"results\": results,\n            \"next_cursor\": next_cursor,\n            \"has_more\": end_idx < len(items)\n        }\n\n    def notion_retrieve_database(self, database_id: str, format: str = \"markdown\") -> dict:\n        \"\"\"Fetch metadata and property schema of a specific database.\"\"\"\n        if database_id not in self.databases:\n            raise ValueError(f\"Database {database_id} not found\")\n        \n        db = self.databases[database_id]\n        return {\n            \"database_id\": db.database_id,\n            \"title\": db.title,\n            \"properties\": db.properties,\n            \"created_time\": db.created_time,\n            \"last_edited_time\": db.last_edited_time\n        }\n\n    def notion_update_database(self, database_id: str, title: Optional[List[Dict[str, Any]]] = None, description: Optional[List[Dict[str, Any]]] = None, properties: Optional[Dict[str, Any]] = None, format: str = \"markdown\") -> dict:\n        \"\"\"Modify title, description, or property schema of an existing database.\"\"\"\n        if database_id not in self.databases:\n            raise ValueError(f\"Database {database_id} not found\")\n        \n        db = self.databases[database_id]\n        if title is not None:\n            db.title = \"Updated Database\"\n        if properties is not None:\n            db.properties.update(properties)\n        \n        db.last_edited_time = self._generate_timestamp()\n        \n        return {\n            \"database_id\": database_id,\n            \"last_edited_time\": db.last_edited_time\n        }\n\n    def notion_delete_database(self, database_id: str, format: str = \"markdown\") -> dict:\n        \"\"\"Delete (archive) a specific database.\"\"\"\n        if database_id not in self.databases:\n            raise ValueError(f\"Database {database_id} not found\")\n        \n        self.databases[database_id].archived = True\n        self.databases[database_id].last_edited_time = self._generate_timestamp()\n        \n        return {\n            \"database_id\": database_id,\n            \"deleted\": True,\n            \"archived\": True\n        }\n\n    def notion_create_database_item(self, database_id: str, properties: Dict[str, Any], format: str = \"markdown\") -> dict:\n        \"\"\"Add a new row (page) to a database with the provided properties.\"\"\"\n        if database_id not in self.databases:\n            raise ValueError(f\"Database {database_id} not found\")\n        \n        page_id = self._generate_id()\n        timestamp = self._generate_timestamp()\n        \n        page = Page(\n            page_id=page_id,\n            title=\"Database Item\",\n            properties=properties,\n            created_time=timestamp,\n            last_edited_time=timestamp,\n            parent={\"database_id\": database_id}\n        )\n        self.pages[page_id] = page\n        \n        if database_id not in self.databaseItems:\n            self.databaseItems[database_id] = []\n        self.databaseItems[database_id].append(page_id)\n        \n        return {\n            \"page_id\": page_id,\n            \"database_id\": database_id,\n            \"properties\": properties,\n            \"created_time\": timestamp\n        }\n\n    def notion_search(self, query: Optional[str] = None, filter: Optional[Dict[str, Any]] = None, sort: Optional[Dict[str, Any]] = None, start_cursor: Optional[str] = None, page_size: int = 100, format: str = \"markdown\") -> dict:\n        \"\"\"Global search across pages and databases by title with optional filtering and sorting.\"\"\"\n        results = []\n        \n        # Search pages\n        for page_id, page in self.pages.items():\n            if not page.archived:\n                if query is None or query.lower() in page.title.lower():\n                    results.append({\n                        \"object_id\": page_id,\n                        \"object_type\": \"page\",\n                        \"title\": page.title\n                    })\n        \n        # Search databases\n        for db_id, db in self.databases.items():\n            if not db.archived:\n                if query is None or query.lower() in db.title.lower():\n                    results.append({\n                        \"object_id\": db_id,\n                        \"object_type\": \"database\",\n                        \"title\": db.title\n                    })\n        \n        # Pagination\n        start_idx = 0\n        if start_cursor:\n            try:\n                start_idx = int(start_cursor)\n            except ValueError:\n                start_idx = 0\n        \n        end_idx = min(start_idx + page_size, len(results))\n        page_results = results[start_idx:end_idx]\n        \n        next_cursor = None\n        if end_idx < len(results):\n            next_cursor = str(end_idx)\n        \n        return {\n            \"results\": page_results,\n            \"next_cursor\": next_cursor,\n            \"has_more\": end_idx < len(results)\n        }\n\n    def notion_list_all_users(self, start_cursor: Optional[str] = None, page_size: int = 100, format: str = \"markdown\") -> dict:\n        \"\"\"List every user in the workspace with optional pagination.\"\"\"\n        users = list(self.users.values())\n        \n        start_idx = 0\n        if start_cursor:\n            try:\n                start_idx = int(start_cursor)\n            except ValueError:\n                start_idx = 0\n        \n        end_idx = min(start_idx + page_size, len(users))\n        page_users = users[start_idx:end_idx]\n        \n        results = []\n        for user in page_users:\n            results.append({\n                \"user_id\": user.user_id,\n                \"name\": user.name,\n                \"email\": user.email\n            })\n        \n        next_cursor = None\n        if end_idx < len(users):\n            next_cursor = str(end_idx)\n        \n        return {\n            \"results\": results,\n            \"next_cursor\": next_cursor\n        }\n\n    def notion_retrieve_user(self, user_id: str, format: str = \"markdown\") -> dict:\n        \"\"\"Fetch detailed information about a specific user.\"\"\"\n        if user_id not in self.users:\n            raise ValueError(f\"User {user_id} not found\")\n        \n        user = self.users[user_id]\n        return {\n            \"user_id\": user.user_id,\n            \"name\": user.name,\n            \"email\": user.email,\n            \"type\": user.type\n        }\n\n    def notion_retrieve_bot_user(self, format: str = \"markdown\") -> dict:\n        \"\"\"Fetch information about the bot user associated with the current integration token.\"\"\"\n        bot_user_id = \"bot_user_001\"\n        if bot_user_id not in self.users:\n            self.users[bot_user_id] = User(\n                user_id=bot_user_id,\n                name=\"Notion Bot\",\n                type=\"bot\"\n            )\n        \n        bot = self.users[bot_user_id]\n        return {\n            \"user_id\": bot.user_id,\n            \"name\": bot.name,\n            \"owner\": {\"type\": \"integration\", \"id\": \"integration_001\"}\n        }\n\n    def notion_create_comment(self, rich_text: List[Dict[str, Any]], parent: Optional[Dict[str, Any]] = None, discussion_id: Optional[str] = None, format: str = \"markdown\") -> dict:\n        \"\"\"Add a new comment to a page or an existing discussion thread.\"\"\"\n        comment_id = self._generate_id()\n        timestamp = self._generate_timestamp()\n        \n        parent_id = None\n        if parent and \"page_id\" in parent:\n            parent_id = parent[\"page_id\"]\n        elif discussion_id:\n            # Find parent from existing discussion\n            for comment in self.comments.values():\n                if comment.discussion_id == discussion_id:\n                    parent_id = comment.parent_id\n                    break\n        \n        if not parent_id:\n            raise ValueError(\"Parent page_id or discussion_id required\")\n        \n        comment = Comment(\n            comment_id=comment_id,\n            rich_text=rich_text,\n            created_time=timestamp,\n            last_edited_time=timestamp,\n            parent_id=parent_id,\n            discussion_id=discussion_id or self._generate_id()\n        )\n        self.comments[comment_id] = comment\n        \n        if parent_id not in self.commentThreads:\n            self.commentThreads[parent_id] = []\n        self.commentThreads[parent_id].append(comment_id)\n        \n        return {\n            \"comment_id\": comment_id,\n            \"rich_text\": rich_text,\n            \"created_time\": timestamp\n        }\n\n    def notion_retrieve_comments(self, block_id: str, start_cursor: Optional[str] = None, page_size: int = 100, format: str = \"markdown\") -> dict:\n        \"\"\"Fetch unresolved comments attached to a page or block with optional pagination.\"\"\"\n        comments = []\n        for comment in self.comments.values():\n            if comment.parent_id == block_id and not comment.resolved:\n                comments.append(comment)\n        \n        start_idx = 0\n        if start_cursor:\n            try:\n                start_idx = int(start_cursor)\n            except ValueError:\n                start_idx = 0\n        \n        end_idx = min(start_idx + page_size, len(comments))\n        page_comments = comments[start_idx:end_idx]\n        \n        results = []\n        for comment in page_comments:\n            results.append({\n                \"comment_id\": comment.comment_id,\n                \"rich_text\": comment.rich_text,\n                \"created_time\": comment.created_time\n            })\n        \n        next_cursor = None\n        if end_idx < len(comments):\n            next_cursor = str(end_idx)\n        \n        return {\n            \"results\": results,\n            \"next_cursor\": next_cursor\n        }\n\n    def notion_update_comment(self, comment_id: str, rich_text: List[Dict[str, Any]], format: str = \"markdown\") -> dict:\n        \"\"\"Modify the rich-text content of an existing comment.\"\"\"\n        if comment_id not in self.comments:\n            raise ValueError(f\"Comment {comment_id} not found\")\n        \n        comment = self.comments[comment_id]\n        comment.rich_text = rich_text\n        comment.last_edited_time = self._generate_timestamp()\n        \n        return {\n            \"comment_id\": comment_id,\n            \"rich_text\": rich_text,\n            \"last_edited_time\": comment.last_edited_time\n        }\n\n    def notion_delete_comment(self, comment_id: str, format: str = \"markdown\") -> dict:\n        \"\"\"Delete a specific comment.\"\"\"\n        if comment_id not in self.comments:\n            raise ValueError(f\"Comment {comment_id} not found\")\n        \n        del self.comments[comment_id]\n        \n        return {\n            \"comment_id\": comment_id,\n            \"deleted\": True\n        }\n\n    def notion_resolve_comment(self, comment_id: str, resolved: bool = True, format: str = \"markdown\") -> dict:\n        \"\"\"Mark a comment as resolved or unresolved.\"\"\"\n        if comment_id not in self.comments:\n            raise ValueError(f\"Comment {comment_id} not found\")\n        \n        comment = self.comments[comment_id]\n        comment.resolved = resolved\n        if resolved:\n            comment.resolved_time = self._generate_timestamp()\n            comment.resolved_by = {\"user_id\": \"current_user\"}\n        else:\n            comment.resolved_time = None\n            comment.resolved_by = None\n        \n        return {\n            \"comment_id\": comment_id,\n            \"resolved\": resolved,\n            \"resolved_time\": comment.resolved_time,\n            \"resolved_by\": comment.resolved_by\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"NotionAPI\")\napi = NotionAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"Load scenario data into the Notion API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching NotionScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"Save current Notion state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_append_block_children(block_id: str, children: List[Dict[str, Any]], format: str = \"markdown\") -> dict:\n    \"\"\"Append one or more child blocks to an existing parent block.\n    \n    Args:\n        block_id (str): The unique identifier of the parent block that will receive the children.\n        children (List[Dict[str, Any]]): Array of block objects to append under the parent.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        block_id (str): The unique identifier of the parent block that now contains the new children.\n        children_count (int): Total number of child blocks now present under the parent.\n    \"\"\"\n    try:\n        if not block_id or not isinstance(block_id, str):\n            raise ValueError(\"Block ID must be a non-empty string\")\n        if not children or not isinstance(children, list):\n            raise ValueError(\"Children must be a non-empty list\")\n        return api.notion_append_block_children(block_id, children, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_retrieve_block_children(block_id: str, start_cursor: Optional[str] = None, page_size: int = 100, format: str = \"markdown\") -> dict:\n    \"\"\"Fetch the child blocks contained within a given parent block with optional pagination.\n    \n    Args:\n        block_id (str): The unique identifier of the parent block whose children are requested.\n        start_cursor (str): Opaque cursor for retrieving the next page of results.\n        page_size (int): Maximum number of child blocks to return in this page.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        results (List[Dict[str, Any]]): List of child block objects each containing block_id, type, and content.\n        next_cursor (str): Cursor for retrieving the next page of children; null when no more pages exist.\n    \"\"\"\n    try:\n        if not block_id or not isinstance(block_id, str):\n            raise ValueError(\"Block ID must be a non-empty string\")\n        if not isinstance(page_size, int) or page_size < 1 or page_size > 100:\n            raise ValueError(\"Page size must be an integer between 1 and 100\")\n        return api.notion_retrieve_block_children(block_id, start_cursor, page_size, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_create_block(parent_id: str, block_type: str, content: Dict[str, Any], format: str = \"markdown\") -> dict:\n    \"\"\"Create a single new block and attach it to the specified parent page or block.\n    \n    Args:\n        parent_id (str): The unique identifier of the parent page or block that will contain the new block.\n        block_type (str): Notion block type such as paragraph, heading_1, bulleted_list_item, etc.\n        content (Dict[str, Any]): Structure matching the chosen block_type that defines the block's content.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        block_id (str): The unique identifier assigned to the newly created block.\n        type (str): The block type as stored in Notion.\n        content (Dict[str, Any]): The content payload persisted for this block.\n        created_time (str): ISO 8601 timestamp marking block creation.\n        last_edited_time (str): ISO 8601 timestamp of the most recent edit.\n    \"\"\"\n    try:\n        if not parent_id or not isinstance(parent_id, str):\n            raise ValueError(\"Parent ID must be a non-empty string\")\n        if not block_type or not isinstance(block_type, str):\n            raise ValueError(\"Block type must be a non-empty string\")\n        if not content or not isinstance(content, dict):\n            raise ValueError(\"Content must be a non-empty dictionary\")\n        return api.notion_create_block(parent_id, block_type, content, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_update_block(block_id: str, block_type: Optional[str] = None, content: Optional[Dict[str, Any]] = None, archived: Optional[bool] = None, format: str = \"markdown\") -> dict:\n    \"\"\"Modify the type, content, or archived status of an existing block.\n    \n    Args:\n        block_id (str): The unique identifier of the block to update.\n        block_type (str): New block type if changing the type.\n        content (Dict[str, Any]): Updated content structure matching the block type.\n        archived (bool): Whether to archive (true) or restore (false) the block.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        block_id (str): The unique identifier of the updated block.\n        type (str): The block type after the update.\n        content (Dict[str, Any]): The content payload after the update.\n        last_edited_time (str): ISO 8601 timestamp of the most recent edit.\n    \"\"\"\n    try:\n        if not block_id or not isinstance(block_id, str):\n            raise ValueError(\"Block ID must be a non-empty string\")\n        return api.notion_update_block(block_id, block_type, content, archived, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_delete_block(block_id: str, format: str = \"markdown\") -> dict:\n    \"\"\"Delete (archive) a specific block.\n    \n    Args:\n        block_id (str): The unique identifier of the block to delete.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        block_id (str): The unique identifier of the deleted block.\n        deleted (bool): True if the block was successfully archived.\n    \"\"\"\n    try:\n        if not block_id or not isinstance(block_id, str):\n            raise ValueError(\"Block ID must be a non-empty string\")\n        return api.notion_delete_block(block_id, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_retrieve_page(page_id: str, format: str = \"markdown\") -> dict:\n    \"\"\"Fetch metadata and properties of a specific page.\n    \n    Args:\n        page_id (str): The unique identifier of the page to retrieve.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        page_id (str): The unique identifier of the retrieved page.\n        title (str): Plain-text title of the page.\n        properties (Dict[str, Any]): Key-value property map as defined in the page's parent database.\n        created_time (str): ISO 8601 timestamp marking page creation.\n        last_edited_time (str): ISO 8601 timestamp of the most recent edit.\n    \"\"\"\n    try:\n        if not page_id or not isinstance(page_id, str):\n            raise ValueError(\"Page ID must be a non-empty string\")\n        return api.notion_retrieve_page(page_id, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_create_page(parent: Dict[str, Any], properties: Optional[Dict[str, Any]] = None, children: Optional[List[Dict[str, Any]]] = None, format: str = \"markdown\") -> dict:\n    \"\"\"Create a new page inside a specified parent page or database.\n    \n    Args:\n        parent (Dict[str, Any]): Parent descriptor containing either page_id or database_id.\n        properties (Dict[str, Any]): Initial property values when the parent is a database.\n        children (List[Dict[str, Any]]): Optional blocks to populate the new page body.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        page_id (str): The unique identifier assigned to the newly created page.\n        parent (Dict[str, Any]): Parent descriptor as stored in Notion.\n        properties (Dict[str, Any]): Properties of the page after creation.\n        created_time (str): ISO 8601 timestamp marking page creation.\n        last_edited_time (str): ISO 8601 timestamp of the most recent edit.\n    \"\"\"\n    try:\n        if not parent or not isinstance(parent, dict):\n            raise ValueError(\"Parent must be a non-empty dictionary\")\n        return api.notion_create_page(parent, properties, children, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_delete_page(page_id: str, format: str = \"markdown\") -> dict:\n    \"\"\"Delete (archive) a specific page.\n    \n    Args:\n        page_id (str): The unique identifier of the page to delete.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        page_id (str): The unique identifier of the deleted page.\n        deleted (bool): True if the page was successfully archived.\n        archived (bool): Mirrors deleted status; true when the page is in the archive.\n    \"\"\"\n    try:\n        if not page_id or not isinstance(page_id, str):\n            raise ValueError(\"Page ID must be a non-empty string\")\n        return api.notion_delete_page(page_id, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_update_page_properties(page_id: str, properties: Dict[str, Any], format: str = \"markdown\") -> dict:\n    \"\"\"Update property values of an existing page.\n    \n    Args:\n        page_id (str): The unique identifier of the page whose properties will be updated.\n        properties (Dict[str, Any]): Map of property names to updated values.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        page_id (str): The unique identifier of the updated page.\n        updated_properties (List[str]): List of property keys that were modified.\n        last_edited_time (str): ISO 8601 timestamp of the most recent edit.\n    \"\"\"\n    try:\n        if not page_id or not isinstance(page_id, str):\n            raise ValueError(\"Page ID must be a non-empty string\")\n        if not properties or not isinstance(properties, dict):\n            raise ValueError(\"Properties must be a non-empty dictionary\")\n        return api.notion_update_page_properties(page_id, properties, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_update_page_content(page_id: str, children: List[Dict[str, Any]], format: str = \"markdown\") -> dict:\n    \"\"\"Append or replace content blocks within an existing page.\n    \n    Args:\n        page_id (str): The unique identifier of the page whose content will be updated.\n        children (List[Dict[str, Any]]): Array of block objects to append to the page.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        page_id (str): The unique identifier of the updated page.\n        children_count (int): Total number of child blocks now present on the page.\n        last_edited_time (str): ISO 8601 timestamp of the most recent edit.\n    \"\"\"\n    try:\n        if not page_id or not isinstance(page_id, str):\n            raise ValueError(\"Page ID must be a non-empty string\")\n        if not children or not isinstance(children, list):\n            raise ValueError(\"Children must be a non-empty list\")\n        return api.notion_update_page_content(page_id, children, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_create_database(parent: Dict[str, Any], title: List[Dict[str, Any]], properties: Dict[str, Any], format: str = \"markdown\") -> dict:\n    \"\"\"Create a new database inside a specified parent page or workspace.\n    \n    Args:\n        parent (Dict[str, Any]): Parent descriptor containing either page_id or workspace flag.\n        title (List[Dict[str, Any]]): Rich-text array representing the database title.\n        properties (Dict[str, Any]): Schema definition for database properties.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        database_id (str): The unique identifier assigned to the newly created database.\n        title (str): Plain-text title of the database.\n        properties (Dict[str, Any]): Property schema as stored in Notion.\n        created_time (str): ISO 8601 timestamp marking database creation.\n    \"\"\"\n    try:\n        if not parent or not isinstance(parent, dict):\n            raise ValueError(\"Parent must be a non-empty dictionary\")\n        if not title or not isinstance(title, list):\n            raise ValueError(\"Title must be a non-empty list\")\n        if not properties or not isinstance(properties, dict):\n            raise ValueError(\"Properties must be a non-empty dictionary\")\n        return api.notion_create_database(parent, title, properties, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_query_database(database_id: str, filter: Optional[Dict[str, Any]] = None, sorts: Optional[List[Dict[str, Any]]] = None, start_cursor: Optional[str] = None, page_size: int = 100, format: str = \"markdown\") -> dict:\n    \"\"\"Query a database and retrieve pages that match optional filter and sort criteria.\n    \n    Args:\n        database_id (str): The unique identifier of the database to query.\n        filter (Dict[str, Any]): Notion filter object to constrain results.\n        sorts (List[Dict[str, Any]]): List of sort objects to order results.\n        start_cursor (str): Opaque cursor for retrieving the next page of results.\n        page_size (int): Maximum number of results to return in this page.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        results (List[Dict[str, Any]]): List of page objects each containing page_id and properties.\n        next_cursor (str): Cursor for retrieving the next page; null when no more pages exist.\n        has_more (bool): True when additional result pages are available.\n    \"\"\"\n    try:\n        if not database_id or not isinstance(database_id, str):\n            raise ValueError(\"Database ID must be a non-empty string\")\n        if not isinstance(page_size, int) or page_size < 1 or page_size > 100:\n            raise ValueError(\"Page size must be an integer between 1 and 100\")\n        return api.notion_query_database(database_id, filter, sorts, start_cursor, page_size, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_retrieve_database(database_id: str, format: str = \"markdown\") -> dict:\n    \"\"\"Fetch metadata and property schema of a specific database.\n    \n    Args:\n        database_id (str): The unique identifier of the database to retrieve.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        database_id (str): The unique identifier of the retrieved database.\n        title (str): Plain-text title of the database.\n        properties (Dict[str, Any]): Property schema defining columns and types.\n        created_time (str): ISO 8601 timestamp marking database creation.\n        last_edited_time (str): ISO 8601 timestamp of the most recent edit.\n    \"\"\"\n    try:\n        if not database_id or not isinstance(database_id, str):\n            raise ValueError(\"Database ID must be a non-empty string\")\n        return api.notion_retrieve_database(database_id, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_update_database(database_id: str, title: Optional[List[Dict[str, Any]]] = None, description: Optional[List[Dict[str, Any]]] = None, properties: Optional[Dict[str, Any]] = None, format: str = \"markdown\") -> dict:\n    \"\"\"Modify title, description, or property schema of an existing database.\n    \n    Args:\n        database_id (str): The unique identifier of the database to update.\n        title (List[Dict[str, Any]]): New rich-text title for the database.\n        description (List[Dict[str, Any]]): New rich-text description for the database.\n        properties (Dict[str, Any]): Updated property schema.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        database_id (str): The unique identifier of the updated database.\n        last_edited_time (str): ISO 8601 timestamp of the most recent edit.\n    \"\"\"\n    try:\n        if not database_id or not isinstance(database_id, str):\n            raise ValueError(\"Database ID must be a non-empty string\")\n        return api.notion_update_database(database_id, title, description, properties, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_delete_database(database_id: str, format: str = \"markdown\") -> dict:\n    \"\"\"Delete (archive) a specific database.\n    \n    Args:\n        database_id (str): The unique identifier of the database to delete.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        database_id (str): The unique identifier of the deleted database.\n        deleted (bool): True if the database was successfully archived.\n        archived (bool): Mirrors deleted status; true when the database is in the archive.\n    \"\"\"\n    try:\n        if not database_id or not isinstance(database_id, str):\n            raise ValueError(\"Database ID must be a non-empty string\")\n        return api.notion_delete_database(database_id, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_create_database_item(database_id: str, properties: Dict[str, Any], format: str = \"markdown\") -> dict:\n    \"\"\"Add a new row (page) to a database with the provided properties.\n    \n    Args:\n        database_id (str): The unique identifier of the database that will contain the new item.\n        properties (Dict[str, Any]): Property values matching the database schema.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        page_id (str): The unique identifier assigned to the newly created page (database row).\n        database_id (str): The unique identifier of the database containing this item.\n        properties (Dict[str, Any]): Property values as stored after creation.\n        created_time (str): ISO 8601 timestamp marking item creation.\n    \"\"\"\n    try:\n        if not database_id or not isinstance(database_id, str):\n            raise ValueError(\"Database ID must be a non-empty string\")\n        if not properties or not isinstance(properties, dict):\n            raise ValueError(\"Properties must be a non-empty dictionary\")\n        return api.notion_create_database_item(database_id, properties, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_search(query: Optional[str] = None, filter: Optional[Dict[str, Any]] = None, sort: Optional[Dict[str, Any]] = None, start_cursor: Optional[str] = None, page_size: int = 100, format: str = \"markdown\") -> dict:\n    \"\"\"Global search across pages and databases by title with optional filtering and sorting.\n    \n    Args:\n        query (str): Text to search for within titles.\n        filter (Dict[str, Any]): Restrict results to only pages or only databases.\n        sort (Dict[str, Any]): Sort criteria for the returned list.\n        start_cursor (str): Opaque cursor for retrieving the next page of results.\n        page_size (int): Maximum number of results to return in this page.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        results (List[Dict[str, Any]]): List of objects each containing object_id, object_type, and title.\n        next_cursor (str): Cursor for retrieving the next page; null when no more pages exist.\n        has_more (bool): True when additional result pages are available.\n    \"\"\"\n    try:\n        if not isinstance(page_size, int) or page_size < 1 or page_size > 100:\n            raise ValueError(\"Page size must be an integer between 1 and 100\")\n        return api.notion_search(query, filter, sort, start_cursor, page_size, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_list_all_users(start_cursor: Optional[str] = None, page_size: int = 100, format: str = \"markdown\") -> dict:\n    \"\"\"List every user in the workspace with optional pagination.\n    \n    Args:\n        start_cursor (str): Opaque cursor for retrieving the next page of users.\n        page_size (int): Maximum number of users to return in this page.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        results (List[Dict[str, Any]]): List of user objects each containing user_id, name, and email.\n        next_cursor (str): Cursor for retrieving the next page; null when no more pages exist.\n    \"\"\"\n    try:\n        if not isinstance(page_size, int) or page_size < 1:\n            raise ValueError(\"Page size must be a positive integer\")\n        return api.notion_list_all_users(start_cursor, page_size, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_retrieve_user(user_id: str, format: str = \"markdown\") -> dict:\n    \"\"\"Fetch detailed information about a specific user.\n    \n    Args:\n        user_id (str): The unique identifier of the user to retrieve.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        user_id (str): The unique identifier of the retrieved user.\n        name (str): Display name of the user.\n        email (str): Email address associated with the user account.\n        type (str): User type such as person or bot.\n    \"\"\"\n    try:\n        if not user_id or not isinstance(user_id, str):\n            raise ValueError(\"User ID must be a non-empty string\")\n        return api.notion_retrieve_user(user_id, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_retrieve_bot_user(format: str = \"markdown\") -> dict:\n    \"\"\"Fetch information about the bot user associated with the current integration token.\n    \n    Args:\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        user_id (str): The unique identifier of the bot user.\n        name (str): Display name of the bot.\n        owner (Dict[str, Any]): Owner information for this bot integration.\n    \"\"\"\n    try:\n        return api.notion_retrieve_bot_user(format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_create_comment(rich_text: List[Dict[str, Any]], parent: Optional[Dict[str, Any]] = None, discussion_id: Optional[str] = None, format: str = \"markdown\") -> dict:\n    \"\"\"Add a new comment to a page or an existing discussion thread.\n    \n    Args:\n        rich_text (List[Dict[str, Any]]): Rich-text array representing the body of the comment.\n        parent (Dict[str, Any]): Must contain page_id when starting a new thread.\n        discussion_id (str): Existing discussion thread ID when replying to a thread.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        comment_id (str): The unique identifier assigned to the newly created comment.\n        rich_text (List[Dict[str, Any]]): The rich-text content as stored after creation.\n        created_time (str): ISO 8601 timestamp marking comment creation.\n    \"\"\"\n    try:\n        if not rich_text or not isinstance(rich_text, list):\n            raise ValueError(\"Rich text must be a non-empty list\")\n        return api.notion_create_comment(rich_text, parent, discussion_id, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_retrieve_comments(block_id: str, start_cursor: Optional[str] = None, page_size: int = 100, format: str = \"markdown\") -> dict:\n    \"\"\"Fetch unresolved comments attached to a page or block with optional pagination.\n    \n    Args:\n        block_id (str): The unique identifier of the page or block whose comments are requested.\n        start_cursor (str): Opaque cursor for retrieving the next page of comments.\n        page_size (int): Maximum number of comments to return in this page.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        results (List[Dict[str, Any]]): List of comment objects each containing comment_id, rich_text, and created_time.\n        next_cursor (str): Cursor for retrieving the next page; null when no more pages exist.\n    \"\"\"\n    try:\n        if not block_id or not isinstance(block_id, str):\n            raise ValueError(\"Block ID must be a non-empty string\")\n        if not isinstance(page_size, int) or page_size < 1:\n            raise ValueError(\"Page size must be a positive integer\")\n        return api.notion_retrieve_comments(block_id, start_cursor, page_size, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_update_comment(comment_id: str, rich_text: List[Dict[str, Any]], format: str = \"markdown\") -> dict:\n    \"\"\"Modify the rich-text content of an existing comment.\n    \n    Args:\n        comment_id (str): The unique identifier of the comment to update.\n        rich_text (List[Dict[str, Any]]): New rich-text array replacing the previous content.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        comment_id (str): The unique identifier of the updated comment.\n        rich_text (List[Dict[str, Any]]): The rich-text content after the update.\n        last_edited_time (str): ISO 8601 timestamp of the most recent edit.\n    \"\"\"\n    try:\n        if not comment_id or not isinstance(comment_id, str):\n            raise ValueError(\"Comment ID must be a non-empty string\")\n        if not rich_text or not isinstance(rich_text, list):\n            raise ValueError(\"Rich text must be a non-empty list\")\n        return api.notion_update_comment(comment_id, rich_text, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_delete_comment(comment_id: str, format: str = \"markdown\") -> dict:\n    \"\"\"Delete a specific comment.\n    \n    Args:\n        comment_id (str): The unique identifier of the comment to delete.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        comment_id (str): The unique identifier of the deleted comment.\n        deleted (bool): True if the comment was successfully removed.\n    \"\"\"\n    try:\n        if not comment_id or not isinstance(comment_id, str):\n            raise ValueError(\"Comment ID must be a non-empty string\")\n        return api.notion_delete_comment(comment_id, format)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notion_resolve_comment(comment_id: str, resolved: bool = True, format: str = \"markdown\") -> dict:\n    \"\"\"Mark a comment as resolved or unresolved.\n    \n    Args:\n        comment_id (str): The unique identifier of the comment to resolve or unresolve.\n        resolved (bool): True to mark as resolved; false to reopen.\n        format (str): Response format selector applied across all tools.\n    \n    Returns:\n        comment_id (str): The unique identifier of the resolved comment.\n        resolved (bool): Resolution status after the operation.\n        resolved_time (str): ISO 8601 timestamp when the comment was resolved; absent when unresolved.\n        resolved_by (Dict[str, Any]): User who resolved the comment; absent when unresolved.\n    \"\"\"\n    try:\n        if not comment_id or not isinstance(comment_id, str):\n            raise ValueError(\"Comment ID must be a non-empty string\")\n        if not isinstance(resolved, bool):\n            raise ValueError(\"Resolved must be a boolean value\")\n        return api.notion_resolve_comment(comment_id, resolved, format)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-04T01:36:32.272792",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic workspace with a single page and one block",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "blocks": {
+          "block_001": {
+            "block_id": "block_001",
+            "type": "paragraph",
+            "content": {
+              "rich_text": [
+                {
+                  "type": "text",
+                  "text": {
+                    "content": "Welcome to my workspace"
+                  }
+                }
+              ]
+            },
+            "created_time": "2024-01-15T10:00:00",
+            "last_edited_time": "2024-01-15T10:00:00",
+            "parent_id": "page_001",
+            "archived": false
+          }
+        },
+        "pages": {
+          "page_001": {
+            "page_id": "page_001",
+            "title": "Getting Started",
+            "properties": {
+              "title": {
+                "title": [
+                  {
+                    "type": "text",
+                    "text": {
+                      "content": "Getting Started"
+                    }
+                  }
+                ]
+              }
+            },
+            "created_time": "2024-01-15T09:00:00",
+            "last_edited_time": "2024-01-15T10:00:00",
+            "parent": null,
+            "archived": false
+          }
+        },
+        "databases": {},
+        "users": {
+          "user_001": {
+            "user_id": "user_001",
+            "name": "Alice Johnson",
+            "email": "alice@example.com",
+            "type": "person"
+          }
+        },
+        "comments": {},
+        "blockChildren": {},
+        "pageChildren": {
+          "page_001": [
+            "block_001"
+          ]
+        },
+        "databaseItems": {},
+        "commentThreads": {}
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Project workspace with database, multiple pages, nested blocks, and comments",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "blocks": {
+          "block_101": {
+            "block_id": "block_101",
+            "type": "heading_1",
+            "content": {
+              "rich_text": [
+                {
+                  "type": "text",
+                  "text": {
+                    "content": "Project Overview"
+                  }
+                }
+              ]
+            },
+            "created_time": "2024-02-01T08:00:00",
+            "last_edited_time": "2024-02-01T08:00:00",
+            "parent_id": "page_101",
+            "archived": false
+          },
+          "block_102": {
+            "block_id": "block_102",
+            "type": "paragraph",
+            "content": {
+              "rich_text": [
+                {
+                  "type": "text",
+                  "text": {
+                    "content": "This project aims to deliver a new feature by Q2."
+                  }
+                }
+              ]
+            },
+            "created_time": "2024-02-01T08:05:00",
+            "last_edited_time": "2024-02-01T08:05:00",
+            "parent_id": "page_101",
+            "archived": false
+          },
+          "block_103": {
+            "block_id": "block_103",
+            "type": "to_do",
+            "content": {
+              "rich_text": [
+                {
+                  "type": "text",
+                  "text": {
+                    "content": "Complete design mockups"
+                  }
+                }
+              ],
+              "checked": false
+            },
+            "created_time": "2024-02-01T09:00:00",
+            "last_edited_time": "2024-02-01T09:00:00",
+            "parent_id": "page_102",
+            "archived": false
+          },
+          "block_104": {
+            "block_id": "block_104",
+            "type": "to_do",
+            "content": {
+              "rich_text": [
+                {
+                  "type": "text",
+                  "text": {
+                    "content": "Review with stakeholders"
+                  }
+                }
+              ],
+              "checked": true
+            },
+            "created_time": "2024-02-01T09:15:00",
+            "last_edited_time": "2024-02-05T14:30:00",
+            "parent_id": "page_102",
+            "archived": false
+          }
+        },
+        "pages": {
+          "page_101": {
+            "page_id": "page_101",
+            "title": "Q2 Feature Launch",
+            "properties": {
+              "title": {
+                "title": [
+                  {
+                    "type": "text",
+                    "text": {
+                      "content": "Q2 Feature Launch"
+                    }
+                  }
+                ]
+              }
+            },
+            "created_time": "2024-02-01T08:00:00",
+            "last_edited_time": "2024-02-05T14:30:00",
+            "parent": {
+              "type": "workspace",
+              "workspace": true
+            },
+            "archived": false
+          },
+          "page_102": {
+            "page_id": "page_102",
+            "title": "Design Phase",
+            "properties": {
+              "title": {
+                "title": [
+                  {
+                    "type": "text",
+                    "text": {
+                      "content": "Design Phase"
+                    }
+                  }
+                ]
+              },
+              "Status": {
+                "select": {
+                  "name": "In Progress"
+                }
+              },
+              "Due Date": {
+                "date": {
+                  "start": "2024-03-15"
+                }
+              }
+            },
+            "created_time": "2024-02-01T09:00:00",
+            "last_edited_time": "2024-02-05T14:30:00",
+            "parent": {
+              "type": "database_id",
+              "database_id": "db_001"
+            },
+            "archived": false
+          },
+          "page_103": {
+            "page_id": "page_103",
+            "title": "Development Phase",
+            "properties": {
+              "title": {
+                "title": [
+                  {
+                    "type": "text",
+                    "text": {
+                      "content": "Development Phase"
+                    }
+                  }
+                ]
+              },
+              "Status": {
+                "select": {
+                  "name": "Not Started"
+                }
+              },
+              "Due Date": {
+                "date": {
+                  "start": "2024-04-30"
+                }
+              }
+            },
+            "created_time": "2024-02-01T09:30:00",
+            "last_edited_time": "2024-02-01T09:30:00",
+            "parent": {
+              "type": "database_id",
+              "database_id": "db_001"
+            },
+            "archived": false
+          }
+        },
+        "databases": {
+          "db_001": {
+            "database_id": "db_001",
+            "title": "Project Tasks",
+            "properties": {
+              "Name": {
+                "title": {}
+              },
+              "Status": {
+                "select": {
+                  "options": [
+                    {
+                      "name": "Not Started",
+                      "color": "gray"
+                    },
+                    {
+                      "name": "In Progress",
+                      "color": "blue"
+                    },
+                    {
+                      "name": "Completed",
+                      "color": "green"
+                    }
+                  ]
+                }
+              },
+              "Due Date": {
+                "date": {}
+              },
+              "Assignee": {
+                "people": {}
+              }
+            },
+            "created_time": "2024-02-01T08:30:00",
+            "last_edited_time": "2024-02-01T09:30:00",
+            "parent": {
+              "type": "page_id",
+              "page_id": "page_101"
+            },
+            "archived": false
+          }
+        },
+        "users": {
+          "user_201": {
+            "user_id": "user_201",
+            "name": "Bob Smith",
+            "email": "bob@example.com",
+            "type": "person"
+          },
+          "user_202": {
+            "user_id": "user_202",
+            "name": "Carol White",
+            "email": "carol@example.com",
+            "type": "person"
+          }
+        },
+        "comments": {
+          "comment_001": {
+            "comment_id": "comment_001",
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": "Great progress on the design!"
+                }
+              }
+            ],
+            "created_time": "2024-02-05T14:00:00",
+            "last_edited_time": "2024-02-05T14:00:00",
+            "parent_id": "page_102",
+            "discussion_id": "disc_001",
+            "resolved": true,
+            "resolved_time": "2024-02-05T14:30:00",
+            "resolved_by": {
+              "object": "user",
+              "id": "user_201"
+            }
+          },
+          "comment_002": {
+            "comment_id": "comment_002",
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": "Should we add more details to the mockups?"
+                }
+              }
+            ],
+            "created_time": "2024-02-05T14:15:00",
+            "last_edited_time": "2024-02-05T14:15:00",
+            "parent_id": "page_102",
+            "discussion_id": "disc_001",
+            "resolved": false,
+            "resolved_time": null,
+            "resolved_by": null
+          }
+        },
+        "blockChildren": {},
+        "pageChildren": {
+          "page_101": [
+            "block_101",
+            "block_102"
+          ],
+          "page_102": [
+            "block_103",
+            "block_104"
+          ]
+        },
+        "databaseItems": {
+          "db_001": [
+            "page_102",
+            "page_103"
+          ]
+        },
+        "commentThreads": {
+          "page_102": [
+            "comment_001",
+            "comment_002"
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich workspace with multiple databases, nested page hierarchies, various block types, and active discussions",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "blocks": {
+          "block_301": {
+            "block_id": "block_301",
+            "type": "heading_2",
+            "content": {
+              "rich_text": [
+                {
+                  "type": "text",
+                  "text": {
+                    "content": "Meeting Notes"
+                  }
+                }
+              ]
+            },
+            "created_time": "2024-03-10T10:00:00",
+            "last_edited_time": "2024-03-10T10:00:00",
+            "parent_id": "page_301",
+            "archived": false
+          },
+          "block_302": {
+            "block_id": "block_302",
+            "type": "bulleted_list_item",
+            "content": {
+              "rich_text": [
+                {
+                  "type": "text",
+                  "text": {
+                    "content": "Discussed Q1 results"
+                  }
+                }
+              ]
+            },
+            "created_time": "2024-03-10T10:05:00",
+            "last_edited_time": "2024-03-10T10:05:00",
+            "parent_id": "block_301",
+            "archived": false
+          },
+          "block_303": {
+            "block_id": "block_303",
+            "type": "bulleted_list_item",
+            "content": {
+              "rich_text": [
+                {
+                  "type": "text",
+                  "text": {
+                    "content": "Planned Q2 initiatives"
+                  }
+                }
+              ]
+            },
+            "created_time": "2024-03-10T10:06:00",
+            "last_edited_time": "2024-03-10T10:06:00",
+            "parent_id": "block_301",
+            "archived": false
+          },
+          "block_304": {
+            "block_id": "block_304",
+            "type": "code",
+            "content": {
+              "rich_text": [
+                {
+                  "type": "text",
+                  "text": {
+                    "content": "SELECT * FROM users WHERE active = true;"
+                  }
+                }
+              ],
+              "language": "sql"
+            },
+            "created_time": "2024-03-11T14:00:00",
+            "last_edited_time": "2024-03-11T14:00:00",
+            "parent_id": "page_303",
+            "archived": false
+          },
+          "block_305": {
+            "block_id": "block_305",
+            "type": "callout",
+            "content": {
+              "rich_text": [
+                {
+                  "type": "text",
+                  "text": {
+                    "content": "Important: Review before deployment"
+                  }
+                }
+              ],
+              "icon": {
+                "emoji": "⚠️"
+              }
+            },
+            "created_time": "2024-03-11T14:30:00",
+            "last_edited_time": "2024-03-11T14:30:00",
+            "parent_id": "page_303",
+            "archived": false
+          },
+          "block_306": {
+            "block_id": "block_306",
+            "type": "image",
+            "content": {
+              "type": "external",
+              "external": {
+                "url": "https://example.com/architecture-diagram.png"
+              }
+            },
+            "created_time": "2024-03-12T09:00:00",
+            "last_edited_time": "2024-03-12T09:00:00",
+            "parent_id": "page_304",
+            "archived": false
+          }
+        },
+        "pages": {
+          "page_301": {
+            "page_id": "page_301",
+            "title": "Team Meeting - March 10",
+            "properties": {
+              "title": {
+                "title": [
+                  {
+                    "type": "text",
+                    "text": {
+                      "content": "Team Meeting - March 10"
+                    }
+                  }
+                ]
+              },
+              "Date": {
+                "date": {
+                  "start": "2024-03-10"
+                }
+              },
+              "Attendees": {
+                "people": [
+                  {
+                    "object": "user",
+                    "id": "user_301"
+                  },
+                  {
+                    "object": "user",
+                    "id": "user_302"
+                  }
+                ]
+              }
+            },
+            "created_time": "2024-03-10T10:00:00",
+            "last_edited_time": "2024-03-10T11:30:00",
+            "parent": {
+              "type": "database_id",
+              "database_id": "db_301"
+            },
+            "archived": false
+          },
+          "page_302": {
+            "page_id": "page_302",
+            "title": "Sprint Planning",
+            "properties": {
+              "title": {
+                "title": [
+                  {
+                    "type": "text",
+                    "text": {
+                      "content": "Sprint Planning"
+                    }
+                  }
+                ]
+              },
+              "Date": {
+                "date": {
+                  "start": "2024-03-15"
+                }
+              },
+              "Attendees": {
+                "people": [
+                  {
+                    "object": "user",
+                    "id": "user_301"
+                  },
+                  {
+                    "object": "user",
+                    "id": "user_303"
+                  }
+                ]
+              }
+            },
+            "created_time": "2024-03-12T08:00:00",
+            "last_edited_time": "2024-03-12T08:00:00",
+            "parent": {
+              "type": "database_id",
+              "database_id": "db_301"
+            },
+            "archived": false
+          },
+          "page_303": {
+            "page_id": "page_303",
+            "title": "Database Migration Script",
+            "properties": {
+              "title": {
+                "title": [
+                  {
+                    "type": "text",
+                    "text": {
+                      "content": "Database Migration Script"
+                    }
+                  }
+                ]
+              },
+              "Priority": {
+                "select": {
+                  "name": "High"
+                }
+              },
+              "Status": {
+                "select": {
+                  "name": "In Review"
+                }
+              }
+            },
+            "created_time": "2024-03-11T14:00:00",
+            "last_edited_time": "2024-03-11T15:00:00",
+            "parent": {
+              "type": "database_id",
+              "database_id": "db_302"
+            },
+            "archived": false
+          },
+          "page_304": {
+            "page_id": "page_304",
+            "title": "System Architecture",
+            "properties": {
+              "title": {
+                "title": [
+                  {
+                    "type": "text",
+                    "text": {
+                      "content": "System Architecture"
+                    }
+                  }
+                ]
+              },
+              "Priority": {
+                "select": {
+                  "name": "Medium"
+                }
+              },
+              "Status": {
+                "select": {
+                  "name": "Completed"
+                }
+              }
+            },
+            "created_time": "2024-03-12T09:00:00",
+            "last_edited_time": "2024-03-12T10:00:00",
+            "parent": {
+              "type": "database_id",
+              "database_id": "db_302"
+            },
+            "archived": false
+          },
+          "page_305": {
+            "page_id": "page_305",
+            "title": "API Documentation",
+            "properties": {
+              "title": {
+                "title": [
+                  {
+                    "type": "text",
+                    "text": {
+                      "content": "API Documentation"
+                    }
+                  }
+                ]
+              },
+              "Priority": {
+                "select": {
+                  "name": "Low"
+                }
+              },
+              "Status": {
+                "select": {
+                  "name": "Not Started"
+                }
+              }
+            },
+            "created_time": "2024-03-12T11:00:00",
+            "last_edited_time": "2024-03-12T11:00:00",
+            "parent": {
+              "type": "database_id",
+              "database_id": "db_302"
+            },
+            "archived": true
+          }
+        },
+        "databases": {
+          "db_301": {
+            "database_id": "db_301",
+            "title": "Meeting Notes",
+            "properties": {
+              "Name": {
+                "title": {}
+              },
+              "Date": {
+                "date": {}
+              },
+              "Attendees": {
+                "people": {}
+              },
+              "Tags": {
+                "multi_select": {
+                  "options": [
+                    {
+                      "name": "Planning",
+                      "color": "blue"
+                    },
+                    {
+                      "name": "Review",
+                      "color": "green"
+                    },
+                    {
+                      "name": "Retrospective",
+                      "color": "purple"
+                    }
+                  ]
+                }
+              }
+            },
+            "created_time": "2024-03-01T08:00:00",
+            "last_edited_time": "2024-03-12T08:00:00",
+            "parent": {
+              "type": "workspace",
+              "workspace": true
+            },
+            "archived": false
+          },
+          "db_302": {
+            "database_id": "db_302",
+            "title": "Technical Documentation",
+            "properties": {
+              "Name": {
+                "title": {}
+              },
+              "Priority": {
+                "select": {
+                  "options": [
+                    {
+                      "name": "High",
+                      "color": "red"
+                    },
+                    {
+                      "name": "Medium",
+                      "color": "yellow"
+                    },
+                    {
+                      "name": "Low",
+                      "color": "gray"
+                    }
+                  ]
+                }
+              },
+              "Status": {
+                "select": {
+                  "options": [
+                    {
+                      "name": "Not Started",
+                      "color": "gray"
+                    },
+                    {
+                      "name": "In Review",
+                      "color": "blue"
+                    },
+                    {
+                      "name": "Completed",
+                      "color": "green"
+                    }
+                  ]
+                }
+              },
+              "Last Updated": {
+                "last_edited_time": {}
+              }
+            },
+            "created_time": "2024-03-05T10:00:00",
+            "last_edited_time": "2024-03-12T11:00:00",
+            "parent": {
+              "type": "workspace",
+              "workspace": true
+            },
+            "archived": false
+          }
+        },
+        "users": {
+          "user_301": {
+            "user_id": "user_301",
+            "name": "David Chen",
+            "email": "david@example.com",
+            "type": "person"
+          },
+          "user_302": {
+            "user_id": "user_302",
+            "name": "Emma Wilson",
+            "email": "emma@example.com",
+            "type": "person"
+          },
+          "user_303": {
+            "user_id": "user_303",
+            "name": "Frank Martinez",
+            "email": null,
+            "type": "person"
+          },
+          "bot_001": {
+            "user_id": "bot_001",
+            "name": "Integration Bot",
+            "email": null,
+            "type": "bot"
+          }
+        },
+        "comments": {
+          "comment_301": {
+            "comment_id": "comment_301",
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": "This query needs optimization for large datasets"
+                }
+              }
+            ],
+            "created_time": "2024-03-11T14:20:00",
+            "last_edited_time": "2024-03-11T14:20:00",
+            "parent_id": "page_303",
+            "discussion_id": "disc_301",
+            "resolved": false,
+            "resolved_time": null,
+            "resolved_by": null
+          },
+          "comment_302": {
+            "comment_id": "comment_302",
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": "Added indexing strategy in the latest version"
+                }
+              }
+            ],
+            "created_time": "2024-03-11T14:45:00",
+            "last_edited_time": "2024-03-11T14:45:00",
+            "parent_id": "page_303",
+            "discussion_id": "disc_301",
+            "resolved": false,
+            "resolved_time": null,
+            "resolved_by": null
+          },
+          "comment_303": {
+            "comment_id": "comment_303",
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": "Looks good, approved for deployment"
+                }
+              }
+            ],
+            "created_time": "2024-03-11T15:00:00",
+            "last_edited_time": "2024-03-11T15:00:00",
+            "parent_id": "page_303",
+            "discussion_id": "disc_301",
+            "resolved": true,
+            "resolved_time": "2024-03-11T15:00:00",
+            "resolved_by": {
+              "object": "user",
+              "id": "user_301"
+            }
+          },
+          "comment_304": {
+            "comment_id": "comment_304",
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": "Can we add more details about the authentication flow?"
+                }
+              }
+            ],
+            "created_time": "2024-03-12T09:30:00",
+            "last_edited_time": "2024-03-12T09:30:00",
+            "parent_id": "page_304",
+            "discussion_id": "disc_302",
+            "resolved": false,
+            "resolved_time": null,
+            "resolved_by": null
+          }
+        },
+        "blockChildren": {
+          "block_301": [
+            "block_302",
+            "block_303"
+          ]
+        },
+        "pageChildren": {
+          "page_301": [
+            "block_301"
+          ],
+          "page_303": [
+            "block_304",
+            "block_305"
+          ],
+          "page_304": [
+            "block_306"
+          ]
+        },
+        "databaseItems": {
+          "db_301": [
+            "page_301",
+            "page_302"
+          ],
+          "db_302": [
+            "page_303",
+            "page_304",
+            "page_305"
+          ]
+        },
+        "commentThreads": {
+          "page_303": [
+            "comment_301",
+            "comment_302",
+            "comment_303"
+          ],
+          "page_304": [
+            "comment_304"
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty workspace with no content (tests handling of minimal data)",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "blocks": {},
+        "pages": {},
+        "databases": {},
+        "users": {},
+        "comments": {},
+        "blockChildren": {},
+        "pageChildren": {},
+        "databaseItems": {},
+        "commentThreads": {}
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "notion_create_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_append_block_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_page_properties",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_page_content",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_query_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_database_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_user",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_list_all_users",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_bot_user",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_search",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_comments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_resolve_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_database",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 110.2301094532013
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "notion_create_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_append_block_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_page_properties",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_page_content",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_query_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_database_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_user",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_list_all_users",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_bot_user",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_comments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_resolve_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_search",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 134.66390013694763
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "notion_append_block_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_block_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_page_properties",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_page_content",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_query_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_database_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_search",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_list_all_users",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_user",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_bot_user",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_comments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_resolve_comment",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 116.9705822467804
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "notion_create_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_block_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_append_block_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_page_properties",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_page_content",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_query_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_database_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_search",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_list_all_users",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_user",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_bot_user",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_comments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_resolve_comment",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 111.13412761688232
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "notion_create_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_append_block_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_page_properties",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_page_content",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_query_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_database_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_user",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_list_all_users",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_bot_user",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_search",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_comments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_resolve_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_database",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 110.2301094532013
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "notion_create_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_append_block_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_page_properties",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_page_content",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_query_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_database_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_user",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_list_all_users",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_bot_user",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_comments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_resolve_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_search",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 134.66390013694763
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "notion_append_block_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_block_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_page_properties",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_page_content",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_query_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_database_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_search",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_list_all_users",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_user",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_bot_user",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_comments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_resolve_comment",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 116.9705822467804
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "notion_create_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_block",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_block_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_append_block_children",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_page_properties",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_page_content",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_page",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_query_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_database",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_database_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_search",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_list_all_users",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_user",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_bot_user",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_create_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_retrieve_comments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_update_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_delete_comment",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notion_resolve_comment",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 111.13412761688232
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/Notion.py"
+  }
+}

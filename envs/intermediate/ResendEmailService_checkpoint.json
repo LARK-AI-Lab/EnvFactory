@@ -1,0 +1,880 @@
+{
+  "metadata": {
+    "class_name": "ResendEmailService",
+    "metadata_path": "envs\\metadata\\ResendEmailService_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-03-05T20:21:48.223138",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "ResendEmailService",
+    "description": "Email delivery service for sending transactional and marketing emails via the Resend API.",
+    "tools": [
+      {
+        "name": "send_email",
+        "description": "Send a single email to a recipient with optional HTML and plain text content.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "to": {
+              "type": "string",
+              "description": "The recipient's email address where the email will be delivered."
+            },
+            "subject": {
+              "type": "string",
+              "description": "The subject line that appears in the recipient's inbox."
+            },
+            "html": {
+              "type": "string",
+              "description": "The HTML-formatted content of the email body."
+            },
+            "text": {
+              "type": "string",
+              "description": "The plain text version of the email body, used as fallback when HTML is not supported."
+            },
+            "from_email": {
+              "type": "string",
+              "description": "The sender's email address that appears in the 'From' field."
+            },
+            "reply_to": {
+              "type": "string",
+              "description": "The email address where replies will be directed."
+            },
+            "cc": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of email addresses to receive a carbon copy of the email."
+            },
+            "bcc": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of email addresses to receive a blind carbon copy of the email."
+            }
+          },
+          "required": [
+            "to",
+            "subject"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier assigned to the sent email by Resend."
+            }
+          }
+        }
+      },
+      {
+        "name": "send_batch_emails",
+        "description": "Send multiple emails in a single API request for improved efficiency.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "emails": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "description": "List of email objects, each containing to, subject, html, text, from, reply_to, cc, and bcc fields."
+            }
+          },
+          "required": [
+            "emails"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The unique identifier assigned to the sent email by Resend."
+                  },
+                  "to": {
+                    "type": "string",
+                    "description": "The recipient's email address where the email was delivered."
+                  },
+                  "from": {
+                    "type": "string",
+                    "description": "The sender's email address that appears in the 'From' field."
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "description": "The timestamp when the email was created, in ISO 8601 format."
+                  }
+                }
+              },
+              "description": "List of successfully sent emails with their metadata."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_email",
+        "description": "Retrieve detailed information about a previously sent email, including delivery status and content.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "email_id": {
+              "type": "string",
+              "description": "The unique identifier assigned to the sent email by Resend."
+            }
+          },
+          "required": [
+            "email_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "object": {
+              "type": "string",
+              "description": "The object type, always 'email' for this response."
+            },
+            "id": {
+              "type": "string",
+              "description": "The unique identifier assigned to the sent email by Resend."
+            },
+            "to": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of recipient email addresses where the email was delivered."
+            },
+            "from": {
+              "type": "string",
+              "description": "The sender's email address that appears in the 'From' field."
+            },
+            "created_at": {
+              "type": "string",
+              "description": "The timestamp when the email was created, in ISO 8601 format."
+            },
+            "subject": {
+              "type": "string",
+              "description": "The subject line that appears in the recipient's inbox."
+            },
+            "html": {
+              "type": "string",
+              "description": "The HTML-formatted content of the email body."
+            },
+            "text": {
+              "type": "string",
+              "description": "The plain text version of the email body."
+            },
+            "bcc": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of email addresses that received a blind carbon copy of the email."
+            },
+            "cc": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of email addresses that received a carbon copy of the email."
+            },
+            "reply_to": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of email addresses where replies are directed."
+            },
+            "last_event": {
+              "type": "string",
+              "description": "The most recent delivery event status, such as delivered, opened, clicked, bounced, or complained."
+            }
+          }
+        }
+      },
+      {
+        "name": "list_emails",
+        "description": "Retrieve a paginated list of sent emails with optional domain filtering.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "domain_id": {
+              "type": "string",
+              "description": "The unique identifier of the domain to filter emails by."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "The maximum number of emails to return in the response (default: 50, maximum: 100)."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "object": {
+              "type": "string",
+              "description": "The object type, always 'list' for this response."
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The unique identifier assigned to the sent email by Resend."
+                  },
+                  "to": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of recipient email addresses where the email was delivered."
+                  },
+                  "from": {
+                    "type": "string",
+                    "description": "The sender's email address that appears in the 'From' field."
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "description": "The timestamp when the email was created, in ISO 8601 format."
+                  },
+                  "subject": {
+                    "type": "string",
+                    "description": "The subject line that appears in the recipient's inbox."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "The current delivery status of the email, such as pending, delivered, bounced, or failed."
+                  }
+                }
+              },
+              "description": "List of emails matching the query criteria."
+            }
+          }
+        }
+      },
+      {
+        "name": "update_email",
+        "description": "Modify a scheduled email's send time before it is delivered.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "email_id": {
+              "type": "string",
+              "description": "The unique identifier assigned to the sent email by Resend."
+            },
+            "scheduled_at": {
+              "type": "string",
+              "description": "The new scheduled delivery time for the email, in ISO 8601 format."
+            }
+          },
+          "required": [
+            "email_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier assigned to the sent email by Resend."
+            },
+            "scheduled_at": {
+              "type": "string",
+              "description": "The updated scheduled delivery time for the email, in ISO 8601 format."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Email(BaseModel):\n    \"\"\"Represents a sent email.\"\"\"\n    id: str = Field(..., description=\"Unique email identifier\")\n    to: List[str] = Field(..., description=\"Recipient email addresses\")\n    from_email: str = Field(..., description=\"Sender email address\")\n    created_at: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"Creation timestamp in ISO 8601 format\")\n    subject: str = Field(..., description=\"Email subject line\")\n    html: Optional[str] = Field(default=None, description=\"HTML content\")\n    text: Optional[str] = Field(default=None, description=\"Plain text content\")\n    bcc: List[str] = Field(default_factory=list, description=\"BCC recipients\")\n    cc: List[str] = Field(default_factory=list, description=\"CC recipients\")\n    reply_to: List[str] = Field(default_factory=list, description=\"Reply-to addresses\")\n    last_event: str = Field(default=\"sent\", description=\"Most recent delivery event\")\n    status: str = Field(default=\"delivered\", description=\"Current delivery status\")\n    scheduled_at: Optional[str] = Field(default=None, pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"Scheduled delivery time in ISO 8601 format\")\n\nclass ResendScenario(BaseModel):\n    \"\"\"Main scenario model for email service.\"\"\"\n    emails: Dict[str, Email] = Field(default={}, description=\"Sent emails by ID\")\n    current_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\", description=\"Current timestamp in ISO 8601 format\")\n\nScenario_Schema = [Email, ResendScenario]\n\n# Section 2: Class\nclass ResendEmailService:\n    def __init__(self):\n        \"\"\"Initialize email service with empty state.\"\"\"\n        self.emails: Dict[str, Email] = {}\n        self.current_time: str = \"\"\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the service instance.\"\"\"\n        model = ResendScenario(**scenario)\n        self.emails = model.emails\n        self.current_time = model.current_time\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"emails\": {email_id: email.model_dump() for email_id, email in self.emails.items()},\n            \"current_time\": self.current_time\n        }\n\n    def send_email(self, to: str, subject: str, html: Optional[str], text: Optional[str], \n                   from_email: Optional[str], reply_to: Optional[str], \n                   cc: Optional[List[str]], bcc: Optional[List[str]]) -> dict:\n        \"\"\"Send a single email.\"\"\"\n        email_id = f\"email_{len(self.emails) + 1}\"\n        email = Email(\n            id=email_id,\n            to=[to],\n            from_email=from_email or \"noreply@example.com\",\n            created_at=self.current_time,\n            subject=subject,\n            html=html,\n            text=text,\n            bcc=bcc or [],\n            cc=cc or [],\n            reply_to=[reply_to] if reply_to else []\n        )\n        self.emails[email_id] = email\n        return {\"id\": email_id}\n\n    def send_batch_emails(self, emails: List[dict]) -> dict:\n        \"\"\"Send multiple emails in batch.\"\"\"\n        results = []\n        for email_data in emails:\n            email_id = f\"email_{len(self.emails) + 1}\"\n            email = Email(\n                id=email_id,\n                to=[email_data[\"to\"]],\n                from_email=email_data.get(\"from\", \"noreply@example.com\"),\n                created_at=self.current_time,\n                subject=email_data[\"subject\"],\n                html=email_data.get(\"html\"),\n                text=email_data.get(\"text\"),\n                bcc=email_data.get(\"bcc\", []),\n                cc=email_data.get(\"cc\", []),\n                reply_to=[email_data[\"reply_to\"]] if email_data.get(\"reply_to\") else []\n            )\n            self.emails[email_id] = email\n            results.append({\n                \"id\": email_id,\n                \"to\": email_data[\"to\"],\n                \"from\": email.from_email,\n                \"created_at\": self.current_time\n            })\n        return {\"data\": results}\n\n    def get_email(self, email_id: str) -> dict:\n        \"\"\"Retrieve email details by ID.\"\"\"\n        email = self.emails[email_id]\n        return {\n            \"object\": \"email\",\n            \"id\": email.id,\n            \"to\": email.to,\n            \"from\": email.from_email,\n            \"created_at\": email.created_at,\n            \"subject\": email.subject,\n            \"html\": email.html,\n            \"text\": email.text,\n            \"bcc\": email.bcc,\n            \"cc\": email.cc,\n            \"reply_to\": email.reply_to,\n            \"last_event\": email.last_event\n        }\n\n    def list_emails(self, domain_id: Optional[str], limit: Optional[int]) -> dict:\n        \"\"\"List sent emails with pagination.\"\"\"\n        limit = limit or 50\n        email_list = list(self.emails.values())[:limit]\n        return {\n            \"object\": \"list\",\n            \"data\": [{\n                \"id\": email.id,\n                \"to\": email.to,\n                \"from\": email.from_email,\n                \"created_at\": email.created_at,\n                \"subject\": email.subject,\n                \"status\": email.status\n            } for email in email_list]\n        }\n\n    def update_email(self, email_id: str, scheduled_at: Optional[str]) -> dict:\n        \"\"\"Update scheduled email delivery time.\"\"\"\n        email = self.emails[email_id]\n        if scheduled_at:\n            email.scheduled_at = scheduled_at\n        return {\n            \"id\": email.id,\n            \"scheduled_at\": email.scheduled_at\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"ResendEmailService\")\nservice = ResendEmailService()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the email service.\n\n    Args:\n        scenario (dict): Scenario dictionary matching ResendScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        service.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current email service state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return service.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef send_email(to: str, subject: str, html: str = None, text: str = None, \n               from_email: str = None, reply_to: str = None, \n               cc: List[str] = None, bcc: List[str] = None) -> dict:\n    \"\"\"\n    Send a single email to a recipient with optional HTML and plain text content.\n\n    Args:\n        to (str): The recipient's email address where the email will be delivered.\n        subject (str): The subject line that appears in the recipient's inbox.\n        html (str) [Optional]: The HTML-formatted content of the email body.\n        text (str) [Optional]: The plain text version of the email body, used as fallback when HTML is not supported.\n        from_email (str) [Optional]: The sender's email address that appears in the 'From' field.\n        reply_to (str) [Optional]: The email address where replies will be directed.\n        cc (List[str]) [Optional]: List of email addresses to receive a carbon copy of the email.\n        bcc (List[str]) [Optional]: List of email addresses to receive a blind carbon copy of the email.\n\n    Returns:\n        id (str): The unique identifier assigned to the sent email by Resend.\n    \"\"\"\n    try:\n        if not to or not isinstance(to, str):\n            raise ValueError(\"Recipient email address is required\")\n        if not subject or not isinstance(subject, str):\n            raise ValueError(\"Subject is required\")\n        return service.send_email(to, subject, html, text, from_email, reply_to, cc, bcc)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef send_batch_emails(emails: List[dict]) -> dict:\n    \"\"\"\n    Send multiple emails in a single API request for improved efficiency.\n\n    Args:\n        emails (List[dict]): List of email objects, each containing to, subject, html, text, from, reply_to, cc, and bcc fields.\n\n    Returns:\n        data (List[dict]): List of successfully sent emails with their metadata.\n            id (str): The unique identifier assigned to the sent email by Resend.\n            to (str): The recipient's email address where the email was delivered.\n            from (str): The sender's email address that appears in the 'From' field.\n            created_at (str): The timestamp when the email was created, in ISO 8601 format.\n    \"\"\"\n    try:\n        if not emails or not isinstance(emails, list):\n            raise ValueError(\"Emails list is required\")\n        return service.send_batch_emails(emails)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_email(email_id: str) -> dict:\n    \"\"\"\n    Retrieve detailed information about a previously sent email, including delivery status and content.\n\n    Args:\n        email_id (str): The unique identifier assigned to the sent email by Resend.\n\n    Returns:\n        object (str): The object type, always 'email' for this response.\n        id (str): The unique identifier assigned to the sent email by Resend.\n        to (List[str]): List of recipient email addresses where the email was delivered.\n        from (str): The sender's email address that appears in the 'From' field.\n        created_at (str): The timestamp when the email was created, in ISO 8601 format.\n        subject (str): The subject line that appears in the recipient's inbox.\n        html (str): The HTML-formatted content of the email body.\n        text (str): The plain text version of the email body.\n        bcc (List[str]): List of email addresses that received a blind carbon copy of the email.\n        cc (List[str]): List of email addresses that received a carbon copy of the email.\n        reply_to (List[str]): List of email addresses where replies are directed.\n        last_event (str): The most recent delivery event status, such as delivered, opened, clicked, bounced, or complained.\n    \"\"\"\n    try:\n        if not email_id or not isinstance(email_id, str):\n            raise ValueError(\"Email ID is required\")\n        if email_id not in service.emails:\n            raise ValueError(f\"Email {email_id} not found\")\n        return service.get_email(email_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef list_emails(domain_id: str = None, limit: int = None) -> dict:\n    \"\"\"\n    Retrieve a paginated list of sent emails with optional domain filtering.\n\n    Args:\n        domain_id (str) [Optional]: The unique identifier of the domain to filter emails by.\n        limit (int) [Optional]: The maximum number of emails to return in the response (default: 50, maximum: 100).\n\n    Returns:\n        object (str): The object type, always 'list' for this response.\n        data (List[dict]): List of emails matching the query criteria.\n            id (str): The unique identifier assigned to the sent email by Resend.\n            to (List[str]): List of recipient email addresses where the email was delivered.\n            from (str): The sender's email address that appears in the 'From' field.\n            created_at (str): The timestamp when the email was created, in ISO 8601 format.\n            subject (str): The subject line that appears in the recipient's inbox.\n            status (str): The current delivery status of the email, such as pending, delivered, bounced, or failed.\n    \"\"\"\n    try:\n        return service.list_emails(domain_id, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef update_email(email_id: str, scheduled_at: str = None) -> dict:\n    \"\"\"\n    Modify a scheduled email's send time before it is delivered.\n\n    Args:\n        email_id (str): The unique identifier assigned to the sent email by Resend.\n        scheduled_at (str) [Optional]: The new scheduled delivery time for the email, in ISO 8601 format.\n\n    Returns:\n        id (str): The unique identifier assigned to the sent email by Resend.\n        scheduled_at (str): The updated scheduled delivery time for the email, in ISO 8601 format.\n    \"\"\"\n    try:\n        if not email_id or not isinstance(email_id, str):\n            raise ValueError(\"Email ID is required\")\n        if email_id not in service.emails:\n            raise ValueError(f\"Email {email_id} not found\")\n        return service.update_email(email_id, scheduled_at)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-03-05T20:21:48.223138",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Single email sent with minimal fields",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "emails": {
+          "email_001": {
+            "id": "email_001",
+            "to": [
+              "user@example.com"
+            ],
+            "from_email": "sender@company.com",
+            "created_at": "2026-03-05T10:00:00",
+            "subject": "Welcome to our service",
+            "html": "<p>Welcome!</p>",
+            "text": "Welcome!",
+            "last_event": "sent",
+            "status": "delivered"
+          }
+        },
+        "current_time": "2026-03-05T12:00:00"
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple emails with varied recipients and delivery states",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "emails": {
+          "email_001": {
+            "id": "email_001",
+            "to": [
+              "alice@example.com",
+              "bob@example.com"
+            ],
+            "from_email": "support@company.com",
+            "created_at": "2026-03-05T09:30:00",
+            "subject": "Account verification required",
+            "html": "<p>Please verify your account</p>",
+            "text": "Please verify your account",
+            "cc": [
+              "manager@company.com"
+            ],
+            "reply_to": [
+              "noreply@company.com"
+            ],
+            "last_event": "delivered",
+            "status": "delivered"
+          },
+          "email_002": {
+            "id": "email_002",
+            "to": [
+              "customer@example.com"
+            ],
+            "from_email": "sales@company.com",
+            "created_at": "2026-03-05T11:00:00",
+            "subject": "Special offer",
+            "html": "<p>Limited time offer!</p>",
+            "bcc": [
+              "analytics@company.com"
+            ],
+            "last_event": "opened",
+            "status": "delivered"
+          },
+          "email_003": {
+            "id": "email_003",
+            "to": [
+              "user@example.com"
+            ],
+            "from_email": "newsletter@company.com",
+            "created_at": "2026-03-05T08:00:00",
+            "subject": "Weekly digest",
+            "text": "Your weekly updates",
+            "last_event": "bounced",
+            "status": "bounced"
+          }
+        },
+        "current_time": "2026-03-05T12:00:00"
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich email history with scheduled emails and various delivery events",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "emails": {
+          "email_001": {
+            "id": "email_001",
+            "to": [
+              "alice@example.com"
+            ],
+            "from_email": "admin@company.com",
+            "created_at": "2026-03-04T14:00:00",
+            "subject": "System maintenance notification",
+            "html": "<h1>Scheduled Maintenance</h1><p>Our system will be down on March 6th</p>",
+            "text": "Scheduled Maintenance: Our system will be down on March 6th",
+            "cc": [
+              "ops@company.com",
+              "support@company.com"
+            ],
+            "bcc": [
+              "logs@company.com"
+            ],
+            "reply_to": [
+              "support@company.com"
+            ],
+            "last_event": "clicked",
+            "status": "delivered"
+          },
+          "email_002": {
+            "id": "email_002",
+            "to": [
+              "bob@example.com",
+              "charlie@example.com"
+            ],
+            "from_email": "marketing@company.com",
+            "created_at": "2026-03-05T06:00:00",
+            "subject": "Product launch announcement",
+            "html": "<p>Exciting new product!</p>",
+            "text": "Exciting new product!",
+            "last_event": "delivered",
+            "status": "delivered"
+          },
+          "email_003": {
+            "id": "email_003",
+            "to": [
+              "customer@example.com"
+            ],
+            "from_email": "billing@company.com",
+            "created_at": "2026-03-05T10:30:00",
+            "subject": "Invoice #12345",
+            "html": "<p>Your invoice is ready</p>",
+            "text": "Your invoice is ready",
+            "reply_to": [
+              "billing@company.com"
+            ],
+            "last_event": "opened",
+            "status": "delivered"
+          },
+          "email_004": {
+            "id": "email_004",
+            "to": [
+              "user@example.com"
+            ],
+            "from_email": "reminders@company.com",
+            "created_at": "2026-03-05T11:00:00",
+            "subject": "Upcoming appointment",
+            "text": "You have an appointment tomorrow",
+            "scheduled_at": "2026-03-06T09:00:00",
+            "last_event": "sent",
+            "status": "scheduled"
+          },
+          "email_005": {
+            "id": "email_005",
+            "to": [
+              "test@example.com"
+            ],
+            "from_email": "noreply@company.com",
+            "created_at": "2026-03-05T07:00:00",
+            "subject": "Test email",
+            "html": "<p>Test</p>",
+            "last_event": "failed",
+            "status": "failed"
+          }
+        },
+        "current_time": "2026-03-05T12:00:00"
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty email database at system start",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "emails": {},
+        "current_time": "2026-03-05T12:00:00"
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_emails",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_batch_emails",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_email",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_emails",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_batch_emails",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_email",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_emails",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_batch_emails",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_email",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_batch_emails",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_emails",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_email",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_emails",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_batch_emails",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_email",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_emails",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_batch_emails",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_email",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_emails",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_batch_emails",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_email",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_batch_emails",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_emails",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_email",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/ResendEmailService.py"
+  }
+}

@@ -1,0 +1,913 @@
+{
+  "metadata": {
+    "class_name": "AmazonSES",
+    "metadata_path": "envs\\metadata\\AmazonSES_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-03-05T19:36:59.101144",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "AmazonSES",
+    "description": "Amazon Simple Email Service (SES) API for sending emails, managing templates, and verifying sender identities.",
+    "tools": [
+      {
+        "name": "send_email",
+        "description": "Send a formatted email with subject and body to specified recipients via Amazon SES.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "destination": {
+              "type": "object",
+              "description": "Recipient email addresses organized by delivery type (To, Cc, Bcc)."
+            },
+            "message": {
+              "type": "object",
+              "description": "Email content including subject line and body (text or HTML format)."
+            },
+            "source": {
+              "type": "string",
+              "description": "The verified sender email address. Must be verified in Amazon SES."
+            },
+            "reply_to_addresses": {
+              "type": "array",
+              "description": "Email addresses that will receive replies when recipients respond to this email."
+            },
+            "return_path": {
+              "type": "string",
+              "description": "Email address where bounce and complaint notifications will be sent."
+            }
+          },
+          "required": [
+            "destination",
+            "message"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "MessageId": {
+              "type": "string",
+              "description": "Unique identifier assigned to the sent email message by Amazon SES."
+            },
+            "RequestId": {
+              "type": "string",
+              "description": "AWS request identifier for tracking and debugging purposes."
+            }
+          }
+        }
+      },
+      {
+        "name": "send_raw_email",
+        "description": "Send a raw MIME-formatted email message, allowing full control over email headers and content structure.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "raw_message": {
+              "type": "string",
+              "description": "Base64-encoded MIME message containing complete email headers and body."
+            },
+            "source": {
+              "type": "string",
+              "description": "The verified sender email address. Must be verified in Amazon SES."
+            },
+            "destinations": {
+              "type": "array",
+              "description": "Recipient email addresses that override the To/Cc/Bcc headers in the MIME message."
+            }
+          },
+          "required": [
+            "raw_message"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "MessageId": {
+              "type": "string",
+              "description": "Unique identifier assigned to the sent email message by Amazon SES."
+            }
+          }
+        }
+      },
+      {
+        "name": "send_templated_email",
+        "description": "Send an email using a pre-configured SES template with dynamic variable substitution.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "destination": {
+              "type": "object",
+              "description": "Recipient email addresses organized by delivery type (To, Cc, Bcc)."
+            },
+            "template": {
+              "type": "string",
+              "description": "Name of the Amazon SES email template to use for this message."
+            },
+            "template_data": {
+              "type": "string",
+              "description": "JSON string containing key-value pairs for template variable substitution."
+            },
+            "source": {
+              "type": "string",
+              "description": "The verified sender email address. Must be verified in Amazon SES."
+            }
+          },
+          "required": [
+            "destination",
+            "template",
+            "template_data"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "MessageId": {
+              "type": "string",
+              "description": "Unique identifier assigned to the sent email message by Amazon SES."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_send_statistics",
+        "description": "Retrieve email sending statistics for the AWS account over the last 14 days, including delivery attempts, bounces, and complaints.",
+        "input_schema": {
+          "type": "object",
+          "properties": {}
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "SendDataPoints": {
+              "type": "array",
+              "description": "Time-series data points containing email sending metrics aggregated by time period.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "Timestamp": {
+                    "type": "string",
+                    "description": "ISO 8601 timestamp indicating when this data point was recorded."
+                  },
+                  "DeliveryAttempts": {
+                    "type": "integer",
+                    "description": "Total number of email delivery attempts during this time period."
+                  },
+                  "Bounces": {
+                    "type": "integer",
+                    "description": "Number of emails that bounced (hard or soft) during this time period."
+                  },
+                  "Complaints": {
+                    "type": "integer",
+                    "description": "Number of spam complaints received during this time period."
+                  },
+                  "Rejects": {
+                    "type": "integer",
+                    "description": "Number of emails rejected by Amazon SES during this time period."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "verify_email_identity",
+        "description": "Initiate the verification process for an email address to authorize it as a sender in Amazon SES.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "email_address": {
+              "type": "string",
+              "description": "The email address to verify as a sender identity in Amazon SES."
+            }
+          },
+          "required": [
+            "email_address"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Current verification status: pending (verification email sent), success (verified), or failed (verification unsuccessful)."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_identity_verification_attributes",
+        "description": "Retrieve the verification status and attributes for email addresses or domains registered as sender identities.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "identities": {
+              "type": "array",
+              "description": "List of email addresses or domain names to check verification status for."
+            }
+          },
+          "required": [
+            "identities"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "VerificationAttributes": {
+              "type": "object",
+              "description": "Map of identity names to their verification status and attributes.",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "VerificationStatus": {
+                    "type": "string",
+                    "description": "Current verification status: Pending (awaiting verification), Success (verified and active), or Failed (verification unsuccessful)."
+                  },
+                  "VerificationToken": {
+                    "type": "string",
+                    "description": "DKIM verification token for domain identities, used to configure DNS records."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass EmailAddress(BaseModel):\n    \"\"\"Email address with verification status.\"\"\"\n    address: str = Field(..., pattern=r\"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$\", description=\"Email address\")\n    verification_status: str = Field(default=\"Pending\", description=\"Verification status\")\n    verification_token: Optional[str] = Field(default=None, description=\"Verification token for domains\")\n\nclass Destination(BaseModel):\n    \"\"\"Email destination addresses.\"\"\"\n    ToAddresses: List[str] = Field(default=[], description=\"To recipients\")\n    CcAddresses: List[str] = Field(default=[], description=\"Cc recipients\")\n    BccAddresses: List[str] = Field(default=[], description=\"Bcc recipients\")\n\nclass Message(BaseModel):\n    \"\"\"Email message content.\"\"\"\n    Subject: Dict[str, str] = Field(..., description=\"Subject line\")\n    Body: Dict[str, Any] = Field(..., description=\"Email body\")\n\nclass SendDataPoint(BaseModel):\n    \"\"\"Email sending statistics data point.\"\"\"\n    Timestamp: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"Timestamp\")\n    DeliveryAttempts: int = Field(default=0, ge=0, description=\"Delivery attempts\")\n    Bounces: int = Field(default=0, ge=0, description=\"Bounces\")\n    Complaints: int = Field(default=0, ge=0, description=\"Complaints\")\n    Rejects: int = Field(default=0, ge=0, description=\"Rejects\")\n\nclass SentEmail(BaseModel):\n    \"\"\"Sent email record.\"\"\"\n    message_id: str = Field(..., description=\"Message ID\")\n    source: str = Field(..., description=\"Source email\")\n    destination: Destination = Field(..., description=\"Destination\")\n    timestamp: str = Field(..., description=\"Sent timestamp\")\n\nclass SESScenario(BaseModel):\n    \"\"\"Amazon SES scenario state.\"\"\"\n    verified_identities: Dict[str, EmailAddress] = Field(default={}, description=\"Verified email identities\")\n    sent_emails: Dict[str, SentEmail] = Field(default={}, description=\"Sent email records\")\n    send_statistics: List[SendDataPoint] = Field(default=[], description=\"Send statistics\")\n    templates: Dict[str, str] = Field(default={}, description=\"Email templates\")\n    current_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"Current timestamp\")\n    message_id_counter: int = Field(default=1, ge=1, description=\"Message ID counter\")\n\nScenario_Schema = [EmailAddress, Destination, Message, SendDataPoint, SentEmail, SESScenario]\n\n# Section 2: Class\nclass AmazonSESAPI:\n    def __init__(self):\n        \"\"\"Initialize Amazon SES API with empty state.\"\"\"\n        self.verified_identities: Dict[str, EmailAddress] = {}\n        self.sent_emails: Dict[str, SentEmail] = {}\n        self.send_statistics: List[SendDataPoint] = []\n        self.templates: Dict[str, str] = {}\n        self.current_time: str = \"\"\n        self.message_id_counter: int = 1\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = SESScenario(**scenario)\n        self.verified_identities = model.verified_identities\n        self.sent_emails = model.sent_emails\n        self.send_statistics = model.send_statistics\n        self.templates = model.templates\n        self.current_time = model.current_time\n        self.message_id_counter = model.message_id_counter\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"verified_identities\": {k: v.model_dump() for k, v in self.verified_identities.items()},\n            \"sent_emails\": {k: v.model_dump() for k, v in self.sent_emails.items()},\n            \"send_statistics\": [s.model_dump() for s in self.send_statistics],\n            \"templates\": self.templates,\n            \"current_time\": self.current_time,\n            \"message_id_counter\": self.message_id_counter\n        }\n\n    def send_email(self, destination: dict, message: dict, source: str, reply_to_addresses: Optional[List[str]], return_path: Optional[str]) -> dict:\n        \"\"\"Send a formatted email.\"\"\"\n        dest = Destination(**destination)\n        msg = Message(**message)\n        message_id = f\"msg-{self.message_id_counter:08d}\"\n        self.message_id_counter += 1\n        \n        sent_email = SentEmail(\n            message_id=message_id,\n            source=source,\n            destination=dest,\n            timestamp=self.current_time\n        )\n        self.sent_emails[message_id] = sent_email\n        \n        return {\"MessageId\": message_id, \"RequestId\": f\"req-{message_id}\"}\n\n    def send_raw_email(self, raw_message: str, source: Optional[str], destinations: Optional[List[str]]) -> dict:\n        \"\"\"Send a raw MIME-formatted email.\"\"\"\n        message_id = f\"msg-{self.message_id_counter:08d}\"\n        self.message_id_counter += 1\n        return {\"MessageId\": message_id}\n\n    def send_templated_email(self, destination: dict, template: str, template_data: str, source: str) -> dict:\n        \"\"\"Send an email using a template.\"\"\"\n        dest = Destination(**destination)\n        message_id = f\"msg-{self.message_id_counter:08d}\"\n        self.message_id_counter += 1\n        \n        sent_email = SentEmail(\n            message_id=message_id,\n            source=source,\n            destination=dest,\n            timestamp=self.current_time\n        )\n        self.sent_emails[message_id] = sent_email\n        \n        return {\"MessageId\": message_id}\n\n    def get_send_statistics(self) -> dict:\n        \"\"\"Retrieve email sending statistics.\"\"\"\n        return {\"SendDataPoints\": [s.model_dump() for s in self.send_statistics]}\n\n    def verify_email_identity(self, email_address: str) -> dict:\n        \"\"\"Initiate email verification process.\"\"\"\n        if email_address in self.verified_identities:\n            status = self.verified_identities[email_address].verification_status\n            return {\"status\": status.lower()}\n        \n        email = EmailAddress(address=email_address, verification_status=\"Pending\")\n        self.verified_identities[email_address] = email\n        return {\"status\": \"pending\"}\n\n    def get_identity_verification_attributes(self, identities: List[str]) -> dict:\n        \"\"\"Retrieve verification status for identities.\"\"\"\n        result = {}\n        for identity in identities:\n            if identity in self.verified_identities:\n                email = self.verified_identities[identity]\n                result[identity] = {\n                    \"VerificationStatus\": email.verification_status,\n                    \"VerificationToken\": email.verification_token\n                }\n        return {\"VerificationAttributes\": result}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"AmazonSES\")\napi = AmazonSESAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Amazon SES API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching SESScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Amazon SES state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef send_email(destination: dict, message: dict, source: str = \"\", reply_to_addresses: list = None, return_path: str = None) -> dict:\n    \"\"\"\n    Send a formatted email with subject and body to specified recipients via Amazon SES.\n\n    Args:\n        destination (dict): Recipient email addresses organized by delivery type (To, Cc, Bcc).\n        message (dict): Email content including subject line and body (text or HTML format).\n        source (str): The verified sender email address. Must be verified in Amazon SES.\n        reply_to_addresses (list): [Optional] Email addresses that will receive replies when recipients respond to this email.\n        return_path (str): [Optional] Email address where bounce and complaint notifications will be sent.\n\n    Returns:\n        MessageId (str): Unique identifier assigned to the sent email message by Amazon SES.\n        RequestId (str): AWS request identifier for tracking and debugging purposes.\n    \"\"\"\n    try:\n        if not isinstance(destination, dict):\n            raise ValueError(\"Destination must be a dictionary\")\n        if not isinstance(message, dict):\n            raise ValueError(\"Message must be a dictionary\")\n        if source and source not in api.verified_identities:\n            raise ValueError(f\"Source email {source} is not verified\")\n        if source and api.verified_identities[source].verification_status != \"Success\":\n            raise ValueError(f\"Source email {source} verification status is not Success\")\n        return api.send_email(destination, message, source, reply_to_addresses, return_path)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef send_raw_email(raw_message: str, source: str = None, destinations: list = None) -> dict:\n    \"\"\"\n    Send a raw MIME-formatted email message, allowing full control over email headers and content structure.\n\n    Args:\n        raw_message (str): Base64-encoded MIME message containing complete email headers and body.\n        source (str): [Optional] The verified sender email address. Must be verified in Amazon SES.\n        destinations (list): [Optional] Recipient email addresses that override the To/Cc/Bcc headers in the MIME message.\n\n    Returns:\n        MessageId (str): Unique identifier assigned to the sent email message by Amazon SES.\n    \"\"\"\n    try:\n        if not raw_message or not isinstance(raw_message, str):\n            raise ValueError(\"Raw message must be a non-empty string\")\n        if source and source not in api.verified_identities:\n            raise ValueError(f\"Source email {source} is not verified\")\n        return api.send_raw_email(raw_message, source, destinations)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef send_templated_email(destination: dict, template: str, template_data: str, source: str = \"\") -> dict:\n    \"\"\"\n    Send an email using a pre-configured SES template with dynamic variable substitution.\n\n    Args:\n        destination (dict): Recipient email addresses organized by delivery type (To, Cc, Bcc).\n        template (str): Name of the Amazon SES email template to use for this message.\n        template_data (str): JSON string containing key-value pairs for template variable substitution.\n        source (str): The verified sender email address. Must be verified in Amazon SES.\n\n    Returns:\n        MessageId (str): Unique identifier assigned to the sent email message by Amazon SES.\n    \"\"\"\n    try:\n        if not isinstance(destination, dict):\n            raise ValueError(\"Destination must be a dictionary\")\n        if not template or not isinstance(template, str):\n            raise ValueError(\"Template must be a non-empty string\")\n        if not template_data or not isinstance(template_data, str):\n            raise ValueError(\"Template data must be a non-empty string\")\n        if source and source not in api.verified_identities:\n            raise ValueError(f\"Source email {source} is not verified\")\n        return api.send_templated_email(destination, template, template_data, source)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_send_statistics() -> dict:\n    \"\"\"\n    Retrieve email sending statistics for the AWS account over the last 14 days, including delivery attempts, bounces, and complaints.\n\n    Returns:\n        SendDataPoints (list): Time-series data points containing email sending metrics aggregated by time period.\n    \"\"\"\n    try:\n        return api.get_send_statistics()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef verify_email_identity(email_address: str) -> dict:\n    \"\"\"\n    Initiate the verification process for an email address to authorize it as a sender in Amazon SES.\n\n    Args:\n        email_address (str): The email address to verify as a sender identity in Amazon SES.\n\n    Returns:\n        status (str): Current verification status: pending (verification email sent), success (verified), or failed (verification unsuccessful).\n    \"\"\"\n    try:\n        if not email_address or not isinstance(email_address, str):\n            raise ValueError(\"Email address must be a non-empty string\")\n        return api.verify_email_identity(email_address)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_identity_verification_attributes(identities: list) -> dict:\n    \"\"\"\n    Retrieve the verification status and attributes for email addresses or domains registered as sender identities.\n\n    Args:\n        identities (list): List of email addresses or domain names to check verification status for.\n\n    Returns:\n        VerificationAttributes (dict): Map of identity names to their verification status and attributes.\n    \"\"\"\n    try:\n        if not isinstance(identities, list):\n            raise ValueError(\"Identities must be a list\")\n        return api.get_identity_verification_attributes(identities)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-03-05T19:36:59.101642",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with one verified email and no sent emails",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "verified_identities": {
+          "user@example.com": {
+            "address": "user@example.com",
+            "verification_status": "Success",
+            "verification_token": null
+          }
+        },
+        "sent_emails": {},
+        "send_statistics": [],
+        "templates": {},
+        "current_time": "2026-03-05T10:00:00",
+        "message_id_counter": 1
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Moderate scenario with multiple verified identities, sent emails, and basic statistics",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "verified_identities": {
+          "sender@company.com": {
+            "address": "sender@company.com",
+            "verification_status": "Success",
+            "verification_token": null
+          },
+          "noreply@company.com": {
+            "address": "noreply@company.com",
+            "verification_status": "Success",
+            "verification_token": null
+          },
+          "pending@company.com": {
+            "address": "pending@company.com",
+            "verification_status": "Pending",
+            "verification_token": "tok_abc123xyz"
+          }
+        },
+        "sent_emails": {
+          "msg_001": {
+            "message_id": "msg_001",
+            "source": "sender@company.com",
+            "destination": {
+              "ToAddresses": [
+                "recipient@example.com"
+              ],
+              "CcAddresses": [],
+              "BccAddresses": []
+            },
+            "timestamp": "2026-03-05T09:30:00"
+          },
+          "msg_002": {
+            "message_id": "msg_002",
+            "source": "noreply@company.com",
+            "destination": {
+              "ToAddresses": [
+                "user1@example.com",
+                "user2@example.com"
+              ],
+              "CcAddresses": [
+                "manager@example.com"
+              ],
+              "BccAddresses": []
+            },
+            "timestamp": "2026-03-05T09:45:00"
+          }
+        },
+        "send_statistics": [
+          {
+            "Timestamp": "2026-03-05T09:00:00",
+            "DeliveryAttempts": 10,
+            "Bounces": 1,
+            "Complaints": 0,
+            "Rejects": 0
+          }
+        ],
+        "templates": {
+          "welcome": "Welcome {{name}}! Thanks for signing up."
+        },
+        "current_time": "2026-03-05T10:00:00",
+        "message_id_counter": 3
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Complex scenario with multiple identities, sent emails with various recipients, detailed statistics, and templates",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "verified_identities": {
+          "admin@company.com": {
+            "address": "admin@company.com",
+            "verification_status": "Success",
+            "verification_token": null
+          },
+          "support@company.com": {
+            "address": "support@company.com",
+            "verification_status": "Success",
+            "verification_token": null
+          },
+          "marketing@company.com": {
+            "address": "marketing@company.com",
+            "verification_status": "Success",
+            "verification_token": null
+          },
+          "test@company.com": {
+            "address": "test@company.com",
+            "verification_status": "Pending",
+            "verification_token": "tok_test456"
+          },
+          "company.com": {
+            "address": "company.com",
+            "verification_status": "Success",
+            "verification_token": "tok_domain789"
+          }
+        },
+        "sent_emails": {
+          "msg_001": {
+            "message_id": "msg_001",
+            "source": "admin@company.com",
+            "destination": {
+              "ToAddresses": [
+                "client@example.com"
+              ],
+              "CcAddresses": [
+                "manager@example.com"
+              ],
+              "BccAddresses": [
+                "archive@company.com"
+              ]
+            },
+            "timestamp": "2026-03-05T08:00:00"
+          },
+          "msg_002": {
+            "message_id": "msg_002",
+            "source": "support@company.com",
+            "destination": {
+              "ToAddresses": [
+                "user1@example.com",
+                "user2@example.com"
+              ],
+              "CcAddresses": [],
+              "BccAddresses": []
+            },
+            "timestamp": "2026-03-05T08:30:00"
+          },
+          "msg_003": {
+            "message_id": "msg_003",
+            "source": "marketing@company.com",
+            "destination": {
+              "ToAddresses": [
+                "subscriber1@example.com",
+                "subscriber2@example.com",
+                "subscriber3@example.com"
+              ],
+              "CcAddresses": [],
+              "BccAddresses": []
+            },
+            "timestamp": "2026-03-05T09:00:00"
+          }
+        },
+        "send_statistics": [
+          {
+            "Timestamp": "2026-03-05T08:00:00",
+            "DeliveryAttempts": 50,
+            "Bounces": 2,
+            "Complaints": 0,
+            "Rejects": 1
+          },
+          {
+            "Timestamp": "2026-03-05T09:00:00",
+            "DeliveryAttempts": 75,
+            "Bounces": 3,
+            "Complaints": 1,
+            "Rejects": 0
+          }
+        ],
+        "templates": {
+          "welcome": "Hello {{name}}, welcome to our service!",
+          "password_reset": "Click here to reset your password: {{reset_link}}",
+          "newsletter": "Monthly newsletter for {{month}}"
+        },
+        "current_time": "2026-03-05T10:00:00",
+        "message_id_counter": 4
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Boundary case with invalid email format (should be rejected)",
+      "expected_behavior": "validation_error",
+      "scenario_data": {
+        "verified_identities": {
+          "invalid-email": {
+            "address": "invalid-email",
+            "verification_status": "Success",
+            "verification_token": null
+          }
+        },
+        "sent_emails": {},
+        "send_statistics": [],
+        "templates": {},
+        "current_time": "2026-03-05T10:00:00",
+        "message_id_counter": 1
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_raw_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_templated_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_send_statistics",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "verify_email_identity",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_identity_verification_attributes",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_raw_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_templated_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_send_statistics",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "verify_email_identity",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_identity_verification_attributes",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_raw_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_raw_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_templated_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_templated_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_templated_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_send_statistics",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "verify_email_identity",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "verify_email_identity",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_identity_verification_attributes",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_identity_verification_attributes",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "load_scenario",
+              "details": "The email address 'invalid-email' in verified_identities failed email pattern validation",
+              "expected_vs_actual": "Expected: Validation error due to invalid email format. Actual: Validation error occurred as expected",
+              "root_cause": "The scenario contains an invalid email address that doesn't match the required email pattern",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "1 validation error for SESScenario\nverified_identities.invalid-email.address\n  String should match pattern '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$' [type=string_pattern_mismatch, input_value='invalid-email', input_type=str]"
+            },
+            "tool_execution": [],
+            "save_scenario": {
+              "success": false,
+              "consistency_check": false,
+              "error": "Skipped due to load_scenario failure"
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_raw_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_templated_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_send_statistics",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "verify_email_identity",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_identity_verification_attributes",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_raw_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_templated_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_send_statistics",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "verify_email_identity",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_identity_verification_attributes",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_raw_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_raw_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_templated_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_templated_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_templated_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_send_statistics",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "verify_email_identity",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "verify_email_identity",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_identity_verification_attributes",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_identity_verification_attributes",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "load_scenario",
+              "details": "The email address 'invalid-email' in verified_identities failed email pattern validation",
+              "expected_vs_actual": "Expected: Validation error due to invalid email format. Actual: Validation error occurred as expected",
+              "root_cause": "The scenario contains an invalid email address that doesn't match the required email pattern",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "1 validation error for SESScenario\nverified_identities.invalid-email.address\n  String should match pattern '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$' [type=string_pattern_mismatch, input_value='invalid-email', input_type=str]"
+            },
+            "tool_execution": [],
+            "save_scenario": {
+              "success": false,
+              "consistency_check": false,
+              "error": "Skipped due to load_scenario failure"
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/AmazonSES.py"
+  }
+}

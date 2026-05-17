@@ -1,0 +1,270 @@
+{
+  "class_name": "ClinicalTrialsGov",
+  "description": "MCP server exposing the ClinicalTrials.gov REST API for discovering, retrieving, and analyzing clinical-study records.",
+  "tools": [
+    {
+      "name": "clinicaltrials_list_studies",
+      "description": "Search and paginate through clinical studies using flexible query objects.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "description": "Optional query object (e.g., {\"term\":\"diabetes\"}) that defines search filters."
+          },
+          "pageSize": {
+            "type": "integer",
+            "description": "Maximum number of studies to return in this page (1-1000)."
+          },
+          "pageToken": {
+            "type": "string",
+            "description": "Pagination token returned by a previous call to retrieve the next page."
+          },
+          "format": {
+            "type": "string",
+            "description": "Response format; always \"json\" for MCP usage."
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "studies": {
+            "type": "array",
+            "description": "List of matching studies with brief metadata.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "nctId": {
+                  "type": "string",
+                  "description": "The unique ClinicalTrials.gov identifier (NCT ID) of the study."
+                },
+                "briefTitle": {
+                  "type": "string",
+                  "description": "Short public title of the clinical study."
+                },
+                "overallStatus": {
+                  "type": "string",
+                  "description": "Current recruitment/review status of the study."
+                },
+                "conditions": {
+                  "type": "array",
+                  "description": "Medical conditions addressed by the study.",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "interventions": {
+                  "type": "array",
+                  "description": "Drugs, devices, procedures, or behavioral interventions being studied.",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "phases": {
+                  "type": "array",
+                  "description": "Clinical trial phases (e.g., Phase 1, Phase 2).",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "nextPageToken": {
+            "type": "string",
+            "description": "Token to supply in the next request to continue pagination; absent when no more pages exist."
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Total number of studies matching the query across all pages."
+          }
+        }
+      }
+    },
+    {
+      "name": "clinicaltrials_get_study",
+      "description": "Retrieve full protocol, results, and derived sections for one or more studies by NCT ID.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "nctIds": {
+            "type": "string",
+            "description": "Comma-separated list of ClinicalTrials.gov NCT IDs to fetch."
+          }
+        },
+        "required": [
+          "nctIds"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "studies": {
+            "type": "array",
+            "description": "Detailed study records for each requested NCT ID.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "nctId": {
+                  "type": "string",
+                  "description": "The unique ClinicalTrials.gov identifier (NCT ID) of the study."
+                },
+                "protocolSection": {
+                  "type": "object",
+                  "description": "Comprehensive protocol information including design, eligibility, and contacts."
+                },
+                "resultsSection": {
+                  "type": "object",
+                  "description": "Reported outcomes, adverse events, and participant flow after study completion."
+                },
+                "derivedSection": {
+                  "type": "object",
+                  "description": "Computed or enriched metadata such as calculated completion dates."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "clinicaltrials_search_studies",
+      "description": "Quickly find studies using high-level filters for condition, intervention, location, and status.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "string",
+            "description": "Disease or medical condition being studied."
+          },
+          "intervention": {
+            "type": "string",
+            "description": "Drug, device, procedure, or behavioral intervention under investigation."
+          },
+          "location": {
+            "type": "string",
+            "description": "Geographic location such as city, state, or country where recruitment occurs."
+          },
+          "status": {
+            "type": "string",
+            "description": "Study recruitment or review status (e.g., recruiting, active, completed)."
+          },
+          "pageSize": {
+            "type": "integer",
+            "description": "Maximum number of studies to return (1-1000)."
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "studies": {
+            "type": "array",
+            "description": "Array of study summaries matching the provided filters.",
+            "items": {
+              "type": "object"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Total number of studies matching the filters across all pages."
+          }
+        }
+      }
+    },
+    {
+      "name": "clinicaltrials_get_results",
+      "description": "Obtain reported results, outcome measures, adverse events, and participant flow for a single study.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "nctId": {
+            "type": "string",
+            "description": "The unique ClinicalTrials.gov identifier (NCT ID) whose results are requested."
+          }
+        },
+        "required": [
+          "nctId"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "nctId": {
+            "type": "string",
+            "description": "The unique ClinicalTrials.gov identifier (NCT ID) of the study."
+          },
+          "outcomeMeasures": {
+            "type": "array",
+            "description": "Primary and secondary outcome measures with analyzed data points.",
+            "items": {
+              "type": "object"
+            }
+          },
+          "adverseEvents": {
+            "type": "array",
+            "description": "Summary tables of adverse events reported by arm and severity.",
+            "items": {
+              "type": "object"
+            }
+          },
+          "participantFlow": {
+            "type": "object",
+            "description": "Diagram and numbers detailing participant progression through trial phases."
+          }
+        }
+      }
+    },
+    {
+      "name": "clinicaltrials_analyze_trends",
+      "description": "Aggregate statistics on groups of trials by a chosen attribute such as phase, status, condition, or sponsor.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "description": "Query object used to select the cohort of studies to analyze."
+          },
+          "group_by": {
+            "type": "string",
+            "description": "Attribute to group studies by (e.g., \"phase\", \"status\", \"condition\", \"sponsor\")."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "group_by": {
+            "type": "string",
+            "description": "The attribute used for grouping the selected studies."
+          },
+          "buckets": {
+            "type": "array",
+            "description": "Count of studies falling into each distinct value of the grouping attribute.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "Distinct value of the grouping attribute (e.g., \"Phase 2\")."
+                },
+                "count": {
+                  "type": "integer",
+                  "description": "Number of studies that share this key value."
+                }
+              }
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Total number of studies included in the analysis."
+          }
+        }
+      }
+    }
+  ]
+}

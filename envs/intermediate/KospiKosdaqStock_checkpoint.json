@@ -1,0 +1,1765 @@
+{
+  "metadata": {
+    "class_name": "KospiKosdaqStock",
+    "metadata_path": "envs\\metadata\\KospiKosdaqStock_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-03T21:41:47.588144",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "KospiKosdaqStock",
+    "description": "Provides access to Korean stock market data including OHLCV prices, market capitalization, fundamental indicators, and trading volume by investor type for KOSPI and KOSDAQ listed securities.",
+    "tools": [
+      {
+        "name": "get_stock_ohlcv",
+        "description": "Retrieve OHLCV (Open/High/Low/Close/Volume) price data for a specific stock over a date range.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "fromdate": {
+              "type": "string",
+              "description": "Start date for the data retrieval period in YYYYMMDD format."
+            },
+            "todate": {
+              "type": "string",
+              "description": "End date for the data retrieval period in YYYYMMDD format."
+            },
+            "ticker": {
+              "type": "string",
+              "description": "The stock ticker symbol identifying the security on KOSPI or KOSDAQ."
+            },
+            "adjusted": {
+              "type": "boolean",
+              "description": "Whether to return adjusted prices accounting for stock splits and dividends. True for adjusted prices, False for unadjusted raw prices."
+            }
+          },
+          "required": [
+            "fromdate",
+            "todate",
+            "ticker"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "ticker": {
+              "type": "string",
+              "description": "The stock ticker symbol identifying the security on KOSPI or KOSDAQ."
+            },
+            "data": {
+              "type": "array",
+              "description": "List of daily OHLCV records for the requested date range.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "description": "The trading date in YYYYMMDD format."
+                  },
+                  "open": {
+                    "type": "number",
+                    "description": "The opening price of the stock for the trading day."
+                  },
+                  "high": {
+                    "type": "number",
+                    "description": "The highest price of the stock during the trading day."
+                  },
+                  "low": {
+                    "type": "number",
+                    "description": "The lowest price of the stock during the trading day."
+                  },
+                  "close": {
+                    "type": "number",
+                    "description": "The closing price of the stock for the trading day."
+                  },
+                  "volume": {
+                    "type": "integer",
+                    "description": "The total number of shares traded during the trading day."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_stock_market_cap",
+        "description": "Retrieve market capitalization data for a specific stock over a date range.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "fromdate": {
+              "type": "string",
+              "description": "Start date for the data retrieval period in YYYYMMDD format."
+            },
+            "todate": {
+              "type": "string",
+              "description": "End date for the data retrieval period in YYYYMMDD format."
+            },
+            "ticker": {
+              "type": "string",
+              "description": "The stock ticker symbol identifying the security on KOSPI or KOSDAQ."
+            }
+          },
+          "required": [
+            "fromdate",
+            "todate",
+            "ticker"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "ticker": {
+              "type": "string",
+              "description": "The stock ticker symbol identifying the security on KOSPI or KOSDAQ."
+            },
+            "data": {
+              "type": "array",
+              "description": "List of daily market capitalization records for the requested date range.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "description": "The trading date in YYYYMMDD format."
+                  },
+                  "market_cap": {
+                    "type": "number",
+                    "description": "The total market capitalization of the stock calculated as share price multiplied by outstanding shares."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_stock_fundamental",
+        "description": "Retrieve fundamental valuation indicators (PER, PBR, Dividend Yield) for a specific stock over a date range.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "fromdate": {
+              "type": "string",
+              "description": "Start date for the data retrieval period in YYYYMMDD format."
+            },
+            "todate": {
+              "type": "string",
+              "description": "End date for the data retrieval period in YYYYMMDD format."
+            },
+            "ticker": {
+              "type": "string",
+              "description": "The stock ticker symbol identifying the security on KOSPI or KOSDAQ."
+            }
+          },
+          "required": [
+            "fromdate",
+            "todate",
+            "ticker"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "ticker": {
+              "type": "string",
+              "description": "The stock ticker symbol identifying the security on KOSPI or KOSDAQ."
+            },
+            "data": {
+              "type": "array",
+              "description": "List of daily fundamental indicator records for the requested date range.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "description": "The trading date in YYYYMMDD format."
+                  },
+                  "per": {
+                    "type": "number",
+                    "description": "Price-to-Earnings Ratio measuring the stock price relative to earnings per share."
+                  },
+                  "pbr": {
+                    "type": "number",
+                    "description": "Price-to-Book Ratio measuring the stock price relative to book value per share."
+                  },
+                  "dividend_yield": {
+                    "type": "number",
+                    "description": "The annual dividend payment expressed as a percentage of the stock price."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_stock_trading_volume",
+        "description": "Retrieve trading volume breakdown by investor type (individual, institutional, foreign) for a specific stock over a date range.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "fromdate": {
+              "type": "string",
+              "description": "Start date for the data retrieval period in YYYYMMDD format."
+            },
+            "todate": {
+              "type": "string",
+              "description": "End date for the data retrieval period in YYYYMMDD format."
+            },
+            "ticker": {
+              "type": "string",
+              "description": "The stock ticker symbol identifying the security on KOSPI or KOSDAQ."
+            }
+          },
+          "required": [
+            "fromdate",
+            "todate",
+            "ticker"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "ticker": {
+              "type": "string",
+              "description": "The stock ticker symbol identifying the security on KOSPI or KOSDAQ."
+            },
+            "data": {
+              "type": "array",
+              "description": "List of daily trading volume records segmented by investor type for the requested date range.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "description": "The trading date in YYYYMMDD format."
+                  },
+                  "individual": {
+                    "type": "integer",
+                    "description": "Trading volume attributed to individual retail investors."
+                  },
+                  "institutional": {
+                    "type": "integer",
+                    "description": "Trading volume attributed to institutional investors such as funds and asset managers."
+                  },
+                  "foreign": {
+                    "type": "integer",
+                    "description": "Trading volume attributed to foreign investors."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass OHLCVRecord(BaseModel):\n    \"\"\"Represents a single day's OHLCV data.\"\"\"\n    date: str = Field(..., pattern=r\"^\\d{8}$\", description=\"The trading date in YYYYMMDD format.\")\n    open: float = Field(..., ge=0, description=\"The opening price of the stock for the trading day.\")\n    high: float = Field(..., ge=0, description=\"The highest price of the stock during the trading day.\")\n    low: float = Field(..., ge=0, description=\"The lowest price of the stock during the trading day.\")\n    close: float = Field(..., ge=0, description=\"The closing price of the stock for the trading day.\")\n    volume: int = Field(..., ge=0, description=\"The total number of shares traded during the trading day.\")\n\nclass MarketCapRecord(BaseModel):\n    \"\"\"Represents a single day's market capitalization data.\"\"\"\n    date: str = Field(..., pattern=r\"^\\d{8}$\", description=\"The trading date in YYYYMMDD format.\")\n    market_cap: float = Field(..., ge=0, description=\"The total market capitalization of the stock.\")\n\nclass FundamentalRecord(BaseModel):\n    \"\"\"Represents a single day's fundamental indicator data.\"\"\"\n    date: str = Field(..., pattern=r\"^\\d{8}$\", description=\"The trading date in YYYYMMDD format.\")\n    per: float = Field(..., description=\"Price-to-Earnings Ratio measuring the stock price relative to earnings per share.\")\n    pbr: float = Field(..., description=\"Price-to-Book Ratio measuring the stock price relative to book value per share.\")\n    dividend_yield: float = Field(..., ge=0, description=\"The annual dividend payment expressed as a percentage of the stock price.\")\n\nclass TradingVolumeRecord(BaseModel):\n    \"\"\"Represents a single day's trading volume breakdown by investor type.\"\"\"\n    date: str = Field(..., pattern=r\"^\\d{8}$\", description=\"The trading date in YYYYMMDD format.\")\n    individual: int = Field(..., description=\"Trading volume attributed to individual retail investors.\")\n    institutional: int = Field(..., description=\"Trading volume attributed to institutional investors.\")\n    foreign: int = Field(..., description=\"Trading volume attributed to foreign investors.\")\n\nclass StockInfo(BaseModel):\n    \"\"\"Represents basic stock information.\"\"\"\n    ticker: str = Field(..., pattern=r\"^\\d{6}$\", description=\"The 6-digit stock ticker symbol.\")\n    name: str = Field(..., description=\"The company name.\")\n    market: str = Field(..., description=\"The market where the stock is listed (KOSPI or KOSDAQ).\")\n\nclass KospiKosdaqScenario(BaseModel):\n    \"\"\"Main scenario model for Korean stock market data.\"\"\"\n    stocks: Dict[str, StockInfo] = Field(default={}, description=\"Registered stocks information by ticker.\")\n    ohlcv_data: Dict[str, List[Dict[str, Any]]] = Field(default={}, description=\"OHLCV data by ticker.\")\n    ohlcv_adjusted_data: Dict[str, List[Dict[str, Any]]] = Field(default={}, description=\"Adjusted OHLCV data by ticker.\")\n    market_cap_data: Dict[str, List[Dict[str, Any]]] = Field(default={}, description=\"Market capitalization data by ticker.\")\n    fundamental_data: Dict[str, List[Dict[str, Any]]] = Field(default={}, description=\"Fundamental indicator data by ticker.\")\n    trading_volume_data: Dict[str, List[Dict[str, Any]]] = Field(default={}, description=\"Trading volume by investor type data by ticker.\")\n    tickerNameMap: Dict[str, str] = Field(default={\n        \"005930\": \"Samsung Electronics\",\n        \"000660\": \"SK Hynix\",\n        \"035420\": \"NAVER\",\n        \"035720\": \"Kakao\",\n        \"051910\": \"LG Chem\",\n        \"006400\": \"Samsung SDI\",\n        \"068270\": \"Celltrion\",\n        \"005380\": \"Hyundai Motor\",\n        \"000270\": \"Kia\",\n        \"105560\": \"KB Financial Group\",\n        \"055550\": \"Shinhan Financial Group\",\n        \"012330\": \"Hyundai Mobis\",\n        \"066570\": \"LG Electronics\",\n        \"003550\": \"LG\",\n        \"028260\": \"Samsung C&T\",\n        \"207940\": \"Samsung Biologics\",\n        \"096770\": \"SK Innovation\",\n        \"034730\": \"SK\",\n        \"017670\": \"SK Telecom\",\n        \"030200\": \"KT\"\n    }, description=\"Mapping of ticker symbols to company names.\")\n    tickerMarketMap: Dict[str, str] = Field(default={\n        \"005930\": \"KOSPI\",\n        \"000660\": \"KOSPI\",\n        \"035420\": \"KOSPI\",\n        \"035720\": \"KOSPI\",\n        \"051910\": \"KOSPI\",\n        \"006400\": \"KOSPI\",\n        \"068270\": \"KOSPI\",\n        \"005380\": \"KOSPI\",\n        \"000270\": \"KOSPI\",\n        \"105560\": \"KOSPI\",\n        \"055550\": \"KOSPI\",\n        \"012330\": \"KOSPI\",\n        \"066570\": \"KOSPI\",\n        \"003550\": \"KOSPI\",\n        \"028260\": \"KOSPI\",\n        \"207940\": \"KOSPI\",\n        \"096770\": \"KOSPI\",\n        \"034730\": \"KOSPI\",\n        \"017670\": \"KOSPI\",\n        \"030200\": \"KOSPI\"\n    }, description=\"Mapping of ticker symbols to market type.\")\n\nScenario_Schema = [OHLCVRecord, MarketCapRecord, FundamentalRecord, TradingVolumeRecord, StockInfo, KospiKosdaqScenario]\n\n# Section 2: Class\nclass KospiKosdaqStockAPI:\n    def __init__(self):\n        \"\"\"Initialize Korean stock market API with empty state.\"\"\"\n        self.stocks: Dict[str, StockInfo] = {}\n        self.ohlcv_data: Dict[str, List[Dict[str, Any]]] = {}\n        self.ohlcv_adjusted_data: Dict[str, List[Dict[str, Any]]] = {}\n        self.market_cap_data: Dict[str, List[Dict[str, Any]]] = {}\n        self.fundamental_data: Dict[str, List[Dict[str, Any]]] = {}\n        self.trading_volume_data: Dict[str, List[Dict[str, Any]]] = {}\n        self.tickerNameMap: Dict[str, str] = {}\n        self.tickerMarketMap: Dict[str, str] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = KospiKosdaqScenario(**scenario)\n        self.stocks = {ticker: StockInfo(**stock) if isinstance(stock, dict) else stock \n                       for ticker, stock in model.stocks.items()}\n        self.ohlcv_data = model.ohlcv_data\n        self.ohlcv_adjusted_data = model.ohlcv_adjusted_data\n        self.market_cap_data = model.market_cap_data\n        self.fundamental_data = model.fundamental_data\n        self.trading_volume_data = model.trading_volume_data\n        self.tickerNameMap = model.tickerNameMap\n        self.tickerMarketMap = model.tickerMarketMap\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"stocks\": {ticker: stock.model_dump() for ticker, stock in self.stocks.items()},\n            \"ohlcv_data\": self.ohlcv_data,\n            \"ohlcv_adjusted_data\": self.ohlcv_adjusted_data,\n            \"market_cap_data\": self.market_cap_data,\n            \"fundamental_data\": self.fundamental_data,\n            \"trading_volume_data\": self.trading_volume_data,\n            \"tickerNameMap\": self.tickerNameMap,\n            \"tickerMarketMap\": self.tickerMarketMap\n        }\n\n    def _filter_by_date_range(self, data: List[Dict[str, Any]], fromdate: str, todate: str) -> List[Dict[str, Any]]:\n        \"\"\"Filter data records by date range.\"\"\"\n        return [record for record in data if fromdate <= record.get(\"date\", \"\") <= todate]\n\n    def get_stock_ohlcv(self, fromdate: str, todate: str, ticker: str, adjusted: Optional[bool] = False) -> dict:\n        \"\"\"Retrieve OHLCV price data for a specific stock over a date range.\"\"\"\n        if adjusted:\n            data_source = self.ohlcv_adjusted_data.get(ticker, [])\n        else:\n            data_source = self.ohlcv_data.get(ticker, [])\n        \n        filtered_data = self._filter_by_date_range(data_source, fromdate, todate)\n        \n        return {\n            \"ticker\": ticker,\n            \"data\": filtered_data\n        }\n\n    def get_stock_market_cap(self, fromdate: str, todate: str, ticker: str) -> dict:\n        \"\"\"Retrieve market capitalization data for a specific stock over a date range.\"\"\"\n        data_source = self.market_cap_data.get(ticker, [])\n        filtered_data = self._filter_by_date_range(data_source, fromdate, todate)\n        \n        return {\n            \"ticker\": ticker,\n            \"data\": filtered_data\n        }\n\n    def get_stock_fundamental(self, fromdate: str, todate: str, ticker: str) -> dict:\n        \"\"\"Retrieve fundamental valuation indicators for a specific stock over a date range.\"\"\"\n        data_source = self.fundamental_data.get(ticker, [])\n        filtered_data = self._filter_by_date_range(data_source, fromdate, todate)\n        \n        return {\n            \"ticker\": ticker,\n            \"data\": filtered_data\n        }\n\n    def get_stock_trading_volume(self, fromdate: str, todate: str, ticker: str) -> dict:\n        \"\"\"Retrieve trading volume breakdown by investor type for a specific stock over a date range.\"\"\"\n        data_source = self.trading_volume_data.get(ticker, [])\n        filtered_data = self._filter_by_date_range(data_source, fromdate, todate)\n        \n        return {\n            \"ticker\": ticker,\n            \"data\": filtered_data\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"KospiKosdaqStock\")\napi = KospiKosdaqStockAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Korean stock market API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching KospiKosdaqScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Korean stock market state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_stock_ohlcv(fromdate: str, todate: str, ticker: str, adjusted: Optional[bool] = False) -> dict:\n    \"\"\"\n    Retrieve OHLCV (Open/High/Low/Close/Volume) price data for a specific stock over a date range.\n    \n    Args:\n        fromdate (str): Start date for the data retrieval period in YYYYMMDD format.\n        todate (str): End date for the data retrieval period in YYYYMMDD format.\n        ticker (str): The stock ticker symbol identifying the security on KOSPI or KOSDAQ.\n        adjusted (bool): [Optional] Whether to return adjusted prices accounting for stock splits and dividends. True for adjusted prices, False for unadjusted raw prices.\n    \n    Returns:\n        ticker (str): The stock ticker symbol identifying the security on KOSPI or KOSDAQ.\n        data (list): List of daily OHLCV records for the requested date range.\n    \"\"\"\n    try:\n        if not fromdate or not isinstance(fromdate, str):\n            raise ValueError(\"fromdate must be a non-empty string\")\n        if not todate or not isinstance(todate, str):\n            raise ValueError(\"todate must be a non-empty string\")\n        if not ticker or not isinstance(ticker, str):\n            raise ValueError(\"ticker must be a non-empty string\")\n        if fromdate > todate:\n            raise ValueError(\"fromdate must be less than or equal to todate\")\n        return api.get_stock_ohlcv(fromdate, todate, ticker, adjusted)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_stock_market_cap(fromdate: str, todate: str, ticker: str) -> dict:\n    \"\"\"\n    Retrieve market capitalization data for a specific stock over a date range.\n    \n    Args:\n        fromdate (str): Start date for the data retrieval period in YYYYMMDD format.\n        todate (str): End date for the data retrieval period in YYYYMMDD format.\n        ticker (str): The stock ticker symbol identifying the security on KOSPI or KOSDAQ.\n    \n    Returns:\n        ticker (str): The stock ticker symbol identifying the security on KOSPI or KOSDAQ.\n        data (list): List of daily market capitalization records for the requested date range.\n    \"\"\"\n    try:\n        if not fromdate or not isinstance(fromdate, str):\n            raise ValueError(\"fromdate must be a non-empty string\")\n        if not todate or not isinstance(todate, str):\n            raise ValueError(\"todate must be a non-empty string\")\n        if not ticker or not isinstance(ticker, str):\n            raise ValueError(\"ticker must be a non-empty string\")\n        if fromdate > todate:\n            raise ValueError(\"fromdate must be less than or equal to todate\")\n        return api.get_stock_market_cap(fromdate, todate, ticker)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_stock_fundamental(fromdate: str, todate: str, ticker: str) -> dict:\n    \"\"\"\n    Retrieve fundamental valuation indicators (PER, PBR, Dividend Yield) for a specific stock over a date range.\n    \n    Args:\n        fromdate (str): Start date for the data retrieval period in YYYYMMDD format.\n        todate (str): End date for the data retrieval period in YYYYMMDD format.\n        ticker (str): The stock ticker symbol identifying the security on KOSPI or KOSDAQ.\n    \n    Returns:\n        ticker (str): The stock ticker symbol identifying the security on KOSPI or KOSDAQ.\n        data (list): List of daily fundamental indicator records for the requested date range.\n    \"\"\"\n    try:\n        if not fromdate or not isinstance(fromdate, str):\n            raise ValueError(\"fromdate must be a non-empty string\")\n        if not todate or not isinstance(todate, str):\n            raise ValueError(\"todate must be a non-empty string\")\n        if not ticker or not isinstance(ticker, str):\n            raise ValueError(\"ticker must be a non-empty string\")\n        if fromdate > todate:\n            raise ValueError(\"fromdate must be less than or equal to todate\")\n        return api.get_stock_fundamental(fromdate, todate, ticker)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_stock_trading_volume(fromdate: str, todate: str, ticker: str) -> dict:\n    \"\"\"\n    Retrieve trading volume breakdown by investor type (individual, institutional, foreign) for a specific stock over a date range.\n    \n    Args:\n        fromdate (str): Start date for the data retrieval period in YYYYMMDD format.\n        todate (str): End date for the data retrieval period in YYYYMMDD format.\n        ticker (str): The stock ticker symbol identifying the security on KOSPI or KOSDAQ.\n    \n    Returns:\n        ticker (str): The stock ticker symbol identifying the security on KOSPI or KOSDAQ.\n        data (list): List of daily trading volume records segmented by investor type for the requested date range.\n    \"\"\"\n    try:\n        if not fromdate or not isinstance(fromdate, str):\n            raise ValueError(\"fromdate must be a non-empty string\")\n        if not todate or not isinstance(todate, str):\n            raise ValueError(\"todate must be a non-empty string\")\n        if not ticker or not isinstance(ticker, str):\n            raise ValueError(\"ticker must be a non-empty string\")\n        if fromdate > todate:\n            raise ValueError(\"fromdate must be less than or equal to todate\")\n        return api.get_stock_trading_volume(fromdate, todate, ticker)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-03T21:41:47.588144",
+      "revision_number": null
+    },
+    {
+      "version": 1,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\nimport re\n\n# Section 1: Schema\nclass OHLCVRecord(BaseModel):\n    \"\"\"Represents a single day's OHLCV data.\"\"\"\n    date: str = Field(..., pattern=r\"^\\d{8}$\", description=\"The trading date in YYYYMMDD format.\")\n    open: float = Field(..., ge=0, description=\"The opening price of the stock for the trading day.\")\n    high: float = Field(..., ge=0, description=\"The highest price of the stock during the trading day.\")\n    low: float = Field(..., ge=0, description=\"The lowest price of the stock during the trading day.\")\n    close: float = Field(..., ge=0, description=\"The closing price of the stock for the trading day.\")\n    volume: int = Field(..., ge=0, description=\"The total number of shares traded during the trading day.\")\n\nclass MarketCapRecord(BaseModel):\n    \"\"\"Represents a single day's market capitalization data.\"\"\"\n    date: str = Field(..., pattern=r\"^\\d{8}$\", description=\"The trading date in YYYYMMDD format.\")\n    market_cap: float = Field(..., ge=0, description=\"The total market capitalization of the stock.\")\n\nclass FundamentalRecord(BaseModel):\n    \"\"\"Represents a single day's fundamental indicator data.\"\"\"\n    date: str = Field(..., pattern=r\"^\\d{8}$\", description=\"The trading date in YYYYMMDD format.\")\n    per: float = Field(..., description=\"Price-to-Earnings Ratio measuring the stock price relative to earnings per share.\")\n    pbr: float = Field(..., description=\"Price-to-Book Ratio measuring the stock price relative to book value per share.\")\n    dividend_yield: float = Field(..., ge=0, description=\"The annual dividend payment expressed as a percentage of the stock price.\")\n\nclass TradingVolumeRecord(BaseModel):\n    \"\"\"Represents a single day's trading volume breakdown by investor type.\"\"\"\n    date: str = Field(..., pattern=r\"^\\d{8}$\", description=\"The trading date in YYYYMMDD format.\")\n    individual: int = Field(..., description=\"Trading volume attributed to individual retail investors.\")\n    institutional: int = Field(..., description=\"Trading volume attributed to institutional investors.\")\n    foreign: int = Field(..., description=\"Trading volume attributed to foreign investors.\")\n\nclass StockInfo(BaseModel):\n    \"\"\"Represents basic stock information.\"\"\"\n    ticker: str = Field(..., pattern=r\"^\\d{6}$\", description=\"The 6-digit stock ticker symbol.\")\n    name: str = Field(..., description=\"The company name.\")\n    market: str = Field(..., description=\"The market where the stock is listed (KOSPI or KOSDAQ).\")\n\nclass KospiKosdaqScenario(BaseModel):\n    \"\"\"Main scenario model for Korean stock market data.\"\"\"\n    stocks: Dict[str, StockInfo] = Field(default={}, description=\"Registered stocks information by ticker.\")\n    ohlcv_data: Dict[str, List[Dict[str, Any]]] = Field(default={}, description=\"OHLCV data by ticker.\")\n    ohlcv_adjusted_data: Dict[str, List[Dict[str, Any]]] = Field(default={}, description=\"Adjusted OHLCV data by ticker.\")\n    market_cap_data: Dict[str, List[Dict[str, Any]]] = Field(default={}, description=\"Market capitalization data by ticker.\")\n    fundamental_data: Dict[str, List[Dict[str, Any]]] = Field(default={}, description=\"Fundamental indicator data by ticker.\")\n    trading_volume_data: Dict[str, List[Dict[str, Any]]] = Field(default={}, description=\"Trading volume by investor type data by ticker.\")\n    tickerNameMap: Dict[str, str] = Field(default={\n        \"005930\": \"Samsung Electronics\",\n        \"000660\": \"SK Hynix\",\n        \"035420\": \"NAVER\",\n        \"035720\": \"Kakao\",\n        \"051910\": \"LG Chem\",\n        \"006400\": \"Samsung SDI\",\n        \"068270\": \"Celltrion\",\n        \"005380\": \"Hyundai Motor\",\n        \"000270\": \"Kia\",\n        \"105560\": \"KB Financial Group\",\n        \"055550\": \"Shinhan Financial Group\",\n        \"012330\": \"Hyundai Mobis\",\n        \"066570\": \"LG Electronics\",\n        \"003550\": \"LG\",\n        \"028260\": \"Samsung C&T\",\n        \"207940\": \"Samsung Biologics\",\n        \"096770\": \"SK Innovation\",\n        \"034730\": \"SK\",\n        \"017670\": \"SK Telecom\",\n        \"030200\": \"KT\"\n    }, description=\"Mapping of ticker symbols to company names.\")\n    tickerMarketMap: Dict[str, str] = Field(default={\n        \"005930\": \"KOSPI\",\n        \"000660\": \"KOSPI\",\n        \"035420\": \"KOSPI\",\n        \"035720\": \"KOSPI\",\n        \"051910\": \"KOSPI\",\n        \"006400\": \"KOSPI\",\n        \"068270\": \"KOSPI\",\n        \"005380\": \"KOSPI\",\n        \"000270\": \"KOSPI\",\n        \"105560\": \"KOSPI\",\n        \"055550\": \"KOSPI\",\n        \"012330\": \"KOSPI\",\n        \"066570\": \"KOSPI\",\n        \"003550\": \"KOSPI\",\n        \"028260\": \"KOSPI\",\n        \"207940\": \"KOSPI\",\n        \"096770\": \"KOSPI\",\n        \"034730\": \"KOSPI\",\n        \"017670\": \"KOSPI\",\n        \"030200\": \"KOSPI\"\n    }, description=\"Mapping of ticker symbols to market type.\")\n\nScenario_Schema = [OHLCVRecord, MarketCapRecord, FundamentalRecord, TradingVolumeRecord, StockInfo, KospiKosdaqScenario]\n\n# Section 2: Class\nclass KospiKosdaqStockAPI:\n    # Date format pattern for YYYYMMDD validation\n    DATE_PATTERN = re.compile(r\"^\\d{8}$\")\n    \n    def __init__(self):\n        \"\"\"Initialize Korean stock market API with empty state.\"\"\"\n        self.stocks: Dict[str, StockInfo] = {}\n        self.ohlcv_data: Dict[str, List[Dict[str, Any]]] = {}\n        self.ohlcv_adjusted_data: Dict[str, List[Dict[str, Any]]] = {}\n        self.market_cap_data: Dict[str, List[Dict[str, Any]]] = {}\n        self.fundamental_data: Dict[str, List[Dict[str, Any]]] = {}\n        self.trading_volume_data: Dict[str, List[Dict[str, Any]]] = {}\n        self.tickerNameMap: Dict[str, str] = {}\n        self.tickerMarketMap: Dict[str, str] = {}\n\n    def _validate_date_format(self, date_str: str, context: str) -> None:\n        \"\"\"Validate that a date string matches YYYYMMDD format.\"\"\"\n        if not self.DATE_PATTERN.match(date_str):\n            raise ValueError(f\"Invalid date format in {context}: '{date_str}'. Expected YYYYMMDD format (8 digits, no hyphens).\")\n\n    def _validate_data_records_dates(self, data_dict: Dict[str, List[Dict[str, Any]]], data_type: str) -> None:\n        \"\"\"Validate date formats in all records of a data dictionary.\"\"\"\n        for ticker, records in data_dict.items():\n            for idx, record in enumerate(records):\n                if \"date\" in record:\n                    date_value = record[\"date\"]\n                    if not isinstance(date_value, str):\n                        raise ValueError(f\"Invalid date type in {data_type} for ticker {ticker}, record {idx}: expected string, got {type(date_value).__name__}\")\n                    self._validate_date_format(date_value, f\"{data_type} for ticker {ticker}, record {idx}\")\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance with validation.\"\"\"\n        # First, validate the basic structure using Pydantic\n        model = KospiKosdaqScenario(**scenario)\n        \n        # Validate date formats in all data records before loading\n        # This ensures dates are in YYYYMMDD format (8 digits, no hyphens)\n        self._validate_data_records_dates(model.ohlcv_data, \"ohlcv_data\")\n        self._validate_data_records_dates(model.ohlcv_adjusted_data, \"ohlcv_adjusted_data\")\n        self._validate_data_records_dates(model.market_cap_data, \"market_cap_data\")\n        self._validate_data_records_dates(model.fundamental_data, \"fundamental_data\")\n        self._validate_data_records_dates(model.trading_volume_data, \"trading_volume_data\")\n        \n        # All validations passed, now load the data\n        self.stocks = {ticker: StockInfo(**stock) if isinstance(stock, dict) else stock \n                       for ticker, stock in model.stocks.items()}\n        self.ohlcv_data = model.ohlcv_data\n        self.ohlcv_adjusted_data = model.ohlcv_adjusted_data\n        self.market_cap_data = model.market_cap_data\n        self.fundamental_data = model.fundamental_data\n        self.trading_volume_data = model.trading_volume_data\n        self.tickerNameMap = model.tickerNameMap\n        self.tickerMarketMap = model.tickerMarketMap\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"stocks\": {ticker: stock.model_dump() for ticker, stock in self.stocks.items()},\n            \"ohlcv_data\": self.ohlcv_data,\n            \"ohlcv_adjusted_data\": self.ohlcv_adjusted_data,\n            \"market_cap_data\": self.market_cap_data,\n            \"fundamental_data\": self.fundamental_data,\n            \"trading_volume_data\": self.trading_volume_data,\n            \"tickerNameMap\": self.tickerNameMap,\n            \"tickerMarketMap\": self.tickerMarketMap\n        }\n\n    def _filter_by_date_range(self, data: List[Dict[str, Any]], fromdate: str, todate: str) -> List[Dict[str, Any]]:\n        \"\"\"Filter data records by date range.\"\"\"\n        return [record for record in data if fromdate <= record.get(\"date\", \"\") <= todate]\n\n    def get_stock_ohlcv(self, fromdate: str, todate: str, ticker: str, adjusted: Optional[bool] = False) -> dict:\n        \"\"\"Retrieve OHLCV price data for a specific stock over a date range.\"\"\"\n        if adjusted:\n            data_source = self.ohlcv_adjusted_data.get(ticker, [])\n        else:\n            data_source = self.ohlcv_data.get(ticker, [])\n        \n        filtered_data = self._filter_by_date_range(data_source, fromdate, todate)\n        \n        return {\n            \"ticker\": ticker,\n            \"data\": filtered_data\n        }\n\n    def get_stock_market_cap(self, fromdate: str, todate: str, ticker: str) -> dict:\n        \"\"\"Retrieve market capitalization data for a specific stock over a date range.\"\"\"\n        data_source = self.market_cap_data.get(ticker, [])\n        filtered_data = self._filter_by_date_range(data_source, fromdate, todate)\n        \n        return {\n            \"ticker\": ticker,\n            \"data\": filtered_data\n        }\n\n    def get_stock_fundamental(self, fromdate: str, todate: str, ticker: str) -> dict:\n        \"\"\"Retrieve fundamental valuation indicators for a specific stock over a date range.\"\"\"\n        data_source = self.fundamental_data.get(ticker, [])\n        filtered_data = self._filter_by_date_range(data_source, fromdate, todate)\n        \n        return {\n            \"ticker\": ticker,\n            \"data\": filtered_data\n        }\n\n    def get_stock_trading_volume(self, fromdate: str, todate: str, ticker: str) -> dict:\n        \"\"\"Retrieve trading volume breakdown by investor type for a specific stock over a date range.\"\"\"\n        data_source = self.trading_volume_data.get(ticker, [])\n        filtered_data = self._filter_by_date_range(data_source, fromdate, todate)\n        \n        return {\n            \"ticker\": ticker,\n            \"data\": filtered_data\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"KospiKosdaqStock\")\napi = KospiKosdaqStockAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Korean stock market API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching KospiKosdaqScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Korean stock market state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_stock_ohlcv(fromdate: str, todate: str, ticker: str, adjusted: Optional[bool] = False) -> dict:\n    \"\"\"\n    Retrieve OHLCV (Open/High/Low/Close/Volume) price data for a specific stock over a date range.\n    \n    Args:\n        fromdate (str): Start date for the data retrieval period in YYYYMMDD format.\n        todate (str): End date for the data retrieval period in YYYYMMDD format.\n        ticker (str): The stock ticker symbol identifying the security on KOSPI or KOSDAQ.\n        adjusted (bool): [Optional] Whether to return adjusted prices accounting for stock splits and dividends. True for adjusted prices, False for unadjusted raw prices.\n    \n    Returns:\n        ticker (str): The stock ticker symbol identifying the security on KOSPI or KOSDAQ.\n        data (list): List of daily OHLCV records for the requested date range.\n    \"\"\"\n    try:\n        if not fromdate or not isinstance(fromdate, str):\n            raise ValueError(\"fromdate must be a non-empty string\")\n        if not todate or not isinstance(todate, str):\n            raise ValueError(\"todate must be a non-empty string\")\n        if not ticker or not isinstance(ticker, str):\n            raise ValueError(\"ticker must be a non-empty string\")\n        if fromdate > todate:\n            raise ValueError(\"fromdate must be less than or equal to todate\")\n        return api.get_stock_ohlcv(fromdate, todate, ticker, adjusted)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_stock_market_cap(fromdate: str, todate: str, ticker: str) -> dict:\n    \"\"\"\n    Retrieve market capitalization data for a specific stock over a date range.\n    \n    Args:\n        fromdate (str): Start date for the data retrieval period in YYYYMMDD format.\n        todate (str): End date for the data retrieval period in YYYYMMDD format.\n        ticker (str): The stock ticker symbol identifying the security on KOSPI or KOSDAQ.\n    \n    Returns:\n        ticker (str): The stock ticker symbol identifying the security on KOSPI or KOSDAQ.\n        data (list): List of daily market capitalization records for the requested date range.\n    \"\"\"\n    try:\n        if not fromdate or not isinstance(fromdate, str):\n            raise ValueError(\"fromdate must be a non-empty string\")\n        if not todate or not isinstance(todate, str):\n            raise ValueError(\"todate must be a non-empty string\")\n        if not ticker or not isinstance(ticker, str):\n            raise ValueError(\"ticker must be a non-empty string\")\n        if fromdate > todate:\n            raise ValueError(\"fromdate must be less than or equal to todate\")\n        return api.get_stock_market_cap(fromdate, todate, ticker)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_stock_fundamental(fromdate: str, todate: str, ticker: str) -> dict:\n    \"\"\"\n    Retrieve fundamental valuation indicators (PER, PBR, Dividend Yield) for a specific stock over a date range.\n    \n    Args:\n        fromdate (str): Start date for the data retrieval period in YYYYMMDD format.\n        todate (str): End date for the data retrieval period in YYYYMMDD format.\n        ticker (str): The stock ticker symbol identifying the security on KOSPI or KOSDAQ.\n    \n    Returns:\n        ticker (str): The stock ticker symbol identifying the security on KOSPI or KOSDAQ.\n        data (list): List of daily fundamental indicator records for the requested date range.\n    \"\"\"\n    try:\n        if not fromdate or not isinstance(fromdate, str):\n            raise ValueError(\"fromdate must be a non-empty string\")\n        if not todate or not isinstance(todate, str):\n            raise ValueError(\"todate must be a non-empty string\")\n        if not ticker or not isinstance(ticker, str):\n            raise ValueError(\"ticker must be a non-empty string\")\n        if fromdate > todate:\n            raise ValueError(\"fromdate must be less than or equal to todate\")\n        return api.get_stock_fundamental(fromdate, todate, ticker)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_stock_trading_volume(fromdate: str, todate: str, ticker: str) -> dict:\n    \"\"\"\n    Retrieve trading volume breakdown by investor type (individual, institutional, foreign) for a specific stock over a date range.\n    \n    Args:\n        fromdate (str): Start date for the data retrieval period in YYYYMMDD format.\n        todate (str): End date for the data retrieval period in YYYYMMDD format.\n        ticker (str): The stock ticker symbol identifying the security on KOSPI or KOSDAQ.\n    \n    Returns:\n        ticker (str): The stock ticker symbol identifying the security on KOSPI or KOSDAQ.\n        data (list): List of daily trading volume records segmented by investor type for the requested date range.\n    \"\"\"\n    try:\n        if not fromdate or not isinstance(fromdate, str):\n            raise ValueError(\"fromdate must be a non-empty string\")\n        if not todate or not isinstance(todate, str):\n            raise ValueError(\"todate must be a non-empty string\")\n        if not ticker or not isinstance(ticker, str):\n            raise ValueError(\"ticker must be a non-empty string\")\n        if fromdate > todate:\n            raise ValueError(\"fromdate must be less than or equal to todate\")\n        return api.get_stock_trading_volume(fromdate, todate, ticker)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-03T21:41:47.588144",
+      "revision_number": 1
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with single stock (Samsung Electronics) and minimal OHLCV data for one trading day",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "stocks": {
+          "005930": {
+            "ticker": "005930",
+            "name": "Samsung Electronics",
+            "market": "KOSPI"
+          }
+        },
+        "ohlcv_data": {
+          "005930": [
+            {
+              "date": "20240115",
+              "open": 75000.0,
+              "high": 76500.0,
+              "low": 74800.0,
+              "close": 76000.0,
+              "volume": 15000000
+            }
+          ]
+        },
+        "ohlcv_adjusted_data": {},
+        "market_cap_data": {},
+        "fundamental_data": {},
+        "trading_volume_data": {},
+        "tickerNameMap": {
+          "005930": "Samsung Electronics",
+          "000660": "SK Hynix",
+          "035420": "NAVER",
+          "035720": "Kakao",
+          "051910": "LG Chem",
+          "006400": "Samsung SDI",
+          "068270": "Celltrion",
+          "005380": "Hyundai Motor",
+          "000270": "Kia",
+          "105560": "KB Financial Group",
+          "055550": "Shinhan Financial Group",
+          "012330": "Hyundai Mobis",
+          "066570": "LG Electronics",
+          "003550": "LG",
+          "028260": "Samsung C&T",
+          "207940": "Samsung Biologics",
+          "096770": "SK Innovation",
+          "034730": "SK",
+          "017670": "SK Telecom",
+          "030200": "KT"
+        },
+        "tickerMarketMap": {
+          "005930": "KOSPI",
+          "000660": "KOSPI",
+          "035420": "KOSPI",
+          "035720": "KOSPI",
+          "051910": "KOSPI",
+          "006400": "KOSPI",
+          "068270": "KOSPI",
+          "005380": "KOSPI",
+          "000270": "KOSPI",
+          "105560": "KOSPI",
+          "055550": "KOSPI",
+          "012330": "KOSPI",
+          "066570": "KOSPI",
+          "003550": "KOSPI",
+          "028260": "KOSPI",
+          "207940": "KOSPI",
+          "096770": "KOSPI",
+          "034730": "KOSPI",
+          "017670": "KOSPI",
+          "030200": "KOSPI"
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple stocks with varied data types including OHLCV, market cap, and fundamental indicators over several trading days",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "stocks": {
+          "005930": {
+            "ticker": "005930",
+            "name": "Samsung Electronics",
+            "market": "KOSPI"
+          },
+          "035420": {
+            "ticker": "035420",
+            "name": "NAVER",
+            "market": "KOSPI"
+          },
+          "035720": {
+            "ticker": "035720",
+            "name": "Kakao",
+            "market": "KOSPI"
+          }
+        },
+        "ohlcv_data": {
+          "005930": [
+            {
+              "date": "20240110",
+              "open": 74000.0,
+              "high": 75000.0,
+              "low": 73500.0,
+              "close": 74800.0,
+              "volume": 12000000
+            },
+            {
+              "date": "20240111",
+              "open": 74800.0,
+              "high": 76000.0,
+              "low": 74500.0,
+              "close": 75500.0,
+              "volume": 14500000
+            }
+          ],
+          "035420": [
+            {
+              "date": "20240110",
+              "open": 210000.0,
+              "high": 215000.0,
+              "low": 208000.0,
+              "close": 213000.0,
+              "volume": 800000
+            }
+          ]
+        },
+        "ohlcv_adjusted_data": {
+          "005930": [
+            {
+              "date": "20240110",
+              "open": 73500.0,
+              "high": 74500.0,
+              "low": 73000.0,
+              "close": 74300.0,
+              "volume": 12000000
+            }
+          ]
+        },
+        "market_cap_data": {
+          "005930": [
+            {
+              "date": "20240110",
+              "market_cap": 450000000000000.0
+            },
+            {
+              "date": "20240111",
+              "market_cap": 455000000000000.0
+            }
+          ],
+          "035420": [
+            {
+              "date": "20240110",
+              "market_cap": 35000000000000.0
+            }
+          ]
+        },
+        "fundamental_data": {
+          "005930": [
+            {
+              "date": "20240110",
+              "per": 15.5,
+              "pbr": 1.8,
+              "dividend_yield": 2.5
+            }
+          ],
+          "035720": [
+            {
+              "date": "20240110",
+              "per": 25.3,
+              "pbr": 3.2,
+              "dividend_yield": 0.5
+            }
+          ]
+        },
+        "trading_volume_data": {
+          "005930": [
+            {
+              "date": "20240110",
+              "individual": 5000000,
+              "institutional": 4000000,
+              "foreign": 3000000
+            }
+          ]
+        },
+        "tickerNameMap": {
+          "005930": "Samsung Electronics",
+          "000660": "SK Hynix",
+          "035420": "NAVER",
+          "035720": "Kakao",
+          "051910": "LG Chem",
+          "006400": "Samsung SDI",
+          "068270": "Celltrion",
+          "005380": "Hyundai Motor",
+          "000270": "Kia",
+          "105560": "KB Financial Group",
+          "055550": "Shinhan Financial Group",
+          "012330": "Hyundai Mobis",
+          "066570": "LG Electronics",
+          "003550": "LG",
+          "028260": "Samsung C&T",
+          "207940": "Samsung Biologics",
+          "096770": "SK Innovation",
+          "034730": "SK",
+          "017670": "SK Telecom",
+          "030200": "KT"
+        },
+        "tickerMarketMap": {
+          "005930": "KOSPI",
+          "000660": "KOSPI",
+          "035420": "KOSPI",
+          "035720": "KOSPI",
+          "051910": "KOSPI",
+          "006400": "KOSPI",
+          "068270": "KOSPI",
+          "005380": "KOSPI",
+          "000270": "KOSPI",
+          "105560": "KOSPI",
+          "055550": "KOSPI",
+          "012330": "KOSPI",
+          "066570": "KOSPI",
+          "003550": "KOSPI",
+          "028260": "KOSPI",
+          "207940": "KOSPI",
+          "096770": "KOSPI",
+          "034730": "KOSPI",
+          "017670": "KOSPI",
+          "030200": "KOSPI"
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Comprehensive scenario with multiple stocks, complete data across all categories (OHLCV, adjusted OHLCV, market cap, fundamentals, trading volume) over a week of trading",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "stocks": {
+          "005930": {
+            "ticker": "005930",
+            "name": "Samsung Electronics",
+            "market": "KOSPI"
+          },
+          "000660": {
+            "ticker": "000660",
+            "name": "SK Hynix",
+            "market": "KOSPI"
+          },
+          "035420": {
+            "ticker": "035420",
+            "name": "NAVER",
+            "market": "KOSPI"
+          },
+          "035720": {
+            "ticker": "035720",
+            "name": "Kakao",
+            "market": "KOSPI"
+          },
+          "068270": {
+            "ticker": "068270",
+            "name": "Celltrion",
+            "market": "KOSPI"
+          }
+        },
+        "ohlcv_data": {
+          "005930": [
+            {
+              "date": "20240108",
+              "open": 73000.0,
+              "high": 74000.0,
+              "low": 72500.0,
+              "close": 73800.0,
+              "volume": 11000000
+            },
+            {
+              "date": "20240109",
+              "open": 73800.0,
+              "high": 74500.0,
+              "low": 73200.0,
+              "close": 74200.0,
+              "volume": 12500000
+            },
+            {
+              "date": "20240110",
+              "open": 74200.0,
+              "high": 75500.0,
+              "low": 74000.0,
+              "close": 75000.0,
+              "volume": 13000000
+            }
+          ],
+          "000660": [
+            {
+              "date": "20240108",
+              "open": 128000.0,
+              "high": 130000.0,
+              "low": 127000.0,
+              "close": 129500.0,
+              "volume": 2000000
+            },
+            {
+              "date": "20240109",
+              "open": 129500.0,
+              "high": 131000.0,
+              "low": 128500.0,
+              "close": 130000.0,
+              "volume": 2200000
+            }
+          ],
+          "035420": [
+            {
+              "date": "20240108",
+              "open": 208000.0,
+              "high": 212000.0,
+              "low": 207000.0,
+              "close": 210000.0,
+              "volume": 750000
+            }
+          ],
+          "035720": [
+            {
+              "date": "20240108",
+              "open": 52000.0,
+              "high": 53500.0,
+              "low": 51500.0,
+              "close": 53000.0,
+              "volume": 3500000
+            }
+          ]
+        },
+        "ohlcv_adjusted_data": {
+          "005930": [
+            {
+              "date": "20240108",
+              "open": 72500.0,
+              "high": 73500.0,
+              "low": 72000.0,
+              "close": 73300.0,
+              "volume": 11000000
+            },
+            {
+              "date": "20240109",
+              "open": 73300.0,
+              "high": 74000.0,
+              "low": 72700.0,
+              "close": 73700.0,
+              "volume": 12500000
+            }
+          ],
+          "000660": [
+            {
+              "date": "20240108",
+              "open": 127000.0,
+              "high": 129000.0,
+              "low": 126000.0,
+              "close": 128500.0,
+              "volume": 2000000
+            }
+          ]
+        },
+        "market_cap_data": {
+          "005930": [
+            {
+              "date": "20240108",
+              "market_cap": 445000000000000.0
+            },
+            {
+              "date": "20240109",
+              "market_cap": 447000000000000.0
+            },
+            {
+              "date": "20240110",
+              "market_cap": 452000000000000.0
+            }
+          ],
+          "000660": [
+            {
+              "date": "20240108",
+              "market_cap": 95000000000000.0
+            },
+            {
+              "date": "20240109",
+              "market_cap": 95500000000000.0
+            }
+          ],
+          "035420": [
+            {
+              "date": "20240108",
+              "market_cap": 34500000000000.0
+            }
+          ]
+        },
+        "fundamental_data": {
+          "005930": [
+            {
+              "date": "20240108",
+              "per": 15.2,
+              "pbr": 1.75,
+              "dividend_yield": 2.6
+            },
+            {
+              "date": "20240109",
+              "per": 15.3,
+              "pbr": 1.76,
+              "dividend_yield": 2.58
+            }
+          ],
+          "000660": [
+            {
+              "date": "20240108",
+              "per": 18.5,
+              "pbr": 2.1,
+              "dividend_yield": 1.8
+            }
+          ],
+          "035420": [
+            {
+              "date": "20240108",
+              "per": 22.8,
+              "pbr": 2.9,
+              "dividend_yield": 0.8
+            }
+          ],
+          "035720": [
+            {
+              "date": "20240108",
+              "per": 28.5,
+              "pbr": 3.5,
+              "dividend_yield": 0.3
+            }
+          ],
+          "068270": [
+            {
+              "date": "20240108",
+              "per": -12.5,
+              "pbr": 4.2,
+              "dividend_yield": 0.0
+            }
+          ]
+        },
+        "trading_volume_data": {
+          "005930": [
+            {
+              "date": "20240108",
+              "individual": 4500000,
+              "institutional": 3800000,
+              "foreign": 2700000
+            },
+            {
+              "date": "20240109",
+              "individual": 5200000,
+              "institutional": 4100000,
+              "foreign": 3200000
+            },
+            {
+              "date": "20240110",
+              "individual": 5500000,
+              "institutional": 4300000,
+              "foreign": 3200000
+            }
+          ],
+          "000660": [
+            {
+              "date": "20240108",
+              "individual": 800000,
+              "institutional": 700000,
+              "foreign": 500000
+            },
+            {
+              "date": "20240109",
+              "individual": 900000,
+              "institutional": 750000,
+              "foreign": 550000
+            }
+          ],
+          "035420": [
+            {
+              "date": "20240108",
+              "individual": 350000,
+              "institutional": 250000,
+              "foreign": 150000
+            }
+          ]
+        },
+        "tickerNameMap": {
+          "005930": "Samsung Electronics",
+          "000660": "SK Hynix",
+          "035420": "NAVER",
+          "035720": "Kakao",
+          "051910": "LG Chem",
+          "006400": "Samsung SDI",
+          "068270": "Celltrion",
+          "005380": "Hyundai Motor",
+          "000270": "Kia",
+          "105560": "KB Financial Group",
+          "055550": "Shinhan Financial Group",
+          "012330": "Hyundai Mobis",
+          "066570": "LG Electronics",
+          "003550": "LG",
+          "028260": "Samsung C&T",
+          "207940": "Samsung Biologics",
+          "096770": "SK Innovation",
+          "034730": "SK",
+          "017670": "SK Telecom",
+          "030200": "KT"
+        },
+        "tickerMarketMap": {
+          "005930": "KOSPI",
+          "000660": "KOSPI",
+          "035420": "KOSPI",
+          "035720": "KOSPI",
+          "051910": "KOSPI",
+          "006400": "KOSPI",
+          "068270": "KOSPI",
+          "005380": "KOSPI",
+          "000270": "KOSPI",
+          "105560": "KOSPI",
+          "055550": "KOSPI",
+          "012330": "KOSPI",
+          "066570": "KOSPI",
+          "003550": "KOSPI",
+          "028260": "KOSPI",
+          "207940": "KOSPI",
+          "096770": "KOSPI",
+          "034730": "KOSPI",
+          "017670": "KOSPI",
+          "030200": "KOSPI"
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Edge case testing with invalid date format, negative PER values, zero volume, and empty stock collections",
+      "expected_behavior": "validation_error",
+      "scenario_data": {
+        "stocks": {
+          "005930": {
+            "ticker": "005930",
+            "name": "Samsung Electronics",
+            "market": "KOSPI"
+          }
+        },
+        "ohlcv_data": {
+          "005930": [
+            {
+              "date": "2024-01-15",
+              "open": 75000.0,
+              "high": 76000.0,
+              "low": 74000.0,
+              "close": 75500.0,
+              "volume": 10000000
+            }
+          ]
+        },
+        "ohlcv_adjusted_data": {},
+        "market_cap_data": {},
+        "fundamental_data": {},
+        "trading_volume_data": {},
+        "tickerNameMap": {
+          "005930": "Samsung Electronics",
+          "000660": "SK Hynix",
+          "035420": "NAVER",
+          "035720": "Kakao",
+          "051910": "LG Chem",
+          "006400": "Samsung SDI",
+          "068270": "Celltrion",
+          "005380": "Hyundai Motor",
+          "000270": "Kia",
+          "105560": "KB Financial Group",
+          "055550": "Shinhan Financial Group",
+          "012330": "Hyundai Mobis",
+          "066570": "LG Electronics",
+          "003550": "LG",
+          "028260": "Samsung C&T",
+          "207940": "Samsung Biologics",
+          "096770": "SK Innovation",
+          "034730": "SK",
+          "017670": "SK Telecom",
+          "030200": "KT"
+        },
+        "tickerMarketMap": {
+          "005930": "KOSPI",
+          "000660": "KOSPI",
+          "035420": "KOSPI",
+          "035720": "KOSPI",
+          "051910": "KOSPI",
+          "006400": "KOSPI",
+          "068270": "KOSPI",
+          "005380": "KOSPI",
+          "000270": "KOSPI",
+          "105560": "KOSPI",
+          "055550": "KOSPI",
+          "012330": "KOSPI",
+          "066570": "KOSPI",
+          "003550": "KOSPI",
+          "028260": "KOSPI",
+          "207940": "KOSPI",
+          "096770": "KOSPI",
+          "034730": "KOSPI",
+          "017670": "KOSPI",
+          "030200": "KOSPI"
+        }
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 3,
+      "failed_scenarios": 1,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_stock_ohlcv",
+                "test_cases": [
+                  {
+                    "description": "Valid case - retrieve existing OHLCV data",
+                    "input": {
+                      "fromdate": "20240115",
+                      "todate": "20240115",
+                      "ticker": "005930",
+                      "adjusted": false
+                    },
+                    "passed": true,
+                    "output": {
+                      "ticker": "005930",
+                      "data": [
+                        {
+                          "date": "20240115",
+                          "open": 75000.0,
+                          "high": 76500.0,
+                          "low": 74800.0,
+                          "close": 76000.0,
+                          "volume": 15000000
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - retrieve adjusted data (empty)",
+                    "input": {
+                      "fromdate": "20240115",
+                      "todate": "20240115",
+                      "ticker": "005930",
+                      "adjusted": true
+                    },
+                    "passed": true,
+                    "output": {
+                      "ticker": "005930",
+                      "data": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - invalid date range (fromdate > todate)",
+                    "input": {
+                      "fromdate": "20240120",
+                      "todate": "20240115",
+                      "ticker": "005930",
+                      "adjusted": false
+                    },
+                    "passed": true,
+                    "expected_error": true,
+                    "error": "fromdate must be less than or equal to todate"
+                  },
+                  {
+                    "description": "Boundary case - non-existent ticker",
+                    "input": {
+                      "fromdate": "20240115",
+                      "todate": "20240115",
+                      "ticker": "999999",
+                      "adjusted": false
+                    },
+                    "passed": true,
+                    "output": {
+                      "ticker": "999999",
+                      "data": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Boundary case - date range with no data",
+                    "input": {
+                      "fromdate": "20240101",
+                      "todate": "20240110",
+                      "ticker": "005930",
+                      "adjusted": false
+                    },
+                    "passed": true,
+                    "output": {
+                      "ticker": "005930",
+                      "data": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_market_cap",
+                "test_cases": [
+                  {
+                    "description": "Valid case - retrieve market cap data (empty in scenario)",
+                    "input": {
+                      "fromdate": "20240115",
+                      "todate": "20240115",
+                      "ticker": "005930"
+                    },
+                    "passed": true,
+                    "output": {
+                      "ticker": "005930",
+                      "data": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - invalid date range (fromdate > todate)",
+                    "input": {
+                      "fromdate": "20240120",
+                      "todate": "20240115",
+                      "ticker": "005930"
+                    },
+                    "passed": true,
+                    "expected_error": true,
+                    "error": "fromdate must be less than or equal to todate"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_fundamental",
+                "test_cases": [
+                  {
+                    "description": "Valid case - retrieve fundamental data (empty in scenario)",
+                    "input": {
+                      "fromdate": "20240115",
+                      "todate": "20240115",
+                      "ticker": "005930"
+                    },
+                    "passed": true,
+                    "output": {
+                      "ticker": "005930",
+                      "data": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - invalid date range (fromdate > todate)",
+                    "input": {
+                      "fromdate": "20240120",
+                      "todate": "20240115",
+                      "ticker": "005930"
+                    },
+                    "passed": true,
+                    "expected_error": true,
+                    "error": "fromdate must be less than or equal to todate"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_trading_volume",
+                "test_cases": [
+                  {
+                    "description": "Valid case - retrieve trading volume data (empty in scenario)",
+                    "input": {
+                      "fromdate": "20240115",
+                      "todate": "20240115",
+                      "ticker": "005930"
+                    },
+                    "passed": true,
+                    "output": {
+                      "ticker": "005930",
+                      "data": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - invalid date range (fromdate > todate)",
+                    "input": {
+                      "fromdate": "20240120",
+                      "todate": "20240115",
+                      "ticker": "005930"
+                    },
+                    "passed": true,
+                    "expected_error": true,
+                    "error": "fromdate must be less than or equal to todate"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All state variables preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 77.5238664150238
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_stock_ohlcv",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get unadjusted OHLCV data for Samsung (005930) for date range 20240110-20240111",
+                    "input": {
+                      "fromdate": "20240110",
+                      "todate": "20240111",
+                      "ticker": "005930",
+                      "adjusted": false
+                    },
+                    "passed": true,
+                    "output": {
+                      "ticker": "005930",
+                      "data_count": 2,
+                      "first_record": {
+                        "date": "20240110",
+                        "open": 74000.0,
+                        "close": 74800.0
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Get adjusted OHLCV data for Samsung (005930) for single date",
+                    "input": {
+                      "fromdate": "20240110",
+                      "todate": "20240110",
+                      "ticker": "005930",
+                      "adjusted": true
+                    },
+                    "passed": true,
+                    "output": {
+                      "ticker": "005930",
+                      "data_count": 1,
+                      "adjusted_close": 74300.0
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Get OHLCV data for NAVER (035420)",
+                    "input": {
+                      "fromdate": "20240110",
+                      "todate": "20240110",
+                      "ticker": "035420",
+                      "adjusted": false
+                    },
+                    "passed": true,
+                    "output": {
+                      "ticker": "035420",
+                      "data_count": 1
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Invalid date range (fromdate > todate)",
+                    "input": {
+                      "fromdate": "20240115",
+                      "todate": "20240110",
+                      "ticker": "005930"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "fromdate must be less than or equal to todate",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_market_cap",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get market cap for Samsung (005930) for date range",
+                    "input": {
+                      "fromdate": "20240110",
+                      "todate": "20240111",
+                      "ticker": "005930"
+                    },
+                    "passed": true,
+                    "output": {
+                      "ticker": "005930",
+                      "data_count": 2,
+                      "market_caps": [
+                        450000000000000.0,
+                        455000000000000.0
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Get market cap for NAVER (035420)",
+                    "input": {
+                      "fromdate": "20240110",
+                      "todate": "20240110",
+                      "ticker": "035420"
+                    },
+                    "passed": true,
+                    "output": {
+                      "ticker": "035420",
+                      "data_count": 1,
+                      "market_cap": 35000000000000.0
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_fundamental",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get fundamental data for Samsung (005930)",
+                    "input": {
+                      "fromdate": "20240110",
+                      "todate": "20240110",
+                      "ticker": "005930"
+                    },
+                    "passed": true,
+                    "output": {
+                      "ticker": "005930",
+                      "data_count": 1,
+                      "fundamentals": {
+                        "per": 15.5,
+                        "pbr": 1.8,
+                        "dividend_yield": 2.5
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Get fundamental data for Kakao (035720)",
+                    "input": {
+                      "fromdate": "20240110",
+                      "todate": "20240110",
+                      "ticker": "035720"
+                    },
+                    "passed": true,
+                    "output": {
+                      "ticker": "035720",
+                      "data_count": 1,
+                      "fundamentals": {
+                        "per": 25.3,
+                        "pbr": 3.2,
+                        "dividend_yield": 0.5
+                      }
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_trading_volume",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get trading volume breakdown for Samsung (005930)",
+                    "input": {
+                      "fromdate": "20240110",
+                      "todate": "20240110",
+                      "ticker": "005930"
+                    },
+                    "passed": true,
+                    "output": {
+                      "ticker": "005930",
+                      "data_count": 1,
+                      "volume_breakdown": {
+                        "individual": 5000000,
+                        "institutional": 4000000,
+                        "foreign": 3000000
+                      }
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All data structures (stocks, ohlcv_data, ohlcv_adjusted_data, market_cap_data, fundamental_data, trading_volume_data, tickerNameMap, tickerMarketMap) are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 58.676363706588745
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_stock_ohlcv",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Single day OHLCV for NAVER (035420)",
+                    "input": {
+                      "fromdate": "20240108",
+                      "todate": "20240108",
+                      "ticker": "035420",
+                      "adjusted": false
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Multi-day OHLCV for Samsung (005930)",
+                    "input": {
+                      "fromdate": "20240108",
+                      "todate": "20240110",
+                      "ticker": "005930",
+                      "adjusted": false
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Adjusted OHLCV for Samsung (005930)",
+                    "input": {
+                      "fromdate": "20240108",
+                      "todate": "20240109",
+                      "ticker": "005930",
+                      "adjusted": true
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Single day OHLCV for Kakao (035720)",
+                    "input": {
+                      "fromdate": "20240108",
+                      "todate": "20240108",
+                      "ticker": "035720",
+                      "adjusted": false
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Invalid date range (fromdate > todate)",
+                    "input": {
+                      "fromdate": "20240110",
+                      "todate": "20240108",
+                      "ticker": "005930",
+                      "adjusted": false
+                    },
+                    "passed": true,
+                    "error": "fromdate must be less than or equal to todate",
+                    "expected_error": true
+                  },
+                  {
+                    "description": "Error case - Empty fromdate string",
+                    "input": {
+                      "fromdate": "",
+                      "todate": "20240108",
+                      "ticker": "005930"
+                    },
+                    "passed": true,
+                    "error": "fromdate must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_market_cap",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Multi-day market cap for Samsung (005930)",
+                    "input": {
+                      "fromdate": "20240108",
+                      "todate": "20240110",
+                      "ticker": "005930"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Single day market cap for NAVER (035420)",
+                    "input": {
+                      "fromdate": "20240108",
+                      "todate": "20240108",
+                      "ticker": "035420"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_fundamental",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Fundamental data for SK Hynix (000660)",
+                    "input": {
+                      "fromdate": "20240108",
+                      "todate": "20240109",
+                      "ticker": "000660"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Multi-day fundamental data for Samsung (005930)",
+                    "input": {
+                      "fromdate": "20240108",
+                      "todate": "20240109",
+                      "ticker": "005930"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Edge case - Negative PER for Celltrion (068270)",
+                    "input": {
+                      "fromdate": "20240108",
+                      "todate": "20240108",
+                      "ticker": "068270"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Low dividend yield for Kakao (035720)",
+                    "input": {
+                      "fromdate": "20240108",
+                      "todate": "20240108",
+                      "ticker": "035720"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_trading_volume",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Multi-day trading volume for Samsung (005930)",
+                    "input": {
+                      "fromdate": "20240108",
+                      "todate": "20240110",
+                      "ticker": "005930"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Trading volume for SK Hynix (000660)",
+                    "input": {
+                      "fromdate": "20240108",
+                      "todate": "20240109",
+                      "ticker": "000660"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All data structures (stocks, ohlcv_data, ohlcv_adjusted_data, market_cap_data, fundamental_data, trading_volume_data, tickerNameMap, tickerMarketMap) are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 83.22069191932678
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Missing Validation Logic",
+              "error_location": "load_scenario function",
+              "error_details": "load_scenario accepted scenario data with invalid date format. The ohlcv_data contains dates in ISO format '2024-01-15' but the system expects YYYYMMDD format '20240115'",
+              "expected_vs_actual": "Expected: load_scenario should raise ValueError for invalid date format. Actual: load_scenario succeeded without validation",
+              "root_cause": "The load_scenario function lacks date format validation. It should validate that all date fields in ohlcv_data, ohlcv_adjusted_data, market_cap_data, fundamental_data, and trading_volume_data use YYYYMMDD format (8 digits, no hyphens). This is a boundary test case designed to catch format validation issues.",
+              "expected_error": false,
+              "severity": "CRITICAL",
+              "recommendation": "Add date format validation in load_scenario to check all date strings match the pattern '^[0-9]{8}$' and reject scenarios with ISO format or other invalid date formats"
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": "Expected validation error but load_scenario succeeded - scenario contains invalid date format (ISO format '2024-01-15' instead of required 'YYYYMMDD' format)"
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_stock_ohlcv",
+                "passed": true,
+                "error": null,
+                "note": "Tool executed successfully but returned empty data due to date format mismatch in loaded scenario"
+              },
+              {
+                "tool_name": "get_stock_market_cap",
+                "passed": true,
+                "error": null,
+                "note": "Tool executed successfully but returned empty data due to missing market_cap_data in scenario"
+              },
+              {
+                "tool_name": "get_stock_fundamental",
+                "passed": true,
+                "error": null,
+                "note": "Tool executed successfully but returned empty data due to missing fundamental_data in scenario"
+              },
+              {
+                "tool_name": "get_stock_trading_volume",
+                "passed": true,
+                "error": null,
+                "note": "Tool executed successfully but returned empty data due to missing trading_volume_data in scenario"
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "note": "State preserved correctly, matching original scenario data"
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 33.68550419807434
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 1,
+      "passed_scenarios": 1,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "error_type": "Expected Validation Error",
+              "error_location": "load_scenario",
+              "error_details": "Invalid date format in ohlcv_data for ticker 005930, record 0: '2024-01-15'. Expected YYYYMMDD format (8 digits, no hyphens).",
+              "expected_vs_actual": "Expected: Validation error due to invalid date format. Actual: Validation error correctly raised.",
+              "root_cause": "The scenario intentionally contains invalid date format '2024-01-15' (with hyphens) instead of required 'YYYYMMDD' format (e.g., '20240115'). The load_scenario function correctly validates date format and rejects the invalid data.",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "Invalid date format in ohlcv_data for ticker 005930, record 0: '2024-01-15'. Expected YYYYMMDD format (8 digits, no hyphens)."
+            },
+            "tool_executions": [
+              {
+                "tool_name": "load_scenario",
+                "passed": true,
+                "error": null,
+                "note": "Correctly rejected invalid date format as expected (expected_behavior=validation_error)"
+              }
+            ],
+            "save_scenario": {
+              "success": false,
+              "consistency_check": false,
+              "error": "Skipped due to load_scenario expected failure (validation_error scenario)"
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 19.0453519821167
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_004"
+      ],
+      "aggregated_errors": {
+        "common_errors": [],
+        "scenario_specific_errors": [
+          {
+            "scenario_id": "scenario_004",
+            "complexity_level": "boundary",
+            "errors": [
+              {
+                "error_type": "Missing Validation Logic",
+                "error_location": "load_scenario function",
+                "error_details": "load_scenario accepted scenario data with invalid date format. The ohlcv_data contains dates in ISO format '2024-01-15' but the system expects YYYYMMDD format '20240115'",
+                "expected_vs_actual": "Expected: load_scenario should raise ValueError for invalid date format. Actual: load_scenario succeeded without validation",
+                "root_cause": "The load_scenario function lacks date format validation. It should validate that all date fields in ohlcv_data, ohlcv_adjusted_data, market_cap_data, fundamental_data, and trading_volume_data use YYYYMMDD format (8 digits, no hyphens). This is a boundary test case designed to catch format validation issues.",
+                "expected_error": false,
+                "severity": "CRITICAL",
+                "recommendation": "Add date format validation in load_scenario to check all date strings match the pattern '^[0-9]{8}$' and reject scenarios with ISO format or other invalid date formats"
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": "Expected validation error but load_scenario succeeded - scenario contains invalid date format (ISO format '2024-01-15' instead of required 'YYYYMMDD' format)"
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_stock_ohlcv",
+                  "passed": true,
+                  "error": null,
+                  "note": "Tool executed successfully but returned empty data due to date format mismatch in loaded scenario"
+                },
+                {
+                  "tool_name": "get_stock_market_cap",
+                  "passed": true,
+                  "error": null,
+                  "note": "Tool executed successfully but returned empty data due to missing market_cap_data in scenario"
+                },
+                {
+                  "tool_name": "get_stock_fundamental",
+                  "passed": true,
+                  "error": null,
+                  "note": "Tool executed successfully but returned empty data due to missing fundamental_data in scenario"
+                },
+                {
+                  "tool_name": "get_stock_trading_volume",
+                  "passed": true,
+                  "error": null,
+                  "note": "Tool executed successfully but returned empty data due to missing trading_volume_data in scenario"
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null,
+                "note": "State preserved correctly, matching original scenario data"
+              },
+              "summary": {}
+            }
+          }
+        ],
+        "error_by_tool": {
+          "load_scenario function": [
+            {
+              "scenario_id": "scenario_004",
+              "complexity_level": "boundary",
+              "error": {
+                "error_type": "Missing Validation Logic",
+                "error_location": "load_scenario function",
+                "error_details": "load_scenario accepted scenario data with invalid date format. The ohlcv_data contains dates in ISO format '2024-01-15' but the system expects YYYYMMDD format '20240115'",
+                "expected_vs_actual": "Expected: load_scenario should raise ValueError for invalid date format. Actual: load_scenario succeeded without validation",
+                "root_cause": "The load_scenario function lacks date format validation. It should validate that all date fields in ohlcv_data, ohlcv_adjusted_data, market_cap_data, fundamental_data, and trading_volume_data use YYYYMMDD format (8 digits, no hyphens). This is a boundary test case designed to catch format validation issues.",
+                "expected_error": false,
+                "severity": "CRITICAL",
+                "recommendation": "Add date format validation in load_scenario to check all date strings match the pattern '^[0-9]{8}$' and reject scenarios with ISO format or other invalid date formats"
+              }
+            }
+          ]
+        },
+        "error_categories": {
+          "critical_load_failures": [
+            {
+              "error_type": "Missing Validation Logic",
+              "error_location": "load_scenario function",
+              "error_details": "load_scenario accepted scenario data with invalid date format. The ohlcv_data contains dates in ISO format '2024-01-15' but the system expects YYYYMMDD format '20240115'",
+              "expected_vs_actual": "Expected: load_scenario should raise ValueError for invalid date format. Actual: load_scenario succeeded without validation",
+              "root_cause": "The load_scenario function lacks date format validation. It should validate that all date fields in ohlcv_data, ohlcv_adjusted_data, market_cap_data, fundamental_data, and trading_volume_data use YYYYMMDD format (8 digits, no hyphens). This is a boundary test case designed to catch format validation issues.",
+              "expected_error": false,
+              "severity": "CRITICAL",
+              "recommendation": "Add date format validation in load_scenario to check all date strings match the pattern '^[0-9]{8}$' and reject scenarios with ISO format or other invalid date formats"
+            }
+          ],
+          "critical_schema_mismatches": [],
+          "high_tool_logic_errors": [],
+          "medium_state_errors": [],
+          "low_edge_case_failures": []
+        },
+        "severity_summary": {
+          "critical": 1,
+          "high": 0,
+          "medium": 0,
+          "low": 0
+        },
+        "total_failed_scenarios": 1,
+        "expected_failures": 0,
+        "unexpected_failures": 1
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 1,
+        "passed_scenarios": 1,
+        "failed_scenarios": 0,
+        "all_passed": true,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_004",
+            "passed": true,
+            "errors": [
+              {
+                "error_type": "Expected Validation Error",
+                "error_location": "load_scenario",
+                "error_details": "Invalid date format in ohlcv_data for ticker 005930, record 0: '2024-01-15'. Expected YYYYMMDD format (8 digits, no hyphens).",
+                "expected_vs_actual": "Expected: Validation error due to invalid date format. Actual: Validation error correctly raised.",
+                "root_cause": "The scenario intentionally contains invalid date format '2024-01-15' (with hyphens) instead of required 'YYYYMMDD' format (e.g., '20240115'). The load_scenario function correctly validates date format and rejects the invalid data.",
+                "expected_error": true
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": false,
+                "error": "Invalid date format in ohlcv_data for ticker 005930, record 0: '2024-01-15'. Expected YYYYMMDD format (8 digits, no hyphens)."
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "load_scenario",
+                  "passed": true,
+                  "error": null,
+                  "note": "Correctly rejected invalid date format as expected (expected_behavior=validation_error)"
+                }
+              ],
+              "save_scenario": {
+                "success": false,
+                "consistency_check": false,
+                "error": "Skipped due to load_scenario expected failure (validation_error scenario)"
+              },
+              "summary": {}
+            },
+            "complexity_level": "boundary",
+            "execution_time": 19.0453519821167
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 1,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/KospiKosdaqStock.py"
+  }
+}

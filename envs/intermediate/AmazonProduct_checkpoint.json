@@ -1,0 +1,1359 @@
+{
+  "metadata": {
+    "class_name": "AmazonProduct",
+    "metadata_path": "envs\\metadata\\AmazonProduct_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-03-05T17:32:34.714933",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "AmazonProduct",
+    "description": "Amazon Product Advertising API 5.0 integration for searching products, retrieving details, variations, browse nodes, and deals for affiliate marketing.",
+    "tools": [
+      {
+        "name": "search_items",
+        "description": "Search the Amazon product catalog by keywords with optional category filtering and pagination.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "keywords": {
+              "type": "string",
+              "description": "Search query terms to find products in the Amazon catalog."
+            },
+            "search_index": {
+              "type": "string",
+              "description": "Product category to search within (e.g., 'All', 'Electronics', 'Books'). Defaults to 'All'."
+            },
+            "item_page": {
+              "type": "integer",
+              "description": "Pagination page number (1-10) for navigating large result sets. Defaults to 1."
+            },
+            "resources": {
+              "type": "array",
+              "description": "Specific data fields to include in the response, such as 'Images', 'ItemInfo', 'Offers', or 'CustomerReviews'.",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "keywords"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "products": {
+              "type": "array",
+              "description": "Array of product results matching the search criteria.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "ASIN": {
+                    "type": "string",
+                    "description": "The unique Amazon Standard Identification Number (ASIN) assigned to the product."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The display title or name of the product."
+                  },
+                  "detail_page_url": {
+                    "type": "string",
+                    "description": "The canonical URL to the product's detail page on Amazon."
+                  },
+                  "price": {
+                    "type": "object",
+                    "properties": {
+                      "amount": {
+                        "type": "number",
+                        "description": "The numerical price value."
+                      },
+                      "currency": {
+                        "type": "string",
+                        "description": "The ISO 4217 currency code (e.g., 'USD', 'EUR')."
+                      }
+                    }
+                  },
+                  "image_url": {
+                    "type": "string",
+                    "description": "URL to the primary product image."
+                  },
+                  "rating": {
+                    "type": "number",
+                    "description": "The average customer rating score, typically ranging from 0.0 to 5.0."
+                  },
+                  "total_reviews": {
+                    "type": "integer",
+                    "description": "The total count of customer reviews submitted for the product."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_items",
+        "description": "Retrieve detailed product information for specific Amazon items by their ASINs.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "asins": {
+              "type": "array",
+              "description": "List of Amazon Standard Identification Numbers (ASINs) to retrieve detailed information for (maximum 10 items).",
+              "items": {
+                "type": "string"
+              }
+            },
+            "resources": {
+              "type": "array",
+              "description": "Specific data fields to include in the response, such as 'Images', 'ItemInfo', 'Offers', or 'CustomerReviews'.",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "asins"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "description": "Array of detailed product information objects.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "ASIN": {
+                    "type": "string",
+                    "description": "The unique Amazon Standard Identification Number (ASIN) assigned to the product."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The display title or name of the product."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Detailed product description and overview."
+                  },
+                  "features": {
+                    "type": "array",
+                    "description": "List of key product features and bullet points.",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "price": {
+                    "type": "object",
+                    "properties": {
+                      "amount": {
+                        "type": "number",
+                        "description": "The numerical price value."
+                      },
+                      "currency": {
+                        "type": "string",
+                        "description": "The ISO 4217 currency code (e.g., 'USD', 'EUR')."
+                      }
+                    }
+                  },
+                  "images": {
+                    "type": "array",
+                    "description": "Collection of image URLs for the product gallery.",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "rating": {
+                    "type": "number",
+                    "description": "The average customer rating score, typically ranging from 0.0 to 5.0."
+                  },
+                  "total_reviews": {
+                    "type": "integer",
+                    "description": "The total count of customer reviews submitted for the product."
+                  },
+                  "availability": {
+                    "type": "string",
+                    "description": "The current stock availability status (e.g., 'In Stock', 'Out of Stock')."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_variations",
+        "description": "Retrieve product variations (size, color, style options) for a parent ASIN.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "asin": {
+              "type": "string",
+              "description": "The parent product ASIN for which to retrieve size, color, or style variations."
+            },
+            "resources": {
+              "type": "array",
+              "description": "Specific data fields to include in the response, such as 'Images', 'ItemInfo', 'Offers', or 'CustomerReviews'.",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "asin"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "variations": {
+              "type": "array",
+              "description": "Array of product variation objects representing different size, color, or style options.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "ASIN": {
+                    "type": "string",
+                    "description": "The unique Amazon Standard Identification Number (ASIN) assigned to the product."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The display title or name of the product."
+                  },
+                  "variation_attributes": {
+                    "type": "object",
+                    "description": "Dictionary mapping variation dimensions (e.g., 'Color', 'Size') to specific values."
+                  },
+                  "price": {
+                    "type": "object",
+                    "properties": {
+                      "amount": {
+                        "type": "number",
+                        "description": "The numerical price value."
+                      },
+                      "currency": {
+                        "type": "string",
+                        "description": "The ISO 4217 currency code (e.g., 'USD', 'EUR')."
+                      }
+                    }
+                  },
+                  "availability": {
+                    "type": "string",
+                    "description": "The current stock availability status (e.g., 'In Stock', 'Out of Stock')."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_browse_nodes",
+        "description": "Retrieve category hierarchy and metadata for specific browse node IDs.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "browse_node_ids": {
+              "type": "array",
+              "description": "List of category/browse node identifiers to retrieve hierarchy information for.",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "browse_node_ids"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "browse_nodes": {
+              "type": "array",
+              "description": "Array of browse node objects representing categories and their hierarchy.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The unique identifier of the browse node/category."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The display name of the category or browse node."
+                  },
+                  "is_root": {
+                    "type": "boolean",
+                    "description": "Indicates whether this node is a root-level category."
+                  },
+                  "children": {
+                    "type": "array",
+                    "description": "List of child subcategories under this node."
+                  },
+                  "ancestors": {
+                    "type": "array",
+                    "description": "List of parent categories in the hierarchy path."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_deals",
+        "description": "Retrieve current deals, promotions, and discounts available on Amazon.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "deal_types": {
+              "type": "array",
+              "description": "Types of promotions to filter by (e.g., 'LightningDeals', 'BestDeals').",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "deals": {
+              "type": "array",
+              "description": "Array of active deal and promotion objects.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "ASIN": {
+                    "type": "string",
+                    "description": "The unique Amazon Standard Identification Number (ASIN) assigned to the product."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The display title or name of the product."
+                  },
+                  "deal_price": {
+                    "type": "number",
+                    "description": "The current promotional or discounted price."
+                  },
+                  "list_price": {
+                    "type": "number",
+                    "description": "The original retail price before discount."
+                  },
+                  "discount_percent": {
+                    "type": "integer",
+                    "description": "Percentage reduction from the list price."
+                  },
+                  "end_time": {
+                    "type": "string",
+                    "description": "ISO 8601 timestamp indicating when the deal expires."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Price(BaseModel):\n    \"\"\"Price information.\"\"\"\n    amount: float = Field(..., ge=0, description=\"Price amount\")\n    currency: str = Field(..., description=\"Currency code\")\n\nclass Product(BaseModel):\n    \"\"\"Product search result.\"\"\"\n    ASIN: str = Field(..., pattern=r\"^[A-Z0-9]{10}$\", description=\"Amazon ASIN\")\n    title: str = Field(..., description=\"Product title\")\n    detail_page_url: str = Field(..., description=\"Product URL\")\n    price: Optional[Price] = Field(default=None, description=\"Product price\")\n    image_url: Optional[str] = Field(default=None, description=\"Image URL\")\n    rating: Optional[float] = Field(default=None, ge=0, le=5, description=\"Rating\")\n    total_reviews: Optional[int] = Field(default=None, ge=0, description=\"Review count\")\n\nclass Item(BaseModel):\n    \"\"\"Detailed product item.\"\"\"\n    ASIN: str = Field(..., pattern=r\"^[A-Z0-9]{10}$\", description=\"Amazon ASIN\")\n    title: str = Field(..., description=\"Product title\")\n    description: Optional[str] = Field(default=None, description=\"Description\")\n    features: Optional[List[str]] = Field(default=None, description=\"Features\")\n    price: Optional[Price] = Field(default=None, description=\"Product price\")\n    images: Optional[List[str]] = Field(default=None, description=\"Image URLs\")\n    rating: Optional[float] = Field(default=None, ge=0, le=5, description=\"Rating\")\n    total_reviews: Optional[int] = Field(default=None, ge=0, description=\"Review count\")\n    availability: Optional[str] = Field(default=None, description=\"Availability status\")\n\nclass Variation(BaseModel):\n    \"\"\"Product variation.\"\"\"\n    ASIN: str = Field(..., pattern=r\"^[A-Z0-9]{10}$\", description=\"Amazon ASIN\")\n    title: str = Field(..., description=\"Product title\")\n    variation_attributes: Optional[Dict[str, str]] = Field(default=None, description=\"Variation attributes\")\n    price: Optional[Price] = Field(default=None, description=\"Product price\")\n    availability: Optional[str] = Field(default=None, description=\"Availability status\")\n\nclass BrowseNode(BaseModel):\n    \"\"\"Browse node category.\"\"\"\n    id: str = Field(..., description=\"Browse node ID\")\n    name: str = Field(..., description=\"Category name\")\n    is_root: bool = Field(..., description=\"Is root category\")\n    children: Optional[List[str]] = Field(default=None, description=\"Child node IDs\")\n    ancestors: Optional[List[str]] = Field(default=None, description=\"Ancestor node IDs\")\n\nclass Deal(BaseModel):\n    \"\"\"Product deal.\"\"\"\n    ASIN: str = Field(..., pattern=r\"^[A-Z0-9]{10}$\", description=\"Amazon ASIN\")\n    title: str = Field(..., description=\"Product title\")\n    deal_price: float = Field(..., ge=0, description=\"Deal price\")\n    list_price: float = Field(..., ge=0, description=\"List price\")\n    discount_percent: int = Field(..., ge=0, le=100, description=\"Discount percentage\")\n    end_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"Deal end time\")\n\nclass AmazonProductScenario(BaseModel):\n    \"\"\"Amazon Product API scenario.\"\"\"\n    products: Dict[str, Product] = Field(default={}, description=\"Products by ASIN\")\n    items: Dict[str, Item] = Field(default={}, description=\"Detailed items by ASIN\")\n    variations: Dict[str, List[Variation]] = Field(default={}, description=\"Variations by parent ASIN\")\n    browse_nodes: Dict[str, BrowseNode] = Field(default={}, description=\"Browse nodes by ID\")\n    deals: List[Deal] = Field(default=[], description=\"Active deals\")\n    search_index_map: Dict[str, List[str]] = Field(default={\n        \"All\": [], \"Electronics\": [], \"Books\": [], \"Clothing\": [], \"Home\": [],\n        \"Sports\": [], \"Toys\": [], \"Beauty\": [], \"Automotive\": [], \"Garden\": []\n    }, description=\"Search index to ASIN mapping\")\n\nScenario_Schema = [Price, Product, Item, Variation, BrowseNode, Deal, AmazonProductScenario]\n\n# Section 2: Class\nclass AmazonProductAPI:\n    def __init__(self):\n        \"\"\"Initialize Amazon Product API with empty state.\"\"\"\n        self.products: Dict[str, Product] = {}\n        self.items: Dict[str, Item] = {}\n        self.variations: Dict[str, List[Variation]] = {}\n        self.browse_nodes: Dict[str, BrowseNode] = {}\n        self.deals: List[Deal] = []\n        self.search_index_map: Dict[str, List[str]] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = AmazonProductScenario(**scenario)\n        self.products = model.products\n        self.items = model.items\n        self.variations = model.variations\n        self.browse_nodes = model.browse_nodes\n        self.deals = model.deals\n        self.search_index_map = model.search_index_map\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"products\": {asin: prod.model_dump() for asin, prod in self.products.items()},\n            \"items\": {asin: item.model_dump() for asin, item in self.items.items()},\n            \"variations\": {asin: [v.model_dump() for v in vars] for asin, vars in self.variations.items()},\n            \"browse_nodes\": {nid: node.model_dump() for nid, node in self.browse_nodes.items()},\n            \"deals\": [deal.model_dump() for deal in self.deals],\n            \"search_index_map\": self.search_index_map\n        }\n\n    def search_items(self, keywords: str, search_index: str, item_page: int, resources: Optional[List[str]]) -> dict:\n        \"\"\"Search products by keywords and category.\"\"\"\n        index_asins = self.search_index_map.get(search_index, [])\n        matching = [p for asin, p in self.products.items() \n                   if keywords.lower() in p.title.lower() and (not index_asins or asin in index_asins)]\n        start = (item_page - 1) * 10\n        page_results = matching[start:start + 10]\n        return {\"products\": [p.model_dump() for p in page_results]}\n\n    def get_items(self, asins: List[str], resources: Optional[List[str]]) -> dict:\n        \"\"\"Retrieve detailed items by ASINs.\"\"\"\n        results = [self.items[asin].model_dump() for asin in asins if asin in self.items]\n        return {\"items\": results}\n\n    def get_variations(self, asin: str, resources: Optional[List[str]]) -> dict:\n        \"\"\"Retrieve product variations for parent ASIN.\"\"\"\n        vars = self.variations.get(asin, [])\n        return {\"variations\": [v.model_dump() for v in vars]}\n\n    def get_browse_nodes(self, browse_node_ids: List[str]) -> dict:\n        \"\"\"Retrieve browse nodes by IDs.\"\"\"\n        results = [self.browse_nodes[nid].model_dump() for nid in browse_node_ids if nid in self.browse_nodes]\n        return {\"browse_nodes\": results}\n\n    def get_deals(self, deal_types: Optional[List[str]]) -> dict:\n        \"\"\"Retrieve active deals.\"\"\"\n        return {\"deals\": [deal.model_dump() for deal in self.deals]}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"AmazonProduct\")\napi = AmazonProductAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Amazon Product API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching AmazonProductScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Amazon Product state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_items(keywords: str, search_index: str = \"All\", item_page: int = 1, resources: Optional[List[str]] = None) -> dict:\n    \"\"\"\n    Search the Amazon product catalog by keywords with optional category filtering and pagination.\n\n    Args:\n        keywords (str): Search query terms to find products in the Amazon catalog.\n        search_index (str): [Optional] Product category to search within (e.g., 'All', 'Electronics', 'Books'). Defaults to 'All'.\n        item_page (int): [Optional] Pagination page number (1-10) for navigating large result sets. Defaults to 1.\n        resources (List[str]): [Optional] Specific data fields to include in the response, such as 'Images', 'ItemInfo', 'Offers', or 'CustomerReviews'.\n\n    Returns:\n        products (List[dict]): Array of product results matching the search criteria.\n    \"\"\"\n    try:\n        if not keywords or not isinstance(keywords, str):\n            raise ValueError(\"Keywords must be a non-empty string\")\n        return api.search_items(keywords, search_index, item_page, resources)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_items(asins: List[str], resources: Optional[List[str]] = None) -> dict:\n    \"\"\"\n    Retrieve detailed product information for specific Amazon items by their ASINs.\n\n    Args:\n        asins (List[str]): List of Amazon Standard Identification Numbers (ASINs) to retrieve detailed information for (maximum 10 items).\n        resources (List[str]): [Optional] Specific data fields to include in the response, such as 'Images', 'ItemInfo', 'Offers', or 'CustomerReviews'.\n\n    Returns:\n        items (List[dict]): Array of detailed product information objects.\n    \"\"\"\n    try:\n        if not asins or not isinstance(asins, list):\n            raise ValueError(\"ASINs must be a non-empty list\")\n        return api.get_items(asins, resources)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_variations(asin: str, resources: Optional[List[str]] = None) -> dict:\n    \"\"\"\n    Retrieve product variations (size, color, style options) for a parent ASIN.\n\n    Args:\n        asin (str): The parent product ASIN for which to retrieve size, color, or style variations.\n        resources (List[str]): [Optional] Specific data fields to include in the response, such as 'Images', 'ItemInfo', 'Offers', or 'CustomerReviews'.\n\n    Returns:\n        variations (List[dict]): Array of product variation objects representing different size, color, or style options.\n    \"\"\"\n    try:\n        if not asin or not isinstance(asin, str):\n            raise ValueError(\"ASIN must be a non-empty string\")\n        return api.get_variations(asin, resources)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_browse_nodes(browse_node_ids: List[str]) -> dict:\n    \"\"\"\n    Retrieve category hierarchy and metadata for specific browse node IDs.\n\n    Args:\n        browse_node_ids (List[str]): List of category/browse node identifiers to retrieve hierarchy information for.\n\n    Returns:\n        browse_nodes (List[dict]): Array of browse node objects representing categories and their hierarchy.\n    \"\"\"\n    try:\n        if not browse_node_ids or not isinstance(browse_node_ids, list):\n            raise ValueError(\"Browse node IDs must be a non-empty list\")\n        return api.get_browse_nodes(browse_node_ids)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_deals(deal_types: Optional[List[str]] = None) -> dict:\n    \"\"\"\n    Retrieve current deals, promotions, and discounts available on Amazon.\n\n    Args:\n        deal_types (List[str]): [Optional] Types of promotions to filter by (e.g., 'LightningDeals', 'BestDeals').\n\n    Returns:\n        deals (List[dict]): Array of active deal and promotion objects.\n    \"\"\"\n    try:\n        return api.get_deals(deal_types)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-03-05T17:32:34.714933",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with one product, one item, and minimal browse node structure",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "products": {
+          "B08N5WRWNW": {
+            "ASIN": "B08N5WRWNW",
+            "title": "Apple iPhone 12",
+            "detail_page_url": "https://www.amazon.com/dp/B08N5WRWNW",
+            "price": {
+              "amount": 799.0,
+              "currency": "USD"
+            },
+            "image_url": "https://images.amazon.com/images/I/71f5Eu5lJSL.jpg",
+            "rating": 4.5,
+            "total_reviews": 2543
+          }
+        },
+        "items": {
+          "B08N5WRWNW": {
+            "ASIN": "B08N5WRWNW",
+            "title": "Apple iPhone 12",
+            "description": "6.1-inch display, A14 Bionic chip, 5G capable",
+            "features": [
+              "5G connectivity",
+              "A14 Bionic chip",
+              "Ceramic Shield"
+            ],
+            "price": {
+              "amount": 799.0,
+              "currency": "USD"
+            },
+            "images": [
+              "https://images.amazon.com/images/I/71f5Eu5lJSL.jpg"
+            ],
+            "rating": 4.5,
+            "total_reviews": 2543,
+            "availability": "In Stock"
+          }
+        },
+        "variations": {},
+        "browse_nodes": {
+          "2407749011": {
+            "id": "2407749011",
+            "name": "Cell Phones",
+            "is_root": false,
+            "children": [],
+            "ancestors": [
+              "7072561011"
+            ]
+          }
+        },
+        "deals": [],
+        "search_index_map": {
+          "All": [
+            "B08N5WRWNW"
+          ],
+          "Electronics": [
+            "B08N5WRWNW"
+          ],
+          "Books": [],
+          "Clothing": [],
+          "Home": [],
+          "Sports": [],
+          "Toys": [],
+          "Beauty": [],
+          "Automotive": [],
+          "Garden": []
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Scenario with multiple products across categories, deals, and browse node hierarchy",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "products": {
+          "B08N5WRWNW": {
+            "ASIN": "B08N5WRWNW",
+            "title": "Apple iPhone 12",
+            "detail_page_url": "https://www.amazon.com/dp/B08N5WRWNW",
+            "price": {
+              "amount": 699.0,
+              "currency": "USD"
+            },
+            "image_url": "https://images.amazon.com/images/I/71f5Eu5lJSL.jpg",
+            "rating": 4.5,
+            "total_reviews": 2543
+          },
+          "B08WMB5SM3": {
+            "ASIN": "B08WMB5SM3",
+            "title": "Samsung Galaxy S21",
+            "detail_page_url": "https://www.amazon.com/dp/B08WMB5SM3",
+            "price": {
+              "amount": 599.99,
+              "currency": "USD"
+            },
+            "image_url": "https://images.amazon.com/images/I/81M6NRcGfYL.jpg",
+            "rating": 4.3,
+            "total_reviews": 1876
+          },
+          "B089KV4YYX": {
+            "ASIN": "B089KV4YYX",
+            "title": "Nike Air Max 270",
+            "detail_page_url": "https://www.amazon.com/dp/B089KV4YYX",
+            "price": {
+              "amount": 150.0,
+              "currency": "USD"
+            },
+            "image_url": "https://images.amazon.com/images/I/71jG3H3D5VL.jpg",
+            "rating": 4.6,
+            "total_reviews": 892
+          }
+        },
+        "items": {
+          "B08N5WRWNW": {
+            "ASIN": "B08N5WRWNW",
+            "title": "Apple iPhone 12",
+            "description": "6.1-inch Super Retina XDR display, 5G capable smartphone",
+            "features": [
+              "5G connectivity",
+              "A14 Bionic chip",
+              "Dual-camera system"
+            ],
+            "price": {
+              "amount": 699.0,
+              "currency": "USD"
+            },
+            "images": [
+              "https://images.amazon.com/images/I/71f5Eu5lJSL.jpg"
+            ],
+            "rating": 4.5,
+            "total_reviews": 2543,
+            "availability": "In Stock"
+          },
+          "B08WMB5SM3": {
+            "ASIN": "B08WMB5SM3",
+            "title": "Samsung Galaxy S21",
+            "description": "6.2-inch Dynamic AMOLED display, 5G Android smartphone",
+            "features": [
+              "5G connectivity",
+              "Snapdragon 888",
+              "Triple-camera system"
+            ],
+            "price": {
+              "amount": 599.99,
+              "currency": "USD"
+            },
+            "images": [
+              "https://images.amazon.com/images/I/81M6NRcGfYL.jpg"
+            ],
+            "rating": 4.3,
+            "total_reviews": 1876,
+            "availability": "Only 3 left in stock"
+          }
+        },
+        "variations": {
+          "B089KV4YYX": [
+            {
+              "ASIN": "B089KV4YYX",
+              "title": "Nike Air Max 270 - Black/White",
+              "variation_attributes": {
+                "Color": "Black/White",
+                "Size": "10"
+              },
+              "price": {
+                "amount": 150.0,
+                "currency": "USD"
+              },
+              "availability": "In Stock"
+            },
+            {
+              "ASIN": "B089KV4YYX",
+              "title": "Nike Air Max 270 - White/Black",
+              "variation_attributes": {
+                "Color": "White/Black",
+                "Size": "9"
+              },
+              "price": {
+                "amount": 150.0,
+                "currency": "USD"
+              },
+              "availability": "Out of Stock"
+            }
+          ]
+        },
+        "browse_nodes": {
+          "2407749011": {
+            "id": "2407749011",
+            "name": "Cell Phones",
+            "is_root": false,
+            "children": [],
+            "ancestors": [
+              "7072561011",
+              "172282"
+            ]
+          },
+          "679337011": {
+            "id": "679337011",
+            "name": "Running Shoes",
+            "is_root": false,
+            "children": [],
+            "ancestors": [
+              "679255011",
+              "11444071011"
+            ]
+          },
+          "172282": {
+            "id": "172282",
+            "name": "Electronics",
+            "is_root": true,
+            "children": [
+              "2407749011"
+            ],
+            "ancestors": []
+          }
+        },
+        "deals": [
+          {
+            "ASIN": "B08N5WRWNW",
+            "title": "Apple iPhone 12",
+            "deal_price": 599.0,
+            "list_price": 799.0,
+            "discount_percent": 25,
+            "end_time": "2024-12-31T23:59:59"
+          },
+          {
+            "ASIN": "B089KV4YYX",
+            "title": "Nike Air Max 270",
+            "deal_price": 120.0,
+            "list_price": 150.0,
+            "discount_percent": 20,
+            "end_time": "2024-12-25T18:00:00"
+          }
+        ],
+        "search_index_map": {
+          "All": [
+            "B08N5WRWNW",
+            "B08WMB5SM3",
+            "B089KV4YYX"
+          ],
+          "Electronics": [
+            "B08N5WRWNW",
+            "B08WMB5SM3"
+          ],
+          "Books": [],
+          "Clothing": [
+            "B089KV4YYX"
+          ],
+          "Home": [],
+          "Sports": [
+            "B089KV4YYX"
+          ],
+          "Toys": [],
+          "Beauty": [],
+          "Automotive": [],
+          "Garden": []
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Complex scenario with extensive product catalog, nested variations, deals, and comprehensive browse tree",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "products": {
+          "B08N5WRWNW": {
+            "ASIN": "B08N5WRWNW",
+            "title": "Apple iPhone 12 Pro Max",
+            "detail_page_url": "https://www.amazon.com/dp/B08N5WRWNW",
+            "price": {
+              "amount": 1099.0,
+              "currency": "USD"
+            },
+            "image_url": "https://images.amazon.com/images/I/71f5Eu5lJSL.jpg",
+            "rating": 4.7,
+            "total_reviews": 3421
+          },
+          "B08WMB5SM3": {
+            "ASIN": "B08WMB5SM3",
+            "title": "Samsung Galaxy S21 Ultra",
+            "detail_page_url": "https://www.amazon.com/dp/B08WMB5SM3",
+            "price": {
+              "amount": 1199.99,
+              "currency": "USD"
+            },
+            "image_url": "https://images.amazon.com/images/I/81M6NRcGfYL.jpg",
+            "rating": 4.6,
+            "total_reviews": 2156
+          },
+          "B08QRGC9WL": {
+            "ASIN": "B08QRGC9WL",
+            "title": "Sony WH-1000XM4 Headphones",
+            "detail_page_url": "https://www.amazon.com/dp/B08QRGC9WL",
+            "price": {
+              "amount": 349.99,
+              "currency": "USD"
+            },
+            "image_url": "https://images.amazon.com/images/I/71o8Q5XJS5L.jpg",
+            "rating": 4.5,
+            "total_reviews": 8934
+          },
+          "B08H95Y452": {
+            "ASIN": "B08H95Y452",
+            "title": "Kindle Paperwhite",
+            "detail_page_url": "https://www.amazon.com/dp/B08H95Y452",
+            "price": {
+              "amount": 139.99,
+              "currency": "USD"
+            },
+            "image_url": "https://images.amazon.com/images/I/61eOogO3ZKL.jpg",
+            "rating": 4.4,
+            "total_reviews": 15623
+          },
+          "B07FZ8S74R": {
+            "ASIN": "B07FZ8S74R",
+            "title": "Amazon Echo Dot (4th Gen)",
+            "detail_page_url": "https://www.amazon.com/dp/B07FZ8S74R",
+            "price": {
+              "amount": 49.99,
+              "currency": "USD"
+            },
+            "image_url": "https://images.amazon.com/images/I/71JB6hM6Z0L.jpg",
+            "rating": 4.3,
+            "total_reviews": 98765
+          }
+        },
+        "items": {
+          "B08N5WRWNW": {
+            "ASIN": "B08N5WRWNW",
+            "title": "Apple iPhone 12 Pro Max",
+            "description": "6.7-inch Super Retina XDR display, 5G capable with A14 Bionic chip",
+            "features": [
+              "5G connectivity",
+              "A14 Bionic chip",
+              "Pro camera system",
+              "Ceramic Shield front",
+              "MagSafe support"
+            ],
+            "price": {
+              "amount": 1099.0,
+              "currency": "USD"
+            },
+            "images": [
+              "https://images.amazon.com/images/I/71f5Eu5lJSL.jpg",
+              "https://images.amazon.com/images/I/71K7R0OeJBL.jpg"
+            ],
+            "rating": 4.7,
+            "total_reviews": 3421,
+            "availability": "In Stock"
+          },
+          "B08QRGC9WL": {
+            "ASIN": "B08QRGC9WL",
+            "title": "Sony WH-1000XM4 Headphones",
+            "description": "Industry-leading noise canceling with Dual Noise Sensor technology",
+            "features": [
+              "Active Noise Cancelling",
+              "30-hour battery life",
+              "Quick charge",
+              "Touch sensor controls",
+              "Speak-to-chat"
+            ],
+            "price": {
+              "amount": 349.99,
+              "currency": "USD"
+            },
+            "images": [
+              "https://images.amazon.com/images/I/71o8Q5XJS5L.jpg",
+              "https://images.amazon.com/images/I/71jOOP4dVVL.jpg"
+            ],
+            "rating": 4.5,
+            "total_reviews": 8934,
+            "availability": "In Stock"
+          },
+          "B08H95Y452": {
+            "ASIN": "B08H95Y452",
+            "title": "Kindle Paperwhite",
+            "description": "Now waterproof, 8GB storage, adjustable warm light",
+            "features": [
+              "6.8-inch display",
+              "IPX8 waterproof",
+              "Adjustable warm light",
+              "8GB storage",
+              "USB-C charging"
+            ],
+            "price": {
+              "amount": 139.99,
+              "currency": "USD"
+            },
+            "images": [
+              "https://images.amazon.com/images/I/61eOogO3ZKL.jpg",
+              "https://images.amazon.com/images/I/61yL9k1NYVL.jpg"
+            ],
+            "rating": 4.4,
+            "total_reviews": 15623,
+            "availability": "In Stock"
+          }
+        },
+        "variations": {
+          "B08N5WRWNW": [
+            {
+              "ASIN": "B08N5WRWNW",
+              "title": "iPhone 12 Pro Max - Graphite, 128GB",
+              "variation_attributes": {
+                "Color": "Graphite",
+                "Storage": "128GB"
+              },
+              "price": {
+                "amount": 1099.0,
+                "currency": "USD"
+              },
+              "availability": "In Stock"
+            },
+            {
+              "ASIN": "B08N5WRWNW",
+              "title": "iPhone 12 Pro Max - Gold, 256GB",
+              "variation_attributes": {
+                "Color": "Gold",
+                "Storage": "256GB"
+              },
+              "price": {
+                "amount": 1199.0,
+                "currency": "USD"
+              },
+              "availability": "In Stock"
+            },
+            {
+              "ASIN": "B08N5WRWNW",
+              "title": "iPhone 12 Pro Max - Pacific Blue, 512GB",
+              "variation_attributes": {
+                "Color": "Pacific Blue",
+                "Storage": "512GB"
+              },
+              "price": {
+                "amount": 1399.0,
+                "currency": "USD"
+              },
+              "availability": "Out of Stock"
+            }
+          ],
+          "B08QRGC9WL": [
+            {
+              "ASIN": "B08QRGC9WL",
+              "title": "Sony WH-1000XM4 - Black",
+              "variation_attributes": {
+                "Color": "Black"
+              },
+              "price": {
+                "amount": 349.99,
+                "currency": "USD"
+              },
+              "availability": "In Stock"
+            },
+            {
+              "ASIN": "B08QRGC9WL",
+              "title": "Sony WH-1000XM4 - Silver",
+              "variation_attributes": {
+                "Color": "Silver"
+              },
+              "price": {
+                "amount": 349.99,
+                "currency": "USD"
+              },
+              "availability": "In Stock"
+            }
+          ]
+        },
+        "browse_nodes": {
+          "2407749011": {
+            "id": "2407749011",
+            "name": "Cell Phones",
+            "is_root": false,
+            "children": [],
+            "ancestors": [
+              "7072561011",
+              "172282"
+            ]
+          },
+          "172282": {
+            "id": "172282",
+            "name": "Electronics",
+            "is_root": true,
+            "children": [
+              "7072561011",
+              "172635"
+            ],
+            "ancestors": []
+          },
+          "7072561011": {
+            "id": "7072561011",
+            "name": "Cell Phones & Accessories",
+            "is_root": false,
+            "children": [
+              "2407749011"
+            ],
+            "ancestors": [
+              "172282"
+            ]
+          },
+          "172635": {
+            "id": "172635",
+            "name": "Headphones",
+            "is_root": false,
+            "children": [],
+            "ancestors": [
+              "172282"
+            ]
+          },
+          "154606011": {
+            "id": "154606011",
+            "name": "Kindle Store",
+            "is_root": false,
+            "children": [],
+            "ancestors": [
+              "133140011"
+            ]
+          },
+          "133140011": {
+            "id": "133140011",
+            "name": "Books",
+            "is_root": true,
+            "children": [
+              "154606011"
+            ],
+            "ancestors": []
+          }
+        },
+        "deals": [
+          {
+            "ASIN": "B08QRGC9WL",
+            "title": "Sony WH-1000XM4 Headphones",
+            "deal_price": 279.99,
+            "list_price": 349.99,
+            "discount_percent": 20,
+            "end_time": "2024-12-31T23:59:59"
+          },
+          {
+            "ASIN": "B08H95Y452",
+            "title": "Kindle Paperwhite",
+            "deal_price": 99.99,
+            "list_price": 139.99,
+            "discount_percent": 29,
+            "end_time": "2024-12-25T23:59:59"
+          },
+          {
+            "ASIN": "B07FZ8S74R",
+            "title": "Amazon Echo Dot (4th Gen)",
+            "deal_price": 29.99,
+            "list_price": 49.99,
+            "discount_percent": 40,
+            "end_time": "2024-11-30T23:59:59"
+          }
+        ],
+        "search_index_map": {
+          "All": [
+            "B08N5WRWNW",
+            "B08WMB5SM3",
+            "B08QRGC9WL",
+            "B08H95Y452",
+            "B07FZ8S74R"
+          ],
+          "Electronics": [
+            "B08N5WRWNW",
+            "B08WMB5SM3",
+            "B08QRGC9WL",
+            "B07FZ8S74R"
+          ],
+          "Books": [
+            "B08H95Y452"
+          ],
+          "Clothing": [],
+          "Home": [],
+          "Sports": [],
+          "Toys": [],
+          "Beauty": [],
+          "Automotive": [],
+          "Garden": []
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Test boundary conditions with zero prices, empty collections, and invalid ASIN pattern (should be rejected)",
+      "expected_behavior": "validation_error",
+      "scenario_data": {
+        "products": {
+          "B000000000": {
+            "ASIN": "B000000000",
+            "title": "Test Product with Zero Price",
+            "detail_page_url": "https://www.amazon.com/dp/B000000000",
+            "price": {
+              "amount": 0.0,
+              "currency": "USD"
+            },
+            "image_url": "",
+            "rating": 0.0,
+            "total_reviews": 0
+          },
+          "INVALID!@#$%": {
+            "ASIN": "INVALID!@#$%",
+            "title": "Product with Invalid ASIN",
+            "detail_page_url": "https://www.amazon.com/dp/INVALID!@#$%",
+            "price": {
+              "amount": 999.99,
+              "currency": "USD"
+            },
+            "rating": 5.5,
+            "total_reviews": -1
+          }
+        },
+        "items": {},
+        "variations": {},
+        "browse_nodes": {},
+        "deals": [],
+        "search_index_map": {
+          "All": [],
+          "Electronics": [],
+          "Books": [],
+          "Clothing": [],
+          "Home": [],
+          "Sports": [],
+          "Toys": [],
+          "Beauty": [],
+          "Automotive": [],
+          "Garden": []
+        }
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_variations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_browse_nodes",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_deals",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_variations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_browse_nodes",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_deals",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_variations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_browse_nodes",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_deals",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "type": "Tool execution error",
+              "location": "load_scenario",
+              "details": "1 validation error for Product\nINVALID!@#$%.rating\n  ensure this value is less than or equal to 5 [type=value_error.number.not_le; input_value=5.5, limit_value=5]",
+              "expected_vs_actual": "Expected validation error due to invalid scenario data, and received validation error for rating field (5.5 > 5)",
+              "root_cause": "The scenario contains invalid data - specifically a product with rating 5.5 which exceeds the maximum allowed value of 5. The validation correctly caught this boundary violation.",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "1 validation error for Product\nINVALID!@#$%.rating\n  ensure this value is less than or equal to 5 [type=value_error.number.not_le; input_value=5.5, limit_value=5]"
+            },
+            "tool_execution": [],
+            "save_scenario": {
+              "success": false,
+              "consistency_check": false,
+              "error": "Skipped due to load_scenario failure"
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_variations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_browse_nodes",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_deals",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_variations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_browse_nodes",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_deals",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_variations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_browse_nodes",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_deals",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "type": "Tool execution error",
+              "location": "load_scenario",
+              "details": "1 validation error for Product\nINVALID!@#$%.rating\n  ensure this value is less than or equal to 5 [type=value_error.number.not_le; input_value=5.5, limit_value=5]",
+              "expected_vs_actual": "Expected validation error due to invalid scenario data, and received validation error for rating field (5.5 > 5)",
+              "root_cause": "The scenario contains invalid data - specifically a product with rating 5.5 which exceeds the maximum allowed value of 5. The validation correctly caught this boundary violation.",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "1 validation error for Product\nINVALID!@#$%.rating\n  ensure this value is less than or equal to 5 [type=value_error.number.not_le; input_value=5.5, limit_value=5]"
+            },
+            "tool_execution": [],
+            "save_scenario": {
+              "success": false,
+              "consistency_check": false,
+              "error": "Skipped due to load_scenario failure"
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/AmazonProduct.py"
+  }
+}

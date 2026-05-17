@@ -1,0 +1,2661 @@
+{
+  "metadata": {
+    "class_name": "GameTrending",
+    "metadata_path": "envs\\metadata\\GameTrending_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-02T23:39:32.238029",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "GameTrending",
+    "description": "Live game-discovery server that surfaces real-time trending titles, free promotions, and player statistics from Steam and Epic Games Store.",
+    "tools": [
+      {
+        "name": "get_steam_trending_games",
+        "description": "Fetch currently trending Steam titles ranked by real-time sales, player activity, and community buzz.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of trending games to return (1-10). Defaults to 5."
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "games": {
+              "type": "array",
+              "description": "List of trending Steam games sorted by current momentum.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "app_id": {
+                    "type": "integer",
+                    "description": "The unique Steam application identifier for this game."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The official title of the game."
+                  },
+                  "current_players": {
+                    "type": "integer",
+                    "description": "Live concurrent player count on Steam."
+                  },
+                  "price": {
+                    "type": "object",
+                    "description": "Current pricing and discount information.",
+                    "properties": {
+                      "amount": {
+                        "type": "number",
+                        "description": "Present sale price in the store’s default currency."
+                      },
+                      "discount_percent": {
+                        "type": "integer",
+                        "description": "Active discount percentage (0 if none)."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_steam_most_played",
+        "description": "Retrieve real-time top Steam games ordered by current concurrent player count.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of most-played games to return (1-10). Defaults to 5."
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "games": {
+              "type": "array",
+              "description": "List of Steam games ranked by live player population.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "app_id": {
+                    "type": "integer",
+                    "description": "The unique Steam application identifier for this game."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The official title of the game."
+                  },
+                  "current_players": {
+                    "type": "integer",
+                    "description": "Live concurrent player count on Steam."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_epic_free_games",
+        "description": "List currently free and upcoming free titles on the Epic Games Store.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "include_upcoming": {
+              "type": "boolean",
+              "description": "When true, also returns games that will become free soon. Defaults to true."
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "current_games": {
+              "type": "array",
+              "description": "Games that are free to claim right now.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "app_id": {
+                    "type": "integer",
+                    "description": "The unique Epic application identifier for this game."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The official title of the game."
+                  }
+                }
+              }
+            },
+            "upcoming_games": {
+              "type": "array",
+              "description": "Games scheduled to be free in the near future (only present when include_upcoming is true).",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "app_id": {
+                    "type": "integer",
+                    "description": "The unique Epic application identifier for this game."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The official title of the game."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_epic_trending_games",
+        "description": "Fetch trending titles on Epic Games Store driven by sales and community engagement.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of trending games to return (1-10). Defaults to 5."
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "games": {
+              "type": "array",
+              "description": "List of trending Epic games sorted by current momentum.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "app_id": {
+                    "type": "integer",
+                    "description": "The unique Epic application identifier for this game."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The official title of the game."
+                  },
+                  "current_players": {
+                    "type": "integer",
+                    "description": "Live concurrent player count on Epic."
+                  },
+                  "price": {
+                    "type": "object",
+                    "description": "Current pricing and discount information.",
+                    "properties": {
+                      "amount": {
+                        "type": "number",
+                        "description": "Present sale price in the store’s default currency."
+                      },
+                      "discount_percent": {
+                        "type": "integer",
+                        "description": "Active discount percentage (0 if none)."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_app_id",
+        "description": "Search for a game’s application identifier across Steam and Epic by title.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "game_name": {
+              "type": "string",
+              "description": "The title of the game to look up."
+            },
+            "platform": {
+              "type": "string",
+              "enum": [
+                "steam",
+                "epic"
+              ],
+              "description": "Optional filter to restrict search to a single store."
+            }
+          },
+          "required": [
+            "game_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "matches": {
+              "type": "array",
+              "description": "Candidate games whose names match the query.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "app_id": {
+                    "type": "integer",
+                    "description": "The unique application identifier for this game."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The official title of the game."
+                  },
+                  "platform": {
+                    "type": "string",
+                    "description": "Store platform hosting this title: steam or epic."
+                  },
+                  "store_url": {
+                    "type": "string",
+                    "description": "Direct link to the game’s page on the store."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_game_details",
+        "description": "Retrieve rich metadata for a specific game using its application identifier.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "app_id": {
+              "type": "integer",
+              "description": "The unique application identifier for this game."
+            }
+          },
+          "required": [
+            "app_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "app_id": {
+              "type": "integer",
+              "description": "The unique application identifier for this game."
+            },
+            "name": {
+              "type": "string",
+              "description": "The official title of the game."
+            },
+            "description": {
+              "type": "string",
+              "description": "Full textual description or synopsis of the game."
+            },
+            "price": {
+              "type": "object",
+              "description": "Current pricing and discount information.",
+              "properties": {
+                "amount": {
+                  "type": "number",
+                  "description": "Present sale price in the store’s default currency."
+                },
+                "discount_percent": {
+                  "type": "integer",
+                  "description": "Active discount percentage (0 if none)."
+                }
+              }
+            },
+            "store_url": {
+              "type": "string",
+              "description": "Direct link to the game’s page on the store."
+            },
+            "rating": {
+              "type": "number",
+              "description": "Aggregate user rating on the store (scale 0-100)."
+            },
+            "platform": {
+              "type": "string",
+              "description": "Store platform hosting this title: steam or epic."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n\n# Section 1: Schema\nclass GamePrice(BaseModel):\n    \"\"\"Represents pricing information for a game.\"\"\"\n    amount: float = Field(..., ge=0, description=\"Present sale price in the store's default currency.\")\n    discount_percent: int = Field(..., ge=0, le=100, description=\"Active discount percentage (0 if none).\")\n\n\nclass SteamGame(BaseModel):\n    \"\"\"Represents a Steam game entry.\"\"\"\n    app_id: int = Field(..., ge=0, description=\"The unique Steam application identifier for this game.\")\n    name: str = Field(..., description=\"The official title of the game.\")\n    current_players: int = Field(..., ge=0, description=\"Live concurrent player count on Steam.\")\n    price: GamePrice = Field(..., description=\"Current pricing and discount information.\")\n    description: str = Field(default=\"\", description=\"Full textual description or synopsis of the game.\")\n    store_url: str = Field(default=\"\", description=\"Direct link to the game's page on the store.\")\n    rating: float = Field(default=0.0, ge=0, le=100, description=\"Aggregate user rating on the store (scale 0-100).\")\n    trending_score: float = Field(default=0.0, ge=0, description=\"Trending momentum score for ranking.\")\n\n\nclass EpicGame(BaseModel):\n    \"\"\"Represents an Epic Games Store game entry.\"\"\"\n    app_id: int = Field(..., ge=0, description=\"The unique Epic application identifier for this game.\")\n    name: str = Field(..., description=\"The official title of the game.\")\n    current_players: int = Field(..., ge=0, description=\"Live concurrent player count on Epic.\")\n    price: GamePrice = Field(..., description=\"Current pricing and discount information.\")\n    description: str = Field(default=\"\", description=\"Full textual description or synopsis of the game.\")\n    store_url: str = Field(default=\"\", description=\"Direct link to the game's page on the store.\")\n    rating: float = Field(default=0.0, ge=0, le=100, description=\"Aggregate user rating on the store (scale 0-100).\")\n    trending_score: float = Field(default=0.0, ge=0, description=\"Trending momentum score for ranking.\")\n    is_free_now: bool = Field(default=False, description=\"Whether the game is currently free to claim.\")\n    is_upcoming_free: bool = Field(default=False, description=\"Whether the game will be free soon.\")\n\n\nclass GameTrendingScenario(BaseModel):\n    \"\"\"Main scenario model for GameTrending server.\"\"\"\n    steam_games: Dict[str, Any] = Field(default_factory=lambda: {\n        \"730\": {\"app_id\": 730, \"name\": \"Counter-Strike 2\", \"current_players\": 1250000, \"price\": {\"amount\": 0.0, \"discount_percent\": 0}, \"description\": \"The next evolution of Counter-Strike, featuring updated graphics and refined gameplay.\", \"store_url\": \"https://store.steampowered.com/app/730\", \"rating\": 85.0, \"trending_score\": 98.5},\n        \"570\": {\"app_id\": 570, \"name\": \"Dota 2\", \"current_players\": 680000, \"price\": {\"amount\": 0.0, \"discount_percent\": 0}, \"description\": \"A competitive game of action and strategy, played both professionally and casually.\", \"store_url\": \"https://store.steampowered.com/app/570\", \"rating\": 82.0, \"trending_score\": 92.0},\n        \"578080\": {\"app_id\": 578080, \"name\": \"PUBG: BATTLEGROUNDS\", \"current_players\": 450000, \"price\": {\"amount\": 0.0, \"discount_percent\": 0}, \"description\": \"Land, loot, and outlast in the original battle royale experience.\", \"store_url\": \"https://store.steampowered.com/app/578080\", \"rating\": 68.0, \"trending_score\": 85.0},\n        \"1172470\": {\"app_id\": 1172470, \"name\": \"Apex Legends\", \"current_players\": 320000, \"price\": {\"amount\": 0.0, \"discount_percent\": 0}, \"description\": \"A free-to-play hero shooter where legendary characters battle for glory.\", \"store_url\": \"https://store.steampowered.com/app/1172470\", \"rating\": 78.0, \"trending_score\": 88.0},\n        \"252490\": {\"app_id\": 252490, \"name\": \"Rust\", \"current_players\": 125000, \"price\": {\"amount\": 39.99, \"discount_percent\": 25}, \"description\": \"The only aim in Rust is to survive. Everything wants you to die.\", \"store_url\": \"https://store.steampowered.com/app/252490\", \"rating\": 86.0, \"trending_score\": 82.0},\n        \"1245620\": {\"app_id\": 1245620, \"name\": \"Elden Ring\", \"current_players\": 95000, \"price\": {\"amount\": 59.99, \"discount_percent\": 35}, \"description\": \"Rise, Tarnished, and be guided by grace to brandish the power of the Elden Ring.\", \"store_url\": \"https://store.steampowered.com/app/1245620\", \"rating\": 94.0, \"trending_score\": 95.0},\n        \"892970\": {\"app_id\": 892970, \"name\": \"Valheim\", \"current_players\": 45000, \"price\": {\"amount\": 19.99, \"discount_percent\": 0}, \"description\": \"A brutal exploration and survival game for 1-10 players set in a procedurally-generated purgatory.\", \"store_url\": \"https://store.steampowered.com/app/892970\", \"rating\": 95.0, \"trending_score\": 78.0},\n        \"1091500\": {\"app_id\": 1091500, \"name\": \"Cyberpunk 2077\", \"current_players\": 72000, \"price\": {\"amount\": 59.99, \"discount_percent\": 50}, \"description\": \"An open-world, action-adventure RPG set in the megalopolis of Night City.\", \"store_url\": \"https://store.steampowered.com/app/1091500\", \"rating\": 76.0, \"trending_score\": 89.0},\n        \"413150\": {\"app_id\": 413150, \"name\": \"Stardew Valley\", \"current_players\": 38000, \"price\": {\"amount\": 14.99, \"discount_percent\": 0}, \"description\": \"You've inherited your grandfather's old farm plot in Stardew Valley.\", \"store_url\": \"https://store.steampowered.com/app/413150\", \"rating\": 97.0, \"trending_score\": 72.0},\n        \"1599340\": {\"app_id\": 1599340, \"name\": \"Lost Ark\", \"current_players\": 85000, \"price\": {\"amount\": 0.0, \"discount_percent\": 0}, \"description\": \"Embark on an odyssey for the Lost Ark in a vast, vibrant world.\", \"store_url\": \"https://store.steampowered.com/app/1599340\", \"rating\": 71.0, \"trending_score\": 80.0},\n        \"271590\": {\"app_id\": 271590, \"name\": \"Grand Theft Auto V\", \"current_players\": 145000, \"price\": {\"amount\": 29.99, \"discount_percent\": 60}, \"description\": \"Grand Theft Auto V for PC offers players the option to explore the award-winning world of Los Santos.\", \"store_url\": \"https://store.steampowered.com/app/271590\", \"rating\": 85.0, \"trending_score\": 75.0},\n        \"1938090\": {\"app_id\": 1938090, \"name\": \"Call of Duty\", \"current_players\": 110000, \"price\": {\"amount\": 69.99, \"discount_percent\": 0}, \"description\": \"The iconic first-person shooter franchise returns with new content.\", \"store_url\": \"https://store.steampowered.com/app/1938090\", \"rating\": 72.0, \"trending_score\": 86.0}\n    }, description=\"Steam games database with app_id as string key\")\n    \n    epic_games: Dict[str, Any] = Field(default_factory=lambda: {\n        \"9d2d0eb64d5c44529cece33fe2a46482\": {\"app_id\": 100001, \"name\": \"Fortnite\", \"current_players\": 2500000, \"price\": {\"amount\": 0.0, \"discount_percent\": 0}, \"description\": \"Battle Royale, Creative, and Save the World modes in one game.\", \"store_url\": \"https://store.epicgames.com/en-US/p/fortnite\", \"rating\": 82.0, \"trending_score\": 99.0, \"is_free_now\": False, \"is_upcoming_free\": False},\n        \"fn_rocket_league\": {\"app_id\": 100002, \"name\": \"Rocket League\", \"current_players\": 450000, \"price\": {\"amount\": 0.0, \"discount_percent\": 0}, \"description\": \"Soccer meets driving in this physics-based multiplayer game.\", \"store_url\": \"https://store.epicgames.com/en-US/p/rocket-league\", \"rating\": 88.0, \"trending_score\": 90.0, \"is_free_now\": False, \"is_upcoming_free\": False},\n        \"fn_fall_guys\": {\"app_id\": 100003, \"name\": \"Fall Guys\", \"current_players\": 180000, \"price\": {\"amount\": 0.0, \"discount_percent\": 0}, \"description\": \"Stumble through chaotic obstacle courses with up to 60 players.\", \"store_url\": \"https://store.epicgames.com/en-US/p/fall-guys\", \"rating\": 80.0, \"trending_score\": 85.0, \"is_free_now\": False, \"is_upcoming_free\": False},\n        \"fn_genshin\": {\"app_id\": 100004, \"name\": \"Genshin Impact\", \"current_players\": 320000, \"price\": {\"amount\": 0.0, \"discount_percent\": 0}, \"description\": \"Step into Teyvat, a vast world teeming with life and flowing with elemental energy.\", \"store_url\": \"https://store.epicgames.com/en-US/p/genshin-impact\", \"rating\": 84.0, \"trending_score\": 93.0, \"is_free_now\": False, \"is_upcoming_free\": False},\n        \"fn_alan_wake\": {\"app_id\": 100005, \"name\": \"Alan Wake 2\", \"current_players\": 25000, \"price\": {\"amount\": 59.99, \"discount_percent\": 40}, \"description\": \"A survival horror game that blurs the boundaries between fiction and reality.\", \"store_url\": \"https://store.epicgames.com/en-US/p/alan-wake-2\", \"rating\": 91.0, \"trending_score\": 88.0, \"is_free_now\": False, \"is_upcoming_free\": False},\n        \"fn_death_stranding\": {\"app_id\": 100006, \"name\": \"Death Stranding\", \"current_players\": 8000, \"price\": {\"amount\": 39.99, \"discount_percent\": 0}, \"description\": \"From legendary game creator Hideo Kojima comes a genre-defying experience.\", \"store_url\": \"https://store.epicgames.com/en-US/p/death-stranding\", \"rating\": 86.0, \"trending_score\": 65.0, \"is_free_now\": True, \"is_upcoming_free\": False},\n        \"fn_control\": {\"app_id\": 100007, \"name\": \"Control\", \"current_players\": 5000, \"price\": {\"amount\": 29.99, \"discount_percent\": 0}, \"description\": \"A supernatural third-person action-adventure game.\", \"store_url\": \"https://store.epicgames.com/en-US/p/control\", \"rating\": 87.0, \"trending_score\": 60.0, \"is_free_now\": True, \"is_upcoming_free\": False},\n        \"fn_hades\": {\"app_id\": 100008, \"name\": \"Hades\", \"current_players\": 15000, \"price\": {\"amount\": 24.99, \"discount_percent\": 0}, \"description\": \"Defy the god of the dead as you hack and slash your way out of the Underworld.\", \"store_url\": \"https://store.epicgames.com/en-US/p/hades\", \"rating\": 96.0, \"trending_score\": 75.0, \"is_free_now\": False, \"is_upcoming_free\": True},\n        \"fn_celeste\": {\"app_id\": 100009, \"name\": \"Celeste\", \"current_players\": 3000, \"price\": {\"amount\": 19.99, \"discount_percent\": 0}, \"description\": \"Help Madeline survive her inner demons on her journey to the top of Celeste Mountain.\", \"store_url\": \"https://store.epicgames.com/en-US/p/celeste\", \"rating\": 94.0, \"trending_score\": 55.0, \"is_free_now\": False, \"is_upcoming_free\": True},\n        \"fn_disco_elysium\": {\"app_id\": 100010, \"name\": \"Disco Elysium\", \"current_players\": 4500, \"price\": {\"amount\": 39.99, \"discount_percent\": 50}, \"description\": \"A groundbreaking open world role playing game with an insane amount of choice.\", \"store_url\": \"https://store.epicgames.com/en-US/p/disco-elysium\", \"rating\": 92.0, \"trending_score\": 70.0, \"is_free_now\": False, \"is_upcoming_free\": False},\n        \"fn_sifu\": {\"app_id\": 100011, \"name\": \"Sifu\", \"current_players\": 12000, \"price\": {\"amount\": 39.99, \"discount_percent\": 25}, \"description\": \"A third-person action game featuring intense hand-to-hand combat.\", \"store_url\": \"https://store.epicgames.com/en-US/p/sifu\", \"rating\": 85.0, \"trending_score\": 78.0, \"is_free_now\": False, \"is_upcoming_free\": False},\n        \"fn_hitman3\": {\"app_id\": 100012, \"name\": \"Hitman 3\", \"current_players\": 9000, \"price\": {\"amount\": 59.99, \"discount_percent\": 70}, \"description\": \"Death Awaits. Agent 47 returns in HITMAN 3, the dramatic conclusion to the World of Assassination trilogy.\", \"store_url\": \"https://store.epicgames.com/en-US/p/hitman-3\", \"rating\": 88.0, \"trending_score\": 72.0, \"is_free_now\": False, \"is_upcoming_free\": False}\n    }, description=\"Epic Games database with internal key\")\n\n\nScenario_Schema = [GamePrice, SteamGame, EpicGame, GameTrendingScenario]\n\n\n# Section 2: Class\nclass GameTrendingAPI:\n    def __init__(self):\n        \"\"\"Initialize GameTrending API with empty state.\"\"\"\n        self.steam_games: Dict[str, Any] = {}\n        self.epic_games: Dict[str, Any] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = GameTrendingScenario(**scenario)\n        self.steam_games = model.steam_games\n        self.epic_games = model.epic_games\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"steam_games\": self.steam_games,\n            \"epic_games\": self.epic_games\n        }\n\n    def get_steam_trending_games(self, limit: int = 5) -> dict:\n        \"\"\"Fetch currently trending Steam titles ranked by trending score.\"\"\"\n        games_list = list(self.steam_games.values())\n        sorted_games = sorted(games_list, key=lambda x: x.get(\"trending_score\", 0), reverse=True)\n        limited_games = sorted_games[:limit]\n        \n        result_games = []\n        for game in limited_games:\n            result_games.append({\n                \"app_id\": game[\"app_id\"],\n                \"name\": game[\"name\"],\n                \"current_players\": game[\"current_players\"],\n                \"price\": {\n                    \"amount\": game[\"price\"][\"amount\"],\n                    \"discount_percent\": game[\"price\"][\"discount_percent\"]\n                }\n            })\n        \n        return {\"games\": result_games}\n\n    def get_steam_most_played(self, limit: int = 5) -> dict:\n        \"\"\"Retrieve real-time top Steam games ordered by current concurrent player count.\"\"\"\n        games_list = list(self.steam_games.values())\n        sorted_games = sorted(games_list, key=lambda x: x.get(\"current_players\", 0), reverse=True)\n        limited_games = sorted_games[:limit]\n        \n        result_games = []\n        for game in limited_games:\n            result_games.append({\n                \"app_id\": game[\"app_id\"],\n                \"name\": game[\"name\"],\n                \"current_players\": game[\"current_players\"]\n            })\n        \n        return {\"games\": result_games}\n\n    def get_epic_free_games(self, include_upcoming: bool = True) -> dict:\n        \"\"\"List currently free and upcoming free titles on the Epic Games Store.\"\"\"\n        current_games = []\n        upcoming_games = []\n        \n        for game in self.epic_games.values():\n            if game.get(\"is_free_now\", False):\n                current_games.append({\n                    \"app_id\": game[\"app_id\"],\n                    \"name\": game[\"name\"]\n                })\n            if include_upcoming and game.get(\"is_upcoming_free\", False):\n                upcoming_games.append({\n                    \"app_id\": game[\"app_id\"],\n                    \"name\": game[\"name\"]\n                })\n        \n        result = {\"current_games\": current_games}\n        if include_upcoming:\n            result[\"upcoming_games\"] = upcoming_games\n        \n        return result\n\n    def get_epic_trending_games(self, limit: int = 5) -> dict:\n        \"\"\"Fetch trending titles on Epic Games Store driven by sales and community engagement.\"\"\"\n        games_list = list(self.epic_games.values())\n        sorted_games = sorted(games_list, key=lambda x: x.get(\"trending_score\", 0), reverse=True)\n        limited_games = sorted_games[:limit]\n        \n        result_games = []\n        for game in limited_games:\n            result_games.append({\n                \"app_id\": game[\"app_id\"],\n                \"name\": game[\"name\"],\n                \"current_players\": game[\"current_players\"],\n                \"price\": {\n                    \"amount\": game[\"price\"][\"amount\"],\n                    \"discount_percent\": game[\"price\"][\"discount_percent\"]\n                }\n            })\n        \n        return {\"games\": result_games}\n\n    def get_app_id(self, game_name: str, platform: Optional[str] = None) -> dict:\n        \"\"\"Search for a game's application identifier across Steam and Epic by title.\"\"\"\n        matches = []\n        search_term = game_name.lower()\n        \n        if platform is None or platform == \"steam\":\n            for game in self.steam_games.values():\n                if search_term in game[\"name\"].lower():\n                    matches.append({\n                        \"app_id\": game[\"app_id\"],\n                        \"name\": game[\"name\"],\n                        \"platform\": \"steam\",\n                        \"store_url\": game.get(\"store_url\", \"\")\n                    })\n        \n        if platform is None or platform == \"epic\":\n            for game in self.epic_games.values():\n                if search_term in game[\"name\"].lower():\n                    matches.append({\n                        \"app_id\": game[\"app_id\"],\n                        \"name\": game[\"name\"],\n                        \"platform\": \"epic\",\n                        \"store_url\": game.get(\"store_url\", \"\")\n                    })\n        \n        return {\"matches\": matches}\n\n    def get_game_details(self, app_id: int) -> dict:\n        \"\"\"Retrieve rich metadata for a specific game using its application identifier.\"\"\"\n        for game in self.steam_games.values():\n            if game[\"app_id\"] == app_id:\n                return {\n                    \"app_id\": game[\"app_id\"],\n                    \"name\": game[\"name\"],\n                    \"description\": game.get(\"description\", \"\"),\n                    \"price\": {\n                        \"amount\": game[\"price\"][\"amount\"],\n                        \"discount_percent\": game[\"price\"][\"discount_percent\"]\n                    },\n                    \"store_url\": game.get(\"store_url\", \"\"),\n                    \"rating\": game.get(\"rating\", 0.0),\n                    \"platform\": \"steam\"\n                }\n        \n        for game in self.epic_games.values():\n            if game[\"app_id\"] == app_id:\n                return {\n                    \"app_id\": game[\"app_id\"],\n                    \"name\": game[\"name\"],\n                    \"description\": game.get(\"description\", \"\"),\n                    \"price\": {\n                        \"amount\": game[\"price\"][\"amount\"],\n                        \"discount_percent\": game[\"price\"][\"discount_percent\"]\n                    },\n                    \"store_url\": game.get(\"store_url\", \"\"),\n                    \"rating\": game.get(\"rating\", 0.0),\n                    \"platform\": \"epic\"\n                }\n        \n        return {}\n\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"GameTrending\")\napi = GameTrendingAPI()\n\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the GameTrending API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching GameTrendingScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current GameTrending state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef get_steam_trending_games(limit: int = 5) -> dict:\n    \"\"\"\n    Fetch currently trending Steam titles ranked by real-time sales, player activity, and community buzz.\n    \n    Args:\n        limit (int): Maximum number of trending games to return (1-10). Defaults to 5. [Optional]\n    \n    Returns:\n        games (list): List of trending Steam games sorted by current momentum. Each game contains:\n            - app_id (int): The unique Steam application identifier for this game.\n            - name (str): The official title of the game.\n            - current_players (int): Live concurrent player count on Steam.\n            - price (dict): Current pricing and discount information with amount and discount_percent.\n    \"\"\"\n    try:\n        if limit is not None:\n            if not isinstance(limit, int):\n                raise ValueError(\"Limit must be an integer\")\n            if limit < 1 or limit > 10:\n                raise ValueError(\"Limit must be between 1 and 10\")\n        return api.get_steam_trending_games(limit)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef get_steam_most_played(limit: int = 5) -> dict:\n    \"\"\"\n    Retrieve real-time top Steam games ordered by current concurrent player count.\n    \n    Args:\n        limit (int): Maximum number of most-played games to return (1-10). Defaults to 5. [Optional]\n    \n    Returns:\n        games (list): List of Steam games ranked by live player population. Each game contains:\n            - app_id (int): The unique Steam application identifier for this game.\n            - name (str): The official title of the game.\n            - current_players (int): Live concurrent player count on Steam.\n    \"\"\"\n    try:\n        if limit is not None:\n            if not isinstance(limit, int):\n                raise ValueError(\"Limit must be an integer\")\n            if limit < 1 or limit > 10:\n                raise ValueError(\"Limit must be between 1 and 10\")\n        return api.get_steam_most_played(limit)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef get_epic_free_games(include_upcoming: bool = True) -> dict:\n    \"\"\"\n    List currently free and upcoming free titles on the Epic Games Store.\n    \n    Args:\n        include_upcoming (bool): When true, also returns games that will become free soon. Defaults to true. [Optional]\n    \n    Returns:\n        current_games (list): Games that are free to claim right now. Each game contains:\n            - app_id (int): The unique Epic application identifier for this game.\n            - name (str): The official title of the game.\n        upcoming_games (list): Games scheduled to be free in the near future (only present when include_upcoming is true). Each game contains:\n            - app_id (int): The unique Epic application identifier for this game.\n            - name (str): The official title of the game.\n    \"\"\"\n    try:\n        if include_upcoming is not None and not isinstance(include_upcoming, bool):\n            raise ValueError(\"include_upcoming must be a boolean\")\n        return api.get_epic_free_games(include_upcoming)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef get_epic_trending_games(limit: int = 5) -> dict:\n    \"\"\"\n    Fetch trending titles on Epic Games Store driven by sales and community engagement.\n    \n    Args:\n        limit (int): Maximum number of trending games to return (1-10). Defaults to 5. [Optional]\n    \n    Returns:\n        games (list): List of trending Epic games sorted by current momentum. Each game contains:\n            - app_id (int): The unique Epic application identifier for this game.\n            - name (str): The official title of the game.\n            - current_players (int): Live concurrent player count on Epic.\n            - price (dict): Current pricing and discount information with amount and discount_percent.\n    \"\"\"\n    try:\n        if limit is not None:\n            if not isinstance(limit, int):\n                raise ValueError(\"Limit must be an integer\")\n            if limit < 1 or limit > 10:\n                raise ValueError(\"Limit must be between 1 and 10\")\n        return api.get_epic_trending_games(limit)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef get_app_id(game_name: str, platform: Optional[str] = None) -> dict:\n    \"\"\"\n    Search for a game's application identifier across Steam and Epic by title.\n    \n    Args:\n        game_name (str): The title of the game to look up.\n        platform (str): Optional filter to restrict search to a single store. Must be 'steam' or 'epic'. [Optional]\n    \n    Returns:\n        matches (list): Candidate games whose names match the query. Each match contains:\n            - app_id (int): The unique application identifier for this game.\n            - name (str): The official title of the game.\n            - platform (str): Store platform hosting this title: steam or epic.\n            - store_url (str): Direct link to the game's page on the store.\n    \"\"\"\n    try:\n        if not game_name or not isinstance(game_name, str):\n            raise ValueError(\"game_name must be a non-empty string\")\n        if platform is not None:\n            if not isinstance(platform, str):\n                raise ValueError(\"platform must be a string\")\n            if platform not in [\"steam\", \"epic\"]:\n                raise ValueError(\"platform must be 'steam' or 'epic'\")\n        return api.get_app_id(game_name, platform)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef get_game_details(app_id: int) -> dict:\n    \"\"\"\n    Retrieve rich metadata for a specific game using its application identifier.\n    \n    Args:\n        app_id (int): The unique application identifier for this game.\n    \n    Returns:\n        app_id (int): The unique application identifier for this game.\n        name (str): The official title of the game.\n        description (str): Full textual description or synopsis of the game.\n        price (dict): Current pricing and discount information with amount and discount_percent.\n        store_url (str): Direct link to the game's page on the store.\n        rating (float): Aggregate user rating on the store (scale 0-100).\n        platform (str): Store platform hosting this title: steam or epic.\n    \"\"\"\n    try:\n        if app_id is None:\n            raise ValueError(\"app_id is required\")\n        if not isinstance(app_id, int):\n            raise ValueError(\"app_id must be an integer\")\n        result = api.get_game_details(app_id)\n        if not result:\n            raise ValueError(f\"Game with app_id {app_id} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-02T23:39:32.238029",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Minimal dataset with 2 Steam games and 2 Epic games to test basic functionality",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "steam_games": {
+          "730": {
+            "app_id": 730,
+            "name": "Counter-Strike 2",
+            "current_players": 1250000,
+            "price": {
+              "amount": 0.0,
+              "discount_percent": 0
+            },
+            "description": "The next evolution of Counter-Strike",
+            "store_url": "https://store.steampowered.com/app/730",
+            "rating": 85.0,
+            "trending_score": 98.5
+          },
+          "570": {
+            "app_id": 570,
+            "name": "Dota 2",
+            "current_players": 680000,
+            "price": {
+              "amount": 0.0,
+              "discount_percent": 0
+            },
+            "description": "A competitive MOBA game",
+            "store_url": "https://store.steampowered.com/app/570",
+            "rating": 82.0,
+            "trending_score": 92.0
+          }
+        },
+        "epic_games": {
+          "fortnite_id": {
+            "app_id": 100001,
+            "name": "Fortnite",
+            "current_players": 2500000,
+            "price": {
+              "amount": 0.0,
+              "discount_percent": 0
+            },
+            "description": "Battle Royale game",
+            "store_url": "https://store.epicgames.com/en-US/p/fortnite",
+            "rating": 82.0,
+            "trending_score": 99.0,
+            "is_free_now": false,
+            "is_upcoming_free": false
+          },
+          "rocket_league_id": {
+            "app_id": 100002,
+            "name": "Rocket League",
+            "current_players": 450000,
+            "price": {
+              "amount": 0.0,
+              "discount_percent": 0
+            },
+            "description": "Soccer meets driving",
+            "store_url": "https://store.epicgames.com/en-US/p/rocket-league",
+            "rating": 88.0,
+            "trending_score": 90.0,
+            "is_free_now": false,
+            "is_upcoming_free": false
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Mixed dataset with 4 Steam games (varied pricing) and 4 Epic games (including free and upcoming free titles)",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "steam_games": {
+          "1245620": {
+            "app_id": 1245620,
+            "name": "Elden Ring",
+            "current_players": 95000,
+            "price": {
+              "amount": 59.99,
+              "discount_percent": 35
+            },
+            "description": "Rise, Tarnished, and be guided by grace",
+            "store_url": "https://store.steampowered.com/app/1245620",
+            "rating": 94.0,
+            "trending_score": 95.0
+          },
+          "252490": {
+            "app_id": 252490,
+            "name": "Rust",
+            "current_players": 125000,
+            "price": {
+              "amount": 39.99,
+              "discount_percent": 25
+            },
+            "description": "Survival game where everything wants you to die",
+            "store_url": "https://store.steampowered.com/app/252490",
+            "rating": 86.0,
+            "trending_score": 82.0
+          },
+          "413150": {
+            "app_id": 413150,
+            "name": "Stardew Valley",
+            "current_players": 38000,
+            "price": {
+              "amount": 14.99,
+              "discount_percent": 0
+            },
+            "description": "Farm simulation RPG",
+            "store_url": "https://store.steampowered.com/app/413150",
+            "rating": 97.0,
+            "trending_score": 72.0
+          },
+          "1172470": {
+            "app_id": 1172470,
+            "name": "Apex Legends",
+            "current_players": 320000,
+            "price": {
+              "amount": 0.0,
+              "discount_percent": 0
+            },
+            "description": "",
+            "store_url": "",
+            "rating": 78.0,
+            "trending_score": 88.0
+          }
+        },
+        "epic_games": {
+          "fn_genshin": {
+            "app_id": 100004,
+            "name": "Genshin Impact",
+            "current_players": 320000,
+            "price": {
+              "amount": 0.0,
+              "discount_percent": 0
+            },
+            "description": "Open-world action RPG",
+            "store_url": "https://store.epicgames.com/en-US/p/genshin-impact",
+            "rating": 84.0,
+            "trending_score": 93.0,
+            "is_free_now": false,
+            "is_upcoming_free": false
+          },
+          "fn_death_stranding": {
+            "app_id": 100006,
+            "name": "Death Stranding",
+            "current_players": 8000,
+            "price": {
+              "amount": 39.99,
+              "discount_percent": 0
+            },
+            "description": "Genre-defying experience from Hideo Kojima",
+            "store_url": "https://store.epicgames.com/en-US/p/death-stranding",
+            "rating": 86.0,
+            "trending_score": 65.0,
+            "is_free_now": true,
+            "is_upcoming_free": false
+          },
+          "fn_hades": {
+            "app_id": 100008,
+            "name": "Hades",
+            "current_players": 15000,
+            "price": {
+              "amount": 24.99,
+              "discount_percent": 0
+            },
+            "description": "Roguelike dungeon crawler",
+            "store_url": "https://store.epicgames.com/en-US/p/hades",
+            "rating": 96.0,
+            "trending_score": 75.0,
+            "is_free_now": false,
+            "is_upcoming_free": true
+          },
+          "fn_alan_wake": {
+            "app_id": 100005,
+            "name": "Alan Wake 2",
+            "current_players": 25000,
+            "price": {
+              "amount": 59.99,
+              "discount_percent": 40
+            },
+            "description": "Survival horror game",
+            "store_url": "https://store.epicgames.com/en-US/p/alan-wake-2",
+            "rating": 91.0,
+            "trending_score": 88.0,
+            "is_free_now": false,
+            "is_upcoming_free": false
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich dataset with 6 Steam games and 5 Epic games covering diverse genres, pricing models, and promotional states",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "steam_games": {
+          "730": {
+            "app_id": 730,
+            "name": "Counter-Strike 2",
+            "current_players": 1250000,
+            "price": {
+              "amount": 0.0,
+              "discount_percent": 0
+            },
+            "description": "The next evolution of Counter-Strike, featuring updated graphics and refined gameplay.",
+            "store_url": "https://store.steampowered.com/app/730",
+            "rating": 85.0,
+            "trending_score": 98.5
+          },
+          "1091500": {
+            "app_id": 1091500,
+            "name": "Cyberpunk 2077",
+            "current_players": 72000,
+            "price": {
+              "amount": 59.99,
+              "discount_percent": 50
+            },
+            "description": "An open-world, action-adventure RPG set in the megalopolis of Night City.",
+            "store_url": "https://store.steampowered.com/app/1091500",
+            "rating": 76.0,
+            "trending_score": 89.0
+          },
+          "271590": {
+            "app_id": 271590,
+            "name": "Grand Theft Auto V",
+            "current_players": 145000,
+            "price": {
+              "amount": 29.99,
+              "discount_percent": 60
+            },
+            "description": "Grand Theft Auto V for PC offers players the option to explore the award-winning world of Los Santos.",
+            "store_url": "https://store.steampowered.com/app/271590",
+            "rating": 85.0,
+            "trending_score": 75.0
+          },
+          "892970": {
+            "app_id": 892970,
+            "name": "Valheim",
+            "current_players": 45000,
+            "price": {
+              "amount": 19.99,
+              "discount_percent": 0
+            },
+            "description": "A brutal exploration and survival game for 1-10 players set in a procedurally-generated purgatory.",
+            "store_url": "https://store.steampowered.com/app/892970",
+            "rating": 95.0,
+            "trending_score": 78.0
+          },
+          "1938090": {
+            "app_id": 1938090,
+            "name": "Call of Duty",
+            "current_players": 110000,
+            "price": {
+              "amount": 69.99,
+              "discount_percent": 0
+            },
+            "description": "The iconic first-person shooter franchise returns with new content.",
+            "store_url": "https://store.steampowered.com/app/1938090",
+            "rating": 72.0,
+            "trending_score": 86.0
+          },
+          "578080": {
+            "app_id": 578080,
+            "name": "PUBG: BATTLEGROUNDS",
+            "current_players": 450000,
+            "price": {
+              "amount": 0.0,
+              "discount_percent": 0
+            },
+            "description": "Land, loot, and outlast in the original battle royale experience.",
+            "store_url": "https://store.steampowered.com/app/578080",
+            "rating": 68.0,
+            "trending_score": 85.0
+          }
+        },
+        "epic_games": {
+          "9d2d0eb64d5c44529cece33fe2a46482": {
+            "app_id": 100001,
+            "name": "Fortnite",
+            "current_players": 2500000,
+            "price": {
+              "amount": 0.0,
+              "discount_percent": 0
+            },
+            "description": "Battle Royale, Creative, and Save the World modes in one game.",
+            "store_url": "https://store.epicgames.com/en-US/p/fortnite",
+            "rating": 82.0,
+            "trending_score": 99.0,
+            "is_free_now": false,
+            "is_upcoming_free": false
+          },
+          "fn_control": {
+            "app_id": 100007,
+            "name": "Control",
+            "current_players": 5000,
+            "price": {
+              "amount": 29.99,
+              "discount_percent": 0
+            },
+            "description": "A supernatural third-person action-adventure game.",
+            "store_url": "https://store.epicgames.com/en-US/p/control",
+            "rating": 87.0,
+            "trending_score": 60.0,
+            "is_free_now": true,
+            "is_upcoming_free": false
+          },
+          "fn_celeste": {
+            "app_id": 100009,
+            "name": "Celeste",
+            "current_players": 3000,
+            "price": {
+              "amount": 19.99,
+              "discount_percent": 0
+            },
+            "description": "Help Madeline survive her inner demons on her journey to the top of Celeste Mountain.",
+            "store_url": "https://store.epicgames.com/en-US/p/celeste",
+            "rating": 94.0,
+            "trending_score": 55.0,
+            "is_free_now": false,
+            "is_upcoming_free": true
+          },
+          "fn_disco_elysium": {
+            "app_id": 100010,
+            "name": "Disco Elysium",
+            "current_players": 4500,
+            "price": {
+              "amount": 39.99,
+              "discount_percent": 50
+            },
+            "description": "A groundbreaking open world role playing game with an insane amount of choice.",
+            "store_url": "https://store.epicgames.com/en-US/p/disco-elysium",
+            "rating": 92.0,
+            "trending_score": 70.0,
+            "is_free_now": false,
+            "is_upcoming_free": false
+          },
+          "fn_hitman3": {
+            "app_id": 100012,
+            "name": "Hitman 3",
+            "current_players": 9000,
+            "price": {
+              "amount": 59.99,
+              "discount_percent": 70
+            },
+            "description": "Death Awaits. Agent 47 returns in HITMAN 3, the dramatic conclusion to the World of Assassination trilogy.",
+            "store_url": "https://store.epicgames.com/en-US/p/hitman-3",
+            "rating": 88.0,
+            "trending_score": 72.0,
+            "is_free_now": false,
+            "is_upcoming_free": false
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty collections to test handling of no games in either store",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "steam_games": {},
+        "epic_games": {}
+      }
+    },
+    {
+      "scenario_id": "scenario_005",
+      "complexity_level": "boundary",
+      "description": "Edge cases with extreme values: maximum discount (100%), zero players, maximum rating (100.0), and minimal valid data",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "steam_games": {
+          "999999": {
+            "app_id": 999999,
+            "name": "Test Game With Maximum Discount",
+            "current_players": 0,
+            "price": {
+              "amount": 99.99,
+              "discount_percent": 100
+            },
+            "description": "A game testing maximum discount percentage",
+            "store_url": "https://store.steampowered.com/app/999999",
+            "rating": 100.0,
+            "trending_score": 100.0
+          },
+          "1": {
+            "app_id": 1,
+            "name": "Minimal Game",
+            "current_players": 1,
+            "price": {
+              "amount": 0.0,
+              "discount_percent": 0
+            },
+            "description": "",
+            "store_url": "",
+            "rating": 0.0,
+            "trending_score": 0.0
+          }
+        },
+        "epic_games": {
+          "edge_case_1": {
+            "app_id": 999999,
+            "name": "Edge Case Epic Game",
+            "current_players": 0,
+            "price": {
+              "amount": 0.01,
+              "discount_percent": 100
+            },
+            "description": "",
+            "store_url": "",
+            "rating": 100.0,
+            "trending_score": 0.0,
+            "is_free_now": true,
+            "is_upcoming_free": true
+          }
+        }
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 5,
+      "passed_scenarios": 5,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_steam_trending_games",
+                "test_cases": [
+                  {
+                    "description": "Valid case - default limit of 5",
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returns 2 Steam games sorted by trending_score (CS2: 98.5, Dota 2: 92.0)"
+                  },
+                  {
+                    "description": "Boundary case - minimum limit of 1",
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Returns only top trending game (Counter-Strike 2)"
+                  },
+                  {
+                    "description": "Boundary case - maximum limit of 10",
+                    "input": {
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Returns all 2 available games (limit exceeds available games)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_steam_most_played",
+                "test_cases": [
+                  {
+                    "description": "Valid case - limit of 2",
+                    "input": {
+                      "limit": 2
+                    },
+                    "passed": true,
+                    "output": "Returns 2 Steam games sorted by current_players (CS2: 1,250,000, Dota 2: 680,000)"
+                  },
+                  {
+                    "description": "Valid case - default limit of 5",
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returns all 2 available games sorted by player count"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_free_games",
+                "test_cases": [
+                  {
+                    "description": "Valid case - include upcoming games",
+                    "input": {
+                      "include_upcoming": true
+                    },
+                    "passed": true,
+                    "output": "Returns empty lists for current_games and upcoming_games (no free games in scenario)"
+                  },
+                  {
+                    "description": "Valid case - exclude upcoming games",
+                    "input": {
+                      "include_upcoming": false
+                    },
+                    "passed": true,
+                    "output": "Returns empty list for current_games only"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_trending_games",
+                "test_cases": [
+                  {
+                    "description": "Valid case - default limit of 5",
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returns 2 Epic games sorted by trending_score (Fortnite: 99.0, Rocket League: 90.0)"
+                  },
+                  {
+                    "description": "Valid case - limit of 2",
+                    "input": {
+                      "limit": 2
+                    },
+                    "passed": true,
+                    "output": "Returns all 2 available Epic games"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_app_id",
+                "test_cases": [
+                  {
+                    "description": "Valid case - search by game name without platform filter",
+                    "input": {
+                      "game_name": "Counter-Strike 2"
+                    },
+                    "passed": true,
+                    "output": "Returns 1 match with app_id 730 on Steam platform"
+                  },
+                  {
+                    "description": "Valid case - search with platform filter 'epic'",
+                    "input": {
+                      "game_name": "Fortnite",
+                      "platform": "epic"
+                    },
+                    "passed": true,
+                    "output": "Returns 1 match with app_id 100001 on Epic platform"
+                  },
+                  {
+                    "description": "Valid case - search with platform filter 'steam'",
+                    "input": {
+                      "game_name": "Dota 2",
+                      "platform": "steam"
+                    },
+                    "passed": true,
+                    "output": "Returns 1 match with app_id 570 on Steam platform"
+                  },
+                  {
+                    "description": "Edge case - non-existent game",
+                    "input": {
+                      "game_name": "NonExistentGame"
+                    },
+                    "passed": true,
+                    "output": "Returns empty matches list (correct behavior)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_game_details",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Steam game details",
+                    "input": {
+                      "app_id": 730
+                    },
+                    "passed": true,
+                    "output": "Returns complete details for Counter-Strike 2 including description, price, rating, store_url"
+                  },
+                  {
+                    "description": "Valid case - Epic game details",
+                    "input": {
+                      "app_id": 100001
+                    },
+                    "passed": true,
+                    "output": "Returns complete details for Fortnite including all metadata"
+                  },
+                  {
+                    "description": "Error case - non-existent app_id",
+                    "input": {
+                      "app_id": 99999
+                    },
+                    "passed": true,
+                    "output": "Correctly raises ValueError: 'Game with app_id 99999 not found' (expected error handling)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original loaded scenario exactly. All game data preserved correctly including Steam games (730, 570) and Epic games (100001, 100002) with all attributes intact."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 166.8456790447235
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_steam_trending_games",
+                "test_cases": [
+                  {
+                    "description": "Valid case with limit=10",
+                    "input": {
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Returned 4 games sorted by trending_score (Elden Ring: 95.0, Apex Legends: 88.0, Rust: 82.0, Stardew Valley: 72.0)"
+                  },
+                  {
+                    "description": "Valid case with default limit",
+                    "input": {},
+                    "passed": true,
+                    "output": "Returned 4 games with default limit behavior"
+                  },
+                  {
+                    "description": "Valid case with limit=3",
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Correctly limited results to 3 games"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_steam_most_played",
+                "test_cases": [
+                  {
+                    "description": "Valid case with default limit",
+                    "input": {},
+                    "passed": true,
+                    "output": "Returned 4 games sorted by current_players (Apex: 320000, Rust: 125000, Elden Ring: 95000, Stardew: 38000)"
+                  },
+                  {
+                    "description": "Valid case with limit=3",
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Correctly limited results to top 3 most played games"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_free_games",
+                "test_cases": [
+                  {
+                    "description": "Valid case with include_upcoming=true",
+                    "input": {
+                      "include_upcoming": true
+                    },
+                    "passed": true,
+                    "output": "Returned current_games (Death Stranding) and upcoming_games (Hades)"
+                  },
+                  {
+                    "description": "Valid case with include_upcoming=false",
+                    "input": {
+                      "include_upcoming": false
+                    },
+                    "passed": true,
+                    "output": "Returned only current_games (Death Stranding), no upcoming_games field"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_trending_games",
+                "test_cases": [
+                  {
+                    "description": "Valid case with default limit",
+                    "input": {},
+                    "passed": true,
+                    "output": "Returned 4 games sorted by trending_score (Genshin: 93.0, Alan Wake 2: 88.0, Hades: 75.0, Death Stranding: 65.0)"
+                  },
+                  {
+                    "description": "Valid case with limit=2",
+                    "input": {
+                      "limit": 2
+                    },
+                    "passed": true,
+                    "output": "Correctly limited results to 2 games"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_app_id",
+                "test_cases": [
+                  {
+                    "description": "Valid case searching for 'Elden Ring' without platform filter",
+                    "input": {
+                      "game_name": "Elden Ring"
+                    },
+                    "passed": true,
+                    "output": "Found match: app_id 1245620 on steam platform"
+                  },
+                  {
+                    "description": "Valid case searching for 'Hades' with platform='epic'",
+                    "input": {
+                      "game_name": "Hades",
+                      "platform": "epic"
+                    },
+                    "passed": true,
+                    "output": "Found match: app_id 100008 on epic platform"
+                  },
+                  {
+                    "description": "Valid case searching for 'Rust' with platform='steam'",
+                    "input": {
+                      "game_name": "Rust",
+                      "platform": "steam"
+                    },
+                    "passed": true,
+                    "output": "Found match: app_id 252490 on steam platform"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_game_details",
+                "test_cases": [
+                  {
+                    "description": "Valid case for Steam game (Elden Ring, app_id=1245620)",
+                    "input": {
+                      "app_id": 1245620
+                    },
+                    "passed": true,
+                    "output": "Returned complete game details including name, description, price, store_url, rating, and platform"
+                  },
+                  {
+                    "description": "Valid case for Epic game (Genshin Impact, app_id=100004)",
+                    "input": {
+                      "app_id": 100004
+                    },
+                    "passed": true,
+                    "output": "Returned complete game details for Epic game"
+                  },
+                  {
+                    "description": "Valid case for Steam game (Rust, app_id=252490)",
+                    "input": {
+                      "app_id": 252490
+                    },
+                    "passed": true,
+                    "output": "Returned complete game details with discount information"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All 4 Steam games and 4 Epic games preserved with complete data including app_id, name, current_players, price, description, store_url, rating, trending_score, and Epic-specific fields (is_free_now, is_upcoming_free)."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 84.65054559707642
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_steam_trending_games",
+                "test_cases": [
+                  {
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returned 5 games sorted by trending_score (CS2: 98.5, Cyberpunk: 89.0, CoD: 86.0, PUBG: 85.0, Valheim: 78.0)",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Returned top 3 trending games correctly",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Returned all 6 available games (less than limit of 10)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_steam_most_played",
+                "test_cases": [
+                  {
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Returned top 3 games by player count (CS2: 1.25M, PUBG: 450K, GTA V: 145K)",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Returned only the most played game (CS2)",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returned 5 games correctly sorted by current_players",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_free_games",
+                "test_cases": [
+                  {
+                    "input": {
+                      "include_upcoming": true
+                    },
+                    "passed": true,
+                    "output": "Returned current_games (Control) and upcoming_games (Celeste)",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "include_upcoming": false
+                    },
+                    "passed": true,
+                    "output": "Returned only current_games (Control), no upcoming_games field",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_trending_games",
+                "test_cases": [
+                  {
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Returned top 3 trending Epic games (Fortnite: 99.0, Hitman 3: 72.0, Disco Elysium: 70.0)",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returned all 5 Epic games sorted by trending_score",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_app_id",
+                "test_cases": [
+                  {
+                    "input": {
+                      "game_name": "Fortnite",
+                      "platform": null
+                    },
+                    "passed": true,
+                    "output": "Found Fortnite on Epic platform with correct app_id (100001)",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "game_name": "Counter-Strike 2",
+                      "platform": "steam"
+                    },
+                    "passed": true,
+                    "output": "Found CS2 on Steam with correct app_id (730)",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "game_name": "Cyberpunk",
+                      "platform": null
+                    },
+                    "passed": true,
+                    "output": "Partial name match found Cyberpunk 2077 correctly",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_game_details",
+                "test_cases": [
+                  {
+                    "input": {
+                      "app_id": 730
+                    },
+                    "passed": true,
+                    "output": "Returned complete details for Counter-Strike 2 including description, price, rating, store_url",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "app_id": 100001
+                    },
+                    "passed": true,
+                    "output": "Returned complete details for Fortnite from Epic platform",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "app_id": 1091500
+                    },
+                    "passed": true,
+                    "output": "Returned complete details for Cyberpunk 2077 with discount information",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All 6 Steam games and 5 Epic games preserved with complete data including trending_scores, ratings, prices, and Epic-specific fields (is_free_now, is_upcoming_free)."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 102.98687863349915
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_steam_trending_games",
+                "test_cases": [
+                  {
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": {
+                      "games": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": {
+                      "games": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": {
+                      "games": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_steam_most_played",
+                "test_cases": [
+                  {
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": {
+                      "games": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": {
+                      "games": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": {
+                      "games": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_free_games",
+                "test_cases": [
+                  {
+                    "input": {
+                      "include_upcoming": true
+                    },
+                    "passed": true,
+                    "output": {
+                      "current_games": [],
+                      "upcoming_games": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "include_upcoming": false
+                    },
+                    "passed": true,
+                    "output": {
+                      "current_games": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_trending_games",
+                "test_cases": [
+                  {
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": {
+                      "games": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_app_id",
+                "test_cases": [
+                  {
+                    "input": {
+                      "game_name": "Test Game"
+                    },
+                    "passed": true,
+                    "output": {
+                      "matches": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "game_name": "Test Game",
+                      "platform": "steam"
+                    },
+                    "passed": true,
+                    "output": {
+                      "matches": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_game_details",
+                "test_cases": [
+                  {
+                    "input": {
+                      "app_id": 999999
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Game with app_id 999999 not found",
+                    "note": "Expected error for non-existent game - correct behavior"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "saved_scenario": {
+                "steam_games": {},
+                "epic_games": {}
+              },
+              "original_scenario": {
+                "steam_games": {},
+                "epic_games": {}
+              },
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 56.919148683547974
+        },
+        {
+          "scenario_id": "scenario_005",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_steam_trending_games",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - limit 5",
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returns 2 games sorted by trending_score (descending)"
+                  },
+                  {
+                    "test_name": "Boundary case - limit 1",
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Returns top 1 trending game"
+                  },
+                  {
+                    "test_name": "Boundary case - limit 10",
+                    "input": {
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Returns all 2 available games"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_steam_most_played",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - limit 5",
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returns 2 games sorted by current_players (descending)"
+                  },
+                  {
+                    "test_name": "Boundary case - limit 1",
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Returns game with highest player count (Minimal Game with 1 player)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_free_games",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - include_upcoming true",
+                    "input": {
+                      "include_upcoming": true
+                    },
+                    "passed": true,
+                    "output": "Returns both current_games and upcoming_games lists"
+                  },
+                  {
+                    "test_name": "Valid case - include_upcoming false",
+                    "input": {
+                      "include_upcoming": false
+                    },
+                    "passed": true,
+                    "output": "Returns only current_games list, no upcoming_games field"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_trending_games",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - limit 5",
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returns 1 Epic game with trending data"
+                  },
+                  {
+                    "test_name": "Boundary case - limit 1",
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Returns top 1 trending Epic game"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_app_id",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - with platform filter (steam)",
+                    "input": {
+                      "game_name": "Minimal Game",
+                      "platform": "steam"
+                    },
+                    "passed": true,
+                    "output": "Returns matching Steam game"
+                  },
+                  {
+                    "test_name": "Valid case - with platform filter (epic)",
+                    "input": {
+                      "game_name": "Edge Case Epic Game",
+                      "platform": "epic"
+                    },
+                    "passed": true,
+                    "output": "Returns matching Epic game"
+                  },
+                  {
+                    "test_name": "Valid case - no platform filter (partial match)",
+                    "input": {
+                      "game_name": "Test Game"
+                    },
+                    "passed": true,
+                    "output": "Returns matching game from any platform (Steam game found)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_game_details",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - Steam game with max discount (999999)",
+                    "input": {
+                      "app_id": 999999
+                    },
+                    "passed": true,
+                    "output": "Returns complete game details with 100% discount, rating 100.0"
+                  },
+                  {
+                    "test_name": "Boundary case - Minimal game with app_id 1",
+                    "input": {
+                      "app_id": 1
+                    },
+                    "passed": true,
+                    "output": "Returns game with minimal values (0.0 price, empty strings, 0.0 rating)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All boundary values preserved correctly: 100% discount, 0.0 prices, empty strings, maximum ratings, minimal app_id (1), and Epic game with both is_free_now and is_upcoming_free flags."
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 90.59296011924744
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 5,
+      "passed_scenarios": 5,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_steam_trending_games",
+                "test_cases": [
+                  {
+                    "description": "Valid case - default limit of 5",
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returns 2 Steam games sorted by trending_score (CS2: 98.5, Dota 2: 92.0)"
+                  },
+                  {
+                    "description": "Boundary case - minimum limit of 1",
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Returns only top trending game (Counter-Strike 2)"
+                  },
+                  {
+                    "description": "Boundary case - maximum limit of 10",
+                    "input": {
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Returns all 2 available games (limit exceeds available games)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_steam_most_played",
+                "test_cases": [
+                  {
+                    "description": "Valid case - limit of 2",
+                    "input": {
+                      "limit": 2
+                    },
+                    "passed": true,
+                    "output": "Returns 2 Steam games sorted by current_players (CS2: 1,250,000, Dota 2: 680,000)"
+                  },
+                  {
+                    "description": "Valid case - default limit of 5",
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returns all 2 available games sorted by player count"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_free_games",
+                "test_cases": [
+                  {
+                    "description": "Valid case - include upcoming games",
+                    "input": {
+                      "include_upcoming": true
+                    },
+                    "passed": true,
+                    "output": "Returns empty lists for current_games and upcoming_games (no free games in scenario)"
+                  },
+                  {
+                    "description": "Valid case - exclude upcoming games",
+                    "input": {
+                      "include_upcoming": false
+                    },
+                    "passed": true,
+                    "output": "Returns empty list for current_games only"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_trending_games",
+                "test_cases": [
+                  {
+                    "description": "Valid case - default limit of 5",
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returns 2 Epic games sorted by trending_score (Fortnite: 99.0, Rocket League: 90.0)"
+                  },
+                  {
+                    "description": "Valid case - limit of 2",
+                    "input": {
+                      "limit": 2
+                    },
+                    "passed": true,
+                    "output": "Returns all 2 available Epic games"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_app_id",
+                "test_cases": [
+                  {
+                    "description": "Valid case - search by game name without platform filter",
+                    "input": {
+                      "game_name": "Counter-Strike 2"
+                    },
+                    "passed": true,
+                    "output": "Returns 1 match with app_id 730 on Steam platform"
+                  },
+                  {
+                    "description": "Valid case - search with platform filter 'epic'",
+                    "input": {
+                      "game_name": "Fortnite",
+                      "platform": "epic"
+                    },
+                    "passed": true,
+                    "output": "Returns 1 match with app_id 100001 on Epic platform"
+                  },
+                  {
+                    "description": "Valid case - search with platform filter 'steam'",
+                    "input": {
+                      "game_name": "Dota 2",
+                      "platform": "steam"
+                    },
+                    "passed": true,
+                    "output": "Returns 1 match with app_id 570 on Steam platform"
+                  },
+                  {
+                    "description": "Edge case - non-existent game",
+                    "input": {
+                      "game_name": "NonExistentGame"
+                    },
+                    "passed": true,
+                    "output": "Returns empty matches list (correct behavior)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_game_details",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Steam game details",
+                    "input": {
+                      "app_id": 730
+                    },
+                    "passed": true,
+                    "output": "Returns complete details for Counter-Strike 2 including description, price, rating, store_url"
+                  },
+                  {
+                    "description": "Valid case - Epic game details",
+                    "input": {
+                      "app_id": 100001
+                    },
+                    "passed": true,
+                    "output": "Returns complete details for Fortnite including all metadata"
+                  },
+                  {
+                    "description": "Error case - non-existent app_id",
+                    "input": {
+                      "app_id": 99999
+                    },
+                    "passed": true,
+                    "output": "Correctly raises ValueError: 'Game with app_id 99999 not found' (expected error handling)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original loaded scenario exactly. All game data preserved correctly including Steam games (730, 570) and Epic games (100001, 100002) with all attributes intact."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 166.8456790447235
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_steam_trending_games",
+                "test_cases": [
+                  {
+                    "description": "Valid case with limit=10",
+                    "input": {
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Returned 4 games sorted by trending_score (Elden Ring: 95.0, Apex Legends: 88.0, Rust: 82.0, Stardew Valley: 72.0)"
+                  },
+                  {
+                    "description": "Valid case with default limit",
+                    "input": {},
+                    "passed": true,
+                    "output": "Returned 4 games with default limit behavior"
+                  },
+                  {
+                    "description": "Valid case with limit=3",
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Correctly limited results to 3 games"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_steam_most_played",
+                "test_cases": [
+                  {
+                    "description": "Valid case with default limit",
+                    "input": {},
+                    "passed": true,
+                    "output": "Returned 4 games sorted by current_players (Apex: 320000, Rust: 125000, Elden Ring: 95000, Stardew: 38000)"
+                  },
+                  {
+                    "description": "Valid case with limit=3",
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Correctly limited results to top 3 most played games"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_free_games",
+                "test_cases": [
+                  {
+                    "description": "Valid case with include_upcoming=true",
+                    "input": {
+                      "include_upcoming": true
+                    },
+                    "passed": true,
+                    "output": "Returned current_games (Death Stranding) and upcoming_games (Hades)"
+                  },
+                  {
+                    "description": "Valid case with include_upcoming=false",
+                    "input": {
+                      "include_upcoming": false
+                    },
+                    "passed": true,
+                    "output": "Returned only current_games (Death Stranding), no upcoming_games field"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_trending_games",
+                "test_cases": [
+                  {
+                    "description": "Valid case with default limit",
+                    "input": {},
+                    "passed": true,
+                    "output": "Returned 4 games sorted by trending_score (Genshin: 93.0, Alan Wake 2: 88.0, Hades: 75.0, Death Stranding: 65.0)"
+                  },
+                  {
+                    "description": "Valid case with limit=2",
+                    "input": {
+                      "limit": 2
+                    },
+                    "passed": true,
+                    "output": "Correctly limited results to 2 games"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_app_id",
+                "test_cases": [
+                  {
+                    "description": "Valid case searching for 'Elden Ring' without platform filter",
+                    "input": {
+                      "game_name": "Elden Ring"
+                    },
+                    "passed": true,
+                    "output": "Found match: app_id 1245620 on steam platform"
+                  },
+                  {
+                    "description": "Valid case searching for 'Hades' with platform='epic'",
+                    "input": {
+                      "game_name": "Hades",
+                      "platform": "epic"
+                    },
+                    "passed": true,
+                    "output": "Found match: app_id 100008 on epic platform"
+                  },
+                  {
+                    "description": "Valid case searching for 'Rust' with platform='steam'",
+                    "input": {
+                      "game_name": "Rust",
+                      "platform": "steam"
+                    },
+                    "passed": true,
+                    "output": "Found match: app_id 252490 on steam platform"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_game_details",
+                "test_cases": [
+                  {
+                    "description": "Valid case for Steam game (Elden Ring, app_id=1245620)",
+                    "input": {
+                      "app_id": 1245620
+                    },
+                    "passed": true,
+                    "output": "Returned complete game details including name, description, price, store_url, rating, and platform"
+                  },
+                  {
+                    "description": "Valid case for Epic game (Genshin Impact, app_id=100004)",
+                    "input": {
+                      "app_id": 100004
+                    },
+                    "passed": true,
+                    "output": "Returned complete game details for Epic game"
+                  },
+                  {
+                    "description": "Valid case for Steam game (Rust, app_id=252490)",
+                    "input": {
+                      "app_id": 252490
+                    },
+                    "passed": true,
+                    "output": "Returned complete game details with discount information"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All 4 Steam games and 4 Epic games preserved with complete data including app_id, name, current_players, price, description, store_url, rating, trending_score, and Epic-specific fields (is_free_now, is_upcoming_free)."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 84.65054559707642
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_steam_trending_games",
+                "test_cases": [
+                  {
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returned 5 games sorted by trending_score (CS2: 98.5, Cyberpunk: 89.0, CoD: 86.0, PUBG: 85.0, Valheim: 78.0)",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Returned top 3 trending games correctly",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Returned all 6 available games (less than limit of 10)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_steam_most_played",
+                "test_cases": [
+                  {
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Returned top 3 games by player count (CS2: 1.25M, PUBG: 450K, GTA V: 145K)",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Returned only the most played game (CS2)",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returned 5 games correctly sorted by current_players",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_free_games",
+                "test_cases": [
+                  {
+                    "input": {
+                      "include_upcoming": true
+                    },
+                    "passed": true,
+                    "output": "Returned current_games (Control) and upcoming_games (Celeste)",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "include_upcoming": false
+                    },
+                    "passed": true,
+                    "output": "Returned only current_games (Control), no upcoming_games field",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_trending_games",
+                "test_cases": [
+                  {
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Returned top 3 trending Epic games (Fortnite: 99.0, Hitman 3: 72.0, Disco Elysium: 70.0)",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returned all 5 Epic games sorted by trending_score",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_app_id",
+                "test_cases": [
+                  {
+                    "input": {
+                      "game_name": "Fortnite",
+                      "platform": null
+                    },
+                    "passed": true,
+                    "output": "Found Fortnite on Epic platform with correct app_id (100001)",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "game_name": "Counter-Strike 2",
+                      "platform": "steam"
+                    },
+                    "passed": true,
+                    "output": "Found CS2 on Steam with correct app_id (730)",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "game_name": "Cyberpunk",
+                      "platform": null
+                    },
+                    "passed": true,
+                    "output": "Partial name match found Cyberpunk 2077 correctly",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_game_details",
+                "test_cases": [
+                  {
+                    "input": {
+                      "app_id": 730
+                    },
+                    "passed": true,
+                    "output": "Returned complete details for Counter-Strike 2 including description, price, rating, store_url",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "app_id": 100001
+                    },
+                    "passed": true,
+                    "output": "Returned complete details for Fortnite from Epic platform",
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "app_id": 1091500
+                    },
+                    "passed": true,
+                    "output": "Returned complete details for Cyberpunk 2077 with discount information",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All 6 Steam games and 5 Epic games preserved with complete data including trending_scores, ratings, prices, and Epic-specific fields (is_free_now, is_upcoming_free)."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 102.98687863349915
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_steam_trending_games",
+                "test_cases": [
+                  {
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": {
+                      "games": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": {
+                      "games": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": {
+                      "games": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_steam_most_played",
+                "test_cases": [
+                  {
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": {
+                      "games": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": {
+                      "games": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": {
+                      "games": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_free_games",
+                "test_cases": [
+                  {
+                    "input": {
+                      "include_upcoming": true
+                    },
+                    "passed": true,
+                    "output": {
+                      "current_games": [],
+                      "upcoming_games": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "include_upcoming": false
+                    },
+                    "passed": true,
+                    "output": {
+                      "current_games": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_trending_games",
+                "test_cases": [
+                  {
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": {
+                      "games": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_app_id",
+                "test_cases": [
+                  {
+                    "input": {
+                      "game_name": "Test Game"
+                    },
+                    "passed": true,
+                    "output": {
+                      "matches": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "input": {
+                      "game_name": "Test Game",
+                      "platform": "steam"
+                    },
+                    "passed": true,
+                    "output": {
+                      "matches": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_game_details",
+                "test_cases": [
+                  {
+                    "input": {
+                      "app_id": 999999
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Game with app_id 999999 not found",
+                    "note": "Expected error for non-existent game - correct behavior"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "saved_scenario": {
+                "steam_games": {},
+                "epic_games": {}
+              },
+              "original_scenario": {
+                "steam_games": {},
+                "epic_games": {}
+              },
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 56.919148683547974
+        },
+        {
+          "scenario_id": "scenario_005",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_steam_trending_games",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - limit 5",
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returns 2 games sorted by trending_score (descending)"
+                  },
+                  {
+                    "test_name": "Boundary case - limit 1",
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Returns top 1 trending game"
+                  },
+                  {
+                    "test_name": "Boundary case - limit 10",
+                    "input": {
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Returns all 2 available games"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_steam_most_played",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - limit 5",
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returns 2 games sorted by current_players (descending)"
+                  },
+                  {
+                    "test_name": "Boundary case - limit 1",
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Returns game with highest player count (Minimal Game with 1 player)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_free_games",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - include_upcoming true",
+                    "input": {
+                      "include_upcoming": true
+                    },
+                    "passed": true,
+                    "output": "Returns both current_games and upcoming_games lists"
+                  },
+                  {
+                    "test_name": "Valid case - include_upcoming false",
+                    "input": {
+                      "include_upcoming": false
+                    },
+                    "passed": true,
+                    "output": "Returns only current_games list, no upcoming_games field"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_epic_trending_games",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - limit 5",
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returns 1 Epic game with trending data"
+                  },
+                  {
+                    "test_name": "Boundary case - limit 1",
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Returns top 1 trending Epic game"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_app_id",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - with platform filter (steam)",
+                    "input": {
+                      "game_name": "Minimal Game",
+                      "platform": "steam"
+                    },
+                    "passed": true,
+                    "output": "Returns matching Steam game"
+                  },
+                  {
+                    "test_name": "Valid case - with platform filter (epic)",
+                    "input": {
+                      "game_name": "Edge Case Epic Game",
+                      "platform": "epic"
+                    },
+                    "passed": true,
+                    "output": "Returns matching Epic game"
+                  },
+                  {
+                    "test_name": "Valid case - no platform filter (partial match)",
+                    "input": {
+                      "game_name": "Test Game"
+                    },
+                    "passed": true,
+                    "output": "Returns matching game from any platform (Steam game found)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_game_details",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - Steam game with max discount (999999)",
+                    "input": {
+                      "app_id": 999999
+                    },
+                    "passed": true,
+                    "output": "Returns complete game details with 100% discount, rating 100.0"
+                  },
+                  {
+                    "test_name": "Boundary case - Minimal game with app_id 1",
+                    "input": {
+                      "app_id": 1
+                    },
+                    "passed": true,
+                    "output": "Returns game with minimal values (0.0 price, empty strings, 0.0 rating)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All boundary values preserved correctly: 100% discount, 0.0 prices, empty strings, maximum ratings, minimal app_id (1), and Epic game with both is_free_now and is_upcoming_free flags."
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 90.59296011924744
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/GameTrending.py"
+  }
+}

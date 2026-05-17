@@ -1,0 +1,248 @@
+{
+  "class_name": "MongoDBServer",
+  "description": "MongoDB MCP server exposing core CRUD and metadata operations on databases, collections, and documents.",
+  "tools": [
+    {
+      "name": "list_databases",
+      "description": "List all MongoDB databases visible to the current connection, including their on-disk size and emptiness status.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "databases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the database."
+                },
+                "sizeOnDisk": {
+                  "type": "integer",
+                  "description": "Approximate total size of the database on disk in bytes."
+                },
+                "empty": {
+                  "type": "boolean",
+                  "description": "True if the database contains no collections."
+                }
+              }
+            },
+            "description": "List of databases with metadata."
+          }
+        }
+      }
+    },
+    {
+      "name": "list_collections",
+      "description": "List all collections within a specified MongoDB database, including their type and options.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "database": {
+            "type": "string",
+            "description": "The name of the MongoDB database whose collections will be listed."
+          }
+        },
+        "required": [
+          "database"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "database": {
+            "type": "string",
+            "description": "The database name provided in the request."
+          },
+          "collections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the collection."
+                },
+                "type": {
+                  "type": "string",
+                  "description": "Collection type (e.g., 'collection' or 'view')."
+                },
+                "options": {
+                  "type": "object",
+                  "description": "Additional collection options such as validation rules or collation."
+                }
+              }
+            },
+            "description": "List of collections in the specified database."
+          }
+        }
+      }
+    },
+    {
+      "name": "find",
+      "description": "Query documents in a MongoDB collection with optional filtering, projection, sorting, and pagination.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "database": {
+            "type": "string",
+            "description": "The name of the MongoDB database containing the collection to query."
+          },
+          "collection": {
+            "type": "string",
+            "description": "The name of the MongoDB collection to query."
+          },
+          "filter": {
+            "type": "object",
+            "description": "MongoDB query predicate to filter documents. Defaults to {} (match all)."
+          },
+          "projection": {
+            "type": "object",
+            "description": "Projection specification to include or exclude fields in returned documents."
+          },
+          "sort": {
+            "type": "object",
+            "description": "Sort specification keyed by field names, with values 1 (ascending) or -1 (descending)."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of documents to return. Defaults to 10."
+          },
+          "skip": {
+            "type": "integer",
+            "description": "Number of matching documents to skip before returning results. Defaults to 0."
+          }
+        },
+        "required": [
+          "database",
+          "collection"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "database": {
+            "type": "string",
+            "description": "The database name provided in the request."
+          },
+          "collection": {
+            "type": "string",
+            "description": "The collection name provided in the request."
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "List of documents matching the query criteria."
+          },
+          "count": {
+            "type": "integer",
+            "description": "Number of documents returned in this response."
+          }
+        }
+      }
+    },
+    {
+      "name": "aggregate",
+      "description": "Execute an aggregation pipeline against a MongoDB collection to perform advanced data processing.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "database": {
+            "type": "string",
+            "description": "The name of the MongoDB database containing the collection to aggregate."
+          },
+          "collection": {
+            "type": "string",
+            "description": "The name of the MongoDB collection to aggregate."
+          },
+          "pipeline": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Ordered list of MongoDB aggregation pipeline stages (e.g., $match, $group, $project)."
+          }
+        },
+        "required": [
+          "database",
+          "collection",
+          "pipeline"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "database": {
+            "type": "string",
+            "description": "The database name provided in the request."
+          },
+          "collection": {
+            "type": "string",
+            "description": "The collection name provided in the request."
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "List of documents produced by the aggregation pipeline."
+          },
+          "count": {
+            "type": "integer",
+            "description": "Number of documents returned by the aggregation pipeline."
+          }
+        }
+      }
+    },
+    {
+      "name": "insert_one",
+      "description": "Insert a single document into a MongoDB collection.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "database": {
+            "type": "string",
+            "description": "The name of the MongoDB database containing the collection to insert into."
+          },
+          "collection": {
+            "type": "string",
+            "description": "The name of the MongoDB collection to insert the document into."
+          },
+          "document": {
+            "type": "object",
+            "description": "The JSON document to insert into the collection."
+          }
+        },
+        "required": [
+          "database",
+          "collection",
+          "document"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "acknowledged": {
+            "type": "boolean",
+            "description": "True if the insert operation was acknowledged by the server."
+          },
+          "inserted_id": {
+            "type": "string",
+            "description": "The unique identifier (_id) assigned to the inserted document."
+          },
+          "document": {
+            "type": "object",
+            "description": "The full document as inserted, including the generated _id if applicable."
+          }
+        }
+      }
+    }
+  ]
+}

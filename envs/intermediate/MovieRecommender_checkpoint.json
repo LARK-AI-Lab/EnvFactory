@@ -1,0 +1,1645 @@
+{
+  "metadata": {
+    "class_name": "MovieRecommender",
+    "metadata_path": "envs\\metadata\\MovieRecommender_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-04T00:25:34.672589",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "MovieRecommender",
+    "description": "A movie recommendation service that interfaces with the TMDb API to search, retrieve details, and discover popular movies.",
+    "tools": [
+      {
+        "name": "get_movies",
+        "description": "Search for movie suggestions from TMDb based on a keyword matching movie titles or descriptions.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "keyword": {
+              "type": "string",
+              "description": "Search keyword to match against movie titles or descriptions."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of movie results to return."
+            }
+          },
+          "required": [
+            "keyword"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "movies": {
+              "type": "array",
+              "description": "List of movies matching the search keyword.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "movie_id": {
+                    "type": "integer",
+                    "description": "The unique identifier of the movie from TMDb."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The official title of the movie."
+                  },
+                  "overview": {
+                    "type": "string",
+                    "description": "A brief synopsis or description of the movie's plot."
+                  },
+                  "release_date": {
+                    "type": "string",
+                    "description": "The theatrical release date of the movie in YYYY-MM-DD format."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_movie_details",
+        "description": "Retrieve detailed information for a specific movie including cast, genres, and ratings.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "movie_id": {
+              "type": "integer",
+              "description": "The unique identifier of the movie from TMDb."
+            }
+          },
+          "required": [
+            "movie_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "movie_id": {
+              "type": "integer",
+              "description": "The unique identifier of the movie from TMDb."
+            },
+            "title": {
+              "type": "string",
+              "description": "The official title of the movie."
+            },
+            "overview": {
+              "type": "string",
+              "description": "A brief synopsis or description of the movie's plot."
+            },
+            "release_date": {
+              "type": "string",
+              "description": "The theatrical release date of the movie in YYYY-MM-DD format."
+            },
+            "duration": {
+              "type": "integer",
+              "description": "The runtime of the movie in minutes."
+            },
+            "genres": {
+              "type": "array",
+              "description": "List of genre categories the movie belongs to.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "vote_average": {
+              "type": "number",
+              "description": "The average user rating score for the movie on TMDb."
+            },
+            "views": {
+              "type": "integer",
+              "description": "The total number of views or popularity count for the movie."
+            },
+            "actors": {
+              "type": "array",
+              "description": "List of main actors appearing in the movie.",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_popular_movies",
+        "description": "Retrieve a list of currently popular movies from TMDb, with optional filtering by rating, views, or release date.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "filter": {
+              "type": "string",
+              "description": "Sorting criteria for popularity ranking. Accepts 'vote_average' for rating-based or 'views' for view count-based sorting."
+            },
+            "date": {
+              "type": "string",
+              "description": "Filter movies released on or after this date in YYYY-MM-DD format."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of movie results to return. Defaults to 5 if not specified."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "movies": {
+              "type": "array",
+              "description": "List of popular movies matching the specified filter criteria.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "movie_id": {
+                    "type": "integer",
+                    "description": "The unique identifier of the movie from TMDb."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The official title of the movie."
+                  },
+                  "overview": {
+                    "type": "string",
+                    "description": "A brief synopsis or description of the movie's plot."
+                  },
+                  "release_date": {
+                    "type": "string",
+                    "description": "The theatrical release date of the movie in YYYY-MM-DD format."
+                  },
+                  "vote_average": {
+                    "type": "number",
+                    "description": "The average user rating score for the movie on TMDb."
+                  },
+                  "views": {
+                    "type": "integer",
+                    "description": "The total number of views or popularity count for the movie."
+                  },
+                  "actors": {
+                    "type": "array",
+                    "description": "List of main actors appearing in the movie.",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Union, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Movie(BaseModel):\n    \"\"\"Represents a movie with basic information.\"\"\"\n    movie_id: int = Field(..., ge=0, description=\"The unique identifier of the movie from TMDb\")\n    title: str = Field(..., description=\"The official title of the movie\")\n    overview: str = Field(default=\"\", description=\"A brief synopsis or description of the movie's plot\")\n    release_date: str = Field(default=\"\", pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"The theatrical release date of the movie in YYYY-MM-DD format\")\n\nclass MovieDetails(BaseModel):\n    \"\"\"Represents detailed movie information.\"\"\"\n    movie_id: int = Field(..., ge=0, description=\"The unique identifier of the movie from TMDb\")\n    title: str = Field(..., description=\"The official title of the movie\")\n    overview: str = Field(default=\"\", description=\"A brief synopsis or description of the movie's plot\")\n    release_date: str = Field(default=\"\", pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"The theatrical release date of the movie in YYYY-MM-DD format\")\n    duration: int = Field(default=0, ge=0, description=\"The runtime of the movie in minutes\")\n    genres: List[str] = Field(default=[], description=\"List of genre categories the movie belongs to\")\n    vote_average: float = Field(default=0.0, ge=0, le=10, description=\"The average user rating score for the movie on TMDb\")\n    views: int = Field(default=0, ge=0, description=\"The total number of views or popularity count for the movie\")\n    actors: List[str] = Field(default=[], description=\"List of main actors appearing in the movie\")\n\nclass MovieRecommenderScenario(BaseModel):\n    \"\"\"Main scenario model for movie recommender service.\"\"\"\n    movies: Dict[int, MovieDetails] = Field(default={}, description=\"Movies database\")\n    popular_movies: List[int] = Field(default=[], description=\"List of popular movie IDs\")\n    api_key: str = Field(default=\"demo_key\", description=\"TMDb API key\")\n    \nScenario_Schema = [Movie, MovieDetails, MovieRecommenderScenario]\n\n# Section 2: Class\nclass MovieRecommenderAPI:\n    def __init__(self):\n        \"\"\"Initialize movie recommender API with empty state.\"\"\"\n        self.movies: Dict[int, MovieDetails] = {}\n        self.popular_movies: List[int] = []\n        self.api_key: str = \"\"\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = MovieRecommenderScenario(**scenario)\n        self.movies = model.movies\n        self.popular_movies = model.popular_movies\n        self.api_key = model.api_key\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"movies\": {movie_id: movie.dict() for movie_id, movie in self.movies.items()},\n            \"popular_movies\": self.popular_movies,\n            \"api_key\": self.api_key\n        }\n\n    def get_movies(self, keyword: str, limit: Optional[int] = 5) -> dict:\n        \"\"\"Search for movies matching keyword.\"\"\"\n        if limit is None:\n            limit = 5\n        matches = []\n        for movie in self.movies.values():\n            if keyword.lower() in movie.title.lower() or keyword.lower() in movie.overview.lower():\n                matches.append({\n                    \"movie_id\": movie.movie_id,\n                    \"title\": movie.title,\n                    \"overview\": movie.overview,\n                    \"release_date\": movie.release_date\n                })\n                if len(matches) >= limit:\n                    break\n        return {\"movies\": matches}\n\n    def get_movie_details(self, movie_id: int) -> dict:\n        \"\"\"Retrieve detailed information for a specific movie.\"\"\"\n        movie = self.movies[movie_id]\n        return {\n            \"movie_id\": movie.movie_id,\n            \"title\": movie.title,\n            \"overview\": movie.overview,\n            \"release_date\": movie.release_date,\n            \"duration\": movie.duration,\n            \"genres\": movie.genres,\n            \"vote_average\": movie.vote_average,\n            \"views\": movie.views,\n            \"actors\": movie.actors\n        }\n\n    def get_popular_movies(self, filter: Optional[str] = None, date: Optional[str] = None, limit: Optional[int] = 5) -> dict:\n        \"\"\"Retrieve popular movies with optional filtering.\"\"\"\n        if limit is None:\n            limit = 5\n        popular_list = []\n        for movie_id in self.popular_movies:\n            if movie_id in self.movies:\n                movie = self.movies[movie_id]\n                if date and movie.release_date < date:\n                    continue\n                popular_list.append(movie)\n        \n        if filter == \"vote_average\":\n            popular_list.sort(key=lambda x: x.vote_average, reverse=True)\n        elif filter == \"views\":\n            popular_list.sort(key=lambda x: x.views, reverse=True)\n        \n        result_movies = []\n        for movie in popular_list[:limit]:\n            result_movies.append({\n                \"movie_id\": movie.movie_id,\n                \"title\": movie.title,\n                \"overview\": movie.overview,\n                \"release_date\": movie.release_date,\n                \"vote_average\": movie.vote_average,\n                \"views\": movie.views,\n                \"actors\": movie.actors\n            })\n        return {\"movies\": result_movies}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"MovieRecommender\")\napi = MovieRecommenderAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the movie recommender API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching MovieRecommenderScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current movie recommender state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_movies(keyword: str, limit: Optional[int] = 5) -> dict:\n    \"\"\"\n    Search for movie suggestions from TMDb based on a keyword matching movie titles or descriptions.\n    \n    Args:\n        keyword (str): Search keyword to match against movie titles or descriptions.\n        limit (int): [Optional] Maximum number of movie results to return.\n    \n    Returns:\n        movies (list): List of movies matching the search keyword.\n    \"\"\"\n    try:\n        if not keyword or not isinstance(keyword, str):\n            raise ValueError(\"Keyword must be a non-empty string\")\n        if limit is not None and (not isinstance(limit, int) or limit <= 0):\n            raise ValueError(\"Limit must be a positive integer\")\n        return api.get_movies(keyword, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_movie_details(movie_id: int) -> dict:\n    \"\"\"\n    Retrieve detailed information for a specific movie including cast, genres, and ratings.\n    \n    Args:\n        movie_id (int): The unique identifier of the movie from TMDb.\n    \n    Returns:\n        movie_id (int): The unique identifier of the movie from TMDb.\n        title (str): The official title of the movie.\n        overview (str): A brief synopsis or description of the movie's plot.\n        release_date (str): The theatrical release date of the movie in YYYY-MM-DD format.\n        duration (int): The runtime of the movie in minutes.\n        genres (list): List of genre categories the movie belongs to.\n        vote_average (float): The average user rating score for the movie on TMDb.\n        views (int): The total number of views or popularity count for the movie.\n        actors (list): List of main actors appearing in the movie.\n    \"\"\"\n    try:\n        if not isinstance(movie_id, int) or movie_id < 0:\n            raise ValueError(\"Movie ID must be a non-negative integer\")\n        if movie_id not in api.movies:\n            raise ValueError(f\"Movie {movie_id} not found\")\n        return api.get_movie_details(movie_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_popular_movies(filter: Optional[str] = None, date: Optional[str] = None, limit: Optional[int] = 5) -> dict:\n    \"\"\"\n    Retrieve a list of currently popular movies from TMDb, with optional filtering by rating, views, or release date.\n    \n    Args:\n        filter (str): [Optional] Sorting criteria for popularity ranking. Accepts 'vote_average' for rating-based or 'views' for view count-based sorting.\n        date (str): [Optional] Filter movies released on or after this date in YYYY-MM-DD format.\n        limit (int): [Optional] Maximum number of movie results to return. Defaults to 5 if not specified.\n    \n    Returns:\n        movies (list): List of popular movies matching the specified filter criteria.\n    \"\"\"\n    try:\n        if filter is not None and filter not in [\"vote_average\", \"views\"]:\n            raise ValueError(\"Filter must be either 'vote_average' or 'views'\")\n        if date is not None and (not isinstance(date, str) or len(date) != 10):\n            raise ValueError(\"Date must be in YYYY-MM-DD format\")\n        if limit is not None and (not isinstance(limit, int) or limit <= 0):\n            raise ValueError(\"Limit must be a positive integer\")\n        return api.get_popular_movies(filter, date, limit)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-04T00:25:34.672589",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Minimal movie database with one popular movie - tests basic functionality",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "movies": {
+          "550": {
+            "movie_id": 550,
+            "title": "Fight Club",
+            "overview": "A ticking-time-bomb insomniac and a slippery soap salesman channel primal male aggression into a shocking new form of therapy.",
+            "release_date": "1999-10-15",
+            "duration": 139,
+            "genres": [
+              "Drama"
+            ],
+            "vote_average": 8.4,
+            "views": 25000,
+            "actors": [
+              "Brad Pitt",
+              "Edward Norton"
+            ]
+          }
+        },
+        "popular_movies": [
+          550
+        ],
+        "api_key": "demo_key"
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Moderate database with 4 movies of different genres and ratings - tests typical use cases and filtering",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "movies": {
+          "278": {
+            "movie_id": 278,
+            "title": "The Shawshank Redemption",
+            "overview": "Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.",
+            "release_date": "1994-09-23",
+            "duration": 142,
+            "genres": [
+              "Drama",
+              "Crime"
+            ],
+            "vote_average": 8.7,
+            "views": 45000,
+            "actors": [
+              "Tim Robbins",
+              "Morgan Freeman"
+            ]
+          },
+          "238": {
+            "movie_id": 238,
+            "title": "The Godfather",
+            "overview": "The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son.",
+            "release_date": "1972-03-14",
+            "duration": 175,
+            "genres": [
+              "Drama",
+              "Crime"
+            ],
+            "vote_average": 8.7,
+            "views": 38000,
+            "actors": [
+              "Marlon Brando",
+              "Al Pacino",
+              "James Caan"
+            ]
+          },
+          "19995": {
+            "movie_id": 19995,
+            "title": "Avatar",
+            "overview": "A paraplegic Marine dispatched to the moon Pandora on a unique mission becomes torn between following his orders and protecting the world he feels is his home.",
+            "release_date": "2009-12-18",
+            "duration": 162,
+            "genres": [
+              "Action",
+              "Adventure",
+              "Fantasy",
+              "Science Fiction"
+            ],
+            "vote_average": 7.6,
+            "views": 52000,
+            "actors": [
+              "Sam Worthington",
+              "Zoe Saldana"
+            ]
+          },
+          "155": {
+            "movie_id": 155,
+            "title": "The Dark Knight",
+            "overview": "",
+            "release_date": "2008-07-18",
+            "duration": 152,
+            "genres": [
+              "Action",
+              "Crime",
+              "Drama"
+            ],
+            "vote_average": 8.5,
+            "views": 41000,
+            "actors": [
+              "Christian Bale",
+              "Heath Ledger"
+            ]
+          }
+        },
+        "popular_movies": [
+          19995,
+          278,
+          155
+        ],
+        "api_key": "demo_key"
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich database with 7 diverse movies including edge cases (minimal data, maximum ratings, various genres) - tests complex filtering and recommendations",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "movies": {
+          "680": {
+            "movie_id": 680,
+            "title": "Pulp Fiction",
+            "overview": "A burger-loving hit man, his philosophical partner, a drug-addled gangster's moll and a washed-up boxer converge in this sprawling, comedic crime caper.",
+            "release_date": "1994-09-10",
+            "duration": 154,
+            "genres": [
+              "Thriller",
+              "Crime"
+            ],
+            "vote_average": 8.5,
+            "views": 35000,
+            "actors": [
+              "John Travolta",
+              "Uma Thurman",
+              "Samuel L. Jackson"
+            ]
+          },
+          "13": {
+            "movie_id": 13,
+            "title": "Forrest Gump",
+            "overview": "A man with a low IQ has accomplished great things in his life and been present during significant historic events.",
+            "release_date": "1994-07-06",
+            "duration": 142,
+            "genres": [
+              "Comedy",
+              "Drama",
+              "Romance"
+            ],
+            "vote_average": 8.5,
+            "views": 48000,
+            "actors": [
+              "Tom Hanks",
+              "Robin Wright",
+              "Gary Sinise"
+            ]
+          },
+          "424": {
+            "movie_id": 424,
+            "title": "Schindler's List",
+            "overview": "The true story of how businessman Oskar Schindler saved over a thousand Jewish lives during the Holocaust.",
+            "release_date": "1993-12-15",
+            "duration": 195,
+            "genres": [
+              "Drama",
+              "History",
+              "War"
+            ],
+            "vote_average": 8.6,
+            "views": 28000,
+            "actors": [
+              "Liam Neeson",
+              "Ben Kingsley",
+              "Ralph Fiennes"
+            ]
+          },
+          "122": {
+            "movie_id": 122,
+            "title": "The Lord of the Rings: The Return of the King",
+            "overview": "Aragorn is revealed as the heir to the ancient kings as he, Gandalf and the other members of the broken fellowship struggle to save Gondor.",
+            "release_date": "2003-12-17",
+            "duration": 201,
+            "genres": [
+              "Adventure",
+              "Fantasy",
+              "Action"
+            ],
+            "vote_average": 8.5,
+            "views": 44000,
+            "actors": [
+              "Elijah Wood",
+              "Ian McKellen",
+              "Viggo Mortensen",
+              "Orlando Bloom"
+            ]
+          },
+          "27205": {
+            "movie_id": 27205,
+            "title": "Inception",
+            "overview": "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea.",
+            "release_date": "2010-07-16",
+            "duration": 148,
+            "genres": [
+              "Action",
+              "Science Fiction",
+              "Mystery"
+            ],
+            "vote_average": 8.4,
+            "views": 55000,
+            "actors": [
+              "Leonardo DiCaprio",
+              "Joseph Gordon-Levitt",
+              "Ellen Page"
+            ]
+          },
+          "497": {
+            "movie_id": 497,
+            "title": "The Green Mile",
+            "overview": "A supernatural tale set on death row in a Southern prison.",
+            "release_date": "1999-12-10",
+            "duration": 189,
+            "genres": [
+              "Fantasy",
+              "Drama",
+              "Crime"
+            ],
+            "vote_average": 8.5,
+            "views": 32000,
+            "actors": [
+              "Tom Hanks",
+              "Michael Clarke Duncan",
+              "David Morse"
+            ]
+          },
+          "12345": {
+            "movie_id": 12345,
+            "title": "Indie Film",
+            "overview": "",
+            "release_date": "2023-01-01",
+            "duration": 0,
+            "genres": [],
+            "vote_average": 0.0,
+            "views": 0,
+            "actors": []
+          }
+        },
+        "popular_movies": [
+          27205,
+          13,
+          122,
+          680,
+          497
+        ],
+        "api_key": "test_api_key_12345"
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty database with no movies - tests handling of empty collections and edge cases",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "movies": {},
+        "popular_movies": [],
+        "api_key": "demo_key"
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_movies",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Search with keyword 'Fight' and limit 5",
+                    "input": {
+                      "keyword": "Fight",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Found 1 movie matching 'Fight'",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Search with keyword 'therapy' and limit 1",
+                    "input": {
+                      "keyword": "therapy",
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Found 1 movie matching 'therapy'",
+                    "error": null
+                  },
+                  {
+                    "description": "Boundary case: Search with non-existent keyword",
+                    "input": {
+                      "keyword": "nonexistent"
+                    },
+                    "passed": true,
+                    "output": "Returned empty list as expected",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Empty keyword string",
+                    "input": {
+                      "keyword": "",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Keyword must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_movie_details",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get details for existing movie ID 550",
+                    "input": {
+                      "movie_id": 550
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved complete movie details",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Non-existent movie ID",
+                    "input": {
+                      "movie_id": 999
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Movie 999 not found",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_popular_movies",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get popular movies with default parameters",
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved 1 popular movie",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Filter by vote_average with limit 3",
+                    "input": {
+                      "filter": "vote_average",
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved movies sorted by rating",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Filter by views with date filter",
+                    "input": {
+                      "filter": "views",
+                      "date": "1999-01-01",
+                      "limit": 2
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved movies filtered by date and sorted by views",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Invalid filter value",
+                    "input": {
+                      "filter": "invalid_filter",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Filter must be either 'vote_average' or 'views'",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All state preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 73.76569128036499
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_movies",
+                "test_cases": [
+                  {
+                    "test_name": "Valid search - keyword 'Godfather'",
+                    "input": {
+                      "keyword": "Godfather",
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Found 1 movie matching 'Godfather'",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid search - keyword 'crime' in overview",
+                    "input": {
+                      "keyword": "crime",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Found 1 movie with 'crime' in overview",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Error case - empty keyword",
+                    "input": {
+                      "keyword": ""
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected empty keyword",
+                    "error": "Keyword must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_movie_details",
+                "test_cases": [
+                  {
+                    "test_name": "Valid movie ID - 278 (Shawshank Redemption)",
+                    "input": {
+                      "movie_id": 278
+                    },
+                    "passed": true,
+                    "output": "Retrieved complete movie details with all fields",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid movie ID - 19995 (Avatar)",
+                    "input": {
+                      "movie_id": 19995
+                    },
+                    "passed": true,
+                    "output": "Retrieved complete movie details with all fields",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Error case - non-existent movie ID",
+                    "input": {
+                      "movie_id": 99999
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected non-existent movie ID",
+                    "error": "Movie 99999 not found",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_popular_movies",
+                "test_cases": [
+                  {
+                    "test_name": "Default popular movies - no filter",
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Retrieved 3 popular movies in default order (by popular_movies list)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Filter by vote_average",
+                    "input": {
+                      "filter": "vote_average",
+                      "limit": 2
+                    },
+                    "passed": true,
+                    "output": "Retrieved 2 movies sorted by rating (8.7, 8.5)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Filter by views",
+                    "input": {
+                      "filter": "views",
+                      "limit": 2
+                    },
+                    "passed": true,
+                    "output": "Retrieved 2 movies sorted by views (52000, 45000)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Date filter - movies after 2000-01-01",
+                    "input": {
+                      "date": "2000-01-01",
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Retrieved 2 movies released after 2000 (Avatar 2009, Dark Knight 2008)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Error case - invalid filter",
+                    "input": {
+                      "filter": "invalid_filter"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected invalid filter value",
+                    "error": "Filter must be either 'vote_average' or 'views'",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All movie data, popular_movies list, and api_key preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 85.72262573242188
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_movies",
+                "test_cases": [
+                  {
+                    "description": "Search for movies with keyword 'Fiction'",
+                    "input": {
+                      "keyword": "Fiction",
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Found 1 movie matching 'Fiction' - Pulp Fiction",
+                    "error": null
+                  },
+                  {
+                    "description": "Search for movies with keyword 'dream'",
+                    "input": {
+                      "keyword": "dream",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Found 1 movie matching 'dream' - Inception",
+                    "error": null
+                  },
+                  {
+                    "description": "Search for movies with keyword 'Tom Hanks'",
+                    "input": {
+                      "keyword": "Tom Hanks",
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Found 0 movies (keyword searches titles/overviews, not actors)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_movie_details",
+                "test_cases": [
+                  {
+                    "description": "Get details for Pulp Fiction (movie_id: 680)",
+                    "input": {
+                      "movie_id": 680
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved all movie details including title, overview, release_date, duration, genres, vote_average, views, and actors",
+                    "error": null
+                  },
+                  {
+                    "description": "Get details for Inception (movie_id: 27205)",
+                    "input": {
+                      "movie_id": 27205
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved all movie details",
+                    "error": null
+                  },
+                  {
+                    "description": "Get details for Indie Film with empty fields (movie_id: 12345)",
+                    "input": {
+                      "movie_id": 12345
+                    },
+                    "passed": true,
+                    "output": "Successfully handled movie with empty/zero values for overview, duration, genres, vote_average, views, and actors",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_popular_movies",
+                "test_cases": [
+                  {
+                    "description": "Get popular movies with default settings",
+                    "input": {},
+                    "passed": true,
+                    "output": "Returned 5 popular movies in order: Inception, Forrest Gump, LOTR, Pulp Fiction, The Green Mile",
+                    "error": null
+                  },
+                  {
+                    "description": "Get top 3 popular movies filtered by vote_average",
+                    "input": {
+                      "filter": "vote_average",
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Returned 3 movies sorted by rating: Forrest Gump (8.5), LOTR (8.5), Pulp Fiction (8.5)",
+                    "error": null
+                  },
+                  {
+                    "description": "Get top 3 popular movies filtered by views",
+                    "input": {
+                      "filter": "views",
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Returned 3 movies sorted by views: Inception (55000), Forrest Gump (48000), LOTR (44000)",
+                    "error": null
+                  },
+                  {
+                    "description": "Get popular movies released after 2000-01-01",
+                    "input": {
+                      "date": "2000-01-01",
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Returned 2 movies released after 2000: Inception (2010-07-16) and LOTR (2003-12-17)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All 7 movies preserved with correct data, popular_movies list intact, api_key preserved."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 57.136017084121704
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_movies",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case with keyword 'a' and limit 1",
+                    "input": {
+                      "keyword": "a",
+                      "limit": 1
+                    },
+                    "result": "Success - returned empty list (expected for empty movies)",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case with keyword 'action' and limit 5",
+                    "input": {
+                      "keyword": "action",
+                      "limit": 5
+                    },
+                    "result": "Success - returned empty list (expected for empty movies)",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case with keyword 'comedy' and default limit",
+                    "input": {
+                      "keyword": "comedy"
+                    },
+                    "result": "Success - returned empty list (expected for empty movies)",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case with empty keyword",
+                    "input": {
+                      "keyword": "",
+                      "limit": 5
+                    },
+                    "result": "Correctly rejected with validation error",
+                    "error": "Keyword must be a non-empty string"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_movie_details",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid movie_id but not found in empty movies dict",
+                    "input": {
+                      "movie_id": 1
+                    },
+                    "result": "Correctly rejected - movie not found",
+                    "error": "Movie 1 not found"
+                  },
+                  {
+                    "description": "Error case with negative movie_id",
+                    "input": {
+                      "movie_id": -1
+                    },
+                    "result": "Correctly rejected with validation error",
+                    "error": "Movie ID must be a non-negative integer"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_popular_movies",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case with no filters",
+                    "input": {},
+                    "result": "Success - returned empty list (expected for empty popular_movies)",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case with vote_average filter",
+                    "input": {
+                      "filter": "vote_average",
+                      "limit": 3
+                    },
+                    "result": "Success - returned empty list (expected for empty popular_movies)",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case with all parameters",
+                    "input": {
+                      "filter": "views",
+                      "date": "2023-01-01",
+                      "limit": 10
+                    },
+                    "result": "Success - returned empty list (expected for empty popular_movies)",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case with invalid filter",
+                    "input": {
+                      "filter": "invalid_filter"
+                    },
+                    "result": "Correctly rejected with validation error",
+                    "error": "Filter must be either 'vote_average' or 'views'"
+                  },
+                  {
+                    "description": "Error case with invalid date format",
+                    "input": {
+                      "date": "invalid-date"
+                    },
+                    "result": "Correctly rejected with validation error",
+                    "error": "Date must be in YYYY-MM-DD format"
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "saved_scenario": {
+                "movies": {},
+                "popular_movies": [],
+                "api_key": "demo_key"
+              },
+              "comparison": "Saved scenario matches original scenario exactly - no modifications expected for boundary case with empty data structures",
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 60.24823260307312
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_movies",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Search with keyword 'Fight' and limit 5",
+                    "input": {
+                      "keyword": "Fight",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Found 1 movie matching 'Fight'",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Search with keyword 'therapy' and limit 1",
+                    "input": {
+                      "keyword": "therapy",
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Found 1 movie matching 'therapy'",
+                    "error": null
+                  },
+                  {
+                    "description": "Boundary case: Search with non-existent keyword",
+                    "input": {
+                      "keyword": "nonexistent"
+                    },
+                    "passed": true,
+                    "output": "Returned empty list as expected",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Empty keyword string",
+                    "input": {
+                      "keyword": "",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Keyword must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_movie_details",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get details for existing movie ID 550",
+                    "input": {
+                      "movie_id": 550
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved complete movie details",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Non-existent movie ID",
+                    "input": {
+                      "movie_id": 999
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Movie 999 not found",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_popular_movies",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get popular movies with default parameters",
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved 1 popular movie",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Filter by vote_average with limit 3",
+                    "input": {
+                      "filter": "vote_average",
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved movies sorted by rating",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case: Filter by views with date filter",
+                    "input": {
+                      "filter": "views",
+                      "date": "1999-01-01",
+                      "limit": 2
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved movies filtered by date and sorted by views",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Invalid filter value",
+                    "input": {
+                      "filter": "invalid_filter",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error",
+                    "error": "Filter must be either 'vote_average' or 'views'",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All state preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 73.76569128036499
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_movies",
+                "test_cases": [
+                  {
+                    "test_name": "Valid search - keyword 'Godfather'",
+                    "input": {
+                      "keyword": "Godfather",
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Found 1 movie matching 'Godfather'",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid search - keyword 'crime' in overview",
+                    "input": {
+                      "keyword": "crime",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Found 1 movie with 'crime' in overview",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Error case - empty keyword",
+                    "input": {
+                      "keyword": ""
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected empty keyword",
+                    "error": "Keyword must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_movie_details",
+                "test_cases": [
+                  {
+                    "test_name": "Valid movie ID - 278 (Shawshank Redemption)",
+                    "input": {
+                      "movie_id": 278
+                    },
+                    "passed": true,
+                    "output": "Retrieved complete movie details with all fields",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid movie ID - 19995 (Avatar)",
+                    "input": {
+                      "movie_id": 19995
+                    },
+                    "passed": true,
+                    "output": "Retrieved complete movie details with all fields",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Error case - non-existent movie ID",
+                    "input": {
+                      "movie_id": 99999
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected non-existent movie ID",
+                    "error": "Movie 99999 not found",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_popular_movies",
+                "test_cases": [
+                  {
+                    "test_name": "Default popular movies - no filter",
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Retrieved 3 popular movies in default order (by popular_movies list)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Filter by vote_average",
+                    "input": {
+                      "filter": "vote_average",
+                      "limit": 2
+                    },
+                    "passed": true,
+                    "output": "Retrieved 2 movies sorted by rating (8.7, 8.5)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Filter by views",
+                    "input": {
+                      "filter": "views",
+                      "limit": 2
+                    },
+                    "passed": true,
+                    "output": "Retrieved 2 movies sorted by views (52000, 45000)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Date filter - movies after 2000-01-01",
+                    "input": {
+                      "date": "2000-01-01",
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Retrieved 2 movies released after 2000 (Avatar 2009, Dark Knight 2008)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Error case - invalid filter",
+                    "input": {
+                      "filter": "invalid_filter"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected invalid filter value",
+                    "error": "Filter must be either 'vote_average' or 'views'",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All movie data, popular_movies list, and api_key preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 85.72262573242188
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_movies",
+                "test_cases": [
+                  {
+                    "description": "Search for movies with keyword 'Fiction'",
+                    "input": {
+                      "keyword": "Fiction",
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Found 1 movie matching 'Fiction' - Pulp Fiction",
+                    "error": null
+                  },
+                  {
+                    "description": "Search for movies with keyword 'dream'",
+                    "input": {
+                      "keyword": "dream",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Found 1 movie matching 'dream' - Inception",
+                    "error": null
+                  },
+                  {
+                    "description": "Search for movies with keyword 'Tom Hanks'",
+                    "input": {
+                      "keyword": "Tom Hanks",
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Found 0 movies (keyword searches titles/overviews, not actors)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_movie_details",
+                "test_cases": [
+                  {
+                    "description": "Get details for Pulp Fiction (movie_id: 680)",
+                    "input": {
+                      "movie_id": 680
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved all movie details including title, overview, release_date, duration, genres, vote_average, views, and actors",
+                    "error": null
+                  },
+                  {
+                    "description": "Get details for Inception (movie_id: 27205)",
+                    "input": {
+                      "movie_id": 27205
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved all movie details",
+                    "error": null
+                  },
+                  {
+                    "description": "Get details for Indie Film with empty fields (movie_id: 12345)",
+                    "input": {
+                      "movie_id": 12345
+                    },
+                    "passed": true,
+                    "output": "Successfully handled movie with empty/zero values for overview, duration, genres, vote_average, views, and actors",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_popular_movies",
+                "test_cases": [
+                  {
+                    "description": "Get popular movies with default settings",
+                    "input": {},
+                    "passed": true,
+                    "output": "Returned 5 popular movies in order: Inception, Forrest Gump, LOTR, Pulp Fiction, The Green Mile",
+                    "error": null
+                  },
+                  {
+                    "description": "Get top 3 popular movies filtered by vote_average",
+                    "input": {
+                      "filter": "vote_average",
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Returned 3 movies sorted by rating: Forrest Gump (8.5), LOTR (8.5), Pulp Fiction (8.5)",
+                    "error": null
+                  },
+                  {
+                    "description": "Get top 3 popular movies filtered by views",
+                    "input": {
+                      "filter": "views",
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Returned 3 movies sorted by views: Inception (55000), Forrest Gump (48000), LOTR (44000)",
+                    "error": null
+                  },
+                  {
+                    "description": "Get popular movies released after 2000-01-01",
+                    "input": {
+                      "date": "2000-01-01",
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Returned 2 movies released after 2000: Inception (2010-07-16) and LOTR (2003-12-17)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All 7 movies preserved with correct data, popular_movies list intact, api_key preserved."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 57.136017084121704
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_movies",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case with keyword 'a' and limit 1",
+                    "input": {
+                      "keyword": "a",
+                      "limit": 1
+                    },
+                    "result": "Success - returned empty list (expected for empty movies)",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case with keyword 'action' and limit 5",
+                    "input": {
+                      "keyword": "action",
+                      "limit": 5
+                    },
+                    "result": "Success - returned empty list (expected for empty movies)",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case with keyword 'comedy' and default limit",
+                    "input": {
+                      "keyword": "comedy"
+                    },
+                    "result": "Success - returned empty list (expected for empty movies)",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case with empty keyword",
+                    "input": {
+                      "keyword": "",
+                      "limit": 5
+                    },
+                    "result": "Correctly rejected with validation error",
+                    "error": "Keyword must be a non-empty string"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_movie_details",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid movie_id but not found in empty movies dict",
+                    "input": {
+                      "movie_id": 1
+                    },
+                    "result": "Correctly rejected - movie not found",
+                    "error": "Movie 1 not found"
+                  },
+                  {
+                    "description": "Error case with negative movie_id",
+                    "input": {
+                      "movie_id": -1
+                    },
+                    "result": "Correctly rejected with validation error",
+                    "error": "Movie ID must be a non-negative integer"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_popular_movies",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case with no filters",
+                    "input": {},
+                    "result": "Success - returned empty list (expected for empty popular_movies)",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case with vote_average filter",
+                    "input": {
+                      "filter": "vote_average",
+                      "limit": 3
+                    },
+                    "result": "Success - returned empty list (expected for empty popular_movies)",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case with all parameters",
+                    "input": {
+                      "filter": "views",
+                      "date": "2023-01-01",
+                      "limit": 10
+                    },
+                    "result": "Success - returned empty list (expected for empty popular_movies)",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case with invalid filter",
+                    "input": {
+                      "filter": "invalid_filter"
+                    },
+                    "result": "Correctly rejected with validation error",
+                    "error": "Filter must be either 'vote_average' or 'views'"
+                  },
+                  {
+                    "description": "Error case with invalid date format",
+                    "input": {
+                      "date": "invalid-date"
+                    },
+                    "result": "Correctly rejected with validation error",
+                    "error": "Date must be in YYYY-MM-DD format"
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "saved_scenario": {
+                "movies": {},
+                "popular_movies": [],
+                "api_key": "demo_key"
+              },
+              "comparison": "Saved scenario matches original scenario exactly - no modifications expected for boundary case with empty data structures",
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 60.24823260307312
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/MovieRecommender.py"
+  }
+}

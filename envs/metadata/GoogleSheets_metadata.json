@@ -1,0 +1,539 @@
+{
+  "class_name": "GoogleSheets",
+  "description": "A server for managing Google Spreadsheets, including creating, reading, and modifying spreadsheets, sheets, rows, columns, and cell data.",
+  "tools": [
+    {
+      "name": "list_spreadsheets",
+      "description": "List all spreadsheets in the configured Google Drive folder.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "spreadsheets": {
+            "type": "array",
+            "description": "List of spreadsheets available in the configured Google Drive folder.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "spreadsheet_id": {
+                  "type": "string",
+                  "description": "The unique identifier of the Google Spreadsheet, as found in the spreadsheet URL."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The display title of the spreadsheet."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_spreadsheet_info",
+      "description": "Get basic information about a Google Spreadsheet, including its title, sheets, and timestamps.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet, as found in the spreadsheet URL."
+          }
+        },
+        "required": [
+          "spreadsheet_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet, as found in the spreadsheet URL."
+          },
+          "title": {
+            "type": "string",
+            "description": "The display title of the spreadsheet."
+          },
+          "sheets": {
+            "type": "array",
+            "description": "List of sheet names contained within the spreadsheet.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "created_time": {
+            "type": "string",
+            "description": "The timestamp when the spreadsheet was created."
+          },
+          "modified_time": {
+            "type": "string",
+            "description": "The timestamp when the spreadsheet was last modified."
+          }
+        }
+      }
+    },
+    {
+      "name": "list_sheets",
+      "description": "List all sheet tabs in a Google Spreadsheet.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet, as found in the spreadsheet URL."
+          }
+        },
+        "required": [
+          "spreadsheet_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "sheet_names": {
+            "type": "array",
+            "description": "List of sheet tab names within the spreadsheet.",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_sheet_data",
+      "description": "Get cell data from a specific sheet in a Google Spreadsheet, optionally limited to a specific range.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet, as found in the spreadsheet URL."
+          },
+          "sheet": {
+            "type": "string",
+            "description": "The name of the sheet tab to read data from."
+          },
+          "range": {
+            "type": "string",
+            "description": "Cell range in A1 notation (e.g., 'A1:C10'). If omitted, returns all data in the sheet."
+          }
+        },
+        "required": [
+          "spreadsheet_id",
+          "sheet"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "2D array representing the sheet data, where each inner array is a row of cell values.",
+            "items": {
+              "type": "array",
+              "items": {}
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "create_spreadsheet",
+      "description": "Create a new Google Spreadsheet with the specified title.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The display title for the new spreadsheet."
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the newly created Google Spreadsheet."
+          },
+          "title": {
+            "type": "string",
+            "description": "The display title of the newly created spreadsheet."
+          },
+          "url": {
+            "type": "string",
+            "description": "The URL to access the newly created spreadsheet in Google Sheets."
+          }
+        }
+      }
+    },
+    {
+      "name": "create_sheet",
+      "description": "Create a new sheet tab in an existing Google Spreadsheet.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet, as found in the spreadsheet URL."
+          },
+          "title": {
+            "type": "string",
+            "description": "The display title for the new sheet tab."
+          }
+        },
+        "required": [
+          "spreadsheet_id",
+          "title"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "sheet_id": {
+            "type": "integer",
+            "description": "The unique numeric identifier of the newly created sheet tab within the spreadsheet."
+          },
+          "title": {
+            "type": "string",
+            "description": "The display title of the newly created sheet tab."
+          },
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet containing the new sheet."
+          }
+        }
+      }
+    },
+    {
+      "name": "batch_update_cells",
+      "description": "Update cells in a Google Spreadsheet. Supports updating a single range or multiple ranges in batch.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet, as found in the spreadsheet URL."
+          },
+          "sheet": {
+            "type": "string",
+            "description": "The name of the sheet tab to update."
+          },
+          "ranges": {
+            "type": "object",
+            "description": "Dictionary mapping range strings (in A1 notation) to 2D arrays of values for batch updates. Use this for updating multiple ranges at once."
+          },
+          "range": {
+            "type": "string",
+            "description": "Single cell range in A1 notation (e.g., 'A1:C10') for a single update. Use with 'data' parameter."
+          },
+          "data": {
+            "type": "array",
+            "description": "2D array of values to write to the specified single range. Required when 'range' parameter is provided.",
+            "items": {
+              "type": "array",
+              "items": {}
+            }
+          }
+        },
+        "required": [
+          "spreadsheet_id",
+          "sheet"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "updated_ranges": {
+            "type": "array",
+            "description": "List of cell ranges that were successfully updated.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "total_updated_cells": {
+            "type": "integer",
+            "description": "The total number of cells that were updated across all ranges."
+          },
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet that was updated."
+          }
+        }
+      }
+    },
+    {
+      "name": "add_rows",
+      "description": "Add new rows to the end of a sheet in a Google Spreadsheet.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet, as found in the spreadsheet URL."
+          },
+          "sheet": {
+            "type": "string",
+            "description": "The name of the sheet tab to add rows to."
+          },
+          "count": {
+            "type": "integer",
+            "description": "Number of rows to add. Defaults to 1 if not specified."
+          }
+        },
+        "required": [
+          "spreadsheet_id",
+          "sheet"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "added_rows": {
+            "type": "integer",
+            "description": "The number of rows that were successfully added."
+          },
+          "sheet": {
+            "type": "string",
+            "description": "The name of the sheet tab where rows were added."
+          },
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet that was modified."
+          }
+        }
+      }
+    },
+    {
+      "name": "add_columns",
+      "description": "Add new columns to a sheet in a Google Spreadsheet.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet, as found in the spreadsheet URL."
+          },
+          "sheet": {
+            "type": "string",
+            "description": "The name of the sheet tab to add columns to."
+          },
+          "count": {
+            "type": "integer",
+            "description": "Number of columns to add. Defaults to 1 if not specified."
+          }
+        },
+        "required": [
+          "spreadsheet_id",
+          "sheet"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "added_columns": {
+            "type": "integer",
+            "description": "The number of columns that were successfully added."
+          },
+          "sheet": {
+            "type": "string",
+            "description": "The name of the sheet tab where columns were added."
+          },
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet that was modified."
+          }
+        }
+      }
+    },
+    {
+      "name": "delete_rows",
+      "description": "Delete rows from a sheet in a Google Spreadsheet starting at a specified index.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet, as found in the spreadsheet URL."
+          },
+          "sheet": {
+            "type": "string",
+            "description": "The name of the sheet tab to delete rows from."
+          },
+          "start_index": {
+            "type": "integer",
+            "description": "The 0-based index of the first row to delete."
+          },
+          "count": {
+            "type": "integer",
+            "description": "Number of consecutive rows to delete starting from start_index. Defaults to 1 if not specified."
+          }
+        },
+        "required": [
+          "spreadsheet_id",
+          "sheet",
+          "start_index"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "deleted_rows": {
+            "type": "integer",
+            "description": "The number of rows that were successfully deleted."
+          },
+          "sheet": {
+            "type": "string",
+            "description": "The name of the sheet tab where rows were deleted."
+          },
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet that was modified."
+          }
+        }
+      }
+    },
+    {
+      "name": "delete_columns",
+      "description": "Delete columns from a sheet in a Google Spreadsheet starting at a specified index.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet, as found in the spreadsheet URL."
+          },
+          "sheet": {
+            "type": "string",
+            "description": "The name of the sheet tab to delete columns from."
+          },
+          "start_index": {
+            "type": "integer",
+            "description": "The 0-based index of the first column to delete."
+          },
+          "count": {
+            "type": "integer",
+            "description": "Number of consecutive columns to delete starting from start_index. Defaults to 1 if not specified."
+          }
+        },
+        "required": [
+          "spreadsheet_id",
+          "sheet",
+          "start_index"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "deleted_columns": {
+            "type": "integer",
+            "description": "The number of columns that were successfully deleted."
+          },
+          "sheet": {
+            "type": "string",
+            "description": "The name of the sheet tab where columns were deleted."
+          },
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet that was modified."
+          }
+        }
+      }
+    },
+    {
+      "name": "copy_sheet",
+      "description": "Copy an existing sheet tab within a Google Spreadsheet to create a duplicate with a new name.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet, as found in the spreadsheet URL."
+          },
+          "sheet": {
+            "type": "string",
+            "description": "The name of the sheet tab to copy."
+          },
+          "new_sheet_name": {
+            "type": "string",
+            "description": "The display title for the new copied sheet tab."
+          }
+        },
+        "required": [
+          "spreadsheet_id",
+          "sheet",
+          "new_sheet_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "sheet_id": {
+            "type": "integer",
+            "description": "The unique numeric identifier of the newly created copied sheet tab."
+          },
+          "title": {
+            "type": "string",
+            "description": "The display title of the newly created copied sheet tab."
+          },
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet containing the copied sheet."
+          }
+        }
+      }
+    },
+    {
+      "name": "rename_sheet",
+      "description": "Rename an existing sheet tab in a Google Spreadsheet.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet, as found in the spreadsheet URL."
+          },
+          "sheet": {
+            "type": "string",
+            "description": "The current name of the sheet tab to rename."
+          },
+          "new_name": {
+            "type": "string",
+            "description": "The new display title for the sheet tab."
+          }
+        },
+        "required": [
+          "spreadsheet_id",
+          "sheet",
+          "new_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "old_name": {
+            "type": "string",
+            "description": "The previous name of the sheet tab before renaming."
+          },
+          "new_name": {
+            "type": "string",
+            "description": "The new name of the sheet tab after renaming."
+          },
+          "spreadsheet_id": {
+            "type": "string",
+            "description": "The unique identifier of the Google Spreadsheet containing the renamed sheet."
+          }
+        }
+      }
+    }
+  ]
+}

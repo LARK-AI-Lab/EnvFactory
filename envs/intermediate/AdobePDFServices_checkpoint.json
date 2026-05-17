@@ -1,0 +1,1256 @@
+{
+  "metadata": {
+    "class_name": "AdobePDFServices",
+    "metadata_path": "envs\\metadata\\AdobePDFServices_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-03-05T04:09:29.913363",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "AdobePDFServices",
+    "description": "Comprehensive PDF manipulation service providing HTML-to-PDF conversion, format export, OCR text extraction, document merging, and password protection capabilities.",
+    "tools": [
+      {
+        "name": "create_pdf_from_html",
+        "description": "Generate a PDF document from HTML content with configurable page dimensions.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "html_content": {
+              "type": "string",
+              "description": "The HTML content string to be rendered and converted into a PDF document."
+            },
+            "output_filename": {
+              "type": "string",
+              "description": "Optional custom filename for the generated output document. If omitted, a system-generated name is assigned."
+            },
+            "page_size": {
+              "type": "string",
+              "description": "The page size specification for the output PDF. Supported values: A4, Letter, Legal.",
+              "enum": [
+                "A4",
+                "Letter",
+                "Legal"
+              ]
+            }
+          },
+          "required": [
+            "html_content"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "pdf_url": {
+              "type": "string",
+              "description": "The presigned URL for downloading the generated PDF document."
+            },
+            "page_count": {
+              "type": "integer",
+              "description": "The total number of pages in the generated PDF document."
+            },
+            "file_size": {
+              "type": "integer",
+              "description": "The size of the generated PDF file in bytes."
+            }
+          },
+          "required": [
+            "pdf_url",
+            "page_count",
+            "file_size"
+          ]
+        }
+      },
+      {
+        "name": "export_pdf_to_format",
+        "description": "Export a PDF document to alternative formats including Microsoft Office formats (Word, Excel, PowerPoint) or image files (JPEG, PNG).",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "pdf_url": {
+              "type": "string",
+              "description": "The URL of the source PDF document to be converted to another format."
+            },
+            "target_format": {
+              "type": "string",
+              "description": "The target export format. Supported formats: docx (Word), xlsx (Excel), pptx (PowerPoint), jpeg, png.",
+              "enum": [
+                "docx",
+                "xlsx",
+                "pptx",
+                "jpeg",
+                "png"
+              ]
+            },
+            "output_filename": {
+              "type": "string",
+              "description": "Optional custom filename for the generated output document. If omitted, a system-generated name is assigned."
+            }
+          },
+          "required": [
+            "pdf_url",
+            "target_format"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "export_url": {
+              "type": "string",
+              "description": "The presigned URL for downloading the exported file in the target format."
+            },
+            "format": {
+              "type": "string",
+              "description": "The format of the exported file, matching the requested target_format."
+            },
+            "page_count": {
+              "type": "integer",
+              "description": "The total number of pages in the exported document."
+            }
+          },
+          "required": [
+            "export_url",
+            "format",
+            "page_count"
+          ]
+        }
+      },
+      {
+        "name": "ocr_pdf",
+        "description": "Perform optical character recognition on a PDF to extract text or create a searchable PDF document.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "pdf_url": {
+              "type": "string",
+              "description": "The URL of the source PDF document to be processed with OCR."
+            },
+            "language": {
+              "type": "string",
+              "description": "The language code of the document content for optimized OCR accuracy. Defaults to en-US (English, United States)."
+            },
+            "output_type": {
+              "type": "string",
+              "description": "The desired OCR output type. 'searchable_pdf' creates a PDF with embedded text layer; 'text_extraction' extracts raw text content.",
+              "enum": [
+                "searchable_pdf",
+                "text_extraction"
+              ]
+            }
+          },
+          "required": [
+            "pdf_url"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "output_url": {
+              "type": "string",
+              "description": "The presigned URL for downloading the processed file (searchable PDF or text file depending on output_type)."
+            },
+            "extracted_text": {
+              "type": "string",
+              "description": "The raw extracted text content from the PDF. Only present when output_type is set to 'text_extraction'."
+            },
+            "confidence_score": {
+              "type": "number",
+              "description": "The OCR accuracy confidence score ranging from 0 to 100, indicating the reliability of text recognition."
+            }
+          },
+          "required": [
+            "output_url",
+            "confidence_score"
+          ]
+        }
+      },
+      {
+        "name": "combine_pdfs",
+        "description": "Merge multiple PDF documents into a single consolidated PDF file.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "pdf_urls": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "An ordered list of URLs pointing to the PDF documents to be merged. Documents are combined in the order provided."
+            },
+            "output_filename": {
+              "type": "string",
+              "description": "Optional custom filename for the generated output document. If omitted, a system-generated name is assigned."
+            }
+          },
+          "required": [
+            "pdf_urls"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "combined_pdf_url": {
+              "type": "string",
+              "description": "The presigned URL for downloading the merged PDF document."
+            },
+            "total_pages": {
+              "type": "integer",
+              "description": "The total number of pages across all combined source documents."
+            },
+            "source_count": {
+              "type": "integer",
+              "description": "The number of source PDF documents that were merged."
+            }
+          },
+          "required": [
+            "combined_pdf_url",
+            "total_pages",
+            "source_count"
+          ]
+        }
+      },
+      {
+        "name": "protect_pdf",
+        "description": "Apply password protection and configurable permission restrictions to secure a PDF document.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "pdf_url": {
+              "type": "string",
+              "description": "The URL of the source PDF document to be password protected."
+            },
+            "password": {
+              "type": "string",
+              "description": "The password string used to encrypt and restrict access to the PDF document."
+            },
+            "permissions": {
+              "type": "object",
+              "properties": {
+                "printing": {
+                  "type": "boolean",
+                  "description": "Allow or deny printing of the PDF document."
+                },
+                "copying": {
+                  "type": "boolean",
+                  "description": "Allow or deny copying text and content from the PDF document."
+                },
+                "editing": {
+                  "type": "boolean",
+                  "description": "Allow or deny editing and modification of the PDF content."
+                },
+                "commenting": {
+                  "type": "boolean",
+                  "description": "Allow or deny adding annotations and comments to the PDF document."
+                }
+              },
+              "description": "Optional permission settings defining user restrictions for the protected PDF. If omitted, default restrictive permissions apply."
+            }
+          },
+          "required": [
+            "pdf_url",
+            "password"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "protected_pdf_url": {
+              "type": "string",
+              "description": "The presigned URL for downloading the password-protected PDF document."
+            },
+            "encryption_level": {
+              "type": "string",
+              "description": "The encryption standard applied to the PDF (e.g., AES-256)."
+            },
+            "permissions_applied": {
+              "type": "object",
+              "properties": {
+                "printing": {
+                  "type": "boolean",
+                  "description": "Indicates whether printing is permitted on the protected document."
+                },
+                "copying": {
+                  "type": "boolean",
+                  "description": "Indicates whether copying content is permitted on the protected document."
+                },
+                "editing": {
+                  "type": "boolean",
+                  "description": "Indicates whether editing content is permitted on the protected document."
+                },
+                "commenting": {
+                  "type": "boolean",
+                  "description": "Indicates whether adding comments is permitted on the protected document."
+                }
+              },
+              "description": "The complete set of permission restrictions that have been applied to the protected document."
+            }
+          },
+          "required": [
+            "protected_pdf_url",
+            "encryption_level",
+            "permissions_applied"
+          ]
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass PDFDocument(BaseModel):\n    \"\"\"Represents a generated PDF document.\"\"\"\n    id: str = Field(..., description=\"Unique identifier for the PDF\")\n    url: str = Field(..., description=\"Presigned URL for downloading\")\n    page_count: int = Field(..., ge=0, description=\"Number of pages\")\n    file_size: int = Field(..., ge=0, description=\"Size in bytes\")\n    source_type: str = Field(..., description=\"Source: html, combined, ocr, etc.\")\n    created_at: str = Field(..., description=\"Creation timestamp\")\n\nclass ExportJob(BaseModel):\n    \"\"\"Represents a PDF export operation.\"\"\"\n    id: str = Field(..., description=\"Unique identifier for the export job\")\n    source_pdf_id: str = Field(..., description=\"Source PDF ID\")\n    target_format: str = Field(..., pattern=r\"^(docx|xlsx|pptx|jpeg|png)$\", description=\"Export format\")\n    export_url: str = Field(..., description=\"Presigned URL for exported file\")\n    page_count: int = Field(..., ge=0, description=\"Number of pages\")\n    created_at: str = Field(..., description=\"Creation timestamp\")\n\nclass OCRJob(BaseModel):\n    \"\"\"Represents an OCR operation result.\"\"\"\n    id: str = Field(..., description=\"Unique identifier for the OCR job\")\n    source_pdf_id: str = Field(..., description=\"Source PDF ID\")\n    output_type: str = Field(..., pattern=r\"^(searchable_pdf|text_extraction)$\", description=\"OCR output type\")\n    output_url: str = Field(..., description=\"Presigned URL for output\")\n    extracted_text: Optional[str] = Field(default=None, description=\"Extracted text if applicable\")\n    confidence_score: float = Field(..., ge=0, le=100, description=\"OCR confidence score\")\n    created_at: str = Field(..., description=\"Creation timestamp\")\n\nclass CombinedPDF(BaseModel):\n    \"\"\"Represents a merged PDF document.\"\"\"\n    id: str = Field(..., description=\"Unique identifier for the combined PDF\")\n    url: str = Field(..., description=\"Presigned URL for downloading\")\n    source_pdf_ids: List[str] = Field(..., description=\"List of source PDF IDs\")\n    total_pages: int = Field(..., ge=0, description=\"Total pages\")\n    source_count: int = Field(..., ge=0, description=\"Number of sources\")\n    created_at: str = Field(..., description=\"Creation timestamp\")\n\nclass Permissions(BaseModel):\n    \"\"\"Permission settings for PDF protection.\"\"\"\n    printing: bool = Field(default=False, description=\"Allow printing\")\n    copying: bool = Field(default=False, description=\"Allow copying\")\n    editing: bool = Field(default=False, description=\"Allow editing\")\n    commenting: bool = Field(default=False, description=\"Allow commenting\")\n\nclass ProtectedPDF(BaseModel):\n    \"\"\"Represents a password-protected PDF.\"\"\"\n    id: str = Field(..., description=\"Unique identifier for the protected PDF\")\n    source_pdf_id: str = Field(..., description=\"Source PDF ID\")\n    url: str = Field(..., description=\"Presigned URL for downloading\")\n    encryption_level: str = Field(default=\"AES-256\", description=\"Encryption standard\")\n    permissions: Permissions = Field(..., description=\"Applied permissions\")\n    created_at: str = Field(..., description=\"Creation timestamp\")\n\nclass AdobePDFScenario(BaseModel):\n    \"\"\"Main scenario model for Adobe PDF Services.\"\"\"\n    pdfs: Dict[str, PDFDocument] = Field(default={}, description=\"Generated PDFs\")\n    exports: Dict[str, ExportJob] = Field(default={}, description=\"Export operations\")\n    ocr_jobs: Dict[str, OCRJob] = Field(default={}, description=\"OCR operations\")\n    combined_pdfs: Dict[str, CombinedPDF] = Field(default={}, description=\"Merged PDFs\")\n    protected_pdfs: Dict[str, ProtectedPDF] = Field(default={}, description=\"Protected PDFs\")\n    current_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"Current timestamp ISO 8601\")\n    pdf_counter: int = Field(default=0, ge=0, description=\"Counter for generating unique IDs\")\n    base_url: str = Field(default=\"https://api.adobe.example.com/pdfs\", description=\"Base URL for generating presigned URLs\")\n\nScenario_Schema = [PDFDocument, ExportJob, OCRJob, CombinedPDF, Permissions, ProtectedPDF, AdobePDFScenario]\n\n# Section 2: Class\nclass AdobePDFAPI:\n    def __init__(self):\n        \"\"\"Initialize Adobe PDF API with empty state.\"\"\"\n        self.pdfs: Dict[str, PDFDocument] = {}\n        self.exports: Dict[str, ExportJob] = {}\n        self.ocr_jobs: Dict[str, OCRJob] = {}\n        self.combined_pdfs: Dict[str, CombinedPDF] = {}\n        self.protected_pdfs: Dict[str, ProtectedPDF] = {}\n        self.current_time: str = \"\"\n        self.pdf_counter: int = 0\n        self.base_url: str = \"\"\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"\n        Load scenario data into the API instance.\n        \"\"\"\n        model = AdobePDFScenario(**scenario)\n        self.pdfs = model.pdfs\n        self.exports = model.exports\n        self.ocr_jobs = model.ocr_jobs\n        self.combined_pdfs = model.combined_pdfs\n        self.protected_pdfs = model.protected_pdfs\n        self.current_time = model.current_time\n        self.pdf_counter = model.pdf_counter\n        self.base_url = model.base_url\n\n    def save_scenario(self) -> dict:\n        \"\"\"\n        Save current state as scenario dictionary.\n        \"\"\"\n        return {\n            \"pdfs\": {k: v.model_dump() for k, v in self.pdfs.items()},\n            \"exports\": {k: v.model_dump() for k, v in self.exports.items()},\n            \"ocr_jobs\": {k: v.model_dump() for k, v in self.ocr_jobs.items()},\n            \"combined_pdfs\": {k: v.model_dump() for k, v in self.combined_pdfs.items()},\n            \"protected_pdfs\": {k: v.model_dump() for k, v in self.protected_pdfs.items()},\n            \"current_time\": self.current_time,\n            \"pdf_counter\": self.pdf_counter,\n            \"base_url\": self.base_url\n        }\n\n    def _get_pdf_id_from_url(self, url: str) -> Optional[str]:\n        \"\"\"Extract PDF ID from URL or find by URL.\"\"\"\n        for pdf_id, pdf in self.pdfs.items():\n            if pdf.url == url:\n                return pdf_id\n        return None\n\n    def _generate_id(self) -> str:\n        \"\"\"Generate unique ID for resources.\"\"\"\n        self.pdf_counter += 1\n        timestamp = self.current_time.replace(\"-\", \"\").replace(\":\", \"\").replace(\"T\", \"\")\n        return f\"pdf_{self.pdf_counter}_{timestamp}\"\n\n    def _generate_url(self, resource_type: str, resource_id: str) -> str:\n        \"\"\"Generate presigned URL for resource.\"\"\"\n        return f\"{self.base_url}/{resource_type}/{resource_id}?token=sig{hash(resource_id) % 10000}\"\n\n    def create_pdf_from_html(self, html_content: str, output_filename: Optional[str], page_size: Optional[str]) -> dict:\n        \"\"\"\n        Generate a PDF document from HTML content.\n        \"\"\"\n        pdf_id = self._generate_id()\n        page_count = max(1, len(html_content) // 3000)\n        file_size = len(html_content) * 10\n        \n        url = self._generate_url(\"documents\", pdf_id)\n        if output_filename:\n            url += f\"&filename={output_filename}\"\n            \n        pdf_doc = PDFDocument(\n            id=pdf_id,\n            url=url,\n            page_count=page_count,\n            file_size=file_size,\n            source_type=\"html\",\n            created_at=self.current_time\n        )\n        self.pdfs[pdf_id] = pdf_doc\n        \n        return {\n            \"pdf_url\": url,\n            \"page_count\": page_count,\n            \"file_size\": file_size\n        }\n\n    def export_pdf_to_format(self, pdf_url: str, target_format: str, output_filename: Optional[str]) -> dict:\n        \"\"\"\n        Export a PDF document to alternative formats.\n        \"\"\"\n        pdf_id = self._get_pdf_id_from_url(pdf_url)\n        if not pdf_id or pdf_id not in self.pdfs:\n            raise ValueError(f\"PDF not found for URL: {pdf_url}\")\n            \n        source_pdf = self.pdfs[pdf_id]\n        export_id = self._generate_id()\n        url = self._generate_url(\"exports\", export_id)\n        if output_filename:\n            url += f\"&filename={output_filename}\"\n            \n        export_job = ExportJob(\n            id=export_id,\n            source_pdf_id=pdf_id,\n            target_format=target_format,\n            export_url=url,\n            page_count=source_pdf.page_count,\n            created_at=self.current_time\n        )\n        self.exports[export_id] = export_job\n        \n        return {\n            \"export_url\": url,\n            \"format\": target_format,\n            \"page_count\": source_pdf.page_count\n        }\n\n    def ocr_pdf(self, pdf_url: str, language: Optional[str], output_type: Optional[str]) -> dict:\n        \"\"\"\n        Perform optical character recognition on a PDF.\n        \"\"\"\n        pdf_id = self._get_pdf_id_from_url(pdf_url)\n        if not pdf_id or pdf_id not in self.pdfs:\n            raise ValueError(f\"PDF not found for URL: {pdf_url}\")\n            \n        source_pdf = self.pdfs[pdf_id]\n        ocr_id = self._generate_id()\n        \n        lang = language if language else \"en-US\"\n        out_type = output_type if output_type else \"searchable_pdf\"\n        \n        url = self._generate_url(\"ocr\", ocr_id)\n        confidence = 95.0 if lang == \"en-US\" else 85.0\n        \n        extracted_text = None\n        if out_type == \"text_extraction\":\n            extracted_text = f\"Extracted text from {source_pdf.page_count} pages. \" * 20\n            \n        ocr_job = OCRJob(\n            id=ocr_id,\n            source_pdf_id=pdf_id,\n            output_type=out_type,\n            output_url=url,\n            extracted_text=extracted_text,\n            confidence_score=confidence,\n            created_at=self.current_time\n        )\n        self.ocr_jobs[ocr_id] = ocr_job\n        \n        result = {\n            \"output_url\": url,\n            \"confidence_score\": confidence\n        }\n        if extracted_text is not None:\n            result[\"extracted_text\"] = extracted_text\n            \n        return result\n\n    def combine_pdfs(self, pdf_urls: List[str], output_filename: Optional[str]) -> dict:\n        \"\"\"\n        Merge multiple PDF documents into a single consolidated PDF file.\n        \"\"\"\n        source_ids = []\n        total_pages = 0\n        \n        for url in pdf_urls:\n            pdf_id = self._get_pdf_id_from_url(url)\n            if not pdf_id or pdf_id not in self.pdfs:\n                raise ValueError(f\"PDF not found for URL: {url}\")\n            source_ids.append(pdf_id)\n            total_pages += self.pdfs[pdf_id].page_count\n            \n        combined_id = self._generate_id()\n        url = self._generate_url(\"combined\", combined_id)\n        if output_filename:\n            url += f\"&filename={output_filename}\"\n            \n        combined = CombinedPDF(\n            id=combined_id,\n            url=url,\n            source_pdf_ids=source_ids,\n            total_pages=total_pages,\n            source_count=len(source_ids),\n            created_at=self.current_time\n        )\n        self.combined_pdfs[combined_id] = combined\n        \n        return {\n            \"combined_pdf_url\": url,\n            \"total_pages\": total_pages,\n            \"source_count\": len(source_ids)\n        }\n\n    def protect_pdf(self, pdf_url: str, password: str, permissions: Optional[dict]) -> dict:\n        \"\"\"\n        Apply password protection and permission restrictions to a PDF document.\n        \"\"\"\n        pdf_id = self._get_pdf_id_from_url(pdf_url)\n        if not pdf_id or pdf_id not in self.pdfs:\n            raise ValueError(f\"PDF not found for URL: {pdf_url}\")\n            \n        perms = {\n            \"printing\": False,\n            \"copying\": False,\n            \"editing\": False,\n            \"commenting\": False\n        }\n        \n        if permissions:\n            perms.update(permissions)\n            \n        protected_id = self._generate_id()\n        url = self._generate_url(\"protected\", protected_id)\n        \n        protected = ProtectedPDF(\n            id=protected_id,\n            source_pdf_id=pdf_id,\n            url=url,\n            encryption_level=\"AES-256\",\n            permissions=Permissions(**perms),\n            created_at=self.current_time\n        )\n        self.protected_pdfs[protected_id] = protected\n        \n        return {\n            \"protected_pdf_url\": url,\n            \"encryption_level\": \"AES-256\",\n            \"permissions_applied\": perms\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"AdobePDFServices\")\napi = AdobePDFAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Adobe PDF Services API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching AdobePDFScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Adobe PDF Services state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef create_pdf_from_html(html_content: str, output_filename: Optional[str] = None, page_size: Optional[str] = None) -> dict:\n    \"\"\"\n    Generate a PDF document from HTML content with configurable page dimensions.\n\n    Args:\n        html_content (str): The HTML content string to be rendered and converted into a PDF document.\n        output_filename (str): [Optional] Custom filename for the generated output document. If omitted, a system-generated name is assigned.\n        page_size (str): [Optional] The page size specification for the output PDF. Supported values: A4, Letter, Legal.\n\n    Returns:\n        pdf_url (str): The presigned URL for downloading the generated PDF document.\n        page_count (int): The total number of pages in the generated PDF document.\n        file_size (int): The size of the generated PDF file in bytes.\n    \"\"\"\n    try:\n        if not html_content or not isinstance(html_content, str):\n            raise ValueError(\"html_content must be a non-empty string\")\n        if page_size and page_size not in [\"A4\", \"Letter\", \"Legal\"]:\n            raise ValueError(\"page_size must be one of: A4, Letter, Legal\")\n        return api.create_pdf_from_html(html_content, output_filename, page_size)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef export_pdf_to_format(pdf_url: str, target_format: str, output_filename: Optional[str] = None) -> dict:\n    \"\"\"\n    Export a PDF document to alternative formats including Microsoft Office formats (Word, Excel, PowerPoint) or image files (JPEG, PNG).\n\n    Args:\n        pdf_url (str): The URL of the source PDF document to be converted to another format.\n        target_format (str): The target export format. Supported formats: docx (Word), xlsx (Excel), pptx (PowerPoint), jpeg, png.\n        output_filename (str): [Optional] Custom filename for the generated output document. If omitted, a system-generated name is assigned.\n\n    Returns:\n        export_url (str): The presigned URL for downloading the exported file in the target format.\n        format (str): The format of the exported file, matching the requested target_format.\n        page_count (int): The total number of pages in the exported document.\n    \"\"\"\n    try:\n        if not pdf_url or not isinstance(pdf_url, str):\n            raise ValueError(\"pdf_url must be a non-empty string\")\n        if not target_format or not isinstance(target_format, str):\n            raise ValueError(\"target_format must be a non-empty string\")\n        if target_format not in [\"docx\", \"xlsx\", \"pptx\", \"jpeg\", \"png\"]:\n            raise ValueError(\"target_format must be one of: docx, xlsx, pptx, jpeg, png\")\n        return api.export_pdf_to_format(pdf_url, target_format, output_filename)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef ocr_pdf(pdf_url: str, language: Optional[str] = None, output_type: Optional[str] = None) -> dict:\n    \"\"\"\n    Perform optical character recognition on a PDF to extract text or create a searchable PDF document.\n\n    Args:\n        pdf_url (str): The URL of the source PDF document to be processed with OCR.\n        language (str): [Optional] The language code of the document content for optimized OCR accuracy. Defaults to en-US (English, United States).\n        output_type (str): [Optional] The desired OCR output type. 'searchable_pdf' creates a PDF with embedded text layer; 'text_extraction' extracts raw text content.\n\n    Returns:\n        output_url (str): The presigned URL for downloading the processed file (searchable PDF or text file depending on output_type).\n        extracted_text (str): The raw extracted text content from the PDF. Only present when output_type is set to 'text_extraction'.\n        confidence_score (float): The OCR accuracy confidence score ranging from 0 to 100, indicating the reliability of text recognition.\n    \"\"\"\n    try:\n        if not pdf_url or not isinstance(pdf_url, str):\n            raise ValueError(\"pdf_url must be a non-empty string\")\n        if output_type and output_type not in [\"searchable_pdf\", \"text_extraction\"]:\n            raise ValueError(\"output_type must be one of: searchable_pdf, text_extraction\")\n        return api.ocr_pdf(pdf_url, language, output_type)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef combine_pdfs(pdf_urls: List[str], output_filename: Optional[str] = None) -> dict:\n    \"\"\"\n    Merge multiple PDF documents into a single consolidated PDF file.\n\n    Args:\n        pdf_urls (List[str]): An ordered list of URLs pointing to the PDF documents to be merged. Documents are combined in the order provided.\n        output_filename (str): [Optional] Custom filename for the generated output document. If omitted, a system-generated name is assigned.\n\n    Returns:\n        combined_pdf_url (str): The presigned URL for downloading the merged PDF document.\n        total_pages (int): The total number of pages across all combined source documents.\n        source_count (int): The number of source PDF documents that were merged.\n    \"\"\"\n    try:\n        if not pdf_urls or not isinstance(pdf_urls, list):\n            raise ValueError(\"pdf_urls must be a non-empty list\")\n        if not all(isinstance(url, str) for url in pdf_urls):\n            raise ValueError(\"All items in pdf_urls must be strings\")\n        return api.combine_pdfs(pdf_urls, output_filename)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef protect_pdf(pdf_url: str, password: str, permissions: Optional[dict] = None) -> dict:\n    \"\"\"\n    Apply password protection and configurable permission restrictions to secure a PDF document.\n\n    Args:\n        pdf_url (str): The URL of the source PDF document to be password protected.\n        password (str): The password string used to encrypt and restrict access to the PDF document.\n        permissions (dict): [Optional] Permission settings defining user restrictions for the protected PDF. If omitted, default restrictive permissions apply.\n            Properties:\n                printing (bool): Allow or deny printing of the PDF document.\n                copying (bool): Allow or deny copying text and content from the PDF document.\n                editing (bool): Allow or deny editing and modification of the PDF content.\n                commenting (bool): Allow or deny adding annotations and comments to the PDF document.\n\n    Returns:\n        protected_pdf_url (str): The presigned URL for downloading the password-protected PDF document.\n        encryption_level (str): The encryption standard applied to the PDF (e.g., AES-256).\n        permissions_applied (dict): The complete set of permission restrictions that have been applied to the protected document.\n            Properties:\n                printing (bool): Indicates whether printing is permitted on the protected document.\n                copying (bool): Indicates whether copying content is permitted on the protected document.\n                editing (bool): Indicates whether editing content is permitted on the protected document.\n                commenting (bool): Indicates whether adding comments is permitted on the protected document.\n    \"\"\"\n    try:\n        if not pdf_url or not isinstance(pdf_url, str):\n            raise ValueError(\"pdf_url must be a non-empty string\")\n        if not password or not isinstance(password, str):\n            raise ValueError(\"password must be a non-empty string\")\n        if permissions is not None and not isinstance(permissions, dict):\n            raise ValueError(\"permissions must be a dictionary if provided\")\n        return api.protect_pdf(pdf_url, password, permissions)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-03-05T04:09:29.913363",
+      "revision_number": null
+    },
+    {
+      "version": 1,
+      "code": "\n```python\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass PDFDocument(BaseModel):\n    \"\"\"Represents a generated PDF document.\"\"\"\n    id: str = Field(..., description=\"Unique identifier for the PDF\")\n    url: str = Field(..., description=\"Presigned URL for downloading\")\n    page_count: int = Field(..., ge=0, description=\"Number of pages\")\n    file_size: int = Field(..., ge=0, description=\"Size in bytes\")\n    source_type: str = Field(..., description=\"Source: html, combined, ocr, etc.\")\n    created_at: str = Field(..., description=\"Creation timestamp\")\n\nclass ExportJob(BaseModel):\n    \"\"\"Represents a PDF export operation.\"\"\"\n    id: str = Field(..., description=\"Unique identifier for the export job\")\n    source_pdf_id: str = Field(..., description=\"Source PDF ID\")\n    target_format: str = Field(..., pattern=r\"^(docx|xlsx|pptx|jpeg|png)$\", description=\"Export format\")\n    export_url: str = Field(..., description=\"Presigned URL for exported file\")\n    page_count: int = Field(..., ge=0, description=\"Number of pages\")\n    created_at: str = Field(..., description=\"Creation timestamp\")\n\nclass OCRJob(BaseModel):\n    \"\"\"Represents an OCR operation result.\"\"\"\n    id: str = Field(..., description=\"Unique identifier for the OCR job\")\n    source_pdf_id: str = Field(..., description=\"Source PDF ID\")\n    output_type: str = Field(..., pattern=r\"^(searchable_pdf|text_extraction)$\", description=\"OCR output type\")\n    output_url: str = Field(..., description=\"Presigned URL for output\")\n    extracted_text: Optional[str] = Field(default=None, description=\"Extracted text if applicable\")\n    confidence_score: float = Field(..., ge=0, le=100, description=\"OCR confidence score\")\n    created_at: str = Field(..., description=\"Creation timestamp\")\n\nclass CombinedPDF(BaseModel):\n    \"\"\"Represents a merged PDF document.\"\"\"\n    id: str = Field(..., description=\"Unique identifier for the combined PDF\")\n    url: str = Field(..., description=\"Presigned URL for downloading\")\n    source_pdf_ids: List[str] = Field(..., description=\"List of source PDF IDs\")\n    total_pages: int = Field(..., ge=0, description=\"Total pages\")\n    source_count: int = Field(..., ge=0, description=\"Number of sources\")\n    created_at: str = Field(..., description=\"Creation timestamp\")\n\nclass Permissions(BaseModel):\n    \"\"\"Permission settings for PDF protection.\"\"\"\n    printing: bool = Field(default=False, description=\"Allow printing\")\n    copying: bool = Field(default=False, description=\"Allow copying\")\n    editing: bool = Field(default=False, description=\"Allow editing\")\n    commenting: bool = Field(default=False, description=\"Allow commenting\")\n\nclass ProtectedPDF(BaseModel):\n    \"\"\"Represents a password-protected PDF.\"\"\"\n    id: str = Field(..., description=\"Unique identifier for the protected PDF\")\n    source_pdf_id: str = Field(..., description=\"Source PDF ID\")\n    url: str = Field(..., description=\"Presigned URL for downloading\")\n    encryption_level: str = Field(default=\"AES-256\", description=\"Encryption standard\")\n    permissions: Permissions = Field(..., description=\"Applied permissions\")\n    created_at: str = Field(..., description=\"Creation timestamp\")\n\nclass AdobePDFScenario(BaseModel):\n    \"\"\"Main scenario model for Adobe PDF Services.\"\"\"\n    pdfs: Dict[str, PDFDocument] = Field(default={}, description=\"Generated PDFs\")\n    exports: Dict[str, ExportJob] = Field(default={}, description=\"Export operations\")\n    ocr_jobs: Dict[str, OCRJob] = Field(default={}, description=\"OCR operations\")\n    combined_pdfs: Dict[str, CombinedPDF] = Field(default={}, description=\"Merged PDFs\")\n    protected_pdfs: Dict[str, ProtectedPDF] = Field(default={}, description=\"Protected PDFs\")\n    current_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"Current timestamp ISO 8601\")\n    pdf_counter: int = Field(default=0, ge=0, description=\"Counter for generating unique IDs\")\n    base_url: str = Field(default=\"https://api.adobe.example.com/pdfs\", description=\"Base URL for generating presigned URLs\")\n\nScenario_Schema = [PDFDocument, ExportJob, OCRJob, CombinedPDF, Permissions, ProtectedPDF, AdobePDFScenario]\n\n# Section 2: Class\nclass AdobePDFAPI:\n    def __init__(self):\n        \"\"\"Initialize Adobe PDF API with empty state.\"\"\"\n        self.pdfs: Dict[str, PDFDocument] = {}\n        self.exports: Dict[str, ExportJob] = {}\n        self.ocr_jobs: Dict[str, OCRJob] = {}\n        self.combined_pdfs: Dict[str, CombinedPDF] = {}\n        self.protected_pdfs: Dict[str, ProtectedPDF] = {}\n        self.current_time: str = \"\"\n        self.pdf_counter: int = 0\n        self.base_url: str = \"\"\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"\n        Load scenario data into the API instance.\n        \"\"\"\n        model = AdobePDFScenario(**scenario)\n        self.pdfs = model.pdfs\n        self.exports = model.exports\n        self.ocr_jobs = model.ocr_jobs\n        self.combined_pdfs = model.combined_pdfs\n        self.protected_pdfs = model.protected_pdfs\n        self.current_time = model.current_time\n        self.pdf_counter = model.pdf_counter\n        self.base_url = model.base_url\n\n    def save_scenario(self) -> dict:\n        \"\"\"\n        Save current state as scenario dictionary.\n        \"\"\"\n        return {\n            \"pdfs\": {k: v.model_dump() for k, v in self.pdfs.items()},\n            \"exports\": {k: v.model_dump() for k, v in self.exports.items()},\n            \"ocr_jobs\": {k: v.model_dump() for k, v in self.ocr_jobs.items()},\n            \"combined_pdfs\": {k: v.model_dump() for k, v in self.combined_pdfs.items()},\n            \"protected_pdfs\": {k: v.model_dump() for k, v in self.protected_pdfs.items()},\n            \"current_time\": self.current_time,\n            \"pdf_counter\": self.pdf_counter,\n            \"base_url\": self.base_url\n        }\n\n    def _get_pdf_id_from_url(self, url: str) -> Optional[str]:\n        \"\"\"Extract PDF ID from URL or find by URL.\"\"\"\n        for pdf_id, pdf in self.pdfs.items():\n            if pdf.url == url:\n                return pdf_id\n        return None\n\n    def _generate_id(self) -> str:\n        \"\"\"Generate unique ID for resources.\"\"\"\n        self.pdf_counter += 1\n        timestamp = self.current_time.replace(\"-\", \"\").replace(\":\", \"\").replace(\"T\", \"\")\n        return f\"pdf_{self.pdf_counter}_{timestamp}\"\n\n    def _generate_url(self, resource_type: str, resource_id: str) -> str:\n        \"\"\"Generate presigned URL for resource.\"\"\"\n        return f\"{self.base_url}/{resource_type}/{resource_id}?token=sig{hash(resource_id) % 10000}\"\n\n    def create_pdf_from_html(self, html_content: str, output_filename: Optional[str], page_size: Optional[str]) -> dict:\n        \"\"\"\n        Generate a PDF document from HTML content.\n        \"\"\"\n        pdf_id = self._generate_id()\n        page_count = max(1, len(html_content) // 3000)\n        file_size = len(html_content) * 10\n        \n        url = self._generate_url(\"documents\", pdf_id)\n        if output_filename:\n            url += f\"&filename={output_filename}\"\n            \n        pdf_doc = PDFDocument(\n            id=pdf_id,\n            url=url,\n            page_count=page_count,\n            file_size=file_size,\n            source_type=\"html\",\n            created_at=self.current_time\n        )\n        self.pdfs[pdf_id] = pdf_doc\n        \n        return {\n            \"pdf_url\": url,\n            \"page_count\": page_count,\n            \"file_size\": file_size\n        }\n\n    def export_pdf_to_format(self, pdf_url: str, target_format: str, output_filename: Optional[str]) -> dict:\n        \"\"\"\n        Export a PDF document to alternative formats.\n        \"\"\"\n        pdf_id = self._get_pdf_id_from_url(pdf_url)\n        if not pdf_id or pdf_id not in self.pdfs:\n            raise ValueError(f\"PDF not found for URL: {pdf_url}\")\n            \n        source_pdf = self.pdfs[pdf_id]\n        export_id = self._generate_id()\n        url = self._generate_url(\"exports\", export_id)\n        if output_filename:\n            url += f\"&filename={output_filename}\"\n            \n        export_job = ExportJob(\n            id=export_id,\n            source_pdf_id=pdf_id,\n            target_format=target_format,\n            export_url=url,\n            page_count=source_pdf.page_count,\n            created_at=self.current_time\n        )\n        self.exports[export_id] = export_job\n        \n        return {\n            \"export_url\": url,\n            \"format\": target_format,\n            \"page_count\": source_pdf.page_count\n        }\n\n    def ocr_pdf(self, pdf_url: str, language: Optional[str], output_type: Optional[str]) -> dict:\n        \"\"\"\n        Perform optical character recognition on a PDF.\n        \"\"\"\n        pdf_id = self._get_pdf_id_from_url(pdf_url)\n        if not pdf_id or pdf_id not in self.pdfs:\n            raise ValueError(f\"PDF not found for URL: {pdf_url}\")\n            \n        source_pdf = self.pdfs[pdf_id]\n        ocr_id = self._generate_id()\n        \n        lang = language if language else \"en-US\"\n        out_type = output_type if output_type else \"searchable_pdf\"\n        \n        url = self._generate_url(\"ocr\", ocr_id)\n        confidence = 95.0 if lang == \"en-US\" else 85.0\n        \n        extracted_text = None\n        if out_type == \"text_extraction\":\n            extracted_text = f\"Extracted text from {source_pdf.page_count} pages. \" * 20\n            \n        ocr_job = OCRJob(\n            id=ocr_id,\n            source_pdf_id=pdf_id,\n            output_type=out_type,\n            output_url=url,\n            extracted_text=extracted_text,\n            confidence_score=confidence,\n            created_at=self.current_time\n        )\n        self.ocr_jobs[ocr_id] = ocr_job\n        \n        result = {\n            \"output_url\": url,\n            \"confidence_score\": confidence\n        }\n        if extracted_text is not None:\n            result[\"extracted_text\"] = extracted_text\n            \n        return result\n\n    def combine_pdfs(self, pdf_urls: List[str], output_filename: Optional[str]) -> dict:\n        \"\"\"\n        Merge multiple PDF documents into a single consolidated PDF file.\n        \"\"\"\n        source_ids = []\n        total_pages = 0\n        \n        for url in pdf_urls:\n            pdf_id = self._get_pdf_id_from_url(url)\n            if not pdf_id or pdf_id not in self.pdfs:\n                raise ValueError(f\"PDF not found for URL: {url}\")\n            source_ids.append(pdf_id)\n            total_pages += self.pdfs[pdf_id].page_count\n            \n        combined_id = self._generate_id()\n        url = self._generate_url(\"combined\", combined_id)\n        if output_filename:\n            url += f\"&filename={output_filename}\"\n            \n        combined = CombinedPDF(\n            id=combined_id,\n            url=url,\n            source_pdf_ids=source_ids,\n            total_pages=total_pages,\n            source_count=len(source_ids),\n            created_at=self.current_time\n        )\n        self.combined_pdfs[combined_id] = combined\n        \n        return {\n            \"combined_pdf_url\": url,\n            \"total_pages\": total_pages,\n            \"source_count\": len(source_ids)\n        }\n\n    def protect_pdf(self, pdf_url: str, password: str, permissions: Optional[dict]) -> dict:\n        \"\"\"\n        Apply password protection and permission restrictions to a PDF document.\n        \"\"\"\n        pdf_id = self._get_pdf_id_from_url(pdf_url)\n        if not pdf_id or pdf_id not in self.pdfs:\n            raise ValueError(f\"PDF not found for URL: {pdf_url}\")\n            \n        perms = {\n            \"printing\": False,\n            \"copying\": False,\n            \"editing\": False,\n            \"commenting\": False\n        }\n        \n        if permissions:\n            perms.update(permissions)\n            \n        protected_id = self._generate_id()\n        url = self._generate_url(\"protected\", protected_id)\n        \n        protected = ProtectedPDF(\n            id=protected_id,\n            source_pdf_id=pdf_id,\n            url=url,\n            encryption_level=\"AES-256\",\n            permissions=Permissions(**perms),\n            created_at=self.current_time\n        )\n        self.protected_pdfs[protected_id] = protected\n        \n        return {\n            \"protected_pdf_url\": url,\n            \"encryption_level\": \"AES-256\",\n            \"permissions_applied\": perms\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"AdobePDFServices\")\napi = AdobePDFAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Adobe PDF Services API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching AdobePDFScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Adobe PDF Services state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef create_pdf_from_html(html_content: str, output_filename: Optional[str] = None, page_size: Optional[str] = None) -> dict:\n    \"\"\"\n    Generate a PDF document from HTML content with configurable page dimensions.\n\n    Args:\n        html_content (str): The HTML content string to be rendered and converted into a PDF document.\n        output_filename (str): [Optional] Custom filename for the generated output document. If omitted, a system-generated name is assigned.\n        page_size (str): [Optional] The page size specification for the output PDF. Supported values: A4, Letter, Legal.\n\n    Returns:\n        pdf_url (str): The presigned URL for downloading the generated PDF document.\n        page_count (int): The total number of pages in the generated PDF document.\n        file_size (int): The size of the generated PDF file in bytes.\n    \"\"\"\n    try:\n        if not html_content or not isinstance(html_content, str):\n            raise ValueError(\"html_content must be a non-empty string\")\n        if page_size and page_size not in [\"A4\", \"Letter\", \"Legal\"]:\n            raise ValueError(\"page_size must be one of: A4, Letter, Legal\")\n        return api.create_pdf_from_html(html_content, output_filename, page_size)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef export_pdf_to_format(pdf_url: str, target_format: str, output_filename: Optional[str] = None) -> dict:\n    \"\"\"\n    Export a PDF document to alternative formats including Microsoft Office formats (Word, Excel, PowerPoint) or image files (JPEG, PNG).\n\n    Args:\n        pdf_url (str): The URL of the source PDF document to be converted to another format.\n        target_format (str): The target export format. Supported formats: docx (Word), xlsx (Excel), pptx (PowerPoint), jpeg, png.\n        output_filename (str): [Optional] Custom filename for the generated output document. If omitted, a system-generated name is assigned.\n\n    Returns:\n        export_url (str): The presigned URL for downloading the exported file in the target format.\n        format (str): The format of the exported file, matching the requested target_format.\n        page_count (int): The total number of pages in the exported document.\n    \"\"\"\n    try:\n        if not pdf_url or not isinstance(pdf_url, str):\n            raise ValueError(\"pdf_url must be a non-empty string\")\n        if not target_format or not isinstance(target_format, str):\n            raise ValueError(\"target_format must be a non-empty string\")\n        if target_format not in [\"docx\", \"xlsx\", \"pptx\", \"jpeg\", \"png\"]:\n            raise ValueError(\"target_format must be one of: docx, xlsx, pptx, jpeg, png\")\n        return api.export_pdf_to_format(pdf_url, target_format, output_filename)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef ocr_pdf(pdf_url: str, language: Optional[str] = None, output_type: Optional[str] = None) -> dict:\n    \"\"\"\n    Perform optical character recognition on a PDF to extract text or create a searchable PDF document.\n\n    Args:\n        pdf_url (str): The URL of the source PDF document to be processed with OCR.\n        language (str): [Optional] The language code of the document content for optimized OCR accuracy. Defaults to en-US (English, United States).\n        output_type (str): [Optional] The desired OCR output type. 'searchable_pdf' creates a PDF with embedded text layer; 'text_extraction' extracts raw text content.\n\n    Returns:\n        output_url (str): The presigned URL for downloading the processed file (searchable PDF or text file depending on output_type).\n        extracted_text (str): The raw extracted text content from the PDF. Only present when output_type is set to 'text_extraction'.\n        confidence_score (float): The OCR accuracy confidence score ranging from 0 to 100, indicating the reliability of text recognition.\n    \"\"\"\n    try:\n        if not pdf_url or not isinstance(pdf_url, str):\n            raise ValueError(\"pdf_url must be a non-empty string\")\n        if output_type and output_type not in [\"searchable_pdf\", \"text_extraction\"]:\n            raise ValueError(\"output_type must be one of: searchable_pdf, text_extraction\")\n        return api.ocr_pdf(pdf_url, language, output_type)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef combine_pdfs(pdf_urls: List[str], output_filename: Optional[str] = None) -> dict:\n    \"\"\"\n    Merge multiple PDF documents into a single consolidated PDF file.\n\n    Args:\n        pdf_urls (List[str]): An ordered list of URLs pointing to the PDF documents to be merged. Documents are combined in the order provided.\n        output_filename (str): [Optional] Custom filename for the generated output document. If omitted, a system-generated name is assigned.\n\n    Returns:\n        combined_pdf_url (str): The presigned URL for downloading the merged PDF document.\n        total_pages (int): The total number of pages across all combined source documents.\n        source_count (int): The number of source PDF documents that were merged.\n    \"\"\"\n    try:\n        if not pdf_urls or not isinstance(pdf_urls, list):\n            raise ValueError(\"pdf_urls must be a non-empty list\")\n        if not all(isinstance(url, str) for url in pdf_urls):\n            raise ValueError(\"All items in pdf_urls must be strings\")\n        return api.combine_pdfs(pdf_urls, output_filename)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef protect_pdf(pdf_url: str, password: str, permissions: Optional[dict] = None) -> dict:\n    \"\"\"\n    Apply password protection and configurable permission restrictions to secure a PDF document.\n\n    Args:\n        pdf_url (str): The URL of the source PDF document to be password protected.\n        password (str): The password string used to encrypt and restrict access to the PDF document.\n        permissions (dict): [Optional] Permission settings defining user restrictions for the protected PDF. If omitted, default restrictive permissions apply.\n            Properties:\n                printing (bool): Allow or deny printing of the PDF document.\n                copying (bool): Allow or deny copying text and content from the PDF document.\n                editing (bool): Allow or deny editing and modification of the PDF content.\n                commenting (bool): Allow or deny adding annotations and comments to the PDF document.\n\n    Returns:\n        protected_pdf_url (str): The presigned URL for downloading the password-protected PDF document.\n        encryption_level (str): The encryption standard applied to the PDF (e.g., AES-256).\n        permissions_applied (dict): The complete set of permission restrictions that have been applied to the protected document.\n            Properties:\n                printing (bool): Indicates whether printing is permitted on the protected document.\n                copying (bool): Indicates whether copying content is permitted on the protected document.\n                editing (bool): Indicates whether editing content is permitted on the protected document.\n                commenting (bool): Indicates whether adding comments is permitted on the protected document.\n    \"\"\"\n    try:\n        if not pdf_url or not isinstance(pdf_url, str):\n            raise ValueError(\"pdf_url must be a non-empty string\")\n        if not password or not isinstance(password, str):\n            raise ValueError(\"password must be a non-empty string\")\n        if permissions is not None and not isinstance(permissions, dict):\n            raise ValueError(\"permissions must be a dictionary if provided\")\n        return api.protect_pdf(pdf_url, password, permissions)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n```\n",
+      "timestamp": "2026-03-05T04:09:29.913363",
+      "revision_number": 2
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with single PDF generation from HTML and export to DOCX format",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "pdfs": {
+          "pdf_001": {
+            "id": "pdf_001",
+            "url": "https://api.adobe.example.com/pdfs/pdf_001",
+            "page_count": 3,
+            "file_size": 102400,
+            "source_type": "html",
+            "created_at": "2024-01-15T10:30:00"
+          }
+        },
+        "exports": {
+          "exp_001": {
+            "id": "exp_001",
+            "source_pdf_id": "pdf_001",
+            "target_format": "docx",
+            "export_url": "https://api.adobe.example.com/pdfs/exp_001",
+            "page_count": 3,
+            "created_at": "2024-01-15T10:35:00"
+          }
+        },
+        "ocr_jobs": {},
+        "combined_pdfs": {},
+        "protected_pdfs": {},
+        "current_time": "2024-01-15T10:30:00",
+        "pdf_counter": 1,
+        "base_url": "https://api.adobe.example.com/pdfs"
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple PDF operations including OCR text extraction, multi-format exports, and password-protected document with selective permissions",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "pdfs": {
+          "pdf_001": {
+            "id": "pdf_001",
+            "url": "https://api.adobe.example.com/pdfs/pdf_001",
+            "page_count": 5,
+            "file_size": 204800,
+            "source_type": "html",
+            "created_at": "2024-01-15T09:00:00"
+          },
+          "pdf_002": {
+            "id": "pdf_002",
+            "url": "https://api.adobe.example.com/pdfs/pdf_002",
+            "page_count": 10,
+            "file_size": 512000,
+            "source_type": "ocr",
+            "created_at": "2024-01-15T09:15:00"
+          }
+        },
+        "exports": {
+          "exp_001": {
+            "id": "exp_001",
+            "source_pdf_id": "pdf_001",
+            "target_format": "xlsx",
+            "export_url": "https://api.adobe.example.com/pdfs/exp_001",
+            "page_count": 5,
+            "created_at": "2024-01-15T09:30:00"
+          },
+          "exp_002": {
+            "id": "exp_002",
+            "source_pdf_id": "pdf_002",
+            "target_format": "jpeg",
+            "export_url": "https://api.adobe.example.com/pdfs/exp_002",
+            "page_count": 10,
+            "created_at": "2024-01-15T09:45:00"
+          }
+        },
+        "ocr_jobs": {
+          "ocr_001": {
+            "id": "ocr_001",
+            "source_pdf_id": "pdf_002",
+            "output_type": "searchable_pdf",
+            "output_url": "https://api.adobe.example.com/pdfs/ocr_001",
+            "extracted_text": "Sample extracted text content from scanned document",
+            "confidence_score": 95.5,
+            "created_at": "2024-01-15T10:00:00"
+          }
+        },
+        "combined_pdfs": {},
+        "protected_pdfs": {
+          "prot_001": {
+            "id": "prot_001",
+            "source_pdf_id": "pdf_001",
+            "url": "https://api.adobe.example.com/pdfs/prot_001",
+            "encryption_level": "AES-256",
+            "permissions": {
+              "printing": true,
+              "copying": false,
+              "editing": false,
+              "commenting": true
+            },
+            "created_at": "2024-01-15T10:15:00"
+          }
+        },
+        "current_time": "2024-01-15T10:00:00",
+        "pdf_counter": 5,
+        "base_url": "https://api.adobe.example.com/pdfs"
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Complex workflow with multiple PDFs, various export formats, OCR operations with different output types, merged documents, and protected files with full permission matrices",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "pdfs": {
+          "pdf_001": {
+            "id": "pdf_001",
+            "url": "https://api.adobe.example.com/pdfs/pdf_001",
+            "page_count": 2,
+            "file_size": 153600,
+            "source_type": "html",
+            "created_at": "2024-01-15T08:00:00"
+          },
+          "pdf_002": {
+            "id": "pdf_002",
+            "url": "https://api.adobe.example.com/pdfs/pdf_002",
+            "page_count": 8,
+            "file_size": 409600,
+            "source_type": "combined",
+            "created_at": "2024-01-15T08:30:00"
+          },
+          "pdf_003": {
+            "id": "pdf_003",
+            "url": "https://api.adobe.example.com/pdfs/pdf_003",
+            "page_count": 15,
+            "file_size": 1024000,
+            "source_type": "ocr",
+            "created_at": "2024-01-15T09:00:00"
+          },
+          "pdf_004": {
+            "id": "pdf_004",
+            "url": "https://api.adobe.example.com/pdfs/pdf_004",
+            "page_count": 1,
+            "file_size": 51200,
+            "source_type": "html",
+            "created_at": "2024-01-15T09:30:00"
+          }
+        },
+        "exports": {
+          "exp_001": {
+            "id": "exp_001",
+            "source_pdf_id": "pdf_001",
+            "target_format": "docx",
+            "export_url": "https://api.adobe.example.com/pdfs/exp_001",
+            "page_count": 2,
+            "created_at": "2024-01-15T10:00:00"
+          },
+          "exp_002": {
+            "id": "exp_002",
+            "source_pdf_id": "pdf_003",
+            "target_format": "pptx",
+            "export_url": "https://api.adobe.example.com/pdfs/exp_002",
+            "page_count": 15,
+            "created_at": "2024-01-15T10:15:00"
+          },
+          "exp_003": {
+            "id": "exp_003",
+            "source_pdf_id": "pdf_004",
+            "target_format": "png",
+            "export_url": "https://api.adobe.example.com/pdfs/exp_003",
+            "page_count": 1,
+            "created_at": "2024-01-15T10:30:00"
+          }
+        },
+        "ocr_jobs": {
+          "ocr_001": {
+            "id": "ocr_001",
+            "source_pdf_id": "pdf_003",
+            "output_type": "text_extraction",
+            "output_url": "https://api.adobe.example.com/pdfs/ocr_001",
+            "extracted_text": "Full text extraction from document with multiple pages containing technical specifications and requirements.",
+            "confidence_score": 98.2,
+            "created_at": "2024-01-15T11:00:00"
+          },
+          "ocr_002": {
+            "id": "ocr_002",
+            "source_pdf_id": "pdf_002",
+            "output_type": "searchable_pdf",
+            "output_url": "https://api.adobe.example.com/pdfs/ocr_002",
+            "extracted_text": null,
+            "confidence_score": 87.3,
+            "created_at": "2024-01-15T11:15:00"
+          }
+        },
+        "combined_pdfs": {
+          "comb_001": {
+            "id": "comb_001",
+            "url": "https://api.adobe.example.com/pdfs/comb_001",
+            "source_pdf_ids": [
+              "pdf_001",
+              "pdf_004"
+            ],
+            "total_pages": 3,
+            "source_count": 2,
+            "created_at": "2024-01-15T11:30:00"
+          }
+        },
+        "protected_pdfs": {
+          "prot_001": {
+            "id": "prot_001",
+            "source_pdf_id": "pdf_002",
+            "url": "https://api.adobe.example.com/pdfs/prot_001",
+            "encryption_level": "AES-256",
+            "permissions": {
+              "printing": true,
+              "copying": true,
+              "editing": true,
+              "commenting": true
+            },
+            "created_at": "2024-01-15T12:00:00"
+          },
+          "prot_002": {
+            "id": "prot_002",
+            "source_pdf_id": "pdf_003",
+            "url": "https://api.adobe.example.com/pdfs/prot_002",
+            "encryption_level": "AES-256",
+            "permissions": {
+              "printing": false,
+              "copying": false,
+              "editing": false,
+              "commenting": false
+            },
+            "created_at": "2024-01-15T12:15:00"
+          }
+        },
+        "current_time": "2024-01-15T12:00:00",
+        "pdf_counter": 10,
+        "base_url": "https://api.adobe.example.com/pdfs"
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Test validation error handling with invalid export format and invalid OCR output type patterns",
+      "expected_behavior": "validation_error",
+      "scenario_data": {
+        "pdfs": {
+          "pdf_001": {
+            "id": "pdf_001",
+            "url": "https://api.adobe.example.com/pdfs/pdf_001",
+            "page_count": 0,
+            "file_size": 0,
+            "source_type": "html",
+            "created_at": "2024-01-15T10:00:00"
+          }
+        },
+        "exports": {
+          "exp_001": {
+            "id": "exp_001",
+            "source_pdf_id": "pdf_001",
+            "target_format": "invalid_format",
+            "export_url": "https://api.adobe.example.com/pdfs/exp_001",
+            "page_count": 0,
+            "created_at": "2024-01-15T10:00:00"
+          }
+        },
+        "ocr_jobs": {
+          "ocr_001": {
+            "id": "ocr_001",
+            "source_pdf_id": "pdf_001",
+            "output_type": "invalid_type",
+            "output_url": "https://api.adobe.example.com/pdfs/ocr_001",
+            "confidence_score": 100.0,
+            "created_at": "2024-01-15T10:00:00"
+          }
+        },
+        "combined_pdfs": {},
+        "protected_pdfs": {},
+        "current_time": "2024-01-15T10:00:00",
+        "pdf_counter": 0,
+        "base_url": "https://api.adobe.example.com/pdfs"
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 2,
+      "failed_scenarios": 2,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "create_pdf_from_html",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "export_pdf_to_format",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ocr_pdf",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "combine_pdfs",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "protect_pdf",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "Duplicate tag found: 'html'. Tags must be unique.",
+              "expected_vs_actual": "",
+              "root_cause": "Duplicate tag found: 'html'. Tags must be unique."
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "Duplicate tag found: 'html'. Tags must be unique.",
+              "expected_vs_actual": "",
+              "root_cause": "Duplicate tag found: 'html'. Tags must be unique."
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "2 validation errors for AdobePDFScenario\nexports.exp_001.target_format\n  String should match pattern '^(docx|xlsx|pptx|jpeg|png)$' [type=string_pattern_mismatch, input_value='invalid_format', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_pattern_mismatch\nocr_jobs.ocr_001.output_type\n  String should match pattern '^(searchable_pdf|text_extraction)$' [type=string_pattern_mismatch, input_value='invalid_type', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_pattern_mismatch"
+            },
+            "tool_execution": [
+              {
+                "tool_name": "create_pdf_from_html",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "export_pdf_to_format",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ocr_pdf",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "combine_pdfs",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "protect_pdf",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": false,
+              "consistency_check": false,
+              "error": "Skipped due to load_scenario failure"
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 3,
+      "failed_scenarios": 1,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "create_pdf_from_html",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "export_pdf_to_format",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ocr_pdf",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "combine_pdfs",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "protect_pdf",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "Duplicate tag found: 'html'. Tags must be unique.",
+              "expected_vs_actual": "",
+              "root_cause": "Duplicate tag found: 'html'. Tags must be unique."
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "create_pdf_from_html",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "export_pdf_to_format",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ocr_pdf",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "combine_pdfs",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "protect_pdf",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "type": "Validation error",
+              "location": "load_scenario",
+              "details": "Invalid target_format 'invalid_format' in export exp_001. Must be one of: docx, xlsx, pptx, jpeg, png",
+              "expected_vs_actual": "Expected validation error due to invalid format, actual behavior matches expectation",
+              "root_cause": "The scenario contains invalid target_format 'invalid_format' in the exports section, which is correctly rejected by the validation logic",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "Validation error: Invalid target_format 'invalid_format' in export exp_001. Must be one of: docx, xlsx, pptx, jpeg, png"
+            },
+            "tool_execution": [],
+            "save_scenario": {
+              "success": false,
+              "consistency_check": false,
+              "error": "Skipped due to load_scenario failure"
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_002",
+        "scenario_003"
+      ],
+      "aggregated_errors": {
+        "total_failed": 2,
+        "scenario_ids": [
+          "scenario_002",
+          "scenario_003"
+        ],
+        "error_categories": {
+          "critical": [],
+          "high": [],
+          "medium": [],
+          "low": [
+            {
+              "scenario_id": "scenario_002",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "Duplicate tag found: 'html'. Tags must be unique.",
+              "root_cause": "Duplicate tag found: 'html'. Tags must be unique.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "Duplicate tag found: 'html'. Tags must be unique.",
+              "root_cause": "Duplicate tag found: 'html'. Tags must be unique.",
+              "expected_error": false
+            }
+          ]
+        },
+        "error_patterns": [
+          {
+            "type": "Validation Error",
+            "location": "validate_scenario",
+            "count": 2,
+            "scenario_ids": [
+              "scenario_002",
+              "scenario_003"
+            ]
+          }
+        ],
+        "severity_summary": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 2
+        }
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 2,
+        "failed_scenarios": 2,
+        "all_passed": false,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Tool execution error",
+                "location": "load_scenario",
+                "details": "load_scenario() missing 1 required positional argument: 'scenario'",
+                "expected_vs_actual": "Expected successful scenario loading, but got missing argument error",
+                "root_cause": "The tool execution framework is not properly passing the scenario argument to the load_scenario function",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": false,
+                "error": "Error in processing tool 'AdobePDFServices-load_scenario': Exception while executing tool: load_scenario() missing 1 required positional argument: 'scenario'"
+              },
+              "tool_execution": [],
+              "save_scenario": {
+                "success": false,
+                "consistency_check": false,
+                "error": "Skipped due to load_scenario failure"
+              }
+            },
+            "complexity_level": "simple",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "create_pdf_from_html",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "export_pdf_to_format",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "ocr_pdf",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "combine_pdfs",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "protect_pdf",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "medium",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "Duplicate tag found: 'execute_mcp_tool'. Tags must be unique.",
+                "expected_vs_actual": "",
+                "root_cause": "Duplicate tag found: 'execute_mcp_tool'. Tags must be unique."
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "complex",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": false,
+                "error": "2 validation errors for AdobePDFScenario\nexports.exp_001.target_format\n  String should match pattern '^(docx|xlsx|pptx|jpeg|png)$' [type=string_pattern_mismatch, input_value='invalid_format', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_pattern_mismatch\nocr_jobs.ocr_001.output_type\n  String should match pattern '^(searchable_pdf|text_extraction)$' [type=string_pattern_mismatch, input_value='invalid_type', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_pattern_mismatch"
+              },
+              "tool_execution": [],
+              "save_scenario": {
+                "success": false,
+                "consistency_check": false,
+                "error": "Skipped due to load_scenario validation failure - this was expected behavior"
+              }
+            },
+            "complexity_level": "boundary",
+            "execution_time": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "revision_number": 2,
+      "failed_scenario_ids": [
+        "scenario_001",
+        "scenario_003"
+      ],
+      "aggregated_errors": {
+        "total_failed": 2,
+        "scenario_ids": [
+          "scenario_001",
+          "scenario_003"
+        ],
+        "error_categories": {
+          "critical": [],
+          "high": [],
+          "medium": [],
+          "low": [
+            {
+              "scenario_id": "scenario_001",
+              "type": "Tool execution error",
+              "location": "load_scenario",
+              "details": "load_scenario() missing 1 required positional argument: 'scenario'",
+              "root_cause": "The tool execution framework is not properly passing the scenario argument to the load_scenario function",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "Duplicate tag found: 'execute_mcp_tool'. Tags must be unique.",
+              "root_cause": "Duplicate tag found: 'execute_mcp_tool'. Tags must be unique.",
+              "expected_error": false
+            }
+          ]
+        },
+        "error_patterns": [
+          {
+            "type": "Tool execution error",
+            "location": "load_scenario",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_001"
+            ]
+          },
+          {
+            "type": "Validation Error",
+            "location": "validate_scenario",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_003"
+            ]
+          }
+        ],
+        "severity_summary": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 2
+        }
+      },
+      "revised_code_version": 2,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 3,
+        "failed_scenarios": 1,
+        "all_passed": false,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "create_pdf_from_html",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "export_pdf_to_format",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "ocr_pdf",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "combine_pdfs",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "protect_pdf",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "simple",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "Duplicate tag found: 'html'. Tags must be unique.",
+                "expected_vs_actual": "",
+                "root_cause": "Duplicate tag found: 'html'. Tags must be unique."
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "medium",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "create_pdf_from_html",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "export_pdf_to_format",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "ocr_pdf",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "combine_pdfs",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "protect_pdf",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "complex",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": true,
+            "errors": [
+              {
+                "type": "Validation error",
+                "location": "load_scenario",
+                "details": "Invalid target_format 'invalid_format' in export exp_001. Must be one of: docx, xlsx, pptx, jpeg, png",
+                "expected_vs_actual": "Expected validation error due to invalid format, actual behavior matches expectation",
+                "root_cause": "The scenario contains invalid target_format 'invalid_format' in the exports section, which is correctly rejected by the validation logic",
+                "expected_error": true
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": false,
+                "error": "Validation error: Invalid target_format 'invalid_format' in export exp_001. Must be one of: docx, xlsx, pptx, jpeg, png"
+              },
+              "tool_execution": [],
+              "save_scenario": {
+                "success": false,
+                "consistency_check": false,
+                "error": "Skipped due to load_scenario failure"
+              }
+            },
+            "complexity_level": "boundary",
+            "execution_time": 0.0
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 2,
+    "total_time": 0.0,
+    "success": false,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/AdobePDFServices.py"
+  }
+}

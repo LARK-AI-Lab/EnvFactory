@@ -1,0 +1,365 @@
+{
+  "class_name": "NationalParks",
+  "description": "Access U.S. National Park Service data: search parks, retrieve detailed park information, alerts, campgrounds, and visitor centers.",
+  "tools": [
+    {
+      "name": "findParks",
+      "description": "Search for parks by state code, text query, or supported activities.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "stateCode": {
+            "type": "string",
+            "description": "Comma-separated two-letter state codes to filter parks (e.g., 'CA,UT')."
+          },
+          "q": {
+            "type": "string",
+            "description": "Search term that matches park names or descriptions."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of parks to return (default 10)."
+          },
+          "start": {
+            "type": "integer",
+            "description": "Result offset for pagination (default 0)."
+          },
+          "activities": {
+            "type": "string",
+            "description": "Comma-separated activity names or IDs to filter parks offering those activities."
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "description": "Total number of parks matching the query."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Limit used for this response."
+          },
+          "start": {
+            "type": "integer",
+            "description": "Start offset used for this response."
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "parkCode": {
+                  "type": "string",
+                  "description": "Unique park identifier used across all NPS APIs."
+                },
+                "fullName": {
+                  "type": "string",
+                  "description": "Complete official name of the park."
+                },
+                "states": {
+                  "type": "string",
+                  "description": "Comma-separated state codes where the park is located."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Short narrative overview of the park."
+                },
+                "activities": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Activity object with name and ID."
+                  },
+                  "description": "List of activities available in the park."
+                }
+              }
+            },
+            "description": "List of parks matching the search criteria."
+          }
+        }
+      }
+    },
+    {
+      "name": "getParkDetails",
+      "description": "Retrieve comprehensive details for a specific park.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "parkCode": {
+            "type": "string",
+            "description": "The unique park identifier (e.g., 'yose', 'grca')."
+          }
+        },
+        "required": [
+          "parkCode"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "parkCode": {
+            "type": "string",
+            "description": "Unique park identifier used across all NPS APIs."
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Complete official name of the park."
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed narrative overview of the park."
+          },
+          "directionsInfo": {
+            "type": "string",
+            "description": "Human-readable driving directions summary."
+          },
+          "operatingHours": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Seasonal or daily operating hours for park facilities."
+          },
+          "entranceFees": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "List of entrance fee structures and cost details."
+          },
+          "contacts": {
+            "type": "object",
+            "description": "Contact information including phone numbers and email addresses."
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Physical and mailing addresses for the park."
+          }
+        }
+      }
+    },
+    {
+      "name": "getAlerts",
+      "description": "Fetch current alerts such as closures, hazards, or notices for parks.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "parkCode": {
+            "type": "string",
+            "description": "Comma-separated park codes to filter alerts (e.g., 'yose,grca')."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of alerts to return (default 10)."
+          },
+          "start": {
+            "type": "integer",
+            "description": "Result offset for pagination (default 0)."
+          },
+          "q": {
+            "type": "string",
+            "description": "Search term that matches alert titles or descriptions."
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "description": "Total number of alerts matching the query."
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for the alert."
+                },
+                "parkCode": {
+                  "type": "string",
+                  "description": "Unique park identifier used across all NPS APIs."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "Short headline summarizing the alert."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Detailed explanation of the alert."
+                },
+                "category": {
+                  "type": "string",
+                  "description": "Alert category such as 'Park Closure' or 'Caution'."
+                },
+                "lastIndexedDate": {
+                  "type": "string",
+                  "description": "ISO 8601 timestamp when the alert was last updated."
+                }
+              }
+            },
+            "description": "List of alerts matching the query."
+          }
+        }
+      }
+    },
+    {
+      "name": "getCampgrounds",
+      "description": "Retrieve campground listings and details for parks.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "parkCode": {
+            "type": "string",
+            "description": "Comma-separated park codes to filter campgrounds (e.g., 'yose,grca')."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of campgrounds to return (default 10)."
+          },
+          "start": {
+            "type": "integer",
+            "description": "Result offset for pagination (default 0)."
+          },
+          "q": {
+            "type": "string",
+            "description": "Search term that matches campground names or descriptions."
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "description": "Total number of campgrounds matching the query."
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for the campground."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Official name of the campground."
+                },
+                "parkCode": {
+                  "type": "string",
+                  "description": "Unique park identifier used across all NPS APIs."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Narrative overview of the campground."
+                },
+                "amenities": {
+                  "type": "object",
+                  "description": "Keyed list of available amenities (restrooms, showers, etc.)."
+                },
+                "fees": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  },
+                  "description": "Pricing details for camping fees."
+                },
+                "reservationUrl": {
+                  "type": "string",
+                  "description": "Direct URL to reserve a campsite."
+                }
+              }
+            },
+            "description": "List of campgrounds matching the query."
+          }
+        }
+      }
+    },
+    {
+      "name": "getVisitorCenters",
+      "description": "Obtain visitor center information including hours and contact details.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "parkCode": {
+            "type": "string",
+            "description": "Comma-separated park codes to filter visitor centers (e.g., 'yose,grca')."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of visitor centers to return (default 10)."
+          },
+          "start": {
+            "type": "integer",
+            "description": "Result offset for pagination (default 0)."
+          },
+          "q": {
+            "type": "string",
+            "description": "Search term that matches visitor center names or descriptions."
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "description": "Total number of visitor centers matching the query."
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for the visitor center."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Official name of the visitor center."
+                },
+                "parkCode": {
+                  "type": "string",
+                  "description": "Unique park identifier used across all NPS APIs."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Overview of services and exhibits offered."
+                },
+                "operatingHours": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  },
+                  "description": "Daily or seasonal operating hours."
+                },
+                "contacts": {
+                  "type": "object",
+                  "description": "Phone numbers and email addresses for the visitor center."
+                },
+                "addresses": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  },
+                  "description": "Physical location and mailing addresses."
+                }
+              }
+            },
+            "description": "List of visitor centers matching the query."
+          }
+        }
+      }
+    }
+  ]
+}

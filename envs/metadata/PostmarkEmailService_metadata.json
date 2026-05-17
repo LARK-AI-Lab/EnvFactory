@@ -1,0 +1,460 @@
+{
+  "class_name": "PostmarkEmailService",
+  "description": "Email delivery and tracking service for sending transactional emails, monitoring delivery status, and analyzing engagement metrics through the Postmark API.",
+  "tools": [
+    {
+      "name": "send_email",
+      "description": "Send a single transactional email to a recipient with optional tracking and categorization.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "to_email": {
+            "type": "string",
+            "description": "The recipient's email address where the message will be delivered."
+          },
+          "subject": {
+            "type": "string",
+            "description": "The subject line that appears in the recipient's inbox."
+          },
+          "text_body": {
+            "type": "string",
+            "description": "Plain text version of the email content for clients that don't support HTML."
+          },
+          "html_body": {
+            "type": "string",
+            "description": "HTML-formatted version of the email content for rich formatting and styling."
+          },
+          "from_email": {
+            "type": "string",
+            "description": "The sender's email address that appears in the From field."
+          },
+          "tag": {
+            "type": "string",
+            "description": "A label for categorizing and filtering emails in reports and analytics."
+          },
+          "track_opens": {
+            "type": "boolean",
+            "description": "Whether to track when recipients open the email (default: true)."
+          },
+          "track_links": {
+            "type": "string",
+            "description": "Link click tracking mode: HtmlAndText (both formats), HtmlOnly, TextOnly, or None (default: HtmlAndText)."
+          }
+        },
+        "required": [
+          "to_email",
+          "subject"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "To": {
+            "type": "string",
+            "description": "The recipient's email address that received the message."
+          },
+          "SubmittedAt": {
+            "type": "string",
+            "description": "ISO 8601 timestamp indicating when the email was submitted to Postmark for delivery."
+          },
+          "MessageID": {
+            "type": "string",
+            "description": "Unique identifier assigned to this email message for tracking and reference."
+          },
+          "ErrorCode": {
+            "type": "integer",
+            "description": "Numeric error code (0 indicates success, non-zero indicates failure)."
+          },
+          "Message": {
+            "type": "string",
+            "description": "Status message indicating success (OK) or describing the error that occurred."
+          }
+        }
+      }
+    },
+    {
+      "name": "send_email_batch",
+      "description": "Send multiple transactional emails in a single API request for improved efficiency (maximum 500 messages per batch).",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "description": "Collection of email message objects, each containing To, Subject, TextBody, HtmlBody, From, and Tag fields.",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "messages"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "description": "Delivery results for each email in the batch, maintaining the same order as the input.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "To": {
+                  "type": "string",
+                  "description": "The recipient's email address that received the message."
+                },
+                "SubmittedAt": {
+                  "type": "string",
+                  "description": "ISO 8601 timestamp indicating when the email was submitted to Postmark for delivery."
+                },
+                "MessageID": {
+                  "type": "string",
+                  "description": "Unique identifier assigned to this email message for tracking and reference."
+                },
+                "ErrorCode": {
+                  "type": "integer",
+                  "description": "Numeric error code (0 indicates success, non-zero indicates failure)."
+                },
+                "Message": {
+                  "type": "string",
+                  "description": "Status message indicating success (OK) or describing the error that occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_bounces",
+      "description": "Retrieve detailed information about emails that failed to deliver due to hard bounces, soft bounces, or other delivery issues.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Maximum number of bounce records to return in the response (default: 100)."
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Number of bounce records to skip for pagination (default: 0)."
+          },
+          "inactive": {
+            "type": "boolean",
+            "description": "Filter bounces by active status (true for inactive bounces, false for active, null for all)."
+          },
+          "email_filter": {
+            "type": "string",
+            "description": "Filter bounces by a specific recipient email address."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "total_count": {
+            "type": "integer",
+            "description": "Total number of bounce records matching the filter criteria."
+          },
+          "bounces": {
+            "type": "array",
+            "description": "Collection of bounce records containing delivery failure details.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ID": {
+                  "type": "integer",
+                  "description": "Unique numeric identifier for this bounce record."
+                },
+                "Type": {
+                  "type": "string",
+                  "description": "Classification of the bounce (HardBounce for permanent failures, SoftBounce for temporary issues)."
+                },
+                "TypeCode": {
+                  "type": "integer",
+                  "description": "Numeric code representing the specific bounce type."
+                },
+                "Name": {
+                  "type": "string",
+                  "description": "Human-readable name describing the bounce reason."
+                },
+                "Tag": {
+                  "type": "string",
+                  "description": "A label for categorizing and filtering emails in reports and analytics."
+                },
+                "MessageID": {
+                  "type": "string",
+                  "description": "Unique identifier assigned to this email message for tracking and reference."
+                },
+                "ServerID": {
+                  "type": "integer",
+                  "description": "Identifier of the Postmark server that processed this email."
+                },
+                "Description": {
+                  "type": "string",
+                  "description": "Detailed explanation of why the email bounced."
+                },
+                "Details": {
+                  "type": "string",
+                  "description": "Technical details from the receiving mail server about the bounce."
+                },
+                "Email": {
+                  "type": "string",
+                  "description": "The recipient's email address that bounced."
+                },
+                "From": {
+                  "type": "string",
+                  "description": "The sender's email address from the bounced message."
+                },
+                "BouncedAt": {
+                  "type": "string",
+                  "description": "ISO 8601 timestamp indicating when the bounce occurred."
+                },
+                "DumpAvailable": {
+                  "type": "boolean",
+                  "description": "Whether a full SMTP dump of the bounce is available for debugging."
+                },
+                "Inactive": {
+                  "type": "boolean",
+                  "description": "Whether this email address has been deactivated due to repeated bounces."
+                },
+                "CanActivate": {
+                  "type": "boolean",
+                  "description": "Whether this bounced email address can be reactivated for future sending."
+                },
+                "Subject": {
+                  "type": "string",
+                  "description": "The subject line of the bounced email."
+                },
+                "Content": {
+                  "type": "string",
+                  "description": "Excerpt or full content of the bounced email message."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_outbound_stats",
+      "description": "Retrieve aggregated statistics about sent emails including delivery rates, engagement metrics, and bounce information.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tag": {
+            "type": "string",
+            "description": "A label for categorizing and filtering emails in reports and analytics."
+          },
+          "from_date": {
+            "type": "string",
+            "description": "Start date for the statistics period in YYYY-MM-DD format."
+          },
+          "to_date": {
+            "type": "string",
+            "description": "End date for the statistics period in YYYY-MM-DD format."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Sent": {
+            "type": "integer",
+            "description": "Total number of emails successfully sent during the period."
+          },
+          "HardBounces": {
+            "type": "integer",
+            "description": "Number of emails that permanently failed delivery due to invalid addresses or blocked domains."
+          },
+          "SoftBounces": {
+            "type": "integer",
+            "description": "Number of emails that temporarily failed delivery due to full mailboxes or server issues."
+          },
+          "TotalBounces": {
+            "type": "integer",
+            "description": "Combined count of all hard and soft bounces."
+          },
+          "SpamComplaints": {
+            "type": "integer",
+            "description": "Number of recipients who marked the email as spam."
+          },
+          "Opens": {
+            "type": "integer",
+            "description": "Total number of times emails were opened, including multiple opens by the same recipient."
+          },
+          "UniqueOpens": {
+            "type": "integer",
+            "description": "Number of unique recipients who opened the email at least once."
+          },
+          "TotalClicks": {
+            "type": "integer",
+            "description": "Total number of link clicks across all emails, including multiple clicks by the same recipient."
+          },
+          "UniqueClicks": {
+            "type": "integer",
+            "description": "Number of unique recipients who clicked at least one link in the email."
+          },
+          "Unsubscribes": {
+            "type": "integer",
+            "description": "Number of recipients who opted out of future emails."
+          },
+          "Tracked": {
+            "type": "integer",
+            "description": "Number of emails that had tracking enabled for opens and clicks."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_message_opens",
+      "description": "Retrieve detailed tracking information about when and how recipients opened a specific email, including device, location, and engagement data.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "message_id": {
+            "type": "string",
+            "description": "Unique identifier assigned to this email message for tracking and reference."
+          },
+          "count": {
+            "type": "integer",
+            "description": "Maximum number of open event records to return in the response (default: 100)."
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Number of open event records to skip for pagination (default: 0)."
+          }
+        },
+        "required": [
+          "message_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "total_count": {
+            "type": "integer",
+            "description": "Total number of open events recorded for this email message."
+          },
+          "opens": {
+            "type": "array",
+            "description": "Collection of open events with detailed recipient engagement information.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "FirstOpen": {
+                  "type": "boolean",
+                  "description": "Whether this was the first time the recipient opened this email."
+                },
+                "Client": {
+                  "type": "object",
+                  "description": "Information about the email client application used to open the message.",
+                  "properties": {
+                    "Name": {
+                      "type": "string",
+                      "description": "Name of the email client (e.g., Gmail, Outlook)."
+                    },
+                    "Company": {
+                      "type": "string",
+                      "description": "Company that develops the email client."
+                    },
+                    "Family": {
+                      "type": "string",
+                      "description": "Product family or category of the email client."
+                    }
+                  }
+                },
+                "OS": {
+                  "type": "object",
+                  "description": "Information about the operating system where the email was opened.",
+                  "properties": {
+                    "Name": {
+                      "type": "string",
+                      "description": "Name of the operating system (e.g., iOS, Windows)."
+                    },
+                    "Company": {
+                      "type": "string",
+                      "description": "Company that develops the operating system."
+                    },
+                    "Family": {
+                      "type": "string",
+                      "description": "Operating system family or category."
+                    }
+                  }
+                },
+                "Platform": {
+                  "type": "string",
+                  "description": "Device platform type (e.g., Desktop, Mobile, Webmail)."
+                },
+                "UserAgent": {
+                  "type": "string",
+                  "description": "Raw user agent string from the recipient's email client."
+                },
+                "ReadSeconds": {
+                  "type": "integer",
+                  "description": "Estimated number of seconds the recipient spent reading the email."
+                },
+                "Geo": {
+                  "type": "object",
+                  "description": "Geographic location information derived from the recipient's IP address.",
+                  "properties": {
+                    "CountryISOCode": {
+                      "type": "string",
+                      "description": "Two-letter ISO country code where the email was opened."
+                    },
+                    "Country": {
+                      "type": "string",
+                      "description": "Full country name where the email was opened."
+                    },
+                    "RegionISOCode": {
+                      "type": "string",
+                      "description": "ISO code for the state or region where the email was opened."
+                    },
+                    "Region": {
+                      "type": "string",
+                      "description": "State or region name where the email was opened."
+                    },
+                    "City": {
+                      "type": "string",
+                      "description": "City name where the email was opened."
+                    },
+                    "Zip": {
+                      "type": "string",
+                      "description": "Postal code of the location where the email was opened."
+                    },
+                    "Coords": {
+                      "type": "string",
+                      "description": "Geographic coordinates (latitude, longitude) of the open location."
+                    },
+                    "IP": {
+                      "type": "string",
+                      "description": "IP address from which the email was opened."
+                    }
+                  }
+                },
+                "MessageID": {
+                  "type": "string",
+                  "description": "Unique identifier assigned to this email message for tracking and reference."
+                },
+                "ReceivedAt": {
+                  "type": "string",
+                  "description": "ISO 8601 timestamp indicating when the email was opened by the recipient."
+                },
+                "Tag": {
+                  "type": "string",
+                  "description": "A label for categorizing and filtering emails in reports and analytics."
+                },
+                "Recipient": {
+                  "type": "string",
+                  "description": "The recipient's email address who opened the message."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

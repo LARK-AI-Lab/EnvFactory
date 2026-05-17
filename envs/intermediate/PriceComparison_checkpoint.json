@@ -1,0 +1,4138 @@
+{
+  "metadata": {
+    "class_name": "PriceComparison",
+    "metadata_path": "envs\\metadata\\PriceComparison_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-04T02:12:14.389119",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "PriceComparison",
+    "description": "A service for comparing product prices across retailers, tracking historical and predicted price trends, and retrieving discount information.",
+    "tools": [
+      {
+        "name": "get_pid_pos_details",
+        "description": "Retrieve the product identifier (PID) and position identifier (POS) for a product by searching its name.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The product name to search for in the catalog."
+            }
+          },
+          "required": [
+            "name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "pid": {
+              "type": "string",
+              "description": "The unique product identifier used to reference this product across all price comparison operations."
+            },
+            "pos": {
+              "type": "integer",
+              "description": "The product position identifier used in conjunction with PID to uniquely locate the product variant."
+            },
+            "name": {
+              "type": "string",
+              "description": "The matched product name from the catalog."
+            }
+          }
+        }
+      },
+      {
+        "name": "compare_price",
+        "description": "Fetch and compare current prices for a product across multiple retailers.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "pid": {
+              "type": "string",
+              "description": "The unique product identifier used to reference this product across all price comparison operations."
+            },
+            "pos": {
+              "type": "integer",
+              "description": "The product position identifier used in conjunction with PID to uniquely locate the product variant."
+            },
+            "max_retailers": {
+              "type": "integer",
+              "description": "The maximum number of retailers to include in the price comparison results. Defaults to 10."
+            }
+          },
+          "required": [
+            "pid",
+            "pos"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "pid": {
+              "type": "string",
+              "description": "The unique product identifier used to reference this product across all price comparison operations."
+            },
+            "pos": {
+              "type": "integer",
+              "description": "The product position identifier used in conjunction with PID to uniquely locate the product variant."
+            },
+            "retailers": {
+              "type": "array",
+              "description": "List of retailer pricing information for the specified product.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "store_name": {
+                    "type": "string",
+                    "description": "The name of the retailer offering the product."
+                  },
+                  "price": {
+                    "type": "number",
+                    "description": "The current listed price of the product at this retailer."
+                  },
+                  "availability": {
+                    "type": "string",
+                    "description": "The stock availability status of the product at this retailer."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "price_trend",
+        "description": "Fetch predicted future price trend data for a product to anticipate upcoming price changes.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "pid": {
+              "type": "string",
+              "description": "The unique product identifier used to reference this product across all price comparison operations."
+            },
+            "pos": {
+              "type": "integer",
+              "description": "The product position identifier used in conjunction with PID to uniquely locate the product variant."
+            }
+          },
+          "required": [
+            "pid",
+            "pos"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "pid": {
+              "type": "string",
+              "description": "The unique product identifier used to reference this product across all price comparison operations."
+            },
+            "pos": {
+              "type": "integer",
+              "description": "The product position identifier used in conjunction with PID to uniquely locate the product variant."
+            },
+            "price_data": {
+              "type": "array",
+              "description": "List of predicted price data points for future dates.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "description": "The future date for the price prediction."
+                  },
+                  "predicted_price": {
+                    "type": "number",
+                    "description": "The predicted price of the product on the specified date."
+                  },
+                  "trend": {
+                    "type": "string",
+                    "description": "The trend direction indicator (e.g., 'up', 'down', 'stable')."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_price_history",
+        "description": "Retrieve historical price data for a product to analyze past price fluctuations across retailers.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "pid": {
+              "type": "string",
+              "description": "The unique product identifier used to reference this product across all price comparison operations."
+            },
+            "pos": {
+              "type": "integer",
+              "description": "The product position identifier used in conjunction with PID to uniquely locate the product variant."
+            },
+            "retailers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Optional list of retailer names to filter the price history results. If not provided, returns data for all retailers."
+            }
+          },
+          "required": [
+            "pid",
+            "pos"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "pid": {
+              "type": "string",
+              "description": "The unique product identifier used to reference this product across all price comparison operations."
+            },
+            "pos": {
+              "type": "integer",
+              "description": "The product position identifier used in conjunction with PID to uniquely locate the product variant."
+            },
+            "price_history": {
+              "type": "array",
+              "description": "List of historical price records for the product.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "description": "The date when the price was recorded."
+                  },
+                  "price": {
+                    "type": "number",
+                    "description": "The recorded price of the product on the specified date."
+                  },
+                  "retailer": {
+                    "type": "string",
+                    "description": "The name of the retailer where the price was recorded."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_discount_info",
+        "description": "Retrieve discount and promotional information for a product at a specific retailer within a defined time period.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "pid": {
+              "type": "string",
+              "description": "The unique product identifier used to reference this product across all price comparison operations."
+            },
+            "pos": {
+              "type": "integer",
+              "description": "The product position identifier used in conjunction with PID to uniquely locate the product variant."
+            },
+            "retailer": {
+              "type": "string",
+              "description": "The name of the retailer to query for discount information."
+            },
+            "time_period": {
+              "type": "string",
+              "description": "The time period to query for discounts. Must be one of: 'current' (active discounts), 'past' (expired discounts), or 'upcoming' (future discounts)."
+            }
+          },
+          "required": [
+            "pid",
+            "pos",
+            "retailer",
+            "time_period"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "pid": {
+              "type": "string",
+              "description": "The unique product identifier used to reference this product across all price comparison operations."
+            },
+            "pos": {
+              "type": "integer",
+              "description": "The product position identifier used in conjunction with PID to uniquely locate the product variant."
+            },
+            "retailer": {
+              "type": "string",
+              "description": "The name of the retailer for which discount information was retrieved."
+            },
+            "discounts": {
+              "type": "array",
+              "description": "List of discount records for the product at the specified retailer.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "discount_percentage": {
+                    "type": "number",
+                    "description": "The percentage discount applied to the product."
+                  },
+                  "start_date": {
+                    "type": "string",
+                    "description": "The start date of the discount period."
+                  },
+                  "end_date": {
+                    "type": "string",
+                    "description": "The end date of the discount period."
+                  },
+                  "original_price": {
+                    "type": "number",
+                    "description": "The original price of the product before the discount."
+                  },
+                  "discounted_price": {
+                    "type": "number",
+                    "description": "The final price of the product after applying the discount."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\nimport random\n\n# Section 1: Schema\nclass Product(BaseModel):\n    \"\"\"Represents a product in the catalog.\"\"\"\n    pid: str = Field(..., description=\"Unique product identifier\")\n    pos: int = Field(..., ge=0, description=\"Product position identifier\")\n    name: str = Field(..., description=\"Product name\")\n\nclass RetailerPrice(BaseModel):\n    \"\"\"Represents pricing information from a retailer.\"\"\"\n    store_name: str = Field(..., description=\"Name of the retailer\")\n    price: float = Field(..., ge=0, description=\"Current listed price\")\n    availability: str = Field(..., description=\"Stock availability status\")\n\nclass PriceData(BaseModel):\n    \"\"\"Represents a price data point with date and trend.\"\"\"\n    date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Date in YYYY-MM-DD format\")\n    predicted_price: float = Field(..., ge=0, description=\"Predicted price\")\n    trend: str = Field(..., description=\"Trend direction (up/down/stable)\")\n\nclass HistoricalPrice(BaseModel):\n    \"\"\"Represents historical price record.\"\"\"\n    date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Date in YYYY-MM-DD format\")\n    price: float = Field(..., ge=0, description=\"Recorded price\")\n    retailer: str = Field(..., description=\"Name of the retailer\")\n\nclass DiscountInfo(BaseModel):\n    \"\"\"Represents discount information for a product.\"\"\"\n    discount_percentage: float = Field(..., ge=0, le=100, description=\"Percentage discount\")\n    start_date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Start date in YYYY-MM-DD format\")\n    end_date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"End date in YYYY-MM-DD format\")\n    original_price: float = Field(..., ge=0, description=\"Original price before discount\")\n    discounted_price: float = Field(..., ge=0, description=\"Price after discount\")\n\nclass PriceComparisonScenario(BaseModel):\n    \"\"\"Main scenario model for price comparison service.\"\"\"\n    products: Dict[str, Product] = Field(default={}, description=\"Product catalog\")\n    retailerPrices: Dict[str, List[RetailerPrice]] = Field(default={}, description=\"Current prices by product\")\n    priceHistory: Dict[str, List[HistoricalPrice]] = Field(default={}, description=\"Historical price data by product\")\n    priceTrends: Dict[str, List[PriceData]] = Field(default={}, description=\"Predicted price trends by product\")\n    discountInfo: Dict[str, Dict[str, List[DiscountInfo]]] = Field(default={}, description=\"Discount information by product and retailer\")\n    retailerList: List[str] = Field(default=[\"Amazon\", \"Walmart\", \"Target\", \"Best Buy\", \"Newegg\", \"eBay\", \"Costco\", \"Home Depot\", \"Lowe's\", \"Macy's\"], description=\"Available retailers\")\n    availabilityStatuses: List[str] = Field(default=[\"In Stock\", \"Out of Stock\", \"Limited Stock\", \"Backorder\", \"Pre-order\"], description=\"Stock availability statuses\")\n\nScenario_Schema = [Product, RetailerPrice, PriceData, HistoricalPrice, DiscountInfo, PriceComparisonScenario]\n\n# Section 2: Class\nclass PriceComparisonAPI:\n    def __init__(self):\n        \"\"\"Initialize price comparison API with empty state.\"\"\"\n        self.products: Dict[str, Product] = {}\n        self.retailerPrices: Dict[str, List[RetailerPrice]] = {}\n        self.priceHistory: Dict[str, List[HistoricalPrice]] = {}\n        self.priceTrends: Dict[str, List[PriceData]] = {}\n        self.discountInfo: Dict[str, Dict[str, List[DiscountInfo]]] = {}\n        self.retailerList: List[str] = []\n        self.availabilityStatuses: List[str] = []\n        self.random_seed: Optional[int] = None\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = PriceComparisonScenario(**scenario)\n        self.products = model.products\n        self.retailerPrices = model.retailerPrices\n        self.priceHistory = model.priceHistory\n        self.priceTrends = model.priceTrends\n        self.discountInfo = model.discountInfo\n        self.retailerList = model.retailerList\n        self.availabilityStatuses = model.availabilityStatuses\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"products\": {pid: product.dict() for pid, product in self.products.items()},\n            \"retailerPrices\": {pid: [rp.dict() for rp in rps] for pid, rps in self.retailerPrices.items()},\n            \"priceHistory\": {pid: [ph.dict() for ph in phs] for pid, phs in self.priceHistory.items()},\n            \"priceTrends\": {pid: [pt.dict() for pt in pts] for pid, pts in self.priceTrends.items()},\n            \"discountInfo\": {pid: {retailer: [d.dict() for d in discounts] for retailer, discounts in ret_dict.items()} for pid, ret_dict in self.discountInfo.items()},\n            \"retailerList\": self.retailerList,\n            \"availabilityStatuses\": self.availabilityStatuses\n        }\n\n    def get_pid_pos_details(self, name: str) -> dict:\n        \"\"\"Retrieve product identifier and position for a product by name.\"\"\"\n        for product in self.products.values():\n            if product.name.lower() == name.lower():\n                return {\"pid\": product.pid, \"pos\": product.pos, \"name\": product.name}\n        return {\"pid\": \"\", \"pos\": 0, \"name\": \"\"}\n\n    def compare_price(self, pid: str, pos: int, max_retailers: int = 10) -> dict:\n        \"\"\"Fetch and compare current prices for a product across retailers.\"\"\"\n        key = f\"{pid}_{pos}\"\n        if key not in self.retailerPrices:\n            return {\"pid\": pid, \"pos\": pos, \"retailers\": []}\n        \n        retailers = self.retailerPrices[key][:max_retailers]\n        return {\"pid\": pid, \"pos\": pos, \"retailers\": [r.dict() for r in retailers]}\n\n    def price_trend(self, pid: str, pos: int) -> dict:\n        \"\"\"Fetch predicted future price trend data for a product.\"\"\"\n        key = f\"{pid}_{pos}\"\n        if key not in self.priceTrends:\n            return {\"pid\": pid, \"pos\": pos, \"price_data\": []}\n        \n        return {\"pid\": pid, \"pos\": pos, \"price_data\": [pt.dict() for pt in self.priceTrends[key]]}\n\n    def get_price_history(self, pid: str, pos: int, retailers: Optional[List[str]] = None) -> dict:\n        \"\"\"Retrieve historical price data for a product.\"\"\"\n        key = f\"{pid}_{pos}\"\n        if key not in self.priceHistory:\n            return {\"pid\": pid, \"pos\": pos, \"price_history\": []}\n        \n        history = self.priceHistory[key]\n        if retailers:\n            history = [h for h in history if h.retailer in retailers]\n        \n        return {\"pid\": pid, \"pos\": pos, \"price_history\": [h.dict() for h in history]}\n\n    def get_discount_info(self, pid: str, pos: int, retailer: str, time_period: str) -> dict:\n        \"\"\"Retrieve discount information for a product at a specific retailer.\"\"\"\n        key = f\"{pid}_{pos}\"\n        if key not in self.discountInfo or retailer not in self.discountInfo[key]:\n            return {\"pid\": pid, \"pos\": pos, \"retailer\": retailer, \"discounts\": []}\n        \n        discounts = self.discountInfo[key][retailer]\n        filtered_discounts = []\n        \n        for discount in discounts:\n            if time_period == \"current\":\n                filtered_discounts.append(discount)\n            elif time_period == \"past\":\n                filtered_discounts.append(discount)\n            elif time_period == \"upcoming\":\n                filtered_discounts.append(discount)\n        \n        return {\"pid\": pid, \"pos\": pos, \"retailer\": retailer, \"discounts\": [d.dict() for d in filtered_discounts]}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"PriceComparison\")\napi = PriceComparisonAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the price comparison API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching PriceComparisonScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current price comparison state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_pid_pos_details(name: str) -> dict:\n    \"\"\"\n    Retrieve the product identifier and position for a product by searching its name.\n    \n    Args:\n        name (str): The product name to search for in the catalog.\n    \n    Returns:\n        pid (str): The unique product identifier.\n        pos (int): The product position identifier.\n        name (str): The matched product name from the catalog.\n    \"\"\"\n    try:\n        if not name or not isinstance(name, str):\n            raise ValueError(\"Name must be a non-empty string\")\n        return api.get_pid_pos_details(name)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef compare_price(pid: str, pos: int, max_retailers: int = 10) -> dict:\n    \"\"\"\n    Fetch and compare current prices for a product across multiple retailers.\n    \n    Args:\n        pid (str): The unique product identifier.\n        pos (int): The product position identifier.\n        max_retailers (int) [Optional]: The maximum number of retailers to include. Defaults to 10.\n    \n    Returns:\n        pid (str): The unique product identifier.\n        pos (int): The product position identifier.\n        retailers (list): List of retailer pricing information.\n    \"\"\"\n    try:\n        if not pid or not isinstance(pid, str):\n            raise ValueError(\"PID must be a non-empty string\")\n        if not isinstance(pos, int) or pos < 0:\n            raise ValueError(\"POS must be a non-negative integer\")\n        if not isinstance(max_retailers, int) or max_retailers <= 0:\n            raise ValueError(\"Max retailers must be a positive integer\")\n        return api.compare_price(pid, pos, max_retailers)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef price_trend(pid: str, pos: int) -> dict:\n    \"\"\"\n    Fetch predicted future price trend data for a product.\n    \n    Args:\n        pid (str): The unique product identifier.\n        pos (int): The product position identifier.\n    \n    Returns:\n        pid (str): The unique product identifier.\n        pos (int): The product position identifier.\n        price_data (list): List of predicted price data points.\n    \"\"\"\n    try:\n        if not pid or not isinstance(pid, str):\n            raise ValueError(\"PID must be a non-empty string\")\n        if not isinstance(pos, int) or pos < 0:\n            raise ValueError(\"POS must be a non-negative integer\")\n        return api.price_trend(pid, pos)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_price_history(pid: str, pos: int, retailers: Optional[List[str]] = None) -> dict:\n    \"\"\"\n    Retrieve historical price data for a product across retailers.\n    \n    Args:\n        pid (str): The unique product identifier.\n        pos (int): The product position identifier.\n        retailers (list) [Optional]: Optional list of retailer names to filter results.\n    \n    Returns:\n        pid (str): The unique product identifier.\n        pos (int): The product position identifier.\n        price_history (list): List of historical price records.\n    \"\"\"\n    try:\n        if not pid or not isinstance(pid, str):\n            raise ValueError(\"PID must be a non-empty string\")\n        if not isinstance(pos, int) or pos < 0:\n            raise ValueError(\"POS must be a non-negative integer\")\n        if retailers is not None and not isinstance(retailers, list):\n            raise ValueError(\"Retailers must be a list of strings\")\n        return api.get_price_history(pid, pos, retailers)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_discount_info(pid: str, pos: int, retailer: str, time_period: str) -> dict:\n    \"\"\"\n    Retrieve discount and promotional information for a product at a specific retailer.\n    \n    Args:\n        pid (str): The unique product identifier.\n        pos (int): The product position identifier.\n        retailer (str): The name of the retailer to query.\n        time_period (str): The time period to query ('current', 'past', or 'upcoming').\n    \n    Returns:\n        pid (str): The unique product identifier.\n        pos (int): The product position identifier.\n        retailer (str): The name of the retailer.\n        discounts (list): List of discount records.\n    \"\"\"\n    try:\n        if not pid or not isinstance(pid, str):\n            raise ValueError(\"PID must be a non-empty string\")\n        if not isinstance(pos, int) or pos < 0:\n            raise ValueError(\"POS must be a non-negative integer\")\n        if not retailer or not isinstance(retailer, str):\n            raise ValueError(\"Retailer must be a non-empty string\")\n        if time_period not in [\"current\", \"past\", \"upcoming\"]:\n            raise ValueError(\"Time period must be one of: 'current', 'past', 'upcoming'\")\n        return api.get_discount_info(pid, pos, retailer, time_period)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-04T02:12:14.389119",
+      "revision_number": null
+    },
+    {
+      "version": 1,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\nimport random\n\n# Section 1: Schema\nclass Product(BaseModel):\n    \"\"\"Represents a product in the catalog.\"\"\"\n    pid: str = Field(..., description=\"Unique product identifier\")\n    pos: int = Field(..., ge=0, description=\"Product position identifier\")\n    name: str = Field(..., description=\"Product name\")\n\nclass RetailerPrice(BaseModel):\n    \"\"\"Represents pricing information from a retailer.\"\"\"\n    store_name: str = Field(..., description=\"Name of the retailer\")\n    price: float = Field(..., ge=0, description=\"Current listed price\")\n    availability: str = Field(..., description=\"Stock availability status\")\n\nclass PriceData(BaseModel):\n    \"\"\"Represents a price data point with date and trend.\"\"\"\n    date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Date in YYYY-MM-DD format\")\n    predicted_price: float = Field(..., ge=0, description=\"Predicted price\")\n    trend: str = Field(..., description=\"Trend direction (up/down/stable)\")\n\nclass HistoricalPrice(BaseModel):\n    \"\"\"Represents historical price record.\"\"\"\n    date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Date in YYYY-MM-DD format\")\n    price: float = Field(..., ge=0, description=\"Recorded price\")\n    retailer: str = Field(..., description=\"Name of the retailer\")\n\nclass DiscountInfo(BaseModel):\n    \"\"\"Represents discount information for a product.\"\"\"\n    discount_percentage: float = Field(..., ge=0, le=100, description=\"Percentage discount\")\n    start_date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Start date in YYYY-MM-DD format\")\n    end_date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"End date in YYYY-MM-DD format\")\n    original_price: float = Field(..., ge=0, description=\"Original price before discount\")\n    discounted_price: float = Field(..., ge=0, description=\"Price after discount\")\n\nclass PriceComparisonScenario(BaseModel):\n    \"\"\"Main scenario model for price comparison service.\"\"\"\n    products: Dict[str, Product] = Field(default={}, description=\"Product catalog\")\n    retailerPrices: Dict[str, List[RetailerPrice]] = Field(default={}, description=\"Current prices by product\")\n    priceHistory: Dict[str, List[HistoricalPrice]] = Field(default={}, description=\"Historical price data by product\")\n    priceTrends: Dict[str, List[PriceData]] = Field(default={}, description=\"Predicted price trends by product\")\n    discountInfo: Dict[str, Dict[str, List[DiscountInfo]]] = Field(default={}, description=\"Discount information by product and retailer\")\n    retailerList: List[str] = Field(default=[\"Amazon\", \"Walmart\", \"Target\", \"Best Buy\", \"Newegg\", \"eBay\", \"Costco\", \"Home Depot\", \"Lowe's\", \"Macy's\"], description=\"Available retailers\")\n    availabilityStatuses: List[str] = Field(default=[\"In Stock\", \"Out of Stock\", \"Limited Stock\", \"Backorder\", \"Pre-order\"], description=\"Stock availability statuses\")\n\nScenario_Schema = [Product, RetailerPrice, PriceData, HistoricalPrice, DiscountInfo, PriceComparisonScenario]\n\n# Section 2: Class\nclass PriceComparisonAPI:\n    def __init__(self):\n        \"\"\"Initialize price comparison API with empty state.\"\"\"\n        self.products: Dict[str, Product] = {}\n        self.retailerPrices: Dict[str, List[RetailerPrice]] = {}\n        self.priceHistory: Dict[str, List[HistoricalPrice]] = {}\n        self.priceTrends: Dict[str, List[PriceData]] = {}\n        self.discountInfo: Dict[str, Dict[str, List[DiscountInfo]]] = {}\n        self.retailerList: List[str] = []\n        self.availabilityStatuses: List[str] = []\n        self.random_seed: Optional[int] = None\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = PriceComparisonScenario(**scenario)\n        self.products = model.products\n        self.retailerPrices = model.retailerPrices\n        self.priceHistory = model.priceHistory\n        self.priceTrends = model.priceTrends\n        self.discountInfo = model.discountInfo\n        self.retailerList = model.retailerList\n        self.availabilityStatuses = model.availabilityStatuses\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"products\": {pid: product.dict() for pid, product in self.products.items()},\n            \"retailerPrices\": {pid: [rp.dict() for rp in rps] for pid, rps in self.retailerPrices.items()},\n            \"priceHistory\": {pid: [ph.dict() for ph in phs] for pid, phs in self.priceHistory.items()},\n            \"priceTrends\": {pid: [pt.dict() for pt in pts] for pid, pts in self.priceTrends.items()},\n            \"discountInfo\": {pid: {retailer: [d.dict() for d in discounts] for retailer, discounts in ret_dict.items()} for pid, ret_dict in self.discountInfo.items()},\n            \"retailerList\": self.retailerList,\n            \"availabilityStatuses\": self.availabilityStatuses\n        }\n\n    def get_pid_pos_details(self, name: str) -> dict:\n        \"\"\"Retrieve product identifier and position for a product by name.\"\"\"\n        for product in self.products.values():\n            if product.name.lower() == name.lower():\n                return {\"pid\": product.pid, \"pos\": product.pos, \"name\": product.name}\n        return {\"pid\": \"\", \"pos\": 0, \"name\": \"\"}\n\n    def compare_price(self, pid: str, pos: int, max_retailers: int = 10) -> dict:\n        \"\"\"Fetch and compare current prices for a product across retailers.\"\"\"\n        if pid not in self.retailerPrices:\n            return {\"pid\": pid, \"pos\": pos, \"retailers\": []}\n        \n        retailers = self.retailerPrices[pid][:max_retailers]\n        return {\"pid\": pid, \"pos\": pos, \"retailers\": [r.dict() for r in retailers]}\n\n    def price_trend(self, pid: str, pos: int) -> dict:\n        \"\"\"Fetch predicted future price trend data for a product.\"\"\"\n        if pid not in self.priceTrends:\n            return {\"pid\": pid, \"pos\": pos, \"price_data\": []}\n        \n        return {\"pid\": pid, \"pos\": pos, \"price_data\": [pt.dict() for pt in self.priceTrends[pid]]}\n\n    def get_price_history(self, pid: str, pos: int, retailers: Optional[List[str]] = None) -> dict:\n        \"\"\"Retrieve historical price data for a product.\"\"\"\n        if pid not in self.priceHistory:\n            return {\"pid\": pid, \"pos\": pos, \"price_history\": []}\n        \n        history = self.priceHistory[pid]\n        if retailers:\n            history = [h for h in history if h.retailer in retailers]\n        \n        return {\"pid\": pid, \"pos\": pos, \"price_history\": [h.dict() for h in history]}\n\n    def get_discount_info(self, pid: str, pos: int, retailer: str, time_period: str) -> dict:\n        \"\"\"Retrieve discount information for a product at a specific retailer.\"\"\"\n        if pid not in self.discountInfo or retailer not in self.discountInfo[pid]:\n            return {\"pid\": pid, \"pos\": pos, \"retailer\": retailer, \"discounts\": []}\n        \n        discounts = self.discountInfo[pid][retailer]\n        filtered_discounts = []\n        \n        for discount in discounts:\n            if time_period == \"current\":\n                filtered_discounts.append(discount)\n            elif time_period == \"past\":\n                filtered_discounts.append(discount)\n            elif time_period == \"upcoming\":\n                filtered_discounts.append(discount)\n        \n        return {\"pid\": pid, \"pos\": pos, \"retailer\": retailer, \"discounts\": [d.dict() for d in filtered_discounts]}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"PriceComparison\")\napi = PriceComparisonAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the price comparison API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching PriceComparisonScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current price comparison state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_pid_pos_details(name: str) -> dict:\n    \"\"\"\n    Retrieve the product identifier and position for a product by searching its name.\n    \n    Args:\n        name (str): The product name to search for in the catalog.\n    \n    Returns:\n        pid (str): The unique product identifier.\n        pos (int): The product position identifier.\n        name (str): The matched product name from the catalog.\n    \"\"\"\n    try:\n        if not name or not isinstance(name, str):\n            raise ValueError(\"Name must be a non-empty string\")\n        return api.get_pid_pos_details(name)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef compare_price(pid: str, pos: int, max_retailers: int = 10) -> dict:\n    \"\"\"\n    Fetch and compare current prices for a product across multiple retailers.\n    \n    Args:\n        pid (str): The unique product identifier.\n        pos (int): The product position identifier.\n        max_retailers (int) [Optional]: The maximum number of retailers to include. Defaults to 10.\n    \n    Returns:\n        pid (str): The unique product identifier.\n        pos (int): The product position identifier.\n        retailers (list): List of retailer pricing information.\n    \"\"\"\n    try:\n        if not pid or not isinstance(pid, str):\n            raise ValueError(\"PID must be a non-empty string\")\n        if not isinstance(pos, int) or pos < 0:\n            raise ValueError(\"POS must be a non-negative integer\")\n        if not isinstance(max_retailers, int) or max_retailers <= 0:\n            raise ValueError(\"Max retailers must be a positive integer\")\n        return api.compare_price(pid, pos, max_retailers)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef price_trend(pid: str, pos: int) -> dict:\n    \"\"\"\n    Fetch predicted future price trend data for a product.\n    \n    Args:\n        pid (str): The unique product identifier.\n        pos (int): The product position identifier.\n    \n    Returns:\n        pid (str): The unique product identifier.\n        pos (int): The product position identifier.\n        price_data (list): List of predicted price data points.\n    \"\"\"\n    try:\n        if not pid or not isinstance(pid, str):\n            raise ValueError(\"PID must be a non-empty string\")\n        if not isinstance(pos, int) or pos < 0:\n            raise ValueError(\"POS must be a non-negative integer\")\n        return api.price_trend(pid, pos)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_price_history(pid: str, pos: int, retailers: Optional[List[str]] = None) -> dict:\n    \"\"\"\n    Retrieve historical price data for a product across retailers.\n    \n    Args:\n        pid (str): The unique product identifier.\n        pos (int): The product position identifier.\n        retailers (list) [Optional]: Optional list of retailer names to filter results.\n    \n    Returns:\n        pid (str): The unique product identifier.\n        pos (int): The product position identifier.\n        price_history (list): List of historical price records.\n    \"\"\"\n    try:\n        if not pid or not isinstance(pid, str):\n            raise ValueError(\"PID must be a non-empty string\")\n        if not isinstance(pos, int) or pos < 0:\n            raise ValueError(\"POS must be a non-negative integer\")\n        if retailers is not None and not isinstance(retailers, list):\n            raise ValueError(\"Retailers must be a list of strings\")\n        return api.get_price_history(pid, pos, retailers)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_discount_info(pid: str, pos: int, retailer: str, time_period: str) -> dict:\n    \"\"\"\n    Retrieve discount and promotional information for a product at a specific retailer.\n    \n    Args:\n        pid (str): The unique product identifier.\n        pos (int): The product position identifier.\n        retailer (str): The name of the retailer to query.\n        time_period (str): The time period to query ('current', 'past', or 'upcoming').\n    \n    Returns:\n        pid (str): The unique product identifier.\n        pos (int): The product position identifier.\n        retailer (str): The name of the retailer.\n        discounts (list): List of discount records.\n    \"\"\"\n    try:\n        if not pid or not isinstance(pid, str):\n            raise ValueError(\"PID must be a non-empty string\")\n        if not isinstance(pos, int) or pos < 0:\n            raise ValueError(\"POS must be a non-negative integer\")\n        if not retailer or not isinstance(retailer, str):\n            raise ValueError(\"Retailer must be a non-empty string\")\n        if time_period not in [\"current\", \"past\", \"upcoming\"]:\n            raise ValueError(\"Time period must be one of: 'current', 'past', 'upcoming'\")\n        return api.get_discount_info(pid, pos, retailer, time_period)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-04T02:12:14.389119",
+      "revision_number": 1
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with a single product and minimal price data from two retailers",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "products": {
+          "P001": {
+            "pid": "P001",
+            "pos": 1,
+            "name": "Wireless Mouse"
+          }
+        },
+        "retailerPrices": {
+          "P001": [
+            {
+              "store_name": "Amazon",
+              "price": 24.99,
+              "availability": "In Stock"
+            },
+            {
+              "store_name": "Walmart",
+              "price": 22.99,
+              "availability": "In Stock"
+            }
+          ]
+        },
+        "priceHistory": {},
+        "priceTrends": {},
+        "discountInfo": {},
+        "retailerList": [
+          "Amazon",
+          "Walmart",
+          "Target",
+          "Best Buy",
+          "Newegg",
+          "eBay",
+          "Costco",
+          "Home Depot",
+          "Lowe's",
+          "Macy's"
+        ],
+        "availabilityStatuses": [
+          "In Stock",
+          "Out of Stock",
+          "Limited Stock",
+          "Backorder",
+          "Pre-order"
+        ]
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple products with varied availability, historical prices, and price trends",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "products": {
+          "P001": {
+            "pid": "P001",
+            "pos": 1,
+            "name": "Laptop Stand"
+          },
+          "P002": {
+            "pid": "P002",
+            "pos": 2,
+            "name": "USB-C Hub"
+          },
+          "P003": {
+            "pid": "P003",
+            "pos": 3,
+            "name": "Mechanical Keyboard"
+          }
+        },
+        "retailerPrices": {
+          "P001": [
+            {
+              "store_name": "Amazon",
+              "price": 45.99,
+              "availability": "In Stock"
+            },
+            {
+              "store_name": "Best Buy",
+              "price": 49.99,
+              "availability": "Limited Stock"
+            }
+          ],
+          "P002": [
+            {
+              "store_name": "Newegg",
+              "price": 35.0,
+              "availability": "Out of Stock"
+            },
+            {
+              "store_name": "Amazon",
+              "price": 39.99,
+              "availability": "In Stock"
+            }
+          ],
+          "P003": [
+            {
+              "store_name": "Target",
+              "price": 89.99,
+              "availability": "Backorder"
+            }
+          ]
+        },
+        "priceHistory": {
+          "P001": [
+            {
+              "date": "2024-01-15",
+              "price": 42.99,
+              "retailer": "Amazon"
+            },
+            {
+              "date": "2024-02-01",
+              "price": 45.99,
+              "retailer": "Amazon"
+            }
+          ],
+          "P003": [
+            {
+              "date": "2024-01-10",
+              "price": 95.0,
+              "retailer": "Target"
+            },
+            {
+              "date": "2024-02-10",
+              "price": 89.99,
+              "retailer": "Target"
+            }
+          ]
+        },
+        "priceTrends": {
+          "P001": [
+            {
+              "date": "2024-03-01",
+              "predicted_price": 46.5,
+              "trend": "up"
+            },
+            {
+              "date": "2024-04-01",
+              "predicted_price": 47.0,
+              "trend": "up"
+            }
+          ]
+        },
+        "discountInfo": {},
+        "retailerList": [
+          "Amazon",
+          "Walmart",
+          "Target",
+          "Best Buy",
+          "Newegg",
+          "eBay",
+          "Costco",
+          "Home Depot",
+          "Lowe's",
+          "Macy's"
+        ],
+        "availabilityStatuses": [
+          "In Stock",
+          "Out of Stock",
+          "Limited Stock",
+          "Backorder",
+          "Pre-order"
+        ]
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Comprehensive scenario with multiple products, complete price history, trends, and discount information across various retailers",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "products": {
+          "P001": {
+            "pid": "P001",
+            "pos": 1,
+            "name": "4K Monitor"
+          },
+          "P002": {
+            "pid": "P002",
+            "pos": 2,
+            "name": "Ergonomic Chair"
+          },
+          "P003": {
+            "pid": "P003",
+            "pos": 3,
+            "name": "Desk Lamp"
+          },
+          "P004": {
+            "pid": "P004",
+            "pos": 4,
+            "name": "Webcam HD"
+          },
+          "P005": {
+            "pid": "P005",
+            "pos": 5,
+            "name": "Noise Cancelling Headphones"
+          }
+        },
+        "retailerPrices": {
+          "P001": [
+            {
+              "store_name": "Amazon",
+              "price": 299.99,
+              "availability": "In Stock"
+            },
+            {
+              "store_name": "Best Buy",
+              "price": 319.99,
+              "availability": "In Stock"
+            },
+            {
+              "store_name": "Newegg",
+              "price": 289.99,
+              "availability": "Limited Stock"
+            }
+          ],
+          "P002": [
+            {
+              "store_name": "Amazon",
+              "price": 249.0,
+              "availability": "In Stock"
+            },
+            {
+              "store_name": "Walmart",
+              "price": 239.99,
+              "availability": "In Stock"
+            }
+          ],
+          "P003": [
+            {
+              "store_name": "Target",
+              "price": 45.99,
+              "availability": "In Stock"
+            },
+            {
+              "store_name": "Amazon",
+              "price": 42.99,
+              "availability": "In Stock"
+            }
+          ],
+          "P004": [
+            {
+              "store_name": "Best Buy",
+              "price": 79.99,
+              "availability": "Out of Stock"
+            },
+            {
+              "store_name": "Newegg",
+              "price": 74.99,
+              "availability": "Pre-order"
+            }
+          ],
+          "P005": [
+            {
+              "store_name": "Amazon",
+              "price": 199.99,
+              "availability": "In Stock"
+            },
+            {
+              "store_name": "Target",
+              "price": 209.99,
+              "availability": "Limited Stock"
+            },
+            {
+              "store_name": "Best Buy",
+              "price": 199.99,
+              "availability": "In Stock"
+            }
+          ]
+        },
+        "priceHistory": {
+          "P001": [
+            {
+              "date": "2024-01-01",
+              "price": 349.99,
+              "retailer": "Amazon"
+            },
+            {
+              "date": "2024-01-15",
+              "price": 329.99,
+              "retailer": "Amazon"
+            },
+            {
+              "date": "2024-02-01",
+              "price": 299.99,
+              "retailer": "Amazon"
+            }
+          ],
+          "P002": [
+            {
+              "date": "2024-01-10",
+              "price": 279.99,
+              "retailer": "Walmart"
+            },
+            {
+              "date": "2024-02-10",
+              "price": 239.99,
+              "retailer": "Walmart"
+            }
+          ],
+          "P005": [
+            {
+              "date": "2024-01-05",
+              "price": 229.99,
+              "retailer": "Amazon"
+            },
+            {
+              "date": "2024-02-05",
+              "price": 199.99,
+              "retailer": "Amazon"
+            }
+          ]
+        },
+        "priceTrends": {
+          "P001": [
+            {
+              "date": "2024-03-01",
+              "predicted_price": 295.0,
+              "trend": "down"
+            },
+            {
+              "date": "2024-04-01",
+              "predicted_price": 289.99,
+              "trend": "down"
+            },
+            {
+              "date": "2024-05-01",
+              "predicted_price": 285.0,
+              "trend": "stable"
+            }
+          ],
+          "P002": [
+            {
+              "date": "2024-03-01",
+              "predicted_price": 245.0,
+              "trend": "up"
+            }
+          ],
+          "P005": [
+            {
+              "date": "2024-03-01",
+              "predicted_price": 199.99,
+              "trend": "stable"
+            },
+            {
+              "date": "2024-04-01",
+              "predicted_price": 189.99,
+              "trend": "down"
+            }
+          ]
+        },
+        "discountInfo": {
+          "P001": {
+            "Newegg": [
+              {
+                "discount_percentage": 15.0,
+                "start_date": "2024-02-15",
+                "end_date": "2024-03-15",
+                "original_price": 339.99,
+                "discounted_price": 289.99
+              }
+            ]
+          },
+          "P002": {
+            "Walmart": [
+              {
+                "discount_percentage": 10.0,
+                "start_date": "2024-02-01",
+                "end_date": "2024-02-28",
+                "original_price": 266.66,
+                "discounted_price": 239.99
+              }
+            ]
+          },
+          "P005": {
+            "Amazon": [
+              {
+                "discount_percentage": 13.04,
+                "start_date": "2024-02-01",
+                "end_date": "2024-03-31",
+                "original_price": 229.99,
+                "discounted_price": 199.99
+              }
+            ],
+            "Best Buy": [
+              {
+                "discount_percentage": 13.04,
+                "start_date": "2024-02-10",
+                "end_date": "2024-03-10",
+                "original_price": 229.99,
+                "discounted_price": 199.99
+              }
+            ]
+          }
+        },
+        "retailerList": [
+          "Amazon",
+          "Walmart",
+          "Target",
+          "Best Buy",
+          "Newegg",
+          "eBay",
+          "Costco",
+          "Home Depot",
+          "Lowe's",
+          "Macy's"
+        ],
+        "availabilityStatuses": [
+          "In Stock",
+          "Out of Stock",
+          "Limited Stock",
+          "Backorder",
+          "Pre-order"
+        ]
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Edge case with empty product catalog and minimal reference data",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "products": {},
+        "retailerPrices": {},
+        "priceHistory": {},
+        "priceTrends": {},
+        "discountInfo": {},
+        "retailerList": [
+          "Amazon",
+          "Walmart",
+          "Target"
+        ],
+        "availabilityStatuses": [
+          "In Stock",
+          "Out of Stock"
+        ]
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 2,
+      "failed_scenarios": 2,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_pid_pos_details",
+                "test_cases": [
+                  {
+                    "test_name": "Valid product name lookup",
+                    "input": {
+                      "name": "Wireless Mouse"
+                    },
+                    "expected": "Return product details with pid, pos, and name",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "name": "Wireless Mouse"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "compare_price",
+                "test_cases": [
+                  {
+                    "test_name": "Compare prices with default max_retailers",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "max_retailers": 10
+                    },
+                    "expected": "Return price comparison data",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailers": []
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "test_name": "Compare prices with limited retailers",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "max_retailers": 5
+                    },
+                    "expected": "Return price comparison data with max 5 retailers",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailers": []
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "price_trend",
+                "test_cases": [
+                  {
+                    "test_name": "Get price trend for product",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1
+                    },
+                    "expected": "Return price trend data",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "price_data": []
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_price_history",
+                "test_cases": [
+                  {
+                    "test_name": "Get price history without retailer filter",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailers": null
+                    },
+                    "expected": "Return all price history",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "price_history": []
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "test_name": "Get price history with retailer filter",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailers": [
+                        "Amazon",
+                        "Walmart"
+                      ]
+                    },
+                    "expected": "Return filtered price history",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "price_history": []
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_discount_info",
+                "test_cases": [
+                  {
+                    "test_name": "Get current discount info for Amazon",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Amazon",
+                      "time_period": "current"
+                    },
+                    "expected": "Return current discount information",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Amazon",
+                      "discounts": []
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "test_name": "Get past discount info for Walmart",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Walmart",
+                      "time_period": "past"
+                    },
+                    "expected": "Return past discount information",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Walmart",
+                      "discounts": []
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches the original loaded scenario perfectly. All state variables (products, retailerPrices, priceHistory, priceTrends, discountInfo, retailerList, availabilityStatuses) are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 48.080779790878296
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Data Retrieval Logic Error",
+              "error_location": "compare_price tool",
+              "error_details": "The compare_price tool consistently returns empty retailers list even when retailerPrices data exists in the loaded scenario for the requested products (P001, P002, P003)",
+              "expected_vs_actual": "Expected: retailers list with store_name, price, and availability fields. Actual: empty retailers list []",
+              "root_cause": "The API's compare_price method is not correctly retrieving data from the retailerPrices dictionary. Possible issues: (1) The method may be looking up data using incorrect keys or structure, (2) The method may not be properly accessing the loaded scenario state, (3) There may be a mismatch between how data is stored (retailerPrices) vs how it's retrieved",
+              "expected_error": false
+            },
+            {
+              "error_type": "Data Retrieval Logic Error",
+              "error_location": "price_trend tool",
+              "error_details": "The price_trend tool returns empty price_data list for P001 even though the scenario contains priceTrends data with 2 predicted price points for this product",
+              "expected_vs_actual": "Expected: price_data list with 2 entries containing date, predicted_price, and trend fields. Actual: empty price_data list []",
+              "root_cause": "The API's price_trend method is not correctly retrieving data from the priceTrends dictionary. Similar to compare_price, this suggests the method is not properly accessing the loaded scenario state or there's a key/structure mismatch",
+              "expected_error": false
+            },
+            {
+              "error_type": "Data Retrieval Logic Error",
+              "error_location": "get_price_history tool",
+              "error_details": "The get_price_history tool returns empty price_history list for products P001 and P003 even though the scenario contains priceHistory data for both products",
+              "expected_vs_actual": "Expected: price_history list with historical records containing date, price, and retailer fields. Actual: empty price_history list []",
+              "root_cause": "The API's get_price_history method is not correctly retrieving data from the priceHistory dictionary. The issue persists even when filtering by specific retailers, indicating the core data retrieval mechanism is broken",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_pid_pos_details",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "input": {
+                      "name": "Laptop Stand"
+                    },
+                    "output": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "name": "Laptop Stand"
+                    },
+                    "status": "pass"
+                  },
+                  {
+                    "input": {
+                      "name": "USB-C Hub"
+                    },
+                    "output": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "name": "USB-C Hub"
+                    },
+                    "status": "pass"
+                  },
+                  {
+                    "input": {
+                      "name": "Mechanical Keyboard"
+                    },
+                    "output": {
+                      "pid": "P003",
+                      "pos": 3,
+                      "name": "Mechanical Keyboard"
+                    },
+                    "status": "pass"
+                  },
+                  {
+                    "input": {
+                      "name": "Nonexistent Product"
+                    },
+                    "output": {
+                      "pid": "",
+                      "pos": 0,
+                      "name": ""
+                    },
+                    "status": "pass",
+                    "note": "Gracefully handles non-existent products"
+                  }
+                ]
+              },
+              {
+                "tool_name": "compare_price",
+                "passed": false,
+                "error": "Tool returns empty retailers list despite scenario data containing retailerPrices",
+                "test_cases": [
+                  {
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1
+                    },
+                    "expected": "Should return retailers list with Amazon and Best Buy pricing",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailers": []
+                    },
+                    "status": "fail"
+                  },
+                  {
+                    "input": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "max_retailers": 5
+                    },
+                    "expected": "Should return retailers list with Newegg and Amazon pricing",
+                    "actual": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "retailers": []
+                    },
+                    "status": "fail"
+                  },
+                  {
+                    "input": {
+                      "pid": "P003",
+                      "pos": 3
+                    },
+                    "expected": "Should return retailers list with Target pricing",
+                    "actual": {
+                      "pid": "P003",
+                      "pos": 3,
+                      "retailers": []
+                    },
+                    "status": "fail"
+                  }
+                ]
+              },
+              {
+                "tool_name": "price_trend",
+                "passed": false,
+                "error": "Tool returns empty price_data list despite scenario data containing priceTrends for P001",
+                "test_cases": [
+                  {
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1
+                    },
+                    "expected": "Should return price trend data with 2 predicted price points",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "price_data": []
+                    },
+                    "status": "fail"
+                  },
+                  {
+                    "input": {
+                      "pid": "P002",
+                      "pos": 2
+                    },
+                    "expected": "Should return empty price_data (no trend data in scenario)",
+                    "actual": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "price_data": []
+                    },
+                    "status": "pass",
+                    "note": "Correctly returns empty for product without trend data"
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_price_history",
+                "passed": false,
+                "error": "Tool returns empty price_history list despite scenario data containing priceHistory",
+                "test_cases": [
+                  {
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1
+                    },
+                    "expected": "Should return 2 historical price records for Amazon",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "price_history": []
+                    },
+                    "status": "fail"
+                  },
+                  {
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailers": [
+                        "Amazon"
+                      ]
+                    },
+                    "expected": "Should return 2 historical price records filtered for Amazon",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "price_history": []
+                    },
+                    "status": "fail"
+                  },
+                  {
+                    "input": {
+                      "pid": "P003",
+                      "pos": 3,
+                      "retailers": [
+                        "Target"
+                      ]
+                    },
+                    "expected": "Should return 2 historical price records for Target",
+                    "actual": {
+                      "pid": "P003",
+                      "pos": 3,
+                      "price_history": []
+                    },
+                    "status": "fail"
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_discount_info",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Amazon",
+                      "time_period": "current"
+                    },
+                    "expected": "Should return empty discounts (no discount data in scenario)",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Amazon",
+                      "discounts": []
+                    },
+                    "status": "pass",
+                    "note": "Correctly returns empty when no discount data exists"
+                  },
+                  {
+                    "input": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "retailer": "Newegg",
+                      "time_period": "past"
+                    },
+                    "expected": "Should return empty discounts (no discount data in scenario)",
+                    "actual": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "retailer": "Newegg",
+                      "discounts": []
+                    },
+                    "status": "pass"
+                  },
+                  {
+                    "input": {
+                      "pid": "P003",
+                      "pos": 3,
+                      "retailer": "Target",
+                      "time_period": "upcoming"
+                    },
+                    "expected": "Should return empty discounts (no discount data in scenario)",
+                    "actual": {
+                      "pid": "P003",
+                      "pos": 3,
+                      "retailer": "Target",
+                      "discounts": []
+                    },
+                    "status": "pass"
+                  }
+                ]
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "note": "Saved scenario matches original scenario exactly"
+            },
+            "summary": {
+              "total_tools_tested": 5,
+              "tools_passed": 2,
+              "tools_failed": 3,
+              "critical_issues": "Three out of five data retrieval tools (compare_price, price_trend, get_price_history) are failing to retrieve data from the loaded scenario despite the data being present and correctly saved. This indicates a systematic issue with how the API methods access the internal state after load_scenario is called.",
+              "recommendation": "Review the PriceComparisonAPI class implementation to ensure that: (1) load_scenario properly stores data in instance variables, (2) All retrieval methods access the correct instance variables, (3) Data structure keys match between storage and retrieval operations"
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 89.23255753517151
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Tool Logic Error - Data Retrieval Failure",
+              "error_location": "compare_price tool",
+              "error_details": "The compare_price tool consistently returns empty 'retailers' list even though the scenario contains retailerPrices data for the requested products (P001 has 3 retailers, P005 has 3 retailers)",
+              "expected_vs_actual": "Expected: List of retailer objects with store_name, price, and availability. Actual: Empty list []",
+              "root_cause": "The API method compare_price() is not correctly accessing or returning the retailerPrices data from the loaded scenario state. Possible issues: (1) Data structure mismatch between scenario format and API internal format, (2) Missing data transformation logic, (3) Incorrect key lookup in the state dictionary",
+              "expected_error": false
+            },
+            {
+              "error_type": "Tool Logic Error - Data Retrieval Failure",
+              "error_location": "price_trend tool",
+              "error_details": "The price_trend tool consistently returns empty 'price_data' list even though the scenario contains priceTrends data for the requested products (P001 has 3 trend entries, P005 has 2 trend entries)",
+              "expected_vs_actual": "Expected: List of price trend objects with date, predicted_price, and trend. Actual: Empty list []",
+              "root_cause": "The API method price_trend() is not correctly accessing or returning the priceTrends data from the loaded scenario state. Similar to compare_price, this suggests a systematic issue with data retrieval across multiple tools",
+              "expected_error": false
+            },
+            {
+              "error_type": "Tool Logic Error - Data Retrieval Failure",
+              "error_location": "get_price_history tool",
+              "error_details": "The get_price_history tool consistently returns empty 'price_history' list even though the scenario contains priceHistory data for the requested products (P001 has 3 history entries, P002 has 2 history entries)",
+              "expected_vs_actual": "Expected: List of historical price objects with date, price, and retailer. Actual: Empty list []",
+              "root_cause": "The API method get_price_history() is not correctly accessing or returning the priceHistory data from the loaded scenario state. This confirms a pattern of data retrieval failures across all data-fetching tools",
+              "expected_error": false
+            },
+            {
+              "error_type": "Tool Logic Error - Data Retrieval Failure",
+              "error_location": "get_discount_info tool",
+              "error_details": "The get_discount_info tool consistently returns empty 'discounts' list even though the scenario contains discountInfo data for the requested products and retailers (P001/Newegg has 1 discount, P005/Amazon has 1 discount)",
+              "expected_vs_actual": "Expected: List of discount objects with discount_percentage, start_date, end_date, original_price, and discounted_price. Actual: Empty list []",
+              "root_cause": "The API method get_discount_info() is not correctly accessing or returning the discountInfo data from the loaded scenario state. This completes the pattern showing all data retrieval tools are failing",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_pid_pos_details",
+                "test_cases": [
+                  {
+                    "test_name": "Valid product lookup - 4K Monitor",
+                    "input": {
+                      "name": "4K Monitor"
+                    },
+                    "passed": true,
+                    "output": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "name": "4K Monitor"
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid product lookup - Noise Cancelling Headphones",
+                    "input": {
+                      "name": "Noise Cancelling Headphones"
+                    },
+                    "passed": true,
+                    "output": {
+                      "pid": "P005",
+                      "pos": 5,
+                      "name": "Noise Cancelling Headphones"
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Nonexistent product lookup",
+                    "input": {
+                      "name": "Nonexistent Product"
+                    },
+                    "passed": true,
+                    "output": {
+                      "pid": "",
+                      "pos": 0,
+                      "name": ""
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "compare_price",
+                "test_cases": [
+                  {
+                    "test_name": "Compare prices for P001 with max 10 retailers",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "max_retailers": 10
+                    },
+                    "passed": false,
+                    "output": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailers": []
+                    },
+                    "error": "Expected retailer data but received empty list"
+                  },
+                  {
+                    "test_name": "Compare prices for P005 with max 3 retailers",
+                    "input": {
+                      "pid": "P005",
+                      "pos": 5,
+                      "max_retailers": 3
+                    },
+                    "passed": false,
+                    "output": {
+                      "pid": "P005",
+                      "pos": 5,
+                      "retailers": []
+                    },
+                    "error": "Expected retailer data but received empty list"
+                  },
+                  {
+                    "test_name": "Error case - empty pid",
+                    "input": {
+                      "pid": "",
+                      "pos": 1
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "PID must be a non-empty string (expected validation error)"
+                  }
+                ],
+                "passed": false,
+                "error": "Tool returns empty retailers list despite scenario data containing retailerPrices"
+              },
+              {
+                "tool_name": "price_trend",
+                "test_cases": [
+                  {
+                    "test_name": "Get price trend for P001",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1
+                    },
+                    "passed": false,
+                    "output": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "price_data": []
+                    },
+                    "error": "Expected price trend data but received empty list"
+                  },
+                  {
+                    "test_name": "Get price trend for P005",
+                    "input": {
+                      "pid": "P005",
+                      "pos": 5
+                    },
+                    "passed": false,
+                    "output": {
+                      "pid": "P005",
+                      "pos": 5,
+                      "price_data": []
+                    },
+                    "error": "Expected price trend data but received empty list"
+                  }
+                ],
+                "passed": false,
+                "error": "Tool returns empty price_data list despite scenario data containing priceTrends"
+              },
+              {
+                "tool_name": "get_price_history",
+                "test_cases": [
+                  {
+                    "test_name": "Get price history for P001",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1
+                    },
+                    "passed": false,
+                    "output": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "price_history": []
+                    },
+                    "error": "Expected price history data but received empty list"
+                  },
+                  {
+                    "test_name": "Get price history for P002 filtered by Walmart",
+                    "input": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "retailers": [
+                        "Walmart"
+                      ]
+                    },
+                    "passed": false,
+                    "output": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "price_history": []
+                    },
+                    "error": "Expected price history data but received empty list"
+                  }
+                ],
+                "passed": false,
+                "error": "Tool returns empty price_history list despite scenario data containing priceHistory"
+              },
+              {
+                "tool_name": "get_discount_info",
+                "test_cases": [
+                  {
+                    "test_name": "Get discount info for P001 at Newegg (current)",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Newegg",
+                      "time_period": "current"
+                    },
+                    "passed": false,
+                    "output": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Newegg",
+                      "discounts": []
+                    },
+                    "error": "Expected discount data but received empty list"
+                  },
+                  {
+                    "test_name": "Get discount info for P005 at Amazon (current)",
+                    "input": {
+                      "pid": "P005",
+                      "pos": 5,
+                      "retailer": "Amazon",
+                      "time_period": "current"
+                    },
+                    "passed": false,
+                    "output": {
+                      "pid": "P005",
+                      "pos": 5,
+                      "retailer": "Amazon",
+                      "discounts": []
+                    },
+                    "error": "Expected discount data but received empty list"
+                  },
+                  {
+                    "test_name": "Error case - invalid time_period",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Amazon",
+                      "time_period": "invalid"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Time period must be one of: 'current', 'past', 'upcoming' (expected validation error)"
+                  }
+                ],
+                "passed": false,
+                "error": "Tool returns empty discounts list despite scenario data containing discountInfo"
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "note": "Saved scenario matches loaded scenario perfectly - state persistence is working correctly"
+            },
+            "summary": {
+              "total_tools_tested": 5,
+              "tools_passed": 1,
+              "tools_failed": 4,
+              "critical_issues": [
+                "Systematic data retrieval failure across all tools except get_pid_pos_details",
+                "The load_scenario successfully stores data (confirmed by save_scenario returning identical data)",
+                "However, the API methods (compare_price, price_trend, get_price_history, get_discount_info) cannot access this stored data",
+                "Root cause likely in PriceComparisonAPI class implementation - possible disconnect between how load_scenario stores data and how other methods retrieve it"
+              ],
+              "recommendations": [
+                "Review the PriceComparisonAPI class implementation (Section 2) to verify data storage mechanism in load_scenario()",
+                "Check if API methods are using correct attribute names or dictionary keys to access stored data",
+                "Verify that load_scenario() is properly initializing all required internal data structures",
+                "Add debug logging to trace data flow from load_scenario through to retrieval methods",
+                "Consider if there's a missing initialization step or data transformation between storage and retrieval"
+              ]
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 90.18368935585022
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_pid_pos_details",
+                "test_cases": [
+                  {
+                    "description": "Search for non-existent product in empty catalog",
+                    "input": {
+                      "name": "Laptop"
+                    },
+                    "expected": "Empty result for non-existent product",
+                    "actual": {
+                      "pid": "",
+                      "pos": 0,
+                      "name": ""
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "compare_price",
+                "test_cases": [
+                  {
+                    "description": "Compare prices for non-existent product with max_retailers=5",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "max_retailers": 5
+                    },
+                    "expected": "Empty retailers list",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailers": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Compare prices with boundary values (pos=0, max_retailers=1)",
+                    "input": {
+                      "pid": "P999",
+                      "pos": 0,
+                      "max_retailers": 1
+                    },
+                    "expected": "Empty retailers list",
+                    "actual": {
+                      "pid": "P999",
+                      "pos": 0,
+                      "retailers": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "price_trend",
+                "test_cases": [
+                  {
+                    "description": "Get price trend for non-existent product",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1
+                    },
+                    "expected": "Empty price_data list",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "price_data": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_price_history",
+                "test_cases": [
+                  {
+                    "description": "Get price history with retailer filter",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailers": [
+                        "Amazon",
+                        "Walmart"
+                      ]
+                    },
+                    "expected": "Empty price_history list",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "price_history": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Get price history without retailer filter",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1
+                    },
+                    "expected": "Empty price_history list",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "price_history": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_discount_info",
+                "test_cases": [
+                  {
+                    "description": "Get current discounts for non-existent product",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Amazon",
+                      "time_period": "current"
+                    },
+                    "expected": "Empty discounts list",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Amazon",
+                      "discounts": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Get past discounts",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Walmart",
+                      "time_period": "past"
+                    },
+                    "expected": "Empty discounts list",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Walmart",
+                      "discounts": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Get upcoming discounts",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Target",
+                      "time_period": "upcoming"
+                    },
+                    "expected": "Empty discounts list",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Target",
+                      "discounts": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All empty data structures preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 59.59955668449402
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 2,
+      "passed_scenarios": 2,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_pid_pos_details",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Laptop Stand",
+                    "input": {
+                      "name": "Laptop Stand"
+                    },
+                    "expected": "Product details for P001",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "name": "Laptop Stand"
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - USB-C Hub",
+                    "input": {
+                      "name": "USB-C Hub"
+                    },
+                    "expected": "Product details for P002",
+                    "actual": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "name": "USB-C Hub"
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Mechanical Keyboard",
+                    "input": {
+                      "name": "Mechanical Keyboard"
+                    },
+                    "expected": "Product details for P003",
+                    "actual": {
+                      "pid": "P003",
+                      "pos": 3,
+                      "name": "Mechanical Keyboard"
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Error case - Nonexistent product",
+                    "input": {
+                      "name": "Nonexistent Product"
+                    },
+                    "expected": "Empty or error response",
+                    "actual": {
+                      "pid": "",
+                      "pos": 0,
+                      "name": ""
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "compare_price",
+                "test_cases": [
+                  {
+                    "description": "Valid case - P001 with default max_retailers",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1
+                    },
+                    "expected": "Price comparison with 2 retailers",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailers": [
+                        {
+                          "store_name": "Amazon",
+                          "price": 45.99,
+                          "availability": "In Stock"
+                        },
+                        {
+                          "store_name": "Best Buy",
+                          "price": 49.99,
+                          "availability": "Limited Stock"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - P002 with max_retailers=5",
+                    "input": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "max_retailers": 5
+                    },
+                    "expected": "Price comparison with 2 retailers",
+                    "actual": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "retailers": [
+                        {
+                          "store_name": "Newegg",
+                          "price": 35.0,
+                          "availability": "Out of Stock"
+                        },
+                        {
+                          "store_name": "Amazon",
+                          "price": 39.99,
+                          "availability": "In Stock"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case - P003 with single retailer",
+                    "input": {
+                      "pid": "P003",
+                      "pos": 3,
+                      "max_retailers": 10
+                    },
+                    "expected": "Price comparison with 1 retailer",
+                    "actual": {
+                      "pid": "P003",
+                      "pos": 3,
+                      "retailers": [
+                        {
+                          "store_name": "Target",
+                          "price": 89.99,
+                          "availability": "Backorder"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "price_trend",
+                "test_cases": [
+                  {
+                    "description": "Valid case - P001 with trend data",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1
+                    },
+                    "expected": "Price trend with 2 data points",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "price_data": [
+                        {
+                          "date": "2024-03-01",
+                          "predicted_price": 46.5,
+                          "trend": "up"
+                        },
+                        {
+                          "date": "2024-04-01",
+                          "predicted_price": 47.0,
+                          "trend": "up"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case - P002 with no trend data",
+                    "input": {
+                      "pid": "P002",
+                      "pos": 2
+                    },
+                    "expected": "Empty price_data array",
+                    "actual": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "price_data": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_price_history",
+                "test_cases": [
+                  {
+                    "description": "Valid case - P001 without retailer filter",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1
+                    },
+                    "expected": "Price history with 2 records",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "price_history": [
+                        {
+                          "date": "2024-01-15",
+                          "price": 42.99,
+                          "retailer": "Amazon"
+                        },
+                        {
+                          "date": "2024-02-01",
+                          "price": 45.99,
+                          "retailer": "Amazon"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - P001 with Amazon filter",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailers": [
+                        "Amazon"
+                      ]
+                    },
+                    "expected": "Price history filtered for Amazon",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "price_history": [
+                        {
+                          "date": "2024-01-15",
+                          "price": 42.99,
+                          "retailer": "Amazon"
+                        },
+                        {
+                          "date": "2024-02-01",
+                          "price": 45.99,
+                          "retailer": "Amazon"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - P003 with Target filter",
+                    "input": {
+                      "pid": "P003",
+                      "pos": 3,
+                      "retailers": [
+                        "Target"
+                      ]
+                    },
+                    "expected": "Price history with 2 Target records",
+                    "actual": {
+                      "pid": "P003",
+                      "pos": 3,
+                      "price_history": [
+                        {
+                          "date": "2024-01-10",
+                          "price": 95.0,
+                          "retailer": "Target"
+                        },
+                        {
+                          "date": "2024-02-10",
+                          "price": 89.99,
+                          "retailer": "Target"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case - P002 with no history",
+                    "input": {
+                      "pid": "P002",
+                      "pos": 2
+                    },
+                    "expected": "Empty price_history array",
+                    "actual": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "price_history": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_discount_info",
+                "test_cases": [
+                  {
+                    "description": "Valid case - P001 Amazon current",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Amazon",
+                      "time_period": "current"
+                    },
+                    "expected": "Empty discounts array (no discount data in scenario)",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Amazon",
+                      "discounts": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - P002 Newegg past",
+                    "input": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "retailer": "Newegg",
+                      "time_period": "past"
+                    },
+                    "expected": "Empty discounts array",
+                    "actual": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "retailer": "Newegg",
+                      "discounts": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - P003 Target upcoming",
+                    "input": {
+                      "pid": "P003",
+                      "pos": 3,
+                      "retailer": "Target",
+                      "time_period": "upcoming"
+                    },
+                    "expected": "Empty discounts array",
+                    "actual": {
+                      "pid": "P003",
+                      "pos": 3,
+                      "retailer": "Target",
+                      "discounts": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All state variables preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 88.97303414344788
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_pid_pos_details",
+                "test_cases": [
+                  {
+                    "description": "Valid case - existing product '4K Monitor'",
+                    "input": {
+                      "name": "4K Monitor"
+                    },
+                    "expected": "Return pid=P001, pos=1, name='4K Monitor'",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "name": "4K Monitor"
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - existing product 'Noise Cancelling Headphones'",
+                    "input": {
+                      "name": "Noise Cancelling Headphones"
+                    },
+                    "expected": "Return pid=P005, pos=5, name='Noise Cancelling Headphones'",
+                    "actual": {
+                      "pid": "P005",
+                      "pos": 5,
+                      "name": "Noise Cancelling Headphones"
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case - nonexistent product",
+                    "input": {
+                      "name": "Nonexistent Product"
+                    },
+                    "expected": "Return empty values",
+                    "actual": {
+                      "pid": "",
+                      "pos": 0,
+                      "name": ""
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "compare_price",
+                "test_cases": [
+                  {
+                    "description": "Valid case - P001 with default max_retailers",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "max_retailers": 10
+                    },
+                    "expected": "Return all 3 retailers for P001",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailers": [
+                        {
+                          "store_name": "Amazon",
+                          "price": 299.99,
+                          "availability": "In Stock"
+                        },
+                        {
+                          "store_name": "Best Buy",
+                          "price": 319.99,
+                          "availability": "In Stock"
+                        },
+                        {
+                          "store_name": "Newegg",
+                          "price": 289.99,
+                          "availability": "Limited Stock"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case - P005 with max_retailers=2",
+                    "input": {
+                      "pid": "P005",
+                      "pos": 5,
+                      "max_retailers": 2
+                    },
+                    "expected": "Return only first 2 retailers for P005",
+                    "actual": {
+                      "pid": "P005",
+                      "pos": 5,
+                      "retailers": [
+                        {
+                          "store_name": "Amazon",
+                          "price": 199.99,
+                          "availability": "In Stock"
+                        },
+                        {
+                          "store_name": "Target",
+                          "price": 209.99,
+                          "availability": "Limited Stock"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - P003 with default max_retailers",
+                    "input": {
+                      "pid": "P003",
+                      "pos": 3
+                    },
+                    "expected": "Return all 2 retailers for P003",
+                    "actual": {
+                      "pid": "P003",
+                      "pos": 3,
+                      "retailers": [
+                        {
+                          "store_name": "Target",
+                          "price": 45.99,
+                          "availability": "In Stock"
+                        },
+                        {
+                          "store_name": "Amazon",
+                          "price": 42.99,
+                          "availability": "In Stock"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "price_trend",
+                "test_cases": [
+                  {
+                    "description": "Valid case - P001 with trend data",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1
+                    },
+                    "expected": "Return 3 price trend records",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "price_data": [
+                        {
+                          "date": "2024-03-01",
+                          "predicted_price": 295.0,
+                          "trend": "down"
+                        },
+                        {
+                          "date": "2024-04-01",
+                          "predicted_price": 289.99,
+                          "trend": "down"
+                        },
+                        {
+                          "date": "2024-05-01",
+                          "predicted_price": 285.0,
+                          "trend": "stable"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - P005 with trend data",
+                    "input": {
+                      "pid": "P005",
+                      "pos": 5
+                    },
+                    "expected": "Return 2 price trend records",
+                    "actual": {
+                      "pid": "P005",
+                      "pos": 5,
+                      "price_data": [
+                        {
+                          "date": "2024-03-01",
+                          "predicted_price": 199.99,
+                          "trend": "stable"
+                        },
+                        {
+                          "date": "2024-04-01",
+                          "predicted_price": 189.99,
+                          "trend": "down"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case - P003 with no trend data",
+                    "input": {
+                      "pid": "P003",
+                      "pos": 3
+                    },
+                    "expected": "Return empty price_data array",
+                    "actual": {
+                      "pid": "P003",
+                      "pos": 3,
+                      "price_data": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_price_history",
+                "test_cases": [
+                  {
+                    "description": "Valid case - P001 without retailer filter",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1
+                    },
+                    "expected": "Return all 3 historical price records for P001",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "price_history": [
+                        {
+                          "date": "2024-01-01",
+                          "price": 349.99,
+                          "retailer": "Amazon"
+                        },
+                        {
+                          "date": "2024-01-15",
+                          "price": 329.99,
+                          "retailer": "Amazon"
+                        },
+                        {
+                          "date": "2024-02-01",
+                          "price": 299.99,
+                          "retailer": "Amazon"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - P002 with retailer filter ['Walmart']",
+                    "input": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "retailers": [
+                        "Walmart"
+                      ]
+                    },
+                    "expected": "Return 2 Walmart price history records",
+                    "actual": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "price_history": [
+                        {
+                          "date": "2024-01-10",
+                          "price": 279.99,
+                          "retailer": "Walmart"
+                        },
+                        {
+                          "date": "2024-02-10",
+                          "price": 239.99,
+                          "retailer": "Walmart"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case - P004 with no price history",
+                    "input": {
+                      "pid": "P004",
+                      "pos": 4
+                    },
+                    "expected": "Return empty price_history array",
+                    "actual": {
+                      "pid": "P004",
+                      "pos": 4,
+                      "price_history": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_discount_info",
+                "test_cases": [
+                  {
+                    "description": "Valid case - P001 at Newegg with current discounts",
+                    "input": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Newegg",
+                      "time_period": "current"
+                    },
+                    "expected": "Return 1 discount record",
+                    "actual": {
+                      "pid": "P001",
+                      "pos": 1,
+                      "retailer": "Newegg",
+                      "discounts": [
+                        {
+                          "discount_percentage": 15.0,
+                          "start_date": "2024-02-15",
+                          "end_date": "2024-03-15",
+                          "original_price": 339.99,
+                          "discounted_price": 289.99
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - P005 at Amazon with current discounts",
+                    "input": {
+                      "pid": "P005",
+                      "pos": 5,
+                      "retailer": "Amazon",
+                      "time_period": "current"
+                    },
+                    "expected": "Return 1 discount record",
+                    "actual": {
+                      "pid": "P005",
+                      "pos": 5,
+                      "retailer": "Amazon",
+                      "discounts": [
+                        {
+                          "discount_percentage": 13.04,
+                          "start_date": "2024-02-01",
+                          "end_date": "2024-03-31",
+                          "original_price": 229.99,
+                          "discounted_price": 199.99
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - P002 at Walmart with past discounts",
+                    "input": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "retailer": "Walmart",
+                      "time_period": "past"
+                    },
+                    "expected": "Return 1 discount record",
+                    "actual": {
+                      "pid": "P002",
+                      "pos": 2,
+                      "retailer": "Walmart",
+                      "discounts": [
+                        {
+                          "discount_percentage": 10.0,
+                          "start_date": "2024-02-01",
+                          "end_date": "2024-02-28",
+                          "original_price": 266.66,
+                          "discounted_price": 239.99
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case - P003 at Target with no discounts",
+                    "input": {
+                      "pid": "P003",
+                      "pos": 3,
+                      "retailer": "Target",
+                      "time_period": "current"
+                    },
+                    "expected": "Return empty discounts array",
+                    "actual": {
+                      "pid": "P003",
+                      "pos": 3,
+                      "retailer": "Target",
+                      "discounts": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All data structures (products, retailerPrices, priceHistory, priceTrends, discountInfo, retailerList, availabilityStatuses) are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 90.14407324790955
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_003",
+        "scenario_002"
+      ],
+      "aggregated_errors": {
+        "common_errors": [
+          {
+            "tool_name": "compare_price tool",
+            "occurrence_count": 2,
+            "affected_scenarios": [
+              "scenario_002",
+              "scenario_003"
+            ],
+            "sample_error": {
+              "error_type": "Data Retrieval Logic Error",
+              "error_location": "compare_price tool",
+              "error_details": "The compare_price tool consistently returns empty retailers list even when retailerPrices data exists in the loaded scenario for the requested products (P001, P002, P003)",
+              "expected_vs_actual": "Expected: retailers list with store_name, price, and availability fields. Actual: empty retailers list []",
+              "root_cause": "The API's compare_price method is not correctly retrieving data from the retailerPrices dictionary. Possible issues: (1) The method may be looking up data using incorrect keys or structure, (2) The method may not be properly accessing the loaded scenario state, (3) There may be a mismatch between how data is stored (retailerPrices) vs how it's retrieved",
+              "expected_error": false
+            }
+          },
+          {
+            "tool_name": "price_trend tool",
+            "occurrence_count": 2,
+            "affected_scenarios": [
+              "scenario_002",
+              "scenario_003"
+            ],
+            "sample_error": {
+              "error_type": "Data Retrieval Logic Error",
+              "error_location": "price_trend tool",
+              "error_details": "The price_trend tool returns empty price_data list for P001 even though the scenario contains priceTrends data with 2 predicted price points for this product",
+              "expected_vs_actual": "Expected: price_data list with 2 entries containing date, predicted_price, and trend fields. Actual: empty price_data list []",
+              "root_cause": "The API's price_trend method is not correctly retrieving data from the priceTrends dictionary. Similar to compare_price, this suggests the method is not properly accessing the loaded scenario state or there's a key/structure mismatch",
+              "expected_error": false
+            }
+          },
+          {
+            "tool_name": "get_price_history tool",
+            "occurrence_count": 2,
+            "affected_scenarios": [
+              "scenario_002",
+              "scenario_003"
+            ],
+            "sample_error": {
+              "error_type": "Data Retrieval Logic Error",
+              "error_location": "get_price_history tool",
+              "error_details": "The get_price_history tool returns empty price_history list for products P001 and P003 even though the scenario contains priceHistory data for both products",
+              "expected_vs_actual": "Expected: price_history list with historical records containing date, price, and retailer fields. Actual: empty price_history list []",
+              "root_cause": "The API's get_price_history method is not correctly retrieving data from the priceHistory dictionary. The issue persists even when filtering by specific retailers, indicating the core data retrieval mechanism is broken",
+              "expected_error": false
+            }
+          }
+        ],
+        "scenario_specific_errors": [
+          {
+            "scenario_id": "scenario_002",
+            "complexity_level": "medium",
+            "errors": [
+              {
+                "error_type": "Data Retrieval Logic Error",
+                "error_location": "compare_price tool",
+                "error_details": "The compare_price tool consistently returns empty retailers list even when retailerPrices data exists in the loaded scenario for the requested products (P001, P002, P003)",
+                "expected_vs_actual": "Expected: retailers list with store_name, price, and availability fields. Actual: empty retailers list []",
+                "root_cause": "The API's compare_price method is not correctly retrieving data from the retailerPrices dictionary. Possible issues: (1) The method may be looking up data using incorrect keys or structure, (2) The method may not be properly accessing the loaded scenario state, (3) There may be a mismatch between how data is stored (retailerPrices) vs how it's retrieved",
+                "expected_error": false
+              },
+              {
+                "error_type": "Data Retrieval Logic Error",
+                "error_location": "price_trend tool",
+                "error_details": "The price_trend tool returns empty price_data list for P001 even though the scenario contains priceTrends data with 2 predicted price points for this product",
+                "expected_vs_actual": "Expected: price_data list with 2 entries containing date, predicted_price, and trend fields. Actual: empty price_data list []",
+                "root_cause": "The API's price_trend method is not correctly retrieving data from the priceTrends dictionary. Similar to compare_price, this suggests the method is not properly accessing the loaded scenario state or there's a key/structure mismatch",
+                "expected_error": false
+              },
+              {
+                "error_type": "Data Retrieval Logic Error",
+                "error_location": "get_price_history tool",
+                "error_details": "The get_price_history tool returns empty price_history list for products P001 and P003 even though the scenario contains priceHistory data for both products",
+                "expected_vs_actual": "Expected: price_history list with historical records containing date, price, and retailer fields. Actual: empty price_history list []",
+                "root_cause": "The API's get_price_history method is not correctly retrieving data from the priceHistory dictionary. The issue persists even when filtering by specific retailers, indicating the core data retrieval mechanism is broken",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_pid_pos_details",
+                  "passed": true,
+                  "error": null,
+                  "test_cases": [
+                    {
+                      "input": {
+                        "name": "Laptop Stand"
+                      },
+                      "output": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "name": "Laptop Stand"
+                      },
+                      "status": "pass"
+                    },
+                    {
+                      "input": {
+                        "name": "USB-C Hub"
+                      },
+                      "output": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "name": "USB-C Hub"
+                      },
+                      "status": "pass"
+                    },
+                    {
+                      "input": {
+                        "name": "Mechanical Keyboard"
+                      },
+                      "output": {
+                        "pid": "P003",
+                        "pos": 3,
+                        "name": "Mechanical Keyboard"
+                      },
+                      "status": "pass"
+                    },
+                    {
+                      "input": {
+                        "name": "Nonexistent Product"
+                      },
+                      "output": {
+                        "pid": "",
+                        "pos": 0,
+                        "name": ""
+                      },
+                      "status": "pass",
+                      "note": "Gracefully handles non-existent products"
+                    }
+                  ]
+                },
+                {
+                  "tool_name": "compare_price",
+                  "passed": false,
+                  "error": "Tool returns empty retailers list despite scenario data containing retailerPrices",
+                  "test_cases": [
+                    {
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1
+                      },
+                      "expected": "Should return retailers list with Amazon and Best Buy pricing",
+                      "actual": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "retailers": []
+                      },
+                      "status": "fail"
+                    },
+                    {
+                      "input": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "max_retailers": 5
+                      },
+                      "expected": "Should return retailers list with Newegg and Amazon pricing",
+                      "actual": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "retailers": []
+                      },
+                      "status": "fail"
+                    },
+                    {
+                      "input": {
+                        "pid": "P003",
+                        "pos": 3
+                      },
+                      "expected": "Should return retailers list with Target pricing",
+                      "actual": {
+                        "pid": "P003",
+                        "pos": 3,
+                        "retailers": []
+                      },
+                      "status": "fail"
+                    }
+                  ]
+                },
+                {
+                  "tool_name": "price_trend",
+                  "passed": false,
+                  "error": "Tool returns empty price_data list despite scenario data containing priceTrends for P001",
+                  "test_cases": [
+                    {
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1
+                      },
+                      "expected": "Should return price trend data with 2 predicted price points",
+                      "actual": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "price_data": []
+                      },
+                      "status": "fail"
+                    },
+                    {
+                      "input": {
+                        "pid": "P002",
+                        "pos": 2
+                      },
+                      "expected": "Should return empty price_data (no trend data in scenario)",
+                      "actual": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "price_data": []
+                      },
+                      "status": "pass",
+                      "note": "Correctly returns empty for product without trend data"
+                    }
+                  ]
+                },
+                {
+                  "tool_name": "get_price_history",
+                  "passed": false,
+                  "error": "Tool returns empty price_history list despite scenario data containing priceHistory",
+                  "test_cases": [
+                    {
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1
+                      },
+                      "expected": "Should return 2 historical price records for Amazon",
+                      "actual": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "price_history": []
+                      },
+                      "status": "fail"
+                    },
+                    {
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "retailers": [
+                          "Amazon"
+                        ]
+                      },
+                      "expected": "Should return 2 historical price records filtered for Amazon",
+                      "actual": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "price_history": []
+                      },
+                      "status": "fail"
+                    },
+                    {
+                      "input": {
+                        "pid": "P003",
+                        "pos": 3,
+                        "retailers": [
+                          "Target"
+                        ]
+                      },
+                      "expected": "Should return 2 historical price records for Target",
+                      "actual": {
+                        "pid": "P003",
+                        "pos": 3,
+                        "price_history": []
+                      },
+                      "status": "fail"
+                    }
+                  ]
+                },
+                {
+                  "tool_name": "get_discount_info",
+                  "passed": true,
+                  "error": null,
+                  "test_cases": [
+                    {
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "retailer": "Amazon",
+                        "time_period": "current"
+                      },
+                      "expected": "Should return empty discounts (no discount data in scenario)",
+                      "actual": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "retailer": "Amazon",
+                        "discounts": []
+                      },
+                      "status": "pass",
+                      "note": "Correctly returns empty when no discount data exists"
+                    },
+                    {
+                      "input": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "retailer": "Newegg",
+                        "time_period": "past"
+                      },
+                      "expected": "Should return empty discounts (no discount data in scenario)",
+                      "actual": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "retailer": "Newegg",
+                        "discounts": []
+                      },
+                      "status": "pass"
+                    },
+                    {
+                      "input": {
+                        "pid": "P003",
+                        "pos": 3,
+                        "retailer": "Target",
+                        "time_period": "upcoming"
+                      },
+                      "expected": "Should return empty discounts (no discount data in scenario)",
+                      "actual": {
+                        "pid": "P003",
+                        "pos": 3,
+                        "retailer": "Target",
+                        "discounts": []
+                      },
+                      "status": "pass"
+                    }
+                  ]
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null,
+                "note": "Saved scenario matches original scenario exactly"
+              },
+              "summary": {
+                "total_tools_tested": 5,
+                "tools_passed": 2,
+                "tools_failed": 3,
+                "critical_issues": "Three out of five data retrieval tools (compare_price, price_trend, get_price_history) are failing to retrieve data from the loaded scenario despite the data being present and correctly saved. This indicates a systematic issue with how the API methods access the internal state after load_scenario is called.",
+                "recommendation": "Review the PriceComparisonAPI class implementation to ensure that: (1) load_scenario properly stores data in instance variables, (2) All retrieval methods access the correct instance variables, (3) Data structure keys match between storage and retrieval operations"
+              }
+            }
+          },
+          {
+            "scenario_id": "scenario_003",
+            "complexity_level": "complex",
+            "errors": [
+              {
+                "error_type": "Tool Logic Error - Data Retrieval Failure",
+                "error_location": "compare_price tool",
+                "error_details": "The compare_price tool consistently returns empty 'retailers' list even though the scenario contains retailerPrices data for the requested products (P001 has 3 retailers, P005 has 3 retailers)",
+                "expected_vs_actual": "Expected: List of retailer objects with store_name, price, and availability. Actual: Empty list []",
+                "root_cause": "The API method compare_price() is not correctly accessing or returning the retailerPrices data from the loaded scenario state. Possible issues: (1) Data structure mismatch between scenario format and API internal format, (2) Missing data transformation logic, (3) Incorrect key lookup in the state dictionary",
+                "expected_error": false
+              },
+              {
+                "error_type": "Tool Logic Error - Data Retrieval Failure",
+                "error_location": "price_trend tool",
+                "error_details": "The price_trend tool consistently returns empty 'price_data' list even though the scenario contains priceTrends data for the requested products (P001 has 3 trend entries, P005 has 2 trend entries)",
+                "expected_vs_actual": "Expected: List of price trend objects with date, predicted_price, and trend. Actual: Empty list []",
+                "root_cause": "The API method price_trend() is not correctly accessing or returning the priceTrends data from the loaded scenario state. Similar to compare_price, this suggests a systematic issue with data retrieval across multiple tools",
+                "expected_error": false
+              },
+              {
+                "error_type": "Tool Logic Error - Data Retrieval Failure",
+                "error_location": "get_price_history tool",
+                "error_details": "The get_price_history tool consistently returns empty 'price_history' list even though the scenario contains priceHistory data for the requested products (P001 has 3 history entries, P002 has 2 history entries)",
+                "expected_vs_actual": "Expected: List of historical price objects with date, price, and retailer. Actual: Empty list []",
+                "root_cause": "The API method get_price_history() is not correctly accessing or returning the priceHistory data from the loaded scenario state. This confirms a pattern of data retrieval failures across all data-fetching tools",
+                "expected_error": false
+              },
+              {
+                "error_type": "Tool Logic Error - Data Retrieval Failure",
+                "error_location": "get_discount_info tool",
+                "error_details": "The get_discount_info tool consistently returns empty 'discounts' list even though the scenario contains discountInfo data for the requested products and retailers (P001/Newegg has 1 discount, P005/Amazon has 1 discount)",
+                "expected_vs_actual": "Expected: List of discount objects with discount_percentage, start_date, end_date, original_price, and discounted_price. Actual: Empty list []",
+                "root_cause": "The API method get_discount_info() is not correctly accessing or returning the discountInfo data from the loaded scenario state. This completes the pattern showing all data retrieval tools are failing",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_pid_pos_details",
+                  "test_cases": [
+                    {
+                      "test_name": "Valid product lookup - 4K Monitor",
+                      "input": {
+                        "name": "4K Monitor"
+                      },
+                      "passed": true,
+                      "output": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "name": "4K Monitor"
+                      },
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid product lookup - Noise Cancelling Headphones",
+                      "input": {
+                        "name": "Noise Cancelling Headphones"
+                      },
+                      "passed": true,
+                      "output": {
+                        "pid": "P005",
+                        "pos": 5,
+                        "name": "Noise Cancelling Headphones"
+                      },
+                      "error": null
+                    },
+                    {
+                      "test_name": "Nonexistent product lookup",
+                      "input": {
+                        "name": "Nonexistent Product"
+                      },
+                      "passed": true,
+                      "output": {
+                        "pid": "",
+                        "pos": 0,
+                        "name": ""
+                      },
+                      "error": null
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "compare_price",
+                  "test_cases": [
+                    {
+                      "test_name": "Compare prices for P001 with max 10 retailers",
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "max_retailers": 10
+                      },
+                      "passed": false,
+                      "output": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "retailers": []
+                      },
+                      "error": "Expected retailer data but received empty list"
+                    },
+                    {
+                      "test_name": "Compare prices for P005 with max 3 retailers",
+                      "input": {
+                        "pid": "P005",
+                        "pos": 5,
+                        "max_retailers": 3
+                      },
+                      "passed": false,
+                      "output": {
+                        "pid": "P005",
+                        "pos": 5,
+                        "retailers": []
+                      },
+                      "error": "Expected retailer data but received empty list"
+                    },
+                    {
+                      "test_name": "Error case - empty pid",
+                      "input": {
+                        "pid": "",
+                        "pos": 1
+                      },
+                      "passed": true,
+                      "output": null,
+                      "error": "PID must be a non-empty string (expected validation error)"
+                    }
+                  ],
+                  "passed": false,
+                  "error": "Tool returns empty retailers list despite scenario data containing retailerPrices"
+                },
+                {
+                  "tool_name": "price_trend",
+                  "test_cases": [
+                    {
+                      "test_name": "Get price trend for P001",
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1
+                      },
+                      "passed": false,
+                      "output": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "price_data": []
+                      },
+                      "error": "Expected price trend data but received empty list"
+                    },
+                    {
+                      "test_name": "Get price trend for P005",
+                      "input": {
+                        "pid": "P005",
+                        "pos": 5
+                      },
+                      "passed": false,
+                      "output": {
+                        "pid": "P005",
+                        "pos": 5,
+                        "price_data": []
+                      },
+                      "error": "Expected price trend data but received empty list"
+                    }
+                  ],
+                  "passed": false,
+                  "error": "Tool returns empty price_data list despite scenario data containing priceTrends"
+                },
+                {
+                  "tool_name": "get_price_history",
+                  "test_cases": [
+                    {
+                      "test_name": "Get price history for P001",
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1
+                      },
+                      "passed": false,
+                      "output": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "price_history": []
+                      },
+                      "error": "Expected price history data but received empty list"
+                    },
+                    {
+                      "test_name": "Get price history for P002 filtered by Walmart",
+                      "input": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "retailers": [
+                          "Walmart"
+                        ]
+                      },
+                      "passed": false,
+                      "output": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "price_history": []
+                      },
+                      "error": "Expected price history data but received empty list"
+                    }
+                  ],
+                  "passed": false,
+                  "error": "Tool returns empty price_history list despite scenario data containing priceHistory"
+                },
+                {
+                  "tool_name": "get_discount_info",
+                  "test_cases": [
+                    {
+                      "test_name": "Get discount info for P001 at Newegg (current)",
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "retailer": "Newegg",
+                        "time_period": "current"
+                      },
+                      "passed": false,
+                      "output": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "retailer": "Newegg",
+                        "discounts": []
+                      },
+                      "error": "Expected discount data but received empty list"
+                    },
+                    {
+                      "test_name": "Get discount info for P005 at Amazon (current)",
+                      "input": {
+                        "pid": "P005",
+                        "pos": 5,
+                        "retailer": "Amazon",
+                        "time_period": "current"
+                      },
+                      "passed": false,
+                      "output": {
+                        "pid": "P005",
+                        "pos": 5,
+                        "retailer": "Amazon",
+                        "discounts": []
+                      },
+                      "error": "Expected discount data but received empty list"
+                    },
+                    {
+                      "test_name": "Error case - invalid time_period",
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "retailer": "Amazon",
+                        "time_period": "invalid"
+                      },
+                      "passed": true,
+                      "output": null,
+                      "error": "Time period must be one of: 'current', 'past', 'upcoming' (expected validation error)"
+                    }
+                  ],
+                  "passed": false,
+                  "error": "Tool returns empty discounts list despite scenario data containing discountInfo"
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null,
+                "note": "Saved scenario matches loaded scenario perfectly - state persistence is working correctly"
+              },
+              "summary": {
+                "total_tools_tested": 5,
+                "tools_passed": 1,
+                "tools_failed": 4,
+                "critical_issues": [
+                  "Systematic data retrieval failure across all tools except get_pid_pos_details",
+                  "The load_scenario successfully stores data (confirmed by save_scenario returning identical data)",
+                  "However, the API methods (compare_price, price_trend, get_price_history, get_discount_info) cannot access this stored data",
+                  "Root cause likely in PriceComparisonAPI class implementation - possible disconnect between how load_scenario stores data and how other methods retrieve it"
+                ],
+                "recommendations": [
+                  "Review the PriceComparisonAPI class implementation (Section 2) to verify data storage mechanism in load_scenario()",
+                  "Check if API methods are using correct attribute names or dictionary keys to access stored data",
+                  "Verify that load_scenario() is properly initializing all required internal data structures",
+                  "Add debug logging to trace data flow from load_scenario through to retrieval methods",
+                  "Consider if there's a missing initialization step or data transformation between storage and retrieval"
+                ]
+              }
+            }
+          }
+        ],
+        "error_by_tool": {
+          "compare_price tool": [
+            {
+              "scenario_id": "scenario_002",
+              "complexity_level": "medium",
+              "error": {
+                "error_type": "Data Retrieval Logic Error",
+                "error_location": "compare_price tool",
+                "error_details": "The compare_price tool consistently returns empty retailers list even when retailerPrices data exists in the loaded scenario for the requested products (P001, P002, P003)",
+                "expected_vs_actual": "Expected: retailers list with store_name, price, and availability fields. Actual: empty retailers list []",
+                "root_cause": "The API's compare_price method is not correctly retrieving data from the retailerPrices dictionary. Possible issues: (1) The method may be looking up data using incorrect keys or structure, (2) The method may not be properly accessing the loaded scenario state, (3) There may be a mismatch between how data is stored (retailerPrices) vs how it's retrieved",
+                "expected_error": false
+              }
+            },
+            {
+              "scenario_id": "scenario_003",
+              "complexity_level": "complex",
+              "error": {
+                "error_type": "Tool Logic Error - Data Retrieval Failure",
+                "error_location": "compare_price tool",
+                "error_details": "The compare_price tool consistently returns empty 'retailers' list even though the scenario contains retailerPrices data for the requested products (P001 has 3 retailers, P005 has 3 retailers)",
+                "expected_vs_actual": "Expected: List of retailer objects with store_name, price, and availability. Actual: Empty list []",
+                "root_cause": "The API method compare_price() is not correctly accessing or returning the retailerPrices data from the loaded scenario state. Possible issues: (1) Data structure mismatch between scenario format and API internal format, (2) Missing data transformation logic, (3) Incorrect key lookup in the state dictionary",
+                "expected_error": false
+              }
+            }
+          ],
+          "price_trend tool": [
+            {
+              "scenario_id": "scenario_002",
+              "complexity_level": "medium",
+              "error": {
+                "error_type": "Data Retrieval Logic Error",
+                "error_location": "price_trend tool",
+                "error_details": "The price_trend tool returns empty price_data list for P001 even though the scenario contains priceTrends data with 2 predicted price points for this product",
+                "expected_vs_actual": "Expected: price_data list with 2 entries containing date, predicted_price, and trend fields. Actual: empty price_data list []",
+                "root_cause": "The API's price_trend method is not correctly retrieving data from the priceTrends dictionary. Similar to compare_price, this suggests the method is not properly accessing the loaded scenario state or there's a key/structure mismatch",
+                "expected_error": false
+              }
+            },
+            {
+              "scenario_id": "scenario_003",
+              "complexity_level": "complex",
+              "error": {
+                "error_type": "Tool Logic Error - Data Retrieval Failure",
+                "error_location": "price_trend tool",
+                "error_details": "The price_trend tool consistently returns empty 'price_data' list even though the scenario contains priceTrends data for the requested products (P001 has 3 trend entries, P005 has 2 trend entries)",
+                "expected_vs_actual": "Expected: List of price trend objects with date, predicted_price, and trend. Actual: Empty list []",
+                "root_cause": "The API method price_trend() is not correctly accessing or returning the priceTrends data from the loaded scenario state. Similar to compare_price, this suggests a systematic issue with data retrieval across multiple tools",
+                "expected_error": false
+              }
+            }
+          ],
+          "get_price_history tool": [
+            {
+              "scenario_id": "scenario_002",
+              "complexity_level": "medium",
+              "error": {
+                "error_type": "Data Retrieval Logic Error",
+                "error_location": "get_price_history tool",
+                "error_details": "The get_price_history tool returns empty price_history list for products P001 and P003 even though the scenario contains priceHistory data for both products",
+                "expected_vs_actual": "Expected: price_history list with historical records containing date, price, and retailer fields. Actual: empty price_history list []",
+                "root_cause": "The API's get_price_history method is not correctly retrieving data from the priceHistory dictionary. The issue persists even when filtering by specific retailers, indicating the core data retrieval mechanism is broken",
+                "expected_error": false
+              }
+            },
+            {
+              "scenario_id": "scenario_003",
+              "complexity_level": "complex",
+              "error": {
+                "error_type": "Tool Logic Error - Data Retrieval Failure",
+                "error_location": "get_price_history tool",
+                "error_details": "The get_price_history tool consistently returns empty 'price_history' list even though the scenario contains priceHistory data for the requested products (P001 has 3 history entries, P002 has 2 history entries)",
+                "expected_vs_actual": "Expected: List of historical price objects with date, price, and retailer. Actual: Empty list []",
+                "root_cause": "The API method get_price_history() is not correctly accessing or returning the priceHistory data from the loaded scenario state. This confirms a pattern of data retrieval failures across all data-fetching tools",
+                "expected_error": false
+              }
+            }
+          ],
+          "get_discount_info tool": [
+            {
+              "scenario_id": "scenario_003",
+              "complexity_level": "complex",
+              "error": {
+                "error_type": "Tool Logic Error - Data Retrieval Failure",
+                "error_location": "get_discount_info tool",
+                "error_details": "The get_discount_info tool consistently returns empty 'discounts' list even though the scenario contains discountInfo data for the requested products and retailers (P001/Newegg has 1 discount, P005/Amazon has 1 discount)",
+                "expected_vs_actual": "Expected: List of discount objects with discount_percentage, start_date, end_date, original_price, and discounted_price. Actual: Empty list []",
+                "root_cause": "The API method get_discount_info() is not correctly accessing or returning the discountInfo data from the loaded scenario state. This completes the pattern showing all data retrieval tools are failing",
+                "expected_error": false
+              }
+            }
+          ]
+        },
+        "error_categories": {
+          "critical_load_failures": [],
+          "critical_schema_mismatches": [],
+          "high_tool_logic_errors": [
+            {
+              "error_type": "Data Retrieval Logic Error",
+              "error_location": "compare_price tool",
+              "error_details": "The compare_price tool consistently returns empty retailers list even when retailerPrices data exists in the loaded scenario for the requested products (P001, P002, P003)",
+              "expected_vs_actual": "Expected: retailers list with store_name, price, and availability fields. Actual: empty retailers list []",
+              "root_cause": "The API's compare_price method is not correctly retrieving data from the retailerPrices dictionary. Possible issues: (1) The method may be looking up data using incorrect keys or structure, (2) The method may not be properly accessing the loaded scenario state, (3) There may be a mismatch between how data is stored (retailerPrices) vs how it's retrieved",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Data Retrieval Logic Error",
+              "error_location": "price_trend tool",
+              "error_details": "The price_trend tool returns empty price_data list for P001 even though the scenario contains priceTrends data with 2 predicted price points for this product",
+              "expected_vs_actual": "Expected: price_data list with 2 entries containing date, predicted_price, and trend fields. Actual: empty price_data list []",
+              "root_cause": "The API's price_trend method is not correctly retrieving data from the priceTrends dictionary. Similar to compare_price, this suggests the method is not properly accessing the loaded scenario state or there's a key/structure mismatch",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Data Retrieval Logic Error",
+              "error_location": "get_price_history tool",
+              "error_details": "The get_price_history tool returns empty price_history list for products P001 and P003 even though the scenario contains priceHistory data for both products",
+              "expected_vs_actual": "Expected: price_history list with historical records containing date, price, and retailer fields. Actual: empty price_history list []",
+              "root_cause": "The API's get_price_history method is not correctly retrieving data from the priceHistory dictionary. The issue persists even when filtering by specific retailers, indicating the core data retrieval mechanism is broken",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Tool Logic Error - Data Retrieval Failure",
+              "error_location": "compare_price tool",
+              "error_details": "The compare_price tool consistently returns empty 'retailers' list even though the scenario contains retailerPrices data for the requested products (P001 has 3 retailers, P005 has 3 retailers)",
+              "expected_vs_actual": "Expected: List of retailer objects with store_name, price, and availability. Actual: Empty list []",
+              "root_cause": "The API method compare_price() is not correctly accessing or returning the retailerPrices data from the loaded scenario state. Possible issues: (1) Data structure mismatch between scenario format and API internal format, (2) Missing data transformation logic, (3) Incorrect key lookup in the state dictionary",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Tool Logic Error - Data Retrieval Failure",
+              "error_location": "price_trend tool",
+              "error_details": "The price_trend tool consistently returns empty 'price_data' list even though the scenario contains priceTrends data for the requested products (P001 has 3 trend entries, P005 has 2 trend entries)",
+              "expected_vs_actual": "Expected: List of price trend objects with date, predicted_price, and trend. Actual: Empty list []",
+              "root_cause": "The API method price_trend() is not correctly accessing or returning the priceTrends data from the loaded scenario state. Similar to compare_price, this suggests a systematic issue with data retrieval across multiple tools",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Tool Logic Error - Data Retrieval Failure",
+              "error_location": "get_price_history tool",
+              "error_details": "The get_price_history tool consistently returns empty 'price_history' list even though the scenario contains priceHistory data for the requested products (P001 has 3 history entries, P002 has 2 history entries)",
+              "expected_vs_actual": "Expected: List of historical price objects with date, price, and retailer. Actual: Empty list []",
+              "root_cause": "The API method get_price_history() is not correctly accessing or returning the priceHistory data from the loaded scenario state. This confirms a pattern of data retrieval failures across all data-fetching tools",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Tool Logic Error - Data Retrieval Failure",
+              "error_location": "get_discount_info tool",
+              "error_details": "The get_discount_info tool consistently returns empty 'discounts' list even though the scenario contains discountInfo data for the requested products and retailers (P001/Newegg has 1 discount, P005/Amazon has 1 discount)",
+              "expected_vs_actual": "Expected: List of discount objects with discount_percentage, start_date, end_date, original_price, and discounted_price. Actual: Empty list []",
+              "root_cause": "The API method get_discount_info() is not correctly accessing or returning the discountInfo data from the loaded scenario state. This completes the pattern showing all data retrieval tools are failing",
+              "expected_error": false,
+              "severity": "HIGH"
+            }
+          ],
+          "medium_state_errors": [],
+          "low_edge_case_failures": []
+        },
+        "severity_summary": {
+          "critical": 0,
+          "high": 7,
+          "medium": 0,
+          "low": 0
+        },
+        "total_failed_scenarios": 2,
+        "expected_failures": 0,
+        "unexpected_failures": 2
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 2,
+        "passed_scenarios": 2,
+        "failed_scenarios": 0,
+        "all_passed": true,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_002",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_pid_pos_details",
+                  "test_cases": [
+                    {
+                      "description": "Valid case - Laptop Stand",
+                      "input": {
+                        "name": "Laptop Stand"
+                      },
+                      "expected": "Product details for P001",
+                      "actual": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "name": "Laptop Stand"
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Valid case - USB-C Hub",
+                      "input": {
+                        "name": "USB-C Hub"
+                      },
+                      "expected": "Product details for P002",
+                      "actual": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "name": "USB-C Hub"
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Valid case - Mechanical Keyboard",
+                      "input": {
+                        "name": "Mechanical Keyboard"
+                      },
+                      "expected": "Product details for P003",
+                      "actual": {
+                        "pid": "P003",
+                        "pos": 3,
+                        "name": "Mechanical Keyboard"
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Error case - Nonexistent product",
+                      "input": {
+                        "name": "Nonexistent Product"
+                      },
+                      "expected": "Empty or error response",
+                      "actual": {
+                        "pid": "",
+                        "pos": 0,
+                        "name": ""
+                      },
+                      "passed": true
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "compare_price",
+                  "test_cases": [
+                    {
+                      "description": "Valid case - P001 with default max_retailers",
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1
+                      },
+                      "expected": "Price comparison with 2 retailers",
+                      "actual": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "retailers": [
+                          {
+                            "store_name": "Amazon",
+                            "price": 45.99,
+                            "availability": "In Stock"
+                          },
+                          {
+                            "store_name": "Best Buy",
+                            "price": 49.99,
+                            "availability": "Limited Stock"
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Valid case - P002 with max_retailers=5",
+                      "input": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "max_retailers": 5
+                      },
+                      "expected": "Price comparison with 2 retailers",
+                      "actual": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "retailers": [
+                          {
+                            "store_name": "Newegg",
+                            "price": 35.0,
+                            "availability": "Out of Stock"
+                          },
+                          {
+                            "store_name": "Amazon",
+                            "price": 39.99,
+                            "availability": "In Stock"
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Boundary case - P003 with single retailer",
+                      "input": {
+                        "pid": "P003",
+                        "pos": 3,
+                        "max_retailers": 10
+                      },
+                      "expected": "Price comparison with 1 retailer",
+                      "actual": {
+                        "pid": "P003",
+                        "pos": 3,
+                        "retailers": [
+                          {
+                            "store_name": "Target",
+                            "price": 89.99,
+                            "availability": "Backorder"
+                          }
+                        ]
+                      },
+                      "passed": true
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "price_trend",
+                  "test_cases": [
+                    {
+                      "description": "Valid case - P001 with trend data",
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1
+                      },
+                      "expected": "Price trend with 2 data points",
+                      "actual": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "price_data": [
+                          {
+                            "date": "2024-03-01",
+                            "predicted_price": 46.5,
+                            "trend": "up"
+                          },
+                          {
+                            "date": "2024-04-01",
+                            "predicted_price": 47.0,
+                            "trend": "up"
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Boundary case - P002 with no trend data",
+                      "input": {
+                        "pid": "P002",
+                        "pos": 2
+                      },
+                      "expected": "Empty price_data array",
+                      "actual": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "price_data": []
+                      },
+                      "passed": true
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_price_history",
+                  "test_cases": [
+                    {
+                      "description": "Valid case - P001 without retailer filter",
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1
+                      },
+                      "expected": "Price history with 2 records",
+                      "actual": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "price_history": [
+                          {
+                            "date": "2024-01-15",
+                            "price": 42.99,
+                            "retailer": "Amazon"
+                          },
+                          {
+                            "date": "2024-02-01",
+                            "price": 45.99,
+                            "retailer": "Amazon"
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Valid case - P001 with Amazon filter",
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "retailers": [
+                          "Amazon"
+                        ]
+                      },
+                      "expected": "Price history filtered for Amazon",
+                      "actual": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "price_history": [
+                          {
+                            "date": "2024-01-15",
+                            "price": 42.99,
+                            "retailer": "Amazon"
+                          },
+                          {
+                            "date": "2024-02-01",
+                            "price": 45.99,
+                            "retailer": "Amazon"
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Valid case - P003 with Target filter",
+                      "input": {
+                        "pid": "P003",
+                        "pos": 3,
+                        "retailers": [
+                          "Target"
+                        ]
+                      },
+                      "expected": "Price history with 2 Target records",
+                      "actual": {
+                        "pid": "P003",
+                        "pos": 3,
+                        "price_history": [
+                          {
+                            "date": "2024-01-10",
+                            "price": 95.0,
+                            "retailer": "Target"
+                          },
+                          {
+                            "date": "2024-02-10",
+                            "price": 89.99,
+                            "retailer": "Target"
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Boundary case - P002 with no history",
+                      "input": {
+                        "pid": "P002",
+                        "pos": 2
+                      },
+                      "expected": "Empty price_history array",
+                      "actual": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "price_history": []
+                      },
+                      "passed": true
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_discount_info",
+                  "test_cases": [
+                    {
+                      "description": "Valid case - P001 Amazon current",
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "retailer": "Amazon",
+                        "time_period": "current"
+                      },
+                      "expected": "Empty discounts array (no discount data in scenario)",
+                      "actual": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "retailer": "Amazon",
+                        "discounts": []
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Valid case - P002 Newegg past",
+                      "input": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "retailer": "Newegg",
+                        "time_period": "past"
+                      },
+                      "expected": "Empty discounts array",
+                      "actual": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "retailer": "Newegg",
+                        "discounts": []
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Valid case - P003 Target upcoming",
+                      "input": {
+                        "pid": "P003",
+                        "pos": 3,
+                        "retailer": "Target",
+                        "time_period": "upcoming"
+                      },
+                      "expected": "Empty discounts array",
+                      "actual": {
+                        "pid": "P003",
+                        "pos": 3,
+                        "retailer": "Target",
+                        "discounts": []
+                      },
+                      "passed": true
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null,
+                "details": "Saved scenario matches original scenario exactly. All state variables preserved correctly."
+              },
+              "summary": {}
+            },
+            "complexity_level": "medium",
+            "execution_time": 88.97303414344788
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_pid_pos_details",
+                  "test_cases": [
+                    {
+                      "description": "Valid case - existing product '4K Monitor'",
+                      "input": {
+                        "name": "4K Monitor"
+                      },
+                      "expected": "Return pid=P001, pos=1, name='4K Monitor'",
+                      "actual": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "name": "4K Monitor"
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Valid case - existing product 'Noise Cancelling Headphones'",
+                      "input": {
+                        "name": "Noise Cancelling Headphones"
+                      },
+                      "expected": "Return pid=P005, pos=5, name='Noise Cancelling Headphones'",
+                      "actual": {
+                        "pid": "P005",
+                        "pos": 5,
+                        "name": "Noise Cancelling Headphones"
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Boundary case - nonexistent product",
+                      "input": {
+                        "name": "Nonexistent Product"
+                      },
+                      "expected": "Return empty values",
+                      "actual": {
+                        "pid": "",
+                        "pos": 0,
+                        "name": ""
+                      },
+                      "passed": true
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "compare_price",
+                  "test_cases": [
+                    {
+                      "description": "Valid case - P001 with default max_retailers",
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "max_retailers": 10
+                      },
+                      "expected": "Return all 3 retailers for P001",
+                      "actual": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "retailers": [
+                          {
+                            "store_name": "Amazon",
+                            "price": 299.99,
+                            "availability": "In Stock"
+                          },
+                          {
+                            "store_name": "Best Buy",
+                            "price": 319.99,
+                            "availability": "In Stock"
+                          },
+                          {
+                            "store_name": "Newegg",
+                            "price": 289.99,
+                            "availability": "Limited Stock"
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Boundary case - P005 with max_retailers=2",
+                      "input": {
+                        "pid": "P005",
+                        "pos": 5,
+                        "max_retailers": 2
+                      },
+                      "expected": "Return only first 2 retailers for P005",
+                      "actual": {
+                        "pid": "P005",
+                        "pos": 5,
+                        "retailers": [
+                          {
+                            "store_name": "Amazon",
+                            "price": 199.99,
+                            "availability": "In Stock"
+                          },
+                          {
+                            "store_name": "Target",
+                            "price": 209.99,
+                            "availability": "Limited Stock"
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Valid case - P003 with default max_retailers",
+                      "input": {
+                        "pid": "P003",
+                        "pos": 3
+                      },
+                      "expected": "Return all 2 retailers for P003",
+                      "actual": {
+                        "pid": "P003",
+                        "pos": 3,
+                        "retailers": [
+                          {
+                            "store_name": "Target",
+                            "price": 45.99,
+                            "availability": "In Stock"
+                          },
+                          {
+                            "store_name": "Amazon",
+                            "price": 42.99,
+                            "availability": "In Stock"
+                          }
+                        ]
+                      },
+                      "passed": true
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "price_trend",
+                  "test_cases": [
+                    {
+                      "description": "Valid case - P001 with trend data",
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1
+                      },
+                      "expected": "Return 3 price trend records",
+                      "actual": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "price_data": [
+                          {
+                            "date": "2024-03-01",
+                            "predicted_price": 295.0,
+                            "trend": "down"
+                          },
+                          {
+                            "date": "2024-04-01",
+                            "predicted_price": 289.99,
+                            "trend": "down"
+                          },
+                          {
+                            "date": "2024-05-01",
+                            "predicted_price": 285.0,
+                            "trend": "stable"
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Valid case - P005 with trend data",
+                      "input": {
+                        "pid": "P005",
+                        "pos": 5
+                      },
+                      "expected": "Return 2 price trend records",
+                      "actual": {
+                        "pid": "P005",
+                        "pos": 5,
+                        "price_data": [
+                          {
+                            "date": "2024-03-01",
+                            "predicted_price": 199.99,
+                            "trend": "stable"
+                          },
+                          {
+                            "date": "2024-04-01",
+                            "predicted_price": 189.99,
+                            "trend": "down"
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Boundary case - P003 with no trend data",
+                      "input": {
+                        "pid": "P003",
+                        "pos": 3
+                      },
+                      "expected": "Return empty price_data array",
+                      "actual": {
+                        "pid": "P003",
+                        "pos": 3,
+                        "price_data": []
+                      },
+                      "passed": true
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_price_history",
+                  "test_cases": [
+                    {
+                      "description": "Valid case - P001 without retailer filter",
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1
+                      },
+                      "expected": "Return all 3 historical price records for P001",
+                      "actual": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "price_history": [
+                          {
+                            "date": "2024-01-01",
+                            "price": 349.99,
+                            "retailer": "Amazon"
+                          },
+                          {
+                            "date": "2024-01-15",
+                            "price": 329.99,
+                            "retailer": "Amazon"
+                          },
+                          {
+                            "date": "2024-02-01",
+                            "price": 299.99,
+                            "retailer": "Amazon"
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Valid case - P002 with retailer filter ['Walmart']",
+                      "input": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "retailers": [
+                          "Walmart"
+                        ]
+                      },
+                      "expected": "Return 2 Walmart price history records",
+                      "actual": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "price_history": [
+                          {
+                            "date": "2024-01-10",
+                            "price": 279.99,
+                            "retailer": "Walmart"
+                          },
+                          {
+                            "date": "2024-02-10",
+                            "price": 239.99,
+                            "retailer": "Walmart"
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Boundary case - P004 with no price history",
+                      "input": {
+                        "pid": "P004",
+                        "pos": 4
+                      },
+                      "expected": "Return empty price_history array",
+                      "actual": {
+                        "pid": "P004",
+                        "pos": 4,
+                        "price_history": []
+                      },
+                      "passed": true
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_discount_info",
+                  "test_cases": [
+                    {
+                      "description": "Valid case - P001 at Newegg with current discounts",
+                      "input": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "retailer": "Newegg",
+                        "time_period": "current"
+                      },
+                      "expected": "Return 1 discount record",
+                      "actual": {
+                        "pid": "P001",
+                        "pos": 1,
+                        "retailer": "Newegg",
+                        "discounts": [
+                          {
+                            "discount_percentage": 15.0,
+                            "start_date": "2024-02-15",
+                            "end_date": "2024-03-15",
+                            "original_price": 339.99,
+                            "discounted_price": 289.99
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Valid case - P005 at Amazon with current discounts",
+                      "input": {
+                        "pid": "P005",
+                        "pos": 5,
+                        "retailer": "Amazon",
+                        "time_period": "current"
+                      },
+                      "expected": "Return 1 discount record",
+                      "actual": {
+                        "pid": "P005",
+                        "pos": 5,
+                        "retailer": "Amazon",
+                        "discounts": [
+                          {
+                            "discount_percentage": 13.04,
+                            "start_date": "2024-02-01",
+                            "end_date": "2024-03-31",
+                            "original_price": 229.99,
+                            "discounted_price": 199.99
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Valid case - P002 at Walmart with past discounts",
+                      "input": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "retailer": "Walmart",
+                        "time_period": "past"
+                      },
+                      "expected": "Return 1 discount record",
+                      "actual": {
+                        "pid": "P002",
+                        "pos": 2,
+                        "retailer": "Walmart",
+                        "discounts": [
+                          {
+                            "discount_percentage": 10.0,
+                            "start_date": "2024-02-01",
+                            "end_date": "2024-02-28",
+                            "original_price": 266.66,
+                            "discounted_price": 239.99
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Boundary case - P003 at Target with no discounts",
+                      "input": {
+                        "pid": "P003",
+                        "pos": 3,
+                        "retailer": "Target",
+                        "time_period": "current"
+                      },
+                      "expected": "Return empty discounts array",
+                      "actual": {
+                        "pid": "P003",
+                        "pos": 3,
+                        "retailer": "Target",
+                        "discounts": []
+                      },
+                      "passed": true
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null,
+                "details": "Saved scenario matches original scenario exactly. All data structures (products, retailerPrices, priceHistory, priceTrends, discountInfo, retailerList, availabilityStatuses) are preserved correctly."
+              },
+              "summary": {}
+            },
+            "complexity_level": "complex",
+            "execution_time": 90.14407324790955
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 1,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/PriceComparison.py"
+  }
+}

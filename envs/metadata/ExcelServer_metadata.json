@@ -1,0 +1,346 @@
+{
+  "class_name": "ExcelServer",
+  "description": "A server for reading, writing, and manipulating Microsoft Excel files, including sheet management, cell operations, table creation, formatting, and screen capture capabilities.",
+  "tools": [
+    {
+      "name": "excel_describe_sheets",
+      "description": "List all sheet information of a specified Excel file, including sheet names, indices, and visibility status.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "fileAbsolutePath": {
+            "type": "string",
+            "description": "The absolute file system path to the Excel file to be processed."
+          }
+        },
+        "required": [
+          "fileAbsolutePath"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "sheets": {
+            "type": "array",
+            "description": "List of all sheets contained in the Excel file.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The name of the sheet as displayed in Excel."
+                },
+                "index": {
+                  "type": "integer",
+                  "description": "The zero-based index position of the sheet within the workbook."
+                },
+                "visibility": {
+                  "type": "string",
+                  "description": "The visibility state of the sheet (e.g., 'visible', 'hidden', 'veryHidden')."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "excel_read_sheet",
+      "description": "Read cell values from a specified Excel sheet, with optional support for displaying formulas and style information.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "fileAbsolutePath": {
+            "type": "string",
+            "description": "The absolute file system path to the Excel file to be processed."
+          },
+          "sheetName": {
+            "type": "string",
+            "description": "The name of the sheet within the Excel file to operate on."
+          },
+          "cellRange": {
+            "type": "string",
+            "description": "The range of cells to read in Excel A1 notation (e.g., 'A1:C10'). If omitted, reads the entire used range."
+          },
+          "showFormula": {
+            "type": "boolean",
+            "description": "When true, returns cell formulas instead of calculated values."
+          },
+          "showStyle": {
+            "type": "boolean",
+            "description": "When true, includes style information (font, fill, borders) for each cell."
+          }
+        },
+        "required": [
+          "fileAbsolutePath",
+          "sheetName"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "values": {
+            "type": "array",
+            "description": "A 2D array containing the cell values (or formulas) read from the specified range.",
+            "items": {
+              "type": "array",
+              "items": {}
+            }
+          },
+          "cellRange": {
+            "type": "string",
+            "description": "The actual cell range that was read in Excel A1 notation."
+          },
+          "sheetName": {
+            "type": "string",
+            "description": "The name of the sheet from which data was read."
+          }
+        }
+      }
+    },
+    {
+      "name": "excel_screen_capture",
+      "description": "Capture a screenshot image of a specified Excel sheet or cell range. This feature is only available on Windows.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "fileAbsolutePath": {
+            "type": "string",
+            "description": "The absolute file system path to the Excel file to be processed."
+          },
+          "sheetName": {
+            "type": "string",
+            "description": "The name of the sheet within the Excel file to operate on."
+          },
+          "cellRange": {
+            "type": "string",
+            "description": "The range of cells to capture in Excel A1 notation (e.g., 'A1:C10'). If omitted, captures the entire visible area."
+          }
+        },
+        "required": [
+          "fileAbsolutePath",
+          "sheetName"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "imagePath": {
+            "type": "string",
+            "description": "The absolute file path where the captured screenshot image was saved."
+          },
+          "sheetName": {
+            "type": "string",
+            "description": "The name of the sheet that was captured."
+          },
+          "cellRange": {
+            "type": "string",
+            "description": "The cell range that was captured in Excel A1 notation."
+          }
+        }
+      }
+    },
+    {
+      "name": "excel_write_to_sheet",
+      "description": "Write values to a specified range in an Excel sheet, with the option to create a new sheet or write to an existing one.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "fileAbsolutePath": {
+            "type": "string",
+            "description": "The absolute file system path to the Excel file to be processed."
+          },
+          "sheetName": {
+            "type": "string",
+            "description": "The name of the sheet within the Excel file to operate on."
+          },
+          "newSheet": {
+            "type": "boolean",
+            "description": "When true, creates a new sheet with the specified name; when false, writes to an existing sheet."
+          },
+          "cellRange": {
+            "type": "string",
+            "description": "The target range of cells to write to in Excel A1 notation (e.g., 'A1:C10')."
+          },
+          "values": {
+            "type": "array",
+            "description": "A 2D array of values to write to the cells. Formulas must start with '=' (e.g., '=SUM(A1:A10)').",
+            "items": {
+              "type": "array",
+              "items": {}
+            }
+          }
+        },
+        "required": [
+          "fileAbsolutePath",
+          "sheetName",
+          "newSheet",
+          "cellRange",
+          "values"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "The result status of the write operation (e.g., 'success', 'failed')."
+          },
+          "fileAbsolutePath": {
+            "type": "string",
+            "description": "The absolute file path of the Excel file that was modified."
+          },
+          "sheetName": {
+            "type": "string",
+            "description": "The name of the sheet where data was written."
+          }
+        }
+      }
+    },
+    {
+      "name": "excel_create_table",
+      "description": "Create a formatted Excel table from a specified cell range within a sheet.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "fileAbsolutePath": {
+            "type": "string",
+            "description": "The absolute file system path to the Excel file to be processed."
+          },
+          "sheetName": {
+            "type": "string",
+            "description": "The name of the sheet within the Excel file to operate on."
+          },
+          "cellRange": {
+            "type": "string",
+            "description": "The range of cells to convert into a table in Excel A1 notation (e.g., 'A1:C10')."
+          },
+          "tableName": {
+            "type": "string",
+            "description": "The unique name to assign to the newly created table."
+          }
+        },
+        "required": [
+          "fileAbsolutePath",
+          "sheetName",
+          "cellRange",
+          "tableName"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "tableName": {
+            "type": "string",
+            "description": "The name of the table that was created."
+          },
+          "cellRange": {
+            "type": "string",
+            "description": "The cell range that the table occupies in Excel A1 notation."
+          },
+          "sheetName": {
+            "type": "string",
+            "description": "The name of the sheet containing the created table."
+          }
+        }
+      }
+    },
+    {
+      "name": "excel_copy_sheet",
+      "description": "Copy an existing sheet to create a new sheet within the same Excel workbook.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "fileAbsolutePath": {
+            "type": "string",
+            "description": "The absolute file system path to the Excel file to be processed."
+          },
+          "srcSheetName": {
+            "type": "string",
+            "description": "The name of the source sheet to copy from."
+          },
+          "dstSheetName": {
+            "type": "string",
+            "description": "The name for the new destination sheet to be created."
+          }
+        },
+        "required": [
+          "fileAbsolutePath",
+          "srcSheetName",
+          "dstSheetName"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "srcSheetName": {
+            "type": "string",
+            "description": "The name of the source sheet that was copied."
+          },
+          "dstSheetName": {
+            "type": "string",
+            "description": "The name of the newly created destination sheet."
+          },
+          "fileAbsolutePath": {
+            "type": "string",
+            "description": "The absolute file path of the Excel file containing the copied sheet."
+          }
+        }
+      }
+    },
+    {
+      "name": "excel_format_range",
+      "description": "Apply formatting styles (borders, fonts, fills, number formats) to a specified range of cells in an Excel sheet.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "fileAbsolutePath": {
+            "type": "string",
+            "description": "The absolute file system path to the Excel file to be processed."
+          },
+          "sheetName": {
+            "type": "string",
+            "description": "The name of the sheet within the Excel file to operate on."
+          },
+          "cellRange": {
+            "type": "string",
+            "description": "The range of cells to format in Excel A1 notation (e.g., 'A1:C3')."
+          },
+          "styles": {
+            "type": "array",
+            "description": "A 2D array of style objects corresponding to each cell in the range. Each style object may contain properties: border, font, fill, numFmt, decimalPlaces.",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "required": [
+          "fileAbsolutePath",
+          "sheetName",
+          "cellRange",
+          "styles"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "The result status of the formatting operation (e.g., 'success', 'failed')."
+          },
+          "formattedRange": {
+            "type": "string",
+            "description": "The cell range that was formatted in Excel A1 notation."
+          },
+          "sheetName": {
+            "type": "string",
+            "description": "The name of the sheet where formatting was applied."
+          }
+        }
+      }
+    }
+  ]
+}

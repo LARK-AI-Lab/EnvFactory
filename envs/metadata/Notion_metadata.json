@@ -1,0 +1,1234 @@
+{
+  "class_name": "Notion",
+  "description": "Unified gateway for manipulating pages, databases, blocks, comments, and users inside a Notion workspace. Supports full CRUD, search, and pagination while maintaining consistent ISO-8601 timestamps and shared formatting options.",
+  "tools": [
+    {
+      "name": "notion_append_block_children",
+      "description": "Append one or more child blocks to an existing parent block.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "block_id": {
+            "type": "string",
+            "description": "The unique identifier of the parent block that will receive the children."
+          },
+          "children": {
+            "type": "array",
+            "description": "Array of block objects to append under the parent."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "block_id",
+          "children"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "block_id": {
+            "type": "string",
+            "description": "The unique identifier of the parent block that now contains the new children."
+          },
+          "children_count": {
+            "type": "integer",
+            "description": "Total number of child blocks now present under the parent."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_retrieve_block_children",
+      "description": "Fetch the child blocks contained within a given parent block with optional pagination.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "block_id": {
+            "type": "string",
+            "description": "The unique identifier of the parent block whose children are requested."
+          },
+          "start_cursor": {
+            "type": "string",
+            "description": "Opaque cursor for retrieving the next page of results."
+          },
+          "page_size": {
+            "type": "integer",
+            "maximum": 100,
+            "default": 100,
+            "description": "Maximum number of child blocks to return in this page."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "block_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "description": "List of child block objects each containing block_id, type, and content."
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Cursor for retrieving the next page of children; null when no more pages exist."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_create_block",
+      "description": "Create a single new block and attach it to the specified parent page or block.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "parent_id": {
+            "type": "string",
+            "description": "The unique identifier of the parent page or block that will contain the new block."
+          },
+          "block_type": {
+            "type": "string",
+            "description": "Notion block type such as paragraph, heading_1, bulleted_list_item, etc."
+          },
+          "content": {
+            "type": "object",
+            "description": "Structure matching the chosen block_type that defines the block’s content."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "parent_id",
+          "block_type",
+          "content"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "block_id": {
+            "type": "string",
+            "description": "The unique identifier assigned to the newly created block."
+          },
+          "type": {
+            "type": "string",
+            "description": "The block type as stored in Notion."
+          },
+          "content": {
+            "type": "object",
+            "description": "The content payload persisted for this block."
+          },
+          "created_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp marking block creation."
+          },
+          "last_edited_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the most recent edit."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_update_block",
+      "description": "Modify the type, content, or archived status of an existing block.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "block_id": {
+            "type": "string",
+            "description": "The unique identifier of the block to update."
+          },
+          "block_type": {
+            "type": "string",
+            "description": "New block type if changing the type."
+          },
+          "content": {
+            "type": "object",
+            "description": "Updated content structure matching the block type."
+          },
+          "archived": {
+            "type": "boolean",
+            "description": "Whether to archive (true) or restore (false) the block."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "block_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "block_id": {
+            "type": "string",
+            "description": "The unique identifier of the updated block."
+          },
+          "type": {
+            "type": "string",
+            "description": "The block type after the update."
+          },
+          "content": {
+            "type": "object",
+            "description": "The content payload after the update."
+          },
+          "last_edited_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the most recent edit."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_delete_block",
+      "description": "Delete (archive) a specific block.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "block_id": {
+            "type": "string",
+            "description": "The unique identifier of the block to delete."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "block_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "block_id": {
+            "type": "string",
+            "description": "The unique identifier of the deleted block."
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "True if the block was successfully archived."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_retrieve_page",
+      "description": "Fetch metadata and properties of a specific page.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "page_id": {
+            "type": "string",
+            "description": "The unique identifier of the page to retrieve."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "page_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "page_id": {
+            "type": "string",
+            "description": "The unique identifier of the retrieved page."
+          },
+          "title": {
+            "type": "string",
+            "description": "Plain-text title of the page."
+          },
+          "properties": {
+            "type": "object",
+            "description": "Key-value property map as defined in the page’s parent database."
+          },
+          "created_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp marking page creation."
+          },
+          "last_edited_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the most recent edit."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_create_page",
+      "description": "Create a new page inside a specified parent page or database.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "parent": {
+            "type": "object",
+            "description": "Parent descriptor containing either page_id or database_id."
+          },
+          "properties": {
+            "type": "object",
+            "description": "Initial property values when the parent is a database."
+          },
+          "children": {
+            "type": "array",
+            "description": "Optional blocks to populate the new page body."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "parent"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "page_id": {
+            "type": "string",
+            "description": "The unique identifier assigned to the newly created page."
+          },
+          "parent": {
+            "type": "object",
+            "description": "Parent descriptor as stored in Notion."
+          },
+          "properties": {
+            "type": "object",
+            "description": "Properties of the page after creation."
+          },
+          "created_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp marking page creation."
+          },
+          "last_edited_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the most recent edit."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_delete_page",
+      "description": "Delete (archive) a specific page.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "page_id": {
+            "type": "string",
+            "description": "The unique identifier of the page to delete."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "page_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "page_id": {
+            "type": "string",
+            "description": "The unique identifier of the deleted page."
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "True if the page was successfully archived."
+          },
+          "archived": {
+            "type": "boolean",
+            "description": "Mirrors deleted status; true when the page is in the archive."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_update_page_properties",
+      "description": "Update property values of an existing page.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "page_id": {
+            "type": "string",
+            "description": "The unique identifier of the page whose properties will be updated."
+          },
+          "properties": {
+            "type": "object",
+            "description": "Map of property names to updated values."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "page_id",
+          "properties"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "page_id": {
+            "type": "string",
+            "description": "The unique identifier of the updated page."
+          },
+          "updated_properties": {
+            "type": "array",
+            "description": "List of property keys that were modified."
+          },
+          "last_edited_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the most recent edit."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_update_page_content",
+      "description": "Append or replace content blocks within an existing page.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "page_id": {
+            "type": "string",
+            "description": "The unique identifier of the page whose content will be updated."
+          },
+          "children": {
+            "type": "array",
+            "description": "Array of block objects to append to the page."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "page_id",
+          "children"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "page_id": {
+            "type": "string",
+            "description": "The unique identifier of the updated page."
+          },
+          "children_count": {
+            "type": "integer",
+            "description": "Total number of child blocks now present on the page."
+          },
+          "last_edited_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the most recent edit."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_create_database",
+      "description": "Create a new database inside a specified parent page or workspace.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "parent": {
+            "type": "object",
+            "description": "Parent descriptor containing either page_id or workspace flag."
+          },
+          "title": {
+            "type": "array",
+            "description": "Rich-text array representing the database title."
+          },
+          "properties": {
+            "type": "object",
+            "description": "Schema definition for database properties."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "parent",
+          "title",
+          "properties"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "database_id": {
+            "type": "string",
+            "description": "The unique identifier assigned to the newly created database."
+          },
+          "title": {
+            "type": "string",
+            "description": "Plain-text title of the database."
+          },
+          "properties": {
+            "type": "object",
+            "description": "Property schema as stored in Notion."
+          },
+          "created_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp marking database creation."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_query_database",
+      "description": "Query a database and retrieve pages that match optional filter and sort criteria.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "database_id": {
+            "type": "string",
+            "description": "The unique identifier of the database to query."
+          },
+          "filter": {
+            "type": "object",
+            "description": "Notion filter object to constrain results."
+          },
+          "sorts": {
+            "type": "array",
+            "description": "List of sort objects to order results."
+          },
+          "start_cursor": {
+            "type": "string",
+            "description": "Opaque cursor for retrieving the next page of results."
+          },
+          "page_size": {
+            "type": "integer",
+            "maximum": 100,
+            "default": 100,
+            "description": "Maximum number of results to return in this page."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "database_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "description": "List of page objects each containing page_id and properties."
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Cursor for retrieving the next page; null when no more pages exist."
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "True when additional result pages are available."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_retrieve_database",
+      "description": "Fetch metadata and property schema of a specific database.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "database_id": {
+            "type": "string",
+            "description": "The unique identifier of the database to retrieve."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "database_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "database_id": {
+            "type": "string",
+            "description": "The unique identifier of the retrieved database."
+          },
+          "title": {
+            "type": "string",
+            "description": "Plain-text title of the database."
+          },
+          "properties": {
+            "type": "object",
+            "description": "Property schema defining columns and types."
+          },
+          "created_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp marking database creation."
+          },
+          "last_edited_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the most recent edit."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_update_database",
+      "description": "Modify title, description, or property schema of an existing database.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "database_id": {
+            "type": "string",
+            "description": "The unique identifier of the database to update."
+          },
+          "title": {
+            "type": "array",
+            "description": "New rich-text title for the database."
+          },
+          "description": {
+            "type": "array",
+            "description": "New rich-text description for the database."
+          },
+          "properties": {
+            "type": "object",
+            "description": "Updated property schema."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "database_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "database_id": {
+            "type": "string",
+            "description": "The unique identifier of the updated database."
+          },
+          "last_edited_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the most recent edit."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_delete_database",
+      "description": "Delete (archive) a specific database.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "database_id": {
+            "type": "string",
+            "description": "The unique identifier of the database to delete."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "database_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "database_id": {
+            "type": "string",
+            "description": "The unique identifier of the deleted database."
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "True if the database was successfully archived."
+          },
+          "archived": {
+            "type": "boolean",
+            "description": "Mirrors deleted status; true when the database is in the archive."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_create_database_item",
+      "description": "Add a new row (page) to a database with the provided properties.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "database_id": {
+            "type": "string",
+            "description": "The unique identifier of the database that will contain the new item."
+          },
+          "properties": {
+            "type": "object",
+            "description": "Property values matching the database schema."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "database_id",
+          "properties"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "page_id": {
+            "type": "string",
+            "description": "The unique identifier assigned to the newly created page (database row)."
+          },
+          "database_id": {
+            "type": "string",
+            "description": "The unique identifier of the database containing this item."
+          },
+          "properties": {
+            "type": "object",
+            "description": "Property values as stored after creation."
+          },
+          "created_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp marking item creation."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_search",
+      "description": "Global search across pages and databases by title with optional filtering and sorting.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Text to search for within titles."
+          },
+          "filter": {
+            "type": "object",
+            "description": "Restrict results to only pages or only databases."
+          },
+          "sort": {
+            "type": "object",
+            "description": "Sort criteria for the returned list."
+          },
+          "start_cursor": {
+            "type": "string",
+            "description": "Opaque cursor for retrieving the next page of results."
+          },
+          "page_size": {
+            "type": "integer",
+            "maximum": 100,
+            "default": 100,
+            "description": "Maximum number of results to return in this page."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "description": "List of objects each containing object_id, object_type, and title."
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Cursor for retrieving the next page; null when no more pages exist."
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "True when additional result pages are available."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_list_all_users",
+      "description": "List every user in the workspace with optional pagination.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "start_cursor": {
+            "type": "string",
+            "description": "Opaque cursor for retrieving the next page of users."
+          },
+          "page_size": {
+            "type": "integer",
+            "maximum": 100,
+            "description": "Maximum number of users to return in this page."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "description": "List of user objects each containing user_id, name, and email."
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Cursor for retrieving the next page; null when no more pages exist."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_retrieve_user",
+      "description": "Fetch detailed information about a specific user.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "The unique identifier of the user to retrieve."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "user_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "The unique identifier of the retrieved user."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the user."
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address associated with the user account."
+          },
+          "type": {
+            "type": "string",
+            "description": "User type such as person or bot."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_retrieve_bot_user",
+      "description": "Fetch information about the bot user associated with the current integration token.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "The unique identifier of the bot user."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the bot."
+          },
+          "owner": {
+            "type": "object",
+            "description": "Owner information for this bot integration."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_create_comment",
+      "description": "Add a new comment to a page or an existing discussion thread.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "rich_text": {
+            "type": "array",
+            "description": "Rich-text array representing the body of the comment."
+          },
+          "parent": {
+            "type": "object",
+            "description": "Must contain page_id when starting a new thread."
+          },
+          "discussion_id": {
+            "type": "string",
+            "description": "Existing discussion thread ID when replying to a thread."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "rich_text"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "comment_id": {
+            "type": "string",
+            "description": "The unique identifier assigned to the newly created comment."
+          },
+          "rich_text": {
+            "type": "array",
+            "description": "The rich-text content as stored after creation."
+          },
+          "created_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp marking comment creation."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_retrieve_comments",
+      "description": "Fetch unresolved comments attached to a page or block with optional pagination.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "block_id": {
+            "type": "string",
+            "description": "The unique identifier of the page or block whose comments are requested."
+          },
+          "start_cursor": {
+            "type": "string",
+            "description": "Opaque cursor for retrieving the next page of comments."
+          },
+          "page_size": {
+            "type": "integer",
+            "maximum": 100,
+            "description": "Maximum number of comments to return in this page."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "block_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "description": "List of comment objects each containing comment_id, rich_text, and created_time."
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Cursor for retrieving the next page; null when no more pages exist."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_update_comment",
+      "description": "Modify the rich-text content of an existing comment.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "comment_id": {
+            "type": "string",
+            "description": "The unique identifier of the comment to update."
+          },
+          "rich_text": {
+            "type": "array",
+            "description": "New rich-text array replacing the previous content."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "comment_id",
+          "rich_text"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "comment_id": {
+            "type": "string",
+            "description": "The unique identifier of the updated comment."
+          },
+          "rich_text": {
+            "type": "array",
+            "description": "The rich-text content after the update."
+          },
+          "last_edited_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the most recent edit."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_delete_comment",
+      "description": "Delete a specific comment.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "comment_id": {
+            "type": "string",
+            "description": "The unique identifier of the comment to delete."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "comment_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "comment_id": {
+            "type": "string",
+            "description": "The unique identifier of the deleted comment."
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "True if the comment was successfully removed."
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_resolve_comment",
+      "description": "Mark a comment as resolved or unresolved.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "comment_id": {
+            "type": "string",
+            "description": "The unique identifier of the comment to resolve or unresolve."
+          },
+          "resolved": {
+            "type": "boolean",
+            "default": true,
+            "description": "True to mark as resolved; false to reopen."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown"
+            ],
+            "default": "markdown",
+            "description": "Response format selector applied across all tools."
+          }
+        },
+        "required": [
+          "comment_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "comment_id": {
+            "type": "string",
+            "description": "The unique identifier of the resolved comment."
+          },
+          "resolved": {
+            "type": "boolean",
+            "description": "Resolution status after the operation."
+          },
+          "resolved_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when the comment was resolved; absent when unresolved."
+          },
+          "resolved_by": {
+            "type": "object",
+            "description": "User who resolved the comment; absent when unresolved."
+          }
+        }
+      }
+    }
+  ]
+}

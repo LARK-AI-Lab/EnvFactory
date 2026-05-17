@@ -1,0 +1,458 @@
+{
+  "class_name": "BestBuyServer",
+  "description": "Provides access to Best Buy's e-commerce catalog, enabling product search, detailed product information retrieval, customer reviews, category browsing, and store location services.",
+  "tools": [
+    {
+      "name": "search_products",
+      "description": "Search for products in the Best Buy catalog using keywords with optional filtering by category, price range, and stock availability. Returns paginated results with essential product information.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "keywords": {
+            "type": "string",
+            "description": "Search terms used to find matching products in the catalog (e.g., 'laptop', 'bluetooth headphones')"
+          },
+          "category": {
+            "type": "string",
+            "description": "The category path name or ID to constrain search results to a specific product category"
+          },
+          "min_price": {
+            "type": "number",
+            "description": "Minimum price threshold filter to exclude products below this price point"
+          },
+          "max_price": {
+            "type": "number",
+            "description": "Maximum price threshold filter to exclude products above this price point"
+          },
+          "in_stock_only": {
+            "type": "boolean",
+            "description": "Filter flag to return only products available for purchase (in-store or online)"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "The maximum number of results to return per request (valid range: 1-100)"
+          }
+        },
+        "required": [
+          "keywords"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "integer",
+            "description": "The starting index of the current result set within the total matching products"
+          },
+          "to": {
+            "type": "integer",
+            "description": "The ending index of the current result set within the total matching products"
+          },
+          "total": {
+            "type": "integer",
+            "description": "The total number of products matching the search criteria across all pages"
+          },
+          "currentPage": {
+            "type": "integer",
+            "description": "The current page number in the paginated search results"
+          },
+          "totalPages": {
+            "type": "integer",
+            "description": "The total number of pages available for the search query based on result count and limit"
+          },
+          "products": {
+            "type": "array",
+            "description": "Collection of product summaries matching the search criteria",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sku": {
+                  "type": "integer",
+                  "description": "The Best Buy product Stock Keeping Unit (SKU) - a unique identifier for the product"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The product name or title as displayed in the catalog"
+                },
+                "salePrice": {
+                  "type": "number",
+                  "description": "The current selling price of the product, reflecting any active discounts"
+                },
+                "regularPrice": {
+                  "type": "number",
+                  "description": "The standard retail price before any promotional discounts are applied"
+                },
+                "onSale": {
+                  "type": "boolean",
+                  "description": "Indicates whether the product is currently on sale (salePrice < regularPrice)"
+                },
+                "inStoreAvailability": {
+                  "type": "boolean",
+                  "description": "Indicates if the product is available for purchase in physical Best Buy store locations"
+                },
+                "onlineAvailability": {
+                  "type": "boolean",
+                  "description": "Indicates if the product is available for purchase through Best Buy's website"
+                },
+                "thumbnailImage": {
+                  "type": "string",
+                  "description": "URL to the product's thumbnail image for visual identification"
+                },
+                "url": {
+                  "type": "string",
+                  "description": "Direct URL to the product detail page on Best Buy's website"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_product_details",
+      "description": "Retrieve comprehensive detailed information for a specific product using its SKU, including descriptions, pricing, reviews summary, specifications, and image assets.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "integer",
+            "description": "The Best Buy product Stock Keeping Unit (SKU) - a unique identifier for the product"
+          }
+        },
+        "required": [
+          "sku"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "integer",
+            "description": "The Best Buy product Stock Keeping Unit (SKU) - a unique identifier for the product"
+          },
+          "name": {
+            "type": "string",
+            "description": "The product name or title as displayed in the catalog"
+          },
+          "description": {
+            "type": "string",
+            "description": "Brief summary description of the product suitable for search results and previews"
+          },
+          "longDescription": {
+            "type": "string",
+            "description": "Detailed marketing description of the product features and benefits"
+          },
+          "salePrice": {
+            "type": "number",
+            "description": "The current selling price of the product, reflecting any active discounts"
+          },
+          "regularPrice": {
+            "type": "number",
+            "description": "The standard retail price before any promotional discounts are applied"
+          },
+          "onSale": {
+            "type": "boolean",
+            "description": "Indicates whether the product is currently on sale (salePrice < regularPrice)"
+          },
+          "customerReviewAverage": {
+            "type": "number",
+            "description": "The average customer rating score, typically on a scale of 1-5 stars"
+          },
+          "customerReviewCount": {
+            "type": "integer",
+            "description": "The total number of customer reviews submitted for this product"
+          },
+          "images": {
+            "type": "object",
+            "description": "Collection of product image URLs at various resolutions",
+            "properties": {
+              "thumbnailImage": {
+                "type": "string",
+                "description": "URL to the small thumbnail version of the product image"
+              },
+              "mediumImage": {
+                "type": "string",
+                "description": "URL to the medium-resolution product image suitable for category browsing"
+              },
+              "largeImage": {
+                "type": "string",
+                "description": "URL to the high-resolution product image suitable for detail pages"
+              }
+            }
+          },
+          "manufacturer": {
+            "type": "string",
+            "description": "The brand or manufacturer name of the product (e.g., 'Apple', 'Samsung')"
+          },
+          "modelNumber": {
+            "type": "string",
+            "description": "The manufacturer's specific model number or identifier for this product"
+          },
+          "categoryPath": {
+            "type": "array",
+            "description": "Hierarchical navigation path showing the product's placement in the category tree",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for the category node"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Display name of the category in the breadcrumb hierarchy"
+                }
+              }
+            }
+          },
+          "features": {
+            "type": "array",
+            "description": "List of key product features and specifications",
+            "items": {
+              "type": "object",
+              "properties": {
+                "feature": {
+                  "type": "string",
+                  "description": "Text description of a specific product feature or specification"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_product_reviews",
+      "description": "Retrieve customer reviews and ratings for a specific product identified by SKU, including review text, ratings, and helpfulness metrics.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "integer",
+            "description": "The Best Buy product Stock Keeping Unit (SKU) - a unique identifier for the product"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "The maximum number of results to return per request"
+          }
+        },
+        "required": [
+          "sku"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "integer",
+            "description": "The Best Buy product Stock Keeping Unit (SKU) - a unique identifier for the product"
+          },
+          "overallRating": {
+            "type": "number",
+            "description": "The aggregate average rating across all customer reviews (scale typically 1-5)"
+          },
+          "totalReviewCount": {
+            "type": "integer",
+            "description": "The total number of customer reviews available for this product"
+          },
+          "reviews": {
+            "type": "array",
+            "description": "Collection of individual customer reviews",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "description": "Unique identifier for the specific review"
+                },
+                "rating": {
+                  "type": "integer",
+                  "description": "The star rating given by the reviewer (typically 1-5 scale)"
+                },
+                "reviewer": {
+                  "type": "object",
+                  "description": "Information about the customer who submitted the review",
+                  "properties": {
+                    "displayName": {
+                      "type": "string",
+                      "description": "The public display name or alias of the reviewer"
+                    }
+                  }
+                },
+                "submissionTime": {
+                  "type": "string",
+                  "description": "ISO 8601 timestamp indicating when the review was submitted"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The review headline or title summarizing the customer's opinion"
+                },
+                "reviewText": {
+                  "type": "string",
+                  "description": "The full text content of the customer review"
+                },
+                "helpfulness": {
+                  "type": "integer",
+                  "description": "Count of other users who found this review helpful"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_categories",
+      "description": "Retrieve the complete hierarchical category tree for Best Buy's product catalog, including category IDs, names, and nested subcategory relationships.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "description": "Complete list of product categories available in the Best Buy catalog",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for the category"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Display name of the category"
+                },
+                "path": {
+                  "type": "array",
+                  "description": "Breadcrumb trail showing this category's position in the hierarchy from root to current",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Unique identifier for the category node in the path"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Display name of the category in the breadcrumb"
+                      }
+                    }
+                  }
+                },
+                "subCategories": {
+                  "type": "array",
+                  "description": "Nested child categories contained within this category",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_stores",
+      "description": "Find Best Buy retail store locations using geographic filters such as city, state, ZIP code, or latitude/longitude coordinates with a search radius.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "description": "City name to filter store locations (e.g., 'Los Angeles')"
+          },
+          "state": {
+            "type": "string",
+            "description": "Two-letter state abbreviation to filter stores (e.g., 'CA', 'NY')"
+          },
+          "zip_code": {
+            "type": "string",
+            "description": "Postal ZIP code to find stores in a specific postal area"
+          },
+          "lat": {
+            "type": "number",
+            "description": "Latitude coordinate for geographic center point when performing radius-based searches"
+          },
+          "lng": {
+            "type": "number",
+            "description": "Longitude coordinate for geographic center point when performing radius-based searches"
+          },
+          "radius": {
+            "type": "integer",
+            "description": "Search radius in miles from the specified coordinates (default: 25 miles)"
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "stores": {
+            "type": "array",
+            "description": "Collection of Best Buy retail locations matching the search criteria",
+            "items": {
+              "type": "object",
+              "properties": {
+                "storeId": {
+                  "type": "integer",
+                  "description": "Unique numeric identifier for the store location"
+                },
+                "storeType": {
+                  "type": "string",
+                  "description": "Classification of store format (e.g., 'Big Box', 'Mobile Specialty Store')"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Official name of the store location"
+                },
+                "address": {
+                  "type": "string",
+                  "description": "Street address of the store"
+                },
+                "city": {
+                  "type": "string",
+                  "description": "City where the store is located"
+                },
+                "state": {
+                  "type": "string",
+                  "description": "State abbreviation where the store is located"
+                },
+                "zip": {
+                  "type": "string",
+                  "description": "Postal ZIP code of the store location"
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Contact phone number for the store"
+                },
+                "hours": {
+                  "type": "string",
+                  "description": "Operating hours description or schedule for the store"
+                },
+                "services": {
+                  "type": "array",
+                  "description": "List of services offered at this location (e.g., 'Geek Squad', 'Apple Authorized Service')",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "lat": {
+                  "type": "number",
+                  "description": "Latitude coordinate of the store location"
+                },
+                "lng": {
+                  "type": "number",
+                  "description": "Longitude coordinate of the store location"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

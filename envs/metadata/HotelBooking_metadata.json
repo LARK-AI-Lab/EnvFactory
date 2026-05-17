@@ -1,0 +1,309 @@
+{
+  "class_name": "HotelBooking",
+  "description": "End-to-end hotel search and reservation server: find destinations, browse hotels, retrieve details, book rooms, and cancel reservations.",
+  "tools": [
+    {
+      "name": "search_destinations",
+      "description": "Search for travel destinations by city name and retrieve location details.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "description": "The city name to search for (e.g., \"Paris\", \"New York\")."
+          }
+        },
+        "required": [
+          "city"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "destinations": {
+            "type": "array",
+            "description": "List of matching destinations.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "destination_id": {
+                  "type": "string",
+                  "description": "The unique identifier of the destination."
+                },
+                "city_name": {
+                  "type": "string",
+                  "description": "The name of the city."
+                },
+                "country": {
+                  "type": "string",
+                  "description": "The country where the city is located."
+                },
+                "location": {
+                  "type": "object",
+                  "description": "Additional location information for the destination."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_hotels",
+      "description": "Retrieve available hotels at a destination for specific check-in and check-out dates.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "destination_id": {
+            "type": "string",
+            "description": "The unique identifier of the destination returned by search_destinations."
+          },
+          "checkin_date": {
+            "type": "string",
+            "description": "Check-in date in ISO 8601 format (YYYY-MM-DD). Must be a valid future date."
+          },
+          "checkout_date": {
+            "type": "string",
+            "description": "Check-out date in ISO 8601 format (YYYY-MM-DD). Must be after checkin_date."
+          },
+          "adults": {
+            "type": "integer",
+            "description": "Number of adults staying, defaults to 2."
+          },
+          "kids": {
+            "type": "integer",
+            "description": "Number of kids staying, defaults to 0."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of hotels to return, defaults to 20."
+          }
+        },
+        "required": [
+          "destination_id",
+          "checkin_date",
+          "checkout_date"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "hotels": {
+            "type": "array",
+            "description": "List of available hotels matching the criteria.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "hotel_id": {
+                  "type": "string",
+                  "description": "The unique identifier of the hotel."
+                },
+                "hotel_name": {
+                  "type": "string",
+                  "description": "The name of the hotel."
+                },
+                "star_rating": {
+                  "type": "integer",
+                  "description": "The star rating of the hotel (1-5)."
+                },
+                "checkin_date": {
+                  "type": "string",
+                  "description": "The check-in date in ISO 8601 format (YYYY-MM-DD)."
+                },
+                "checkout_date": {
+                  "type": "string",
+                  "description": "The check-out date in ISO 8601 format (YYYY-MM-DD)."
+                },
+                "price_per_night": {
+                  "type": "number",
+                  "description": "The price per night for the room in the hotel's local currency."
+                },
+                "total_price": {
+                  "type": "number",
+                  "description": "The total price for the entire stay in the hotel's local currency."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "book_hotel",
+      "description": "Create a hotel room reservation for specified guests and dates.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "hotel_id": {
+            "type": "string",
+            "description": "The unique identifier of the hotel returned by get_hotels."
+          },
+          "checkin_date": {
+            "type": "string",
+            "description": "Check-in date in ISO 8601 format (YYYY-MM-DD). Must match the dates used in get_hotels."
+          },
+          "checkout_date": {
+            "type": "string",
+            "description": "Check-out date in ISO 8601 format (YYYY-MM-DD). Must match the dates used in get_hotels."
+          },
+          "room_type_id": {
+            "type": "string",
+            "description": "The unique identifier of the room type selected from get_hotel_details room_types list."
+          },
+          "adults": {
+            "type": "integer",
+            "description": "Number of adults staying."
+          },
+          "kids": {
+            "type": "integer",
+            "description": "Number of kids staying, defaults to 0."
+          },
+          "guest_info": {
+            "type": "array",
+            "description": "List of guest information required for identity verification. Each guest must have name, phone, and id_number.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Full name of the guest as it appears on the ID."
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Contact phone number of the guest."
+                },
+                "id_number": {
+                  "type": "string",
+                  "description": "Government-issued ID number for identity verification."
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "hotel_id",
+          "checkin_date",
+          "checkout_date",
+          "room_type_id",
+          "adults",
+          "guest_info"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "booking_confirmation": {
+            "type": "object",
+            "description": "Details of the confirmed hotel booking.",
+            "properties": {
+              "booking_id": {
+                "type": "string",
+                "description": "The unique identifier of the booking."
+              },
+              "hotel_name": {
+                "type": "string",
+                "description": "The name of the booked hotel."
+              },
+              "checkin_date": {
+                "type": "string",
+                "description": "The check-in date in ISO 8601 format (YYYY-MM-DD)."
+              },
+              "checkout_date": {
+                "type": "string",
+                "description": "The check-out date in ISO 8601 format (YYYY-MM-DD)."
+              },
+              "total_price": {
+                "type": "number",
+                "description": "The total price paid for the booking in the hotel's local currency."
+              },
+              "booking_status": {
+                "type": "string",
+                "description": "The current status of the booking (e.g., confirmed, pending)."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_hotel_details",
+      "description": "Retrieve comprehensive information about a specific hotel including room types and amenities.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "hotel_id": {
+            "type": "string",
+            "description": "The unique identifier of the hotel returned by get_hotels."
+          }
+        },
+        "required": [
+          "hotel_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "hotel_details": {
+            "type": "object",
+            "description": "Detailed information about the hotel.",
+            "properties": {
+              "hotel_name": {
+                "type": "string",
+                "description": "The name of the hotel."
+              },
+              "address": {
+                "type": "string",
+                "description": "The full street address of the hotel."
+              },
+              "description": {
+                "type": "string",
+                "description": "A descriptive overview of the hotel and its amenities."
+              },
+              "room_types": {
+                "type": "array",
+                "description": "List of available room types offered by the hotel.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "room_type_id": {
+                      "type": "string",
+                      "description": "The unique identifier of the room type."
+                    },
+                    "room_name": {
+                      "type": "string",
+                      "description": "The name of the room type (e.g., Deluxe Double, Suite)."
+                    },
+                    "price": {
+                      "type": "number",
+                      "description": "The price per night for this room type in the hotel's local currency."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "cancel_booking",
+      "description": "Cancel an existing hotel booking subject to the hotel's cancellation policy and deadlines.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "booking_id": {
+            "type": "string",
+            "description": "The unique identifier of the booking returned by book_hotel."
+          }
+        },
+        "required": [
+          "booking_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}

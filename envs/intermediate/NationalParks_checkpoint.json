@@ -1,0 +1,1010 @@
+{
+  "metadata": {
+    "class_name": "NationalParks",
+    "metadata_path": "envs/metadata/NationalParks_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-04-17T10:14:02.272953",
+    "state": "scenario_gen"
+  },
+  "schema": {
+    "class_name": "NationalParks",
+    "description": "Access U.S. National Park Service data: search parks, retrieve detailed park information, alerts, campgrounds, and visitor centers.",
+    "tools": [
+      {
+        "name": "findParks",
+        "description": "Search for parks by state code, text query, or supported activities.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "stateCode": {
+              "type": "string",
+              "description": "Comma-separated two-letter state codes to filter parks (e.g., 'CA,UT')."
+            },
+            "q": {
+              "type": "string",
+              "description": "Search term that matches park names or descriptions."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of parks to return (default 10)."
+            },
+            "start": {
+              "type": "integer",
+              "description": "Result offset for pagination (default 0)."
+            },
+            "activities": {
+              "type": "string",
+              "description": "Comma-separated activity names or IDs to filter parks offering those activities."
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "type": "integer",
+              "description": "Total number of parks matching the query."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Limit used for this response."
+            },
+            "start": {
+              "type": "integer",
+              "description": "Start offset used for this response."
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "parkCode": {
+                    "type": "string",
+                    "description": "Unique park identifier used across all NPS APIs."
+                  },
+                  "fullName": {
+                    "type": "string",
+                    "description": "Complete official name of the park."
+                  },
+                  "states": {
+                    "type": "string",
+                    "description": "Comma-separated state codes where the park is located."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Short narrative overview of the park."
+                  },
+                  "activities": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "Activity object with name and ID."
+                    },
+                    "description": "List of activities available in the park."
+                  }
+                }
+              },
+              "description": "List of parks matching the search criteria."
+            }
+          }
+        }
+      },
+      {
+        "name": "getParkDetails",
+        "description": "Retrieve comprehensive details for a specific park.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "parkCode": {
+              "type": "string",
+              "description": "The unique park identifier (e.g., 'yose', 'grca')."
+            }
+          },
+          "required": [
+            "parkCode"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "parkCode": {
+              "type": "string",
+              "description": "Unique park identifier used across all NPS APIs."
+            },
+            "fullName": {
+              "type": "string",
+              "description": "Complete official name of the park."
+            },
+            "description": {
+              "type": "string",
+              "description": "Detailed narrative overview of the park."
+            },
+            "directionsInfo": {
+              "type": "string",
+              "description": "Human-readable driving directions summary."
+            },
+            "operatingHours": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "description": "Seasonal or daily operating hours for park facilities."
+            },
+            "entranceFees": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "description": "List of entrance fee structures and cost details."
+            },
+            "contacts": {
+              "type": "object",
+              "description": "Contact information including phone numbers and email addresses."
+            },
+            "addresses": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "description": "Physical and mailing addresses for the park."
+            }
+          }
+        }
+      },
+      {
+        "name": "getAlerts",
+        "description": "Fetch current alerts such as closures, hazards, or notices for parks.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "parkCode": {
+              "type": "string",
+              "description": "Comma-separated park codes to filter alerts (e.g., 'yose,grca')."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of alerts to return (default 10)."
+            },
+            "start": {
+              "type": "integer",
+              "description": "Result offset for pagination (default 0)."
+            },
+            "q": {
+              "type": "string",
+              "description": "Search term that matches alert titles or descriptions."
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "type": "integer",
+              "description": "Total number of alerts matching the query."
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Unique identifier for the alert."
+                  },
+                  "parkCode": {
+                    "type": "string",
+                    "description": "Unique park identifier used across all NPS APIs."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Short headline summarizing the alert."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Detailed explanation of the alert."
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Alert category such as 'Park Closure' or 'Caution'."
+                  },
+                  "lastIndexedDate": {
+                    "type": "string",
+                    "description": "ISO 8601 timestamp when the alert was last updated."
+                  }
+                }
+              },
+              "description": "List of alerts matching the query."
+            }
+          }
+        }
+      },
+      {
+        "name": "getCampgrounds",
+        "description": "Retrieve campground listings and details for parks.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "parkCode": {
+              "type": "string",
+              "description": "Comma-separated park codes to filter campgrounds (e.g., 'yose,grca')."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of campgrounds to return (default 10)."
+            },
+            "start": {
+              "type": "integer",
+              "description": "Result offset for pagination (default 0)."
+            },
+            "q": {
+              "type": "string",
+              "description": "Search term that matches campground names or descriptions."
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "type": "integer",
+              "description": "Total number of campgrounds matching the query."
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Unique identifier for the campground."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Official name of the campground."
+                  },
+                  "parkCode": {
+                    "type": "string",
+                    "description": "Unique park identifier used across all NPS APIs."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Narrative overview of the campground."
+                  },
+                  "amenities": {
+                    "type": "object",
+                    "description": "Keyed list of available amenities (restrooms, showers, etc.)."
+                  },
+                  "fees": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    },
+                    "description": "Pricing details for camping fees."
+                  },
+                  "reservationUrl": {
+                    "type": "string",
+                    "description": "Direct URL to reserve a campsite."
+                  }
+                }
+              },
+              "description": "List of campgrounds matching the query."
+            }
+          }
+        }
+      },
+      {
+        "name": "getVisitorCenters",
+        "description": "Obtain visitor center information including hours and contact details.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "parkCode": {
+              "type": "string",
+              "description": "Comma-separated park codes to filter visitor centers (e.g., 'yose,grca')."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of visitor centers to return (default 10)."
+            },
+            "start": {
+              "type": "integer",
+              "description": "Result offset for pagination (default 0)."
+            },
+            "q": {
+              "type": "string",
+              "description": "Search term that matches visitor center names or descriptions."
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "type": "integer",
+              "description": "Total number of visitor centers matching the query."
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Unique identifier for the visitor center."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Official name of the visitor center."
+                  },
+                  "parkCode": {
+                    "type": "string",
+                    "description": "Unique park identifier used across all NPS APIs."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Overview of services and exhibits offered."
+                  },
+                  "operatingHours": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    },
+                    "description": "Daily or seasonal operating hours."
+                  },
+                  "contacts": {
+                    "type": "object",
+                    "description": "Phone numbers and email addresses for the visitor center."
+                  },
+                  "addresses": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    },
+                    "description": "Physical location and mailing addresses."
+                  }
+                }
+              },
+              "description": "List of visitor centers matching the query."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\n\nclass Park(BaseModel):\n    \"\"\"Represents a national park.\"\"\"\n    parkCode: str = Field(..., description=\"Unique park identifier\")\n    fullName: str = Field(..., description=\"Complete official name of the park\")\n    states: str = Field(default=\"\", description=\"Comma-separated state codes\")\n    description: str = Field(default=\"\", description=\"Short narrative overview\")\n    activities: List[Any] = Field(default=[], description=\"List of activities\")\n\nclass Alert(BaseModel):\n    \"\"\"Represents a park alert.\"\"\"\n    id: str = Field(..., description=\"Unique alert identifier\")\n    parkCode: str = Field(..., description=\"Park identifier\")\n    title: str = Field(default=\"\", description=\"Alert headline\")\n    description: str = Field(default=\"\", description=\"Alert details\")\n    category: str = Field(default=\"\", description=\"Alert category\")\n    lastIndexedDate: str = Field(default=\"\", description=\"Last updated timestamp\")\n\nclass Campground(BaseModel):\n    \"\"\"Represents a campground.\"\"\"\n    id: str = Field(..., description=\"Unique campground identifier\")\n    name: str = Field(..., description=\"Official campground name\")\n    parkCode: str = Field(..., description=\"Park identifier\")\n    description: str = Field(default=\"\", description=\"Campground overview\")\n    amenities: Dict[str, Any] = Field(default={}, description=\"Available amenities\")\n    fees: List[Any] = Field(default=[], description=\"Camping fees\")\n    reservationUrl: str = Field(default=\"\", description=\"Reservation URL\")\n\nclass VisitorCenter(BaseModel):\n    \"\"\"Represents a visitor center.\"\"\"\n    id: str = Field(..., description=\"Unique visitor center identifier\")\n    name: str = Field(..., description=\"Official visitor center name\")\n    parkCode: str = Field(..., description=\"Park identifier\")\n    description: str = Field(default=\"\", description=\"Services and exhibits overview\")\n    operatingHours: List[Any] = Field(default=[], description=\"Operating hours\")\n    contacts: Dict[str, Any] = Field(default={}, description=\"Contact information\")\n    addresses: List[Any] = Field(default=[], description=\"Physical addresses\")\n\nclass ParkDetails(BaseModel):\n    \"\"\"Represents detailed park information.\"\"\"\n    parkCode: str = Field(..., description=\"Unique park identifier\")\n    fullName: str = Field(..., description=\"Complete official name\")\n    description: str = Field(default=\"\", description=\"Detailed overview\")\n    directionsInfo: str = Field(default=\"\", description=\"Driving directions\")\n    operatingHours: List[Any] = Field(default=[], description=\"Operating hours\")\n    entranceFees: List[Any] = Field(default=[], description=\"Entrance fees\")\n    contacts: Dict[str, Any] = Field(default={}, description=\"Contact information\")\n    addresses: List[Any] = Field(default=[], description=\"Physical addresses\")\n\nclass NationalParksScenario(BaseModel):\n    \"\"\"Main scenario model for National Parks data.\"\"\"\n    parks: Dict[str, Any] = Field(default={}, description=\"Park data keyed by parkCode\")\n    alerts: List[Any] = Field(default=[], description=\"Park alerts\")\n    campgrounds: List[Any] = Field(default=[], description=\"Campground listings\")\n    visitor_centers: List[Any] = Field(default=[], description=\"Visitor center listings\")\n    activitiesMap: Dict[str, Any] = Field(default={\n        \"hiking\": {\"id\": \"BFF8C027-7C8F-400B-B55D-5414C3AA8BB8\", \"name\": \"Hiking\"},\n        \"camping\": {\"id\": \"A59947B7-3376-49B4-AD02-C0423E08C5F7\", \"name\": \"Camping\"},\n        \"fishing\": {\"id\": \"AE42B46C-E4B7-4889-A122-08FE180371AE\", \"name\": \"Fishing\"},\n        \"swimming\": {\"id\": \"587BB2D3-EC35-41B2-B3F7-A39E2B088AEE\", \"name\": \"Swimming\"},\n        \"birdwatching\": {\"id\": \"0B685688-3405-4E2A-ABBA-E3069492EC50\", \"name\": \"Birdwatching\"},\n        \"climbing\": {\"id\": \"7CE6E935-F839-4FEC-A63E-052B1DEF39D2\", \"name\": \"Rock Climbing\"},\n        \"cycling\": {\"id\": \"4D224BCA-C127-408B-AC75-A51563C42411\", \"name\": \"Biking\"},\n        \"kayaking\": {\"id\": \"4A58AF13-E8FB-4530-B41A-97DF0B0C77B7\", \"name\": \"Kayaking\"},\n        \"photography\": {\"id\": \"C8F98B28-3C10-41AE-AA99-092B3B398C43\", \"name\": \"Photography\"},\n        \"stargazing\": {\"id\": \"B33DC9B6-0B7D-4322-BAD7-A13A34C584A3\", \"name\": \"Stargazing\"},\n        \"snowshoeing\": {\"id\": \"F9B1D433-6B86-4804-AED7-B50A519A3B7C\", \"name\": \"Snowshoeing\"},\n        \"horseback\": {\"id\": \"1DFACD97-1B9C-4F5A-80F2-05593604799E\", \"name\": \"Horseback Riding\"},\n        \"rafting\": {\"id\": \"F353A9ED-4A08-456E-8DEC-E61974D0FEB6\", \"name\": \"Whitewater Rafting\"},\n        \"snorkeling\": {\"id\": \"5FF5B286-E9C3-430E-B612-3380D8138600\", \"name\": \"Snorkeling\"},\n        \"skiing\": {\"id\": \"D37A0003-8317-4F04-8FB0-4CF0A272E195\", \"name\": \"Downhill Skiing\"},\n    }, description=\"Activities reference map\")\n    stateParksMap: Dict[str, Any] = Field(default={\n        \"CA\": [\"yose\", \"sequ\", \"jotr\", \"redw\", \"pinn\"],\n        \"UT\": [\"zion\", \"brca\", \"cany\", \"arch\", \"care\"],\n        \"AZ\": [\"grca\", \"pefo\", \"sacu\", \"tuzi\", \"chir\"],\n        \"CO\": [\"romo\", \"blca\", \"grsa\", \"meve\", \"cure\"],\n        \"WY\": [\"yell\", \"grte\", \"fobu\", \"thro\", \"bica\"],\n        \"MT\": [\"glac\", \"biho\", \"litt\", \"grko\", \"noca\"],\n        \"WA\": [\"olym\", \"noca\", \"mora\", \"laro\", \"whis\"],\n        \"OR\": [\"crla\", \"john\", \"nebe\", \"lewi\", \"timu\"],\n        \"FL\": [\"ever\", \"bisc\", \"drto\", \"cana\", \"timu\"],\n        \"TX\": [\"bibe\", \"gumo\", \"saan\", \"paal\", \"lyjo\"],\n        \"AK\": [\"dena\", \"katm\", \"glba\", \"kefj\", \"lacl\"],\n        \"HI\": [\"havo\", \"hale\", \"kala\", \"puhe\", \"puko\"],\n        \"VA\": [\"shen\", \"colo\", \"apco\", \"mana\", \"rich\"],\n        \"NC\": [\"grsm\", \"blue\", \"caha\", \"fora\", \"carl\"],\n        \"SD\": [\"badl\", \"wica\", \"moru\", \"jeca\", \"mnrr\"],\n    }, description=\"State to park codes mapping\")\n\nScenario_Schema = [Park, Alert, Campground, VisitorCenter, ParkDetails, NationalParksScenario]\n\n\n# Section 2: Class\n\nclass NationalParksAPI:\n    def __init__(self):\n        \"\"\"Initialize National Parks API with empty state.\"\"\"\n        self.parks: Dict[str, Any] = {}\n        self.alerts: List[Any] = []\n        self.campgrounds: List[Any] = []\n        self.visitor_centers: List[Any] = []\n        self.activitiesMap: Dict[str, Any] = {}\n        self.stateParksMap: Dict[str, Any] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = NationalParksScenario(**scenario)\n        self.parks = model.parks\n        self.alerts = model.alerts\n        self.campgrounds = model.campgrounds\n        self.visitor_centers = model.visitor_centers\n        self.activitiesMap = model.activitiesMap\n        self.stateParksMap = model.stateParksMap\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"parks\": self.parks,\n            \"alerts\": self.alerts,\n            \"campgrounds\": self.campgrounds,\n            \"visitor_centers\": self.visitor_centers,\n            \"activitiesMap\": self.activitiesMap,\n            \"stateParksMap\": self.stateParksMap,\n        }\n\n    def findParks(self, stateCode: Optional[str], q: Optional[str], limit: int, start: int, activities: Optional[str]) -> dict:\n        \"\"\"Search for parks by state code, text query, or activities.\"\"\"\n        results = list(self.parks.values())\n\n        if stateCode:\n            codes = [s.strip().upper() for s in stateCode.split(\",\")]\n            results = [p for p in results if any(c in p.get(\"states\", \"\").upper().split(\",\") for c in codes)]\n\n        if q:\n            q_lower = q.lower()\n            results = [p for p in results if q_lower in p.get(\"fullName\", \"\").lower() or q_lower in p.get(\"description\", \"\").lower()]\n\n        if activities:\n            act_names = [a.strip().lower() for a in activities.split(\",\")]\n            def park_has_activity(park):\n                park_acts = [a.get(\"name\", \"\").lower() for a in park.get(\"activities\", [])]\n                return any(a in park_acts for a in act_names)\n            results = [p for p in results if park_has_activity(p)]\n\n        total = len(results)\n        paginated = results[start:start + limit]\n        return {\"total\": total, \"limit\": limit, \"start\": start, \"data\": paginated}\n\n    def getParkDetails(self, parkCode: str) -> dict:\n        \"\"\"Retrieve comprehensive details for a specific park.\"\"\"\n        return self.parks[parkCode]\n\n    def getAlerts(self, parkCode: Optional[str], limit: int, start: int, q: Optional[str]) -> dict:\n        \"\"\"Fetch current alerts for parks.\"\"\"\n        results = list(self.alerts)\n\n        if parkCode:\n            codes = [c.strip().lower() for c in parkCode.split(\",\")]\n            results = [a for a in results if a.get(\"parkCode\", \"\").lower() in codes]\n\n        if q:\n            q_lower = q.lower()\n            results = [a for a in results if q_lower in a.get(\"title\", \"\").lower() or q_lower in a.get(\"description\", \"\").lower()]\n\n        total = len(results)\n        return {\"total\": total, \"data\": results[start:start + limit]}\n\n    def getCampgrounds(self, parkCode: Optional[str], limit: int, start: int, q: Optional[str]) -> dict:\n        \"\"\"Retrieve campground listings for parks.\"\"\"\n        results = list(self.campgrounds)\n\n        if parkCode:\n            codes = [c.strip().lower() for c in parkCode.split(\",\")]\n            results = [c for c in results if c.get(\"parkCode\", \"\").lower() in codes]\n\n        if q:\n            q_lower = q.lower()\n            results = [c for c in results if q_lower in c.get(\"name\", \"\").lower() or q_lower in c.get(\"description\", \"\").lower()]\n\n        total = len(results)\n        return {\"total\": total, \"data\": results[start:start + limit]}\n\n    def getVisitorCenters(self, parkCode: Optional[str], limit: int, start: int, q: Optional[str]) -> dict:\n        \"\"\"Obtain visitor center information for parks.\"\"\"\n        results = list(self.visitor_centers)\n\n        if parkCode:\n            codes = [c.strip().lower() for c in parkCode.split(\",\")]\n            results = [v for v in results if v.get(\"parkCode\", \"\").lower() in codes]\n\n        if q:\n            q_lower = q.lower()\n            results = [v for v in results if q_lower in v.get(\"name\", \"\").lower() or q_lower in v.get(\"description\", \"\").lower()]\n\n        total = len(results)\n        return {\"total\": total, \"data\": results[start:start + limit]}\n\n\n# Section 3: MCP Tools\n\nmcp = FastMCP(name=\"NationalParks\")\napi = NationalParksAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the National Parks API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching NationalParksScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current National Parks state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef findParks(\n    stateCode: Optional[str] = None,\n    q: Optional[str] = None,\n    limit: int = 10,\n    start: int = 0,\n    activities: Optional[str] = None,\n) -> dict:\n    \"\"\"\n    Search for parks by state code, text query, or supported activities.\n\n    Args:\n        stateCode (str): [Optional] Comma-separated two-letter state codes (e.g., 'CA,UT').\n        q (str): [Optional] Search term matching park names or descriptions.\n        limit (int): [Optional] Maximum number of parks to return (default 10).\n        start (int): [Optional] Result offset for pagination (default 0).\n        activities (str): [Optional] Comma-separated activity names or IDs.\n\n    Returns:\n        total (int): Total number of parks matching the query.\n        limit (int): Limit used for this response.\n        start (int): Start offset used for this response.\n        data (list): List of parks matching the search criteria.\n    \"\"\"\n    try:\n        if limit < 1:\n            raise ValueError(\"limit must be at least 1\")\n        if start < 0:\n            raise ValueError(\"start must be non-negative\")\n        return api.findParks(stateCode, q, limit, start, activities)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef getParkDetails(parkCode: str) -> dict:\n    \"\"\"\n    Retrieve comprehensive details for a specific park.\n\n    Args:\n        parkCode (str): The unique park identifier (e.g., 'yose', 'grca').\n\n    Returns:\n        parkCode (str): Unique park identifier.\n        fullName (str): Complete official name of the park.\n        description (str): Detailed narrative overview.\n        directionsInfo (str): Human-readable driving directions.\n        operatingHours (list): Seasonal or daily operating hours.\n        entranceFees (list): Entrance fee structures.\n        contacts (dict): Contact information.\n        addresses (list): Physical and mailing addresses.\n    \"\"\"\n    try:\n        if not parkCode or not isinstance(parkCode, str):\n            raise ValueError(\"parkCode must be a non-empty string\")\n        if parkCode not in api.parks:\n            raise ValueError(f\"Park '{parkCode}' not found\")\n        return api.getParkDetails(parkCode)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef getAlerts(\n    parkCode: Optional[str] = None,\n    limit: int = 10,\n    start: int = 0,\n    q: Optional[str] = None,\n) -> dict:\n    \"\"\"\n    Fetch current alerts such as closures, hazards, or notices for parks.\n\n    Args:\n        parkCode (str): [Optional] Comma-separated park codes to filter alerts.\n        limit (int): [Optional] Maximum number of alerts to return (default 10).\n        start (int): [Optional] Result offset for pagination (default 0).\n        q (str): [Optional] Search term matching alert titles or descriptions.\n\n    Returns:\n        total (int): Total number of alerts matching the query.\n        data (list): List of alerts matching the query.\n    \"\"\"\n    try:\n        if limit < 1:\n            raise ValueError(\"limit must be at least 1\")\n        if start < 0:\n            raise ValueError(\"start must be non-negative\")\n        return api.getAlerts(parkCode, limit, start, q)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef getCampgrounds(\n    parkCode: Optional[str] = None,\n    limit: int = 10,\n    start: int = 0,\n    q: Optional[str] = None,\n) -> dict:\n    \"\"\"\n    Retrieve campground listings and details for parks.\n\n    Args:\n        parkCode (str): [Optional] Comma-separated park codes to filter campgrounds.\n        limit (int): [Optional] Maximum number of campgrounds to return (default 10).\n        start (int): [Optional] Result offset for pagination (default 0).\n        q (str): [Optional] Search term matching campground names or descriptions.\n\n    Returns:\n        total (int): Total number of campgrounds matching the query.\n        data (list): List of campgrounds matching the query.\n    \"\"\"\n    try:\n        if limit < 1:\n            raise ValueError(\"limit must be at least 1\")\n        if start < 0:\n            raise ValueError(\"start must be non-negative\")\n        return api.getCampgrounds(parkCode, limit, start, q)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef getVisitorCenters(\n    parkCode: Optional[str] = None,\n    limit: int = 10,\n    start: int = 0,\n    q: Optional[str] = None,\n) -> dict:\n    \"\"\"\n    Obtain visitor center information including hours and contact details.\n\n    Args:\n        parkCode (str): [Optional] Comma-separated park codes to filter visitor centers.\n        limit (int): [Optional] Maximum number of visitor centers to return (default 10).\n        start (int): [Optional] Result offset for pagination (default 0).\n        q (str): [Optional] Search term matching visitor center names or descriptions.\n\n    Returns:\n        total (int): Total number of visitor centers matching the query.\n        data (list): List of visitor centers matching the query.\n    \"\"\"\n    try:\n        if limit < 1:\n            raise ValueError(\"limit must be at least 1\")\n        if start < 0:\n            raise ValueError(\"start must be non-negative\")\n        return api.getVisitorCenters(parkCode, limit, start, q)\n    except Exception as e:\n        raise e\n\n\n# Section 4: Entry Point\n\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-04-17T10:14:02.272981",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Single park with one alert and no campgrounds or visitor centers",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "parks": {
+          "yose": {
+            "parkCode": "yose",
+            "fullName": "Yosemite National Park",
+            "states": "CA",
+            "description": "Known for its waterfalls and granite cliffs.",
+            "activities": [
+              {
+                "id": "BFF8C027-7C8F-400B-B55D-5414C3AA8BB8",
+                "name": "Hiking"
+              }
+            ]
+          }
+        },
+        "alerts": [
+          {
+            "id": "alert-001",
+            "parkCode": "yose",
+            "title": "Road Closure",
+            "description": "Tioga Road closed due to snow.",
+            "category": "Road Closure",
+            "lastIndexedDate": "2026-04-10T08:00:00Z"
+          }
+        ],
+        "campgrounds": [],
+        "visitor_centers": [],
+        "activitiesMap": {
+          "hiking": {
+            "id": "BFF8C027-7C8F-400B-B55D-5414C3AA8BB8",
+            "name": "Hiking"
+          },
+          "camping": {
+            "id": "A59947B7-3376-49B4-AD02-C0423E08C5F7",
+            "name": "Camping"
+          }
+        },
+        "stateParksMap": {
+          "CA": [
+            "yose",
+            "sequ",
+            "jotr"
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Three parks across two states with campgrounds and visitor centers",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "parks": {
+          "zion": {
+            "parkCode": "zion",
+            "fullName": "Zion National Park",
+            "states": "UT",
+            "description": "Steep red cliffs and narrow slot canyons.",
+            "activities": [
+              {
+                "id": "BFF8C027-7C8F-400B-B55D-5414C3AA8BB8",
+                "name": "Hiking"
+              },
+              {
+                "id": "7CE6E935-F839-4FEC-A63E-052B1DEF39D2",
+                "name": "Rock Climbing"
+              }
+            ]
+          },
+          "brca": {
+            "parkCode": "brca",
+            "fullName": "Bryce Canyon National Park",
+            "states": "UT",
+            "description": "Famous for its hoodoo rock formations.",
+            "activities": [
+              {
+                "id": "BFF8C027-7C8F-400B-B55D-5414C3AA8BB8",
+                "name": "Hiking"
+              },
+              {
+                "id": "B33DC9B6-0B7D-4322-BAD7-A13A34C584A3",
+                "name": "Stargazing"
+              }
+            ]
+          },
+          "grca": {
+            "parkCode": "grca",
+            "fullName": "Grand Canyon National Park",
+            "states": "AZ",
+            "description": "One of the world's great natural wonders.",
+            "activities": [
+              {
+                "id": "BFF8C027-7C8F-400B-B55D-5414C3AA8BB8",
+                "name": "Hiking"
+              },
+              {
+                "id": "F353A9ED-4A08-456E-8DEC-E61974D0FEB6",
+                "name": "Whitewater Rafting"
+              }
+            ]
+          }
+        },
+        "alerts": [
+          {
+            "id": "alert-101",
+            "parkCode": "zion",
+            "title": "Flash Flood Watch",
+            "description": "Narrow canyon areas may flood during storms.",
+            "category": "Danger",
+            "lastIndexedDate": "2026-04-15T12:00:00Z"
+          },
+          {
+            "id": "alert-102",
+            "parkCode": "grca",
+            "title": "Extreme Heat Advisory",
+            "description": "Temperatures may exceed 100°F in the inner canyon.",
+            "category": "Caution",
+            "lastIndexedDate": "2026-04-16T09:00:00Z"
+          }
+        ],
+        "campgrounds": [
+          {
+            "id": "cg-001",
+            "name": "South Campground",
+            "parkCode": "zion",
+            "description": "Located near the park entrance.",
+            "amenities": {
+              "toilets": "flush",
+              "showers": false,
+              "drinkingWater": true
+            },
+            "fees": [
+              {
+                "cost": "20.00",
+                "description": "Per night"
+              }
+            ],
+            "reservationUrl": "https://www.recreation.gov/camping/campgrounds/232447"
+          },
+          {
+            "id": "cg-002",
+            "name": "North Rim Campground",
+            "parkCode": "grca",
+            "description": "Forested campground on the North Rim.",
+            "amenities": {
+              "toilets": "flush",
+              "showers": false,
+              "drinkingWater": true
+            },
+            "fees": [
+              {
+                "cost": "18.00",
+                "description": "Per night"
+              }
+            ],
+            "reservationUrl": "https://www.recreation.gov/camping/campgrounds/232490"
+          }
+        ],
+        "visitor_centers": [
+          {
+            "id": "vc-001",
+            "name": "Zion Canyon Visitor Center",
+            "parkCode": "zion",
+            "description": "Main visitor center with exhibits and ranger programs.",
+            "operatingHours": [
+              {
+                "name": "All Year",
+                "description": "Open daily",
+                "standardHours": {
+                  "monday": "8:00AM - 5:00PM"
+                }
+              }
+            ],
+            "contacts": {
+              "phoneNumbers": [
+                {
+                  "phoneNumber": "435-772-3256",
+                  "type": "Voice"
+                }
+              ]
+            },
+            "addresses": [
+              {
+                "line1": "Zion Canyon Scenic Drive",
+                "city": "Springdale",
+                "stateCode": "UT"
+              }
+            ]
+          }
+        ],
+        "activitiesMap": {
+          "hiking": {
+            "id": "BFF8C027-7C8F-400B-B55D-5414C3AA8BB8",
+            "name": "Hiking"
+          },
+          "camping": {
+            "id": "A59947B7-3376-49B4-AD02-C0423E08C5F7",
+            "name": "Camping"
+          },
+          "climbing": {
+            "id": "7CE6E935-F839-4FEC-A63E-052B1DEF39D2",
+            "name": "Rock Climbing"
+          },
+          "rafting": {
+            "id": "F353A9ED-4A08-456E-8DEC-E61974D0FEB6",
+            "name": "Whitewater Rafting"
+          },
+          "stargazing": {
+            "id": "B33DC9B6-0B7D-4322-BAD7-A13A34C584A3",
+            "name": "Stargazing"
+          }
+        },
+        "stateParksMap": {
+          "UT": [
+            "zion",
+            "brca",
+            "cany",
+            "arch",
+            "care"
+          ],
+          "AZ": [
+            "grca",
+            "pefo",
+            "sacu"
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Multi-state scenario with parks, alerts, campgrounds, visitor centers across diverse regions including Alaska and Hawaii",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "parks": {
+          "yell": {
+            "parkCode": "yell",
+            "fullName": "Yellowstone National Park",
+            "states": "WY,MT,ID",
+            "description": "World's first national park, home to geysers and diverse wildlife.",
+            "activities": [
+              {
+                "id": "BFF8C027-7C8F-400B-B55D-5414C3AA8BB8",
+                "name": "Hiking"
+              },
+              {
+                "id": "A59947B7-3376-49B4-AD02-C0423E08C5F7",
+                "name": "Camping"
+              },
+              {
+                "id": "AE42B46C-E4B7-4889-A122-08FE180371AE",
+                "name": "Fishing"
+              },
+              {
+                "id": "C8F98B28-3C10-41AE-AA99-092B3B398C43",
+                "name": "Photography"
+              }
+            ]
+          },
+          "glac": {
+            "parkCode": "glac",
+            "fullName": "Glacier National Park",
+            "states": "MT",
+            "description": "Over a million acres of forests, alpine meadows, and lakes.",
+            "activities": [
+              {
+                "id": "BFF8C027-7C8F-400B-B55D-5414C3AA8BB8",
+                "name": "Hiking"
+              },
+              {
+                "id": "4D224BCA-C127-408B-AC75-A51563C42411",
+                "name": "Biking"
+              },
+              {
+                "id": "F9B1D433-6B86-4804-AED7-B50A519A3B7C",
+                "name": "Snowshoeing"
+              }
+            ]
+          },
+          "ever": {
+            "parkCode": "ever",
+            "fullName": "Everglades National Park",
+            "states": "FL",
+            "description": "Largest tropical wilderness in the US.",
+            "activities": [
+              {
+                "id": "4A58AF13-E8FB-4530-B41A-97DF0B0C77B7",
+                "name": "Kayaking"
+              },
+              {
+                "id": "0B685688-3405-4E2A-ABBA-E3069492EC50",
+                "name": "Birdwatching"
+              },
+              {
+                "id": "5FF5B286-E9C3-430E-B612-3380D8138600",
+                "name": "Snorkeling"
+              }
+            ]
+          },
+          "dena": {
+            "parkCode": "dena",
+            "fullName": "Denali National Park and Preserve",
+            "states": "AK",
+            "description": "Home to North America's highest peak.",
+            "activities": [
+              {
+                "id": "BFF8C027-7C8F-400B-B55D-5414C3AA8BB8",
+                "name": "Hiking"
+              },
+              {
+                "id": "1DFACD97-1B9C-4F5A-80F2-05593604799E",
+                "name": "Horseback Riding"
+              },
+              {
+                "id": "C8F98B28-3C10-41AE-AA99-092B3B398C43",
+                "name": "Photography"
+              }
+            ]
+          },
+          "havo": {
+            "parkCode": "havo",
+            "fullName": "Hawaiʻi Volcanoes National Park",
+            "states": "HI",
+            "description": "Active volcanoes and unique ecosystems.",
+            "activities": [
+              {
+                "id": "BFF8C027-7C8F-400B-B55D-5414C3AA8BB8",
+                "name": "Hiking"
+              },
+              {
+                "id": "C8F98B28-3C10-41AE-AA99-092B3B398C43",
+                "name": "Photography"
+              },
+              {
+                "id": "B33DC9B6-0B7D-4322-BAD7-A13A34C584A3",
+                "name": "Stargazing"
+              }
+            ]
+          }
+        },
+        "alerts": [
+          {
+            "id": "alert-201",
+            "parkCode": "yell",
+            "title": "Bison Calving Season",
+            "description": "Stay 25 yards from bison. Calving season increases unpredictable behavior.",
+            "category": "Caution",
+            "lastIndexedDate": "2026-04-12T10:00:00Z"
+          },
+          {
+            "id": "alert-202",
+            "parkCode": "glac",
+            "title": "Going-to-the-Sun Road Partially Open",
+            "description": "Road open to Avalanche Creek only. Full opening expected late June.",
+            "category": "Road Closure",
+            "lastIndexedDate": "2026-04-14T08:00:00Z"
+          },
+          {
+            "id": "alert-203",
+            "parkCode": "ever",
+            "title": "Mosquito Advisory",
+            "description": "High mosquito activity. Insect repellent strongly recommended.",
+            "category": "Information",
+            "lastIndexedDate": "2026-04-16T07:00:00Z"
+          },
+          {
+            "id": "alert-204",
+            "parkCode": "havo",
+            "title": "Volcanic Eruption Activity",
+            "description": "Kīlauea is currently erupting. Some areas closed due to lava hazards.",
+            "category": "Danger",
+            "lastIndexedDate": "2026-04-17T00:00:00Z"
+          }
+        ],
+        "campgrounds": [
+          {
+            "id": "cg-301",
+            "name": "Madison Campground",
+            "parkCode": "yell",
+            "description": "Popular campground near Madison River.",
+            "amenities": {
+              "toilets": "flush",
+              "showers": false,
+              "drinkingWater": true,
+              "dump_station": true
+            },
+            "fees": [
+              {
+                "cost": "25.00",
+                "description": "Per night, per site"
+              }
+            ],
+            "reservationUrl": "https://www.recreation.gov/camping/campgrounds/232493"
+          },
+          {
+            "id": "cg-302",
+            "name": "Apgar Campground",
+            "parkCode": "glac",
+            "description": "Located near Lake McDonald.",
+            "amenities": {
+              "toilets": "flush",
+              "showers": false,
+              "drinkingWater": true
+            },
+            "fees": [
+              {
+                "cost": "23.00",
+                "description": "Per night"
+              }
+            ],
+            "reservationUrl": "https://www.recreation.gov/camping/campgrounds/232469"
+          },
+          {
+            "id": "cg-303",
+            "name": "Long Pine Key Campground",
+            "parkCode": "ever",
+            "description": "Shaded campground in pine forest.",
+            "amenities": {
+              "toilets": "flush",
+              "showers": false,
+              "drinkingWater": true
+            },
+            "fees": [
+              {
+                "cost": "20.00",
+                "description": "Per night"
+              }
+            ],
+            "reservationUrl": "https://www.recreation.gov/camping/campgrounds/232488"
+          }
+        ],
+        "visitor_centers": [
+          {
+            "id": "vc-301",
+            "name": "Old Faithful Visitor Education Center",
+            "parkCode": "yell",
+            "description": "Exhibits on geothermal features and park geology.",
+            "operatingHours": [
+              {
+                "name": "Summer",
+                "description": "Open daily",
+                "standardHours": {
+                  "monday": "8:00AM - 6:00PM",
+                  "tuesday": "8:00AM - 6:00PM"
+                }
+              }
+            ],
+            "contacts": {
+              "phoneNumbers": [
+                {
+                  "phoneNumber": "307-344-7381",
+                  "type": "Voice"
+                }
+              ]
+            },
+            "addresses": [
+              {
+                "line1": "Old Faithful Area",
+                "city": "Yellowstone National Park",
+                "stateCode": "WY"
+              }
+            ]
+          },
+          {
+            "id": "vc-302",
+            "name": "Apgar Visitor Center",
+            "parkCode": "glac",
+            "description": "Gateway visitor center with park orientation exhibits.",
+            "operatingHours": [
+              {
+                "name": "Summer",
+                "description": "Open daily May-Oct",
+                "standardHours": {
+                  "monday": "8:00AM - 5:00PM"
+                }
+              }
+            ],
+            "contacts": {
+              "phoneNumbers": [
+                {
+                  "phoneNumber": "406-888-7800",
+                  "type": "Voice"
+                }
+              ]
+            },
+            "addresses": [
+              {
+                "line1": "Apgar Village",
+                "city": "West Glacier",
+                "stateCode": "MT"
+              }
+            ]
+          },
+          {
+            "id": "vc-303",
+            "name": "Kilauea Visitor Center",
+            "parkCode": "havo",
+            "description": "Information on volcanic activity and park safety.",
+            "operatingHours": [
+              {
+                "name": "All Year",
+                "description": "Open daily",
+                "standardHours": {
+                  "monday": "9:00AM - 5:00PM"
+                }
+              }
+            ],
+            "contacts": {
+              "phoneNumbers": [
+                {
+                  "phoneNumber": "808-985-6011",
+                  "type": "Voice"
+                }
+              ]
+            },
+            "addresses": [
+              {
+                "line1": "1 Crater Rim Drive",
+                "city": "Hawaii National Park",
+                "stateCode": "HI"
+              }
+            ]
+          }
+        ],
+        "activitiesMap": {
+          "hiking": {
+            "id": "BFF8C027-7C8F-400B-B55D-5414C3AA8BB8",
+            "name": "Hiking"
+          },
+          "camping": {
+            "id": "A59947B7-3376-49B4-AD02-C0423E08C5F7",
+            "name": "Camping"
+          },
+          "fishing": {
+            "id": "AE42B46C-E4B7-4889-A122-08FE180371AE",
+            "name": "Fishing"
+          },
+          "birdwatching": {
+            "id": "0B685688-3405-4E2A-ABBA-E3069492EC50",
+            "name": "Birdwatching"
+          },
+          "cycling": {
+            "id": "4D224BCA-C127-408B-AC75-A51563C42411",
+            "name": "Biking"
+          },
+          "kayaking": {
+            "id": "4A58AF13-E8FB-4530-B41A-97DF0B0C77B7",
+            "name": "Kayaking"
+          },
+          "photography": {
+            "id": "C8F98B28-3C10-41AE-AA99-092B3B398C43",
+            "name": "Photography"
+          },
+          "stargazing": {
+            "id": "B33DC9B6-0B7D-4322-BAD7-A13A34C584A3",
+            "name": "Stargazing"
+          },
+          "snowshoeing": {
+            "id": "F9B1D433-6B86-4804-AED7-B50A519A3B7C",
+            "name": "Snowshoeing"
+          },
+          "horseback": {
+            "id": "1DFACD97-1B9C-4F5A-80F2-05593604799E",
+            "name": "Horseback Riding"
+          },
+          "snorkeling": {
+            "id": "5FF5B286-E9C3-430E-B612-3380D8138600",
+            "name": "Snorkeling"
+          }
+        },
+        "stateParksMap": {
+          "WY": [
+            "yell",
+            "grte"
+          ],
+          "MT": [
+            "glac",
+            "yell"
+          ],
+          "FL": [
+            "ever",
+            "bisc",
+            "drto"
+          ],
+          "AK": [
+            "dena",
+            "katm",
+            "glba"
+          ],
+          "HI": [
+            "havo",
+            "hale"
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty collections — all lists and dicts empty except required defaults; tests tool behavior with no data",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "parks": {},
+        "alerts": [],
+        "campgrounds": [],
+        "visitor_centers": [],
+        "activitiesMap": {},
+        "stateParksMap": {}
+      }
+    }
+  ],
+  "validation_results": {},
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": false,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/NationalParks.py"
+  }
+}

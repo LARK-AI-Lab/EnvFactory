@@ -1,0 +1,237 @@
+{
+  "class_name": "ChinaRailway",
+  "description": "Provides comprehensive access to China Railway (12306) services, including station lookup, ticket availability queries, and train route information for planning rail travel across China.",
+  "tools": [
+    {
+      "name": "get_stations_code_in_city",
+      "description": "Retrieves all railway stations within a specified Chinese city, returning their station codes and names for use in ticket queries.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "description": "The Chinese name of the city to search for railway stations (e.g., '北京', '上海')."
+          }
+        },
+        "required": [
+          "city"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "stations": {
+            "type": "array",
+            "description": "List of all railway stations located in the specified city.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "station_code": {
+                  "type": "string",
+                  "description": "The unique station code used in the China Railway system for identifying this station."
+                },
+                "station_name": {
+                  "type": "string",
+                  "description": "The official Chinese name of the railway station."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_station_code_by_name",
+      "description": "Looks up the unique station code for a railway station by its Chinese name, enabling precise station identification for ticket searches.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "station_name": {
+            "type": "string",
+            "description": "The official Chinese name of the railway station to look up (e.g., '北京南站')."
+          }
+        },
+        "required": [
+          "station_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "station_code": {
+            "type": "string",
+            "description": "The unique station code used in the China Railway system for identifying this station."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_station_by_code",
+      "description": "Retrieves detailed information about a railway station using its station code, including contact details and location.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "station_code": {
+            "type": "string",
+            "description": "The unique station code used in the China Railway system for identifying this station."
+          }
+        },
+        "required": [
+          "station_code"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "station_name": {
+            "type": "string",
+            "description": "The official Chinese name of the railway station."
+          },
+          "address": {
+            "type": "string",
+            "description": "The geographical location or physical address of the railway station."
+          },
+          "phone": {
+            "type": "string",
+            "description": "The contact telephone number for the railway station."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_tickets",
+      "description": "Queries the 12306 system for available train tickets between two stations on a specific date, returning train schedules and seat availability.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "The travel date for the ticket query in ISO 8601 format (yyyy-mm-dd), e.g., '2024-03-15'."
+          },
+          "from_station_code": {
+            "type": "string",
+            "description": "The unique station code used in the China Railway system for identifying the departure station."
+          },
+          "to_station_code": {
+            "type": "string",
+            "description": "The unique station code used in the China Railway system for identifying the arrival station."
+          }
+        },
+        "required": [
+          "date",
+          "from_station_code",
+          "to_station_code"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "trains": {
+            "type": "array",
+            "description": "List of available train services matching the query criteria, including schedule and seat availability.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "train_no": {
+                  "type": "string",
+                  "description": "The unique train number identifier for this service (e.g., 'G123', '240000G10336')."
+                },
+                "departure_time": {
+                  "type": "string",
+                  "description": "The scheduled departure time from the origin station in HH:MM format."
+                },
+                "arrival_time": {
+                  "type": "string",
+                  "description": "The scheduled arrival time at the destination station in HH:MM format."
+                },
+                "duration": {
+                  "type": "string",
+                  "description": "The total travel time for this train journey (e.g., '5h 30m')."
+                },
+                "seat_availability": {
+                  "type": "object",
+                  "description": "Current ticket availability for different seat classes on this train.",
+                  "properties": {
+                    "business_class": {
+                      "type": "integer",
+                      "description": "Number of available business class seats remaining for booking."
+                    },
+                    "first_class": {
+                      "type": "integer",
+                      "description": "Number of available first class seats remaining for booking."
+                    },
+                    "second_class": {
+                      "type": "integer",
+                      "description": "Number of available second class seats remaining for booking."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_train_route_stations",
+      "description": "Retrieves the complete route information for a specific train, including all intermediate stops with arrival and departure times.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "The travel date for the train route query in ISO 8601 format (yyyy-mm-dd), e.g., '2024-03-15'."
+          },
+          "from_station_code": {
+            "type": "string",
+            "description": "The unique station code used in the China Railway system for identifying the departure station."
+          },
+          "to_station_code": {
+            "type": "string",
+            "description": "The unique station code used in the China Railway system for identifying the arrival station."
+          },
+          "train_no": {
+            "type": "string",
+            "description": "The unique train number identifier for this service (e.g., '240000G10336'), as returned by the get_tickets tool."
+          }
+        },
+        "required": [
+          "date",
+          "from_station_code",
+          "to_station_code",
+          "train_no"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "route_stations": {
+            "type": "array",
+            "description": "Ordered list of all stations along the train's route, from origin to final destination.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "station_name": {
+                  "type": "string",
+                  "description": "The official Chinese name of the railway station on this route."
+                },
+                "arrival_time": {
+                  "type": "string",
+                  "description": "The scheduled arrival time at this station in HH:MM format (empty for the origin station)."
+                },
+                "departure_time": {
+                  "type": "string",
+                  "description": "The scheduled departure time from this station in HH:MM format (empty for the final station)."
+                },
+                "stop_duration": {
+                  "type": "string",
+                  "description": "The length of time the train stops at this station (e.g., '2 minutes', '5 minutes')."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

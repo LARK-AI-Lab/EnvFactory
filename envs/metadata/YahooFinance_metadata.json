@@ -1,0 +1,560 @@
+{
+  "class_name": "YahooFinance",
+  "description": "A financial data service providing real-time and historical stock prices, financial statements, dividends, earnings information, news, analyst recommendations, and options data from Yahoo Finance.",
+  "tools": [
+    {
+      "name": "get_current_stock_price",
+      "description": "Retrieve the current real-time market price (last traded price) for a given stock symbol.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+          }
+        },
+        "required": [
+          "symbol"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "current_price": {
+            "type": "string",
+            "description": "The current market price as a formatted string representing the most recent transaction price on the exchange (e.g., '150.25' for $150.25)."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_stock_price_by_date",
+      "description": "Retrieve the opening and closing stock prices for a given stock symbol on a specific trading date.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+          },
+          "date": {
+            "type": "string",
+            "description": "The trading date in YYYY-MM-DD format (e.g., '2024-01-15'). Must be a valid trading day, excluding weekends and market holidays."
+          }
+        },
+        "required": [
+          "symbol",
+          "date"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "The trading date in YYYY-MM-DD format for which price data is returned."
+          },
+          "open": {
+            "type": "number",
+            "description": "The opening price (first trade price of the day), indicating market sentiment at the start of trading."
+          },
+          "close": {
+            "type": "number",
+            "description": "The closing price (last trade price of the day), commonly used as a reference point for daily price movements."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_stock_price_date_range",
+      "description": "Retrieve historical daily closing prices for a given stock symbol over a specified date range.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+          },
+          "start_date": {
+            "type": "string",
+            "description": "The start date (inclusive) in YYYY-MM-DD format for the historical price range (e.g., '2024-01-01')."
+          },
+          "end_date": {
+            "type": "string",
+            "description": "The end date (inclusive) in YYYY-MM-DD format for the historical price range (e.g., '2024-12-31')."
+          }
+        },
+        "required": [
+          "symbol",
+          "start_date",
+          "end_date"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "closing_prices": {
+            "type": "object",
+            "description": "A dictionary mapping trading dates (YYYY-MM-DD) to closing prices. Only includes trading days, excluding weekends and market holidays.",
+            "additionalProperties": {
+              "type": "number",
+              "description": "The closing price for the given trading date."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_historical_stock_prices",
+      "description": "Retrieve comprehensive historical OHLC (open, high, low, close) price data and volume for a given stock symbol with flexible period and interval options.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+          },
+          "period": {
+            "type": "string",
+            "description": "Time period for historical data. Options: '1d', '5d' (trading days), '1mo', '3mo', '6mo' (months), '1y', '2y', '5y', '10y' (years), 'ytd' (year to date), 'max' (maximum available). Default: '1mo'."
+          },
+          "interval": {
+            "type": "string",
+            "description": "Data sampling interval. Options: '1d' (daily), '5d' (every 5 days), '1wk' (weekly), '1mo' (monthly), '3mo' (quarterly). Default: '1d'."
+          }
+        },
+        "required": [
+          "symbol"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "price_history": {
+            "type": "array",
+            "description": "An array of historical price data objects for each time interval within the specified period.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "description": "The date of the price data point in YYYY-MM-DD format."
+                },
+                "open": {
+                  "type": "number",
+                  "description": "The opening price for the interval."
+                },
+                "high": {
+                  "type": "number",
+                  "description": "The highest price reached during the interval."
+                },
+                "low": {
+                  "type": "number",
+                  "description": "The lowest price reached during the interval."
+                },
+                "close": {
+                  "type": "number",
+                  "description": "The closing price for the interval."
+                },
+                "volume": {
+                  "type": "integer",
+                  "description": "The total number of shares traded during the interval."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_dividends",
+      "description": "Retrieve dividend payment history for a given stock symbol, optionally filtered by date range.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+          },
+          "start_date": {
+            "type": "string",
+            "description": "Start date (inclusive) in YYYY-MM-DD format for filtering dividend history. If omitted, returns all available historical dividends."
+          },
+          "end_date": {
+            "type": "string",
+            "description": "End date (inclusive) in YYYY-MM-DD format for filtering dividend history. If omitted, returns dividends up to the most recent payment."
+          }
+        },
+        "required": [
+          "symbol"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "dividends": {
+            "type": "object",
+            "description": "A dictionary mapping dividend payment dates (ex-dividend dates) to dividend amounts per share in the stock's currency.",
+            "additionalProperties": {
+              "type": "number",
+              "description": "The dividend amount per share paid on the given date."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_income_statement",
+      "description": "Retrieve the income statement (profit and loss statement) for a given stock symbol, showing revenues, expenses, and profitability metrics.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+          },
+          "freq": {
+            "type": "string",
+            "description": "Reporting frequency for financial statements. Options: 'yearly' (annual fiscal year), 'quarterly' (Q1-Q4), 'trailing' (trailing twelve months/TTM). Default: 'yearly'."
+          }
+        },
+        "required": [
+          "symbol"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "income_statements": {
+            "type": "object",
+            "description": "Income statement data organized by reporting period, containing financial metrics such as totalRevenue, costOfRevenue, grossProfit, operatingIncome, netIncome, and earningsPerShare.",
+            "additionalProperties": {
+              "type": "object",
+              "description": "Financial metrics for a specific reporting period."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_cashflow",
+      "description": "Retrieve the cash flow statement for a given stock symbol, showing cash movements through operating, investing, and financing activities.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+          },
+          "freq": {
+            "type": "string",
+            "description": "Reporting frequency for financial statements. Options: 'yearly' (annual fiscal year), 'quarterly' (Q1-Q4), 'trailing' (trailing twelve months/TTM). Default: 'yearly'."
+          }
+        },
+        "required": [
+          "symbol"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "cashflow_statements": {
+            "type": "object",
+            "description": "Cash flow statement data organized by reporting period, containing metrics such as operatingCashFlow, capitalExpenditure, freeCashFlow, and netBorrowings.",
+            "additionalProperties": {
+              "type": "object",
+              "description": "Cash flow metrics for a specific reporting period."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_earning_dates",
+      "description": "Retrieve historical and upcoming earnings announcement dates for a given stock symbol, including actual and estimated EPS data.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of earnings dates to return, combining both past and upcoming dates. Default: 12."
+          }
+        },
+        "required": [
+          "symbol"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "earnings_dates": {
+            "type": "array",
+            "description": "An array of earnings announcement records including both historical results and future estimates.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "description": "The earnings announcement date in YYYY-MM-DD format."
+                },
+                "type": {
+                  "type": "string",
+                  "description": "The type of earnings report: 'quarterly' or 'annual'."
+                },
+                "actualEPS": {
+                  "type": "number",
+                  "description": "The actual reported earnings per share. Null for upcoming earnings dates."
+                },
+                "estimatedEPS": {
+                  "type": "number",
+                  "description": "The analyst consensus estimated earnings per share."
+                },
+                "surprise": {
+                  "type": "number",
+                  "description": "The difference between actual and estimated EPS. Null for upcoming earnings dates."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_news",
+      "description": "Retrieve news articles and press releases related to a given stock symbol, optionally filtered by date range.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+          },
+          "start_date": {
+            "type": "string",
+            "description": "Start date (inclusive) in YYYY-MM-DD format for filtering news articles. If omitted, returns the most recent news without a lower date bound."
+          },
+          "end_date": {
+            "type": "string",
+            "description": "End date (inclusive) in YYYY-MM-DD format for filtering news articles. If omitted, returns news up to the current date."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of news articles to return. Default: 50."
+          }
+        },
+        "required": [
+          "symbol"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "news_articles": {
+            "type": "array",
+            "description": "An array of news items sorted by relevance and recency.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "The headline of the news article."
+                },
+                "link": {
+                  "type": "string",
+                  "description": "The URL to the full news article."
+                },
+                "publisher": {
+                  "type": "string",
+                  "description": "The name of the news source or publisher."
+                },
+                "publishDate": {
+                  "type": "string",
+                  "description": "The publication date in YYYY-MM-DD format."
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "A brief summary or excerpt of the news article content."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_recommendations",
+      "description": "Retrieve analyst recommendations and price targets for a given stock symbol from financial research firms and investment banks.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+          }
+        },
+        "required": [
+          "symbol"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "recommendations": {
+            "type": "array",
+            "description": "An array of analyst recommendation records from various financial institutions.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "firm": {
+                  "type": "string",
+                  "description": "The name of the financial research firm or investment bank issuing the recommendation."
+                },
+                "rating": {
+                  "type": "string",
+                  "description": "The analyst rating. Common values: 'Strong Buy', 'Buy', 'Hold', 'Underperform', 'Sell'."
+                },
+                "priceTarget": {
+                  "type": "number",
+                  "description": "The analyst's expected future stock price. May be null if no price target is provided."
+                },
+                "date": {
+                  "type": "string",
+                  "description": "The date the recommendation was issued in YYYY-MM-DD format."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_option_expiration_dates",
+      "description": "Retrieve all available options expiration dates for a given stock symbol, including weekly and monthly expirations.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+          }
+        },
+        "required": [
+          "symbol"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "expiration_dates": {
+            "type": "array",
+            "description": "An array of available options expiration dates in YYYY-MM-DD format, sorted chronologically. Includes both weekly and monthly expirations.",
+            "items": {
+              "type": "string",
+              "description": "An options expiration date in YYYY-MM-DD format."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_option_chain",
+      "description": "Retrieve the complete options chain (all call and put options) for a specific expiration date, including strike prices, bid/ask prices, volume, open interest, and implied volatility.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+          },
+          "expiration_date": {
+            "type": "string",
+            "description": "Options expiration date in YYYY-MM-DD format. Must be a valid expiration date as returned by get_option_expiration_dates()."
+          }
+        },
+        "required": [
+          "symbol",
+          "expiration_date"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "underlyingPrice": {
+            "type": "number",
+            "description": "The current market price of the underlying stock."
+          },
+          "calls": {
+            "type": "array",
+            "description": "An array of call option contracts (right to buy the stock) at various strike prices.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "strike": {
+                  "type": "number",
+                  "description": "The strike price at which the option can be exercised."
+                },
+                "bid": {
+                  "type": "number",
+                  "description": "The highest price buyers are currently willing to pay for the option."
+                },
+                "ask": {
+                  "type": "number",
+                  "description": "The lowest price sellers are currently willing to accept for the option."
+                },
+                "volume": {
+                  "type": "integer",
+                  "description": "The number of option contracts traded during the current session."
+                },
+                "openInterest": {
+                  "type": "integer",
+                  "description": "The total number of outstanding option contracts that have not been settled."
+                },
+                "impliedVolatility": {
+                  "type": "number",
+                  "description": "The market's expectation of future price volatility, derived from the option's price."
+                }
+              }
+            }
+          },
+          "puts": {
+            "type": "array",
+            "description": "An array of put option contracts (right to sell the stock) at various strike prices.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "strike": {
+                  "type": "number",
+                  "description": "The strike price at which the option can be exercised."
+                },
+                "bid": {
+                  "type": "number",
+                  "description": "The highest price buyers are currently willing to pay for the option."
+                },
+                "ask": {
+                  "type": "number",
+                  "description": "The lowest price sellers are currently willing to accept for the option."
+                },
+                "volume": {
+                  "type": "integer",
+                  "description": "The number of option contracts traded during the current session."
+                },
+                "openInterest": {
+                  "type": "integer",
+                  "description": "The total number of outstanding option contracts that have not been settled."
+                },
+                "impliedVolatility": {
+                  "type": "number",
+                  "description": "The market's expectation of future price volatility, derived from the option's price."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

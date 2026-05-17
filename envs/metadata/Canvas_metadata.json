@@ -1,0 +1,372 @@
+{
+  "class_name": "Canvas",
+  "description": "A server for interacting with the Canvas Learning Management System, providing access to courses, modules, assignments, files, and student enrollment data.",
+  "tools": [
+    {
+      "name": "get_courses",
+      "description": "Retrieve all available Canvas courses for the current authenticated user.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "courses": {
+            "type": "object",
+            "description": "Dictionary mapping course names to their corresponding Canvas course identifiers.",
+            "additionalProperties": {
+              "type": "string",
+              "description": "The unique Canvas course identifier."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_modules",
+      "description": "Retrieve all modules within a specific Canvas course.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "course_id": {
+            "type": "string",
+            "description": "The unique identifier of the Canvas course."
+          }
+        },
+        "required": [
+          "course_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "modules": {
+            "type": "array",
+            "description": "List of modules within the specified course.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "module_id": {
+                  "type": "string",
+                  "description": "The unique identifier of the module within the course."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The display name of the module."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "The current status of the module (e.g., locked, unlocked, completed)."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_module_items",
+      "description": "Retrieve all items within a specific module in a Canvas course.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "course_id": {
+            "type": "string",
+            "description": "The unique identifier of the Canvas course."
+          },
+          "module_id": {
+            "type": "string",
+            "description": "The unique identifier of the module within the course."
+          }
+        },
+        "required": [
+          "course_id",
+          "module_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "List of items contained within the specified module.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "item_id": {
+                  "type": "string",
+                  "description": "The unique identifier of the module item."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The display title of the module item."
+                },
+                "type": {
+                  "type": "string",
+                  "description": "The type of content (e.g., File, Page, Assignment, Quiz, ExternalUrl)."
+                },
+                "url": {
+                  "type": "string",
+                  "description": "The URL to access or view the module item."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_file_url",
+      "description": "Get the direct download URL for a file stored in Canvas.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_id": {
+            "type": "string",
+            "description": "The unique identifier of the file in Canvas."
+          },
+          "course_id": {
+            "type": "string",
+            "description": "The unique identifier of the Canvas course."
+          }
+        },
+        "required": [
+          "file_id",
+          "course_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "download_url": {
+            "type": "string",
+            "description": "The direct download URL for accessing the file."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_course_assignments",
+      "description": "Retrieve all assignments for a specific Canvas course, with optional filtering by submission status.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "course_id": {
+            "type": "string",
+            "description": "The unique identifier of the Canvas course."
+          },
+          "bucket": {
+            "type": "string",
+            "description": "Optional filter for assignment status. Valid values: past, overdue, undated, ungraded, unsubmitted, upcoming, future."
+          }
+        },
+        "required": [
+          "course_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "assignments": {
+            "type": "array",
+            "description": "List of assignments matching the specified criteria.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "assignment_id": {
+                  "type": "string",
+                  "description": "The unique identifier of the assignment."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The display name of the assignment."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "The detailed description or instructions for the assignment."
+                },
+                "due_date": {
+                  "type": "string",
+                  "description": "The due date and time for the assignment in ISO 8601 format."
+                },
+                "submission_status": {
+                  "type": "string",
+                  "description": "The current submission status (e.g., submitted, not_submitted, graded)."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_assignments_by_course_name",
+      "description": "Retrieve all assignments for a Canvas course using its name rather than ID, supporting partial name matches.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "course_name": {
+            "type": "string",
+            "description": "The name of the course as it appears in Canvas. Partial matches are supported."
+          },
+          "bucket": {
+            "type": "string",
+            "description": "Optional filter for assignment status. Valid values: past, overdue, undated, ungraded, unsubmitted, upcoming, future."
+          }
+        },
+        "required": [
+          "course_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "assignments": {
+            "type": "array",
+            "description": "List of assignments matching the specified criteria.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "assignment_id": {
+                  "type": "string",
+                  "description": "The unique identifier of the assignment."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The display name of the assignment."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "The detailed description or instructions for the assignment."
+                },
+                "due_date": {
+                  "type": "string",
+                  "description": "The due date and time for the assignment in ISO 8601 format."
+                },
+                "submission_status": {
+                  "type": "string",
+                  "description": "The current submission status (e.g., submitted, not_submitted, graded)."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_students_in_course",
+      "description": "Retrieve all students enrolled in a specific Canvas course.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "course_id": {
+            "type": "string",
+            "description": "The unique identifier of the Canvas course."
+          }
+        },
+        "required": [
+          "course_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "students": {
+            "type": "array",
+            "description": "List of students enrolled in the specified course.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "student_id": {
+                  "type": "string",
+                  "description": "The unique identifier of the student in Canvas."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The full name of the student."
+                },
+                "email": {
+                  "type": "string",
+                  "description": "The email address associated with the student's Canvas account."
+                },
+                "enrollment_status": {
+                  "type": "string",
+                  "description": "The current enrollment status (e.g., active, invited, inactive)."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_submission_status",
+      "description": "Retrieve submission status and grading details for a specific assignment in a Canvas course, optionally filtered by student.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "course_id": {
+            "type": "string",
+            "description": "The unique identifier of the Canvas course."
+          },
+          "assignment_id": {
+            "type": "string",
+            "description": "The unique identifier of the assignment."
+          },
+          "student_id": {
+            "type": "string",
+            "description": "The unique identifier of the student in Canvas. If not provided, returns submission status for all students."
+          }
+        },
+        "required": [
+          "course_id",
+          "assignment_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "submissions": {
+            "type": "object",
+            "description": "Dictionary mapping student IDs to their submission details. If a specific student_id was provided, contains only that student's submission.",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "student_id": {
+                  "type": "string",
+                  "description": "The unique identifier of the student in Canvas."
+                },
+                "student_name": {
+                  "type": "string",
+                  "description": "The full name of the student."
+                },
+                "submitted_at": {
+                  "type": "string",
+                  "description": "The timestamp when the submission was made in ISO 8601 format."
+                },
+                "submission_status": {
+                  "type": "string",
+                  "description": "The current submission status (e.g., submitted, not_submitted, late)."
+                },
+                "score": {
+                  "type": "number",
+                  "description": "The numerical score awarded for the submission."
+                },
+                "graded_at": {
+                  "type": "string",
+                  "description": "The timestamp when the submission was graded in ISO 8601 format."
+                },
+                "workflow_state": {
+                  "type": "string",
+                  "description": "The workflow state of the submission (e.g., pending_review, graded, submitted)."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

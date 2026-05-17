@@ -1,0 +1,1199 @@
+{
+  "metadata": {
+    "class_name": "AirtableMcpServer",
+    "metadata_path": "envs/metadata/AirtableMcpServer_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-04-17T09:45:39.301954",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "AirtableMcpServer",
+    "description": "MCP server exposing Airtable workspace, base, table, and record CRUD operations with optional filtering, pagination, and formula-based queries.",
+    "tools": [
+      {
+        "name": "list_bases",
+        "description": "Retrieve all bases accessible to the authenticated Airtable workspace.",
+        "input_schema": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "bases": {
+              "type": "array",
+              "description": "List of bases in the workspace.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The unique identifier of the Airtable base."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The display name of the Airtable base."
+                  },
+                  "permissionLevel": {
+                    "type": "string",
+                    "description": "Access level granted to the caller within this base."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "list_tables",
+        "description": "Fetch schema and metadata for every table inside a specified base.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "base_id": {
+              "type": "string",
+              "description": "The unique identifier of the Airtable base whose tables are to be listed."
+            }
+          },
+          "required": [
+            "base_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "base_id": {
+              "type": "string",
+              "description": "The unique identifier of the Airtable base whose tables are returned."
+            },
+            "tables": {
+              "type": "array",
+              "description": "Collection of tables defined in the base.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The unique identifier of the table."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The display name of the table."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Optional summary or purpose of the table."
+                  },
+                  "fields": {
+                    "type": "array",
+                    "description": "List of field schemas (name, type, options) within the table.",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "views": {
+                    "type": "array",
+                    "description": "List of views (grid, form, gallery, etc.) configured for the table.",
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "list_records",
+        "description": "Query and paginate through records in a table, optionally filtered by a view or Airtable formula.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "base_id": {
+              "type": "string",
+              "description": "The unique identifier of the Airtable base containing the table."
+            },
+            "table_id": {
+              "type": "string",
+              "description": "The table ID or table name whose records are to be listed."
+            },
+            "view": {
+              "type": "string",
+              "description": "Optional view name or ID that pre-orders or pre-filters the records."
+            },
+            "filter_by_formula": {
+              "type": "string",
+              "description": "Optional Airtable formula string used to filter the returned records."
+            },
+            "max_records": {
+              "type": "integer",
+              "description": "Maximum number of records to return (default 100, max 100)."
+            },
+            "page_size": {
+              "type": "integer",
+              "description": "Number of records per page (default 100)."
+            },
+            "offset": {
+              "type": "string",
+              "description": "Pagination cursor returned from a previous call to fetch the next page."
+            }
+          },
+          "required": [
+            "base_id",
+            "table_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "records": {
+              "type": "array",
+              "description": "Array of record objects returned by the query.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The unique identifier of the record."
+                  },
+                  "createdTime": {
+                    "type": "string",
+                    "description": "ISO 8601 timestamp indicating when the record was created."
+                  },
+                  "fields": {
+                    "type": "object",
+                    "description": "Key-value map of field names or IDs to their respective values for this record."
+                  }
+                }
+              }
+            },
+            "offset": {
+              "type": "string",
+              "description": "Cursor for retrieving the next page of results; absent when no further pages exist."
+            }
+          }
+        }
+      },
+      {
+        "name": "create_record",
+        "description": "Insert a new record into the specified table with the provided field values.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "base_id": {
+              "type": "string",
+              "description": "The unique identifier of the Airtable base containing the table."
+            },
+            "table_id": {
+              "type": "string",
+              "description": "The table ID or table name where the new record will be created."
+            },
+            "fields": {
+              "type": "object",
+              "description": "Map of field names or IDs to the values assigned to the new record."
+            }
+          },
+          "required": [
+            "base_id",
+            "table_id",
+            "fields"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier of the newly created record."
+            },
+            "createdTime": {
+              "type": "string",
+              "description": "ISO 8601 timestamp indicating when the record was created."
+            },
+            "fields": {
+              "type": "object",
+              "description": "Complete set of field values as stored for the new record."
+            }
+          }
+        }
+      },
+      {
+        "name": "update_record",
+        "description": "Modify specific fields of an existing record without altering others.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "base_id": {
+              "type": "string",
+              "description": "The unique identifier of the Airtable base containing the table."
+            },
+            "table_id": {
+              "type": "string",
+              "description": "The table ID or table name that holds the record to update."
+            },
+            "record_id": {
+              "type": "string",
+              "description": "The unique identifier of the record to be updated."
+            },
+            "fields": {
+              "type": "object",
+              "description": "Map of field names or IDs to the new values; omitted fields remain unchanged."
+            }
+          },
+          "required": [
+            "base_id",
+            "table_id",
+            "record_id",
+            "fields"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier of the updated record."
+            },
+            "createdTime": {
+              "type": "string",
+              "description": "ISO 8601 timestamp indicating when the record was originally created."
+            },
+            "fields": {
+              "type": "object",
+              "description": "Full set of field values reflecting the update."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\n\nclass AirtableBase(BaseModel):\n    \"\"\"Represents an Airtable base.\"\"\"\n    id: str = Field(..., description=\"The unique identifier of the Airtable base.\")\n    name: str = Field(..., description=\"The display name of the Airtable base.\")\n    permissionLevel: str = Field(..., description=\"Access level granted to the caller within this base.\")\n\nclass AirtableTable(BaseModel):\n    \"\"\"Represents an Airtable table.\"\"\"\n    id: str = Field(..., description=\"The unique identifier of the table.\")\n    name: str = Field(..., description=\"The display name of the table.\")\n    description: Optional[str] = Field(default=None, description=\"Optional summary or purpose of the table.\")\n    fields: List[Any] = Field(default=[], description=\"List of field schemas within the table.\")\n    views: List[Any] = Field(default=[], description=\"List of views configured for the table.\")\n\nclass AirtableRecord(BaseModel):\n    \"\"\"Represents an Airtable record.\"\"\"\n    id: str = Field(..., description=\"The unique identifier of the record.\")\n    createdTime: str = Field(..., description=\"ISO 8601 timestamp indicating when the record was created.\")\n    fields: Dict[str, Any] = Field(default={}, description=\"Key-value map of field names to values.\")\n\nclass AirtableScenario(BaseModel):\n    \"\"\"Main scenario model for Airtable workspace state.\"\"\"\n    bases: List[AirtableBase] = Field(default=[], description=\"List of bases in the workspace.\")\n    tables: Dict[str, List[AirtableTable]] = Field(default={}, description=\"Map of base_id to list of tables.\")\n    records: Dict[str, Dict[str, List[AirtableRecord]]] = Field(default={}, description=\"Map of base_id -> table_id -> list of records.\")\n    record_counter: int = Field(default=0, description=\"Counter for generating unique record IDs.\")\n    current_time: str = Field(default=\"2026-04-17T01:43:20\", description=\"Current timestamp in ISO 8601 format.\")\n\nScenario_Schema = [AirtableBase, AirtableTable, AirtableRecord, AirtableScenario]\n\n\n# Section 2: Class\n\nclass AirtableMcpServer:\n    def __init__(self):\n        \"\"\"Initialize Airtable MCP server with empty state.\"\"\"\n        self.bases: List[AirtableBase] = []\n        self.tables: Dict[str, List[AirtableTable]] = {}\n        self.records: Dict[str, Dict[str, List[AirtableRecord]]] = {}\n        self.record_counter: int = 0\n        self.current_time: str = \"\"\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the server instance.\"\"\"\n        model = AirtableScenario(**scenario)\n        self.bases = model.bases\n        self.tables = model.tables\n        self.records = {\n            base_id: {\n                table_id: [AirtableRecord(**r) if isinstance(r, dict) else r for r in recs]\n                for table_id, recs in table_map.items()\n            }\n            for base_id, table_map in model.records.items()\n        }\n        self.record_counter = model.record_counter\n        self.current_time = model.current_time\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"bases\": [b.model_dump() for b in self.bases],\n            \"tables\": {\n                base_id: [t.model_dump() for t in tables]\n                for base_id, tables in self.tables.items()\n            },\n            \"records\": {\n                base_id: {\n                    table_id: [r.model_dump() for r in recs]\n                    for table_id, recs in table_map.items()\n                }\n                for base_id, table_map in self.records.items()\n            },\n            \"record_counter\": self.record_counter,\n            \"current_time\": self.current_time,\n        }\n\n    def list_bases(self) -> dict:\n        \"\"\"Retrieve all bases accessible to the authenticated Airtable workspace.\"\"\"\n        return {\"bases\": [b.model_dump() for b in self.bases]}\n\n    def list_tables(self, base_id: str) -> dict:\n        \"\"\"Fetch schema and metadata for every table inside a specified base.\"\"\"\n        tables = self.tables.get(base_id, [])\n        return {\n            \"base_id\": base_id,\n            \"tables\": [t.model_dump() for t in tables],\n        }\n\n    def list_records(self, base_id: str, table_id: str, view: Optional[str], filter_by_formula: Optional[str], max_records: Optional[int], page_size: Optional[int], offset: Optional[str]) -> dict:\n        \"\"\"Query and paginate through records in a table.\"\"\"\n        all_records = self.records.get(base_id, {}).get(table_id, [])\n\n        start = 0\n        if offset:\n            try:\n                start = int(offset)\n            except ValueError:\n                start = 0\n\n        limit = min(max_records or 100, 100)\n        page = min(page_size or 100, 100)\n        limit = min(limit, page)\n\n        page_records = all_records[start:start + limit]\n        result = {\"records\": [r.model_dump() for r in page_records]}\n\n        next_start = start + limit\n        if next_start < len(all_records):\n            result[\"offset\"] = str(next_start)\n\n        return result\n\n    def create_record(self, base_id: str, table_id: str, fields: dict) -> dict:\n        \"\"\"Insert a new record into the specified table.\"\"\"\n        self.record_counter += 1\n        record_id = f\"rec{self.record_counter:010d}\"\n        record = AirtableRecord(id=record_id, createdTime=self.current_time, fields=fields)\n\n        if base_id not in self.records:\n            self.records[base_id] = {}\n        if table_id not in self.records[base_id]:\n            self.records[base_id][table_id] = []\n\n        self.records[base_id][table_id].append(record)\n        return record.model_dump()\n\n    def update_record(self, base_id: str, table_id: str, record_id: str, fields: dict) -> dict:\n        \"\"\"Modify specific fields of an existing record without altering others.\"\"\"\n        records = self.records.get(base_id, {}).get(table_id, [])\n        for record in records:\n            if record.id == record_id:\n                record.fields.update(fields)\n                return record.model_dump()\n        return None\n\n\n# Section 3: MCP Tools\n\nmcp = FastMCP(name=\"AirtableMcpServer\")\napi = AirtableMcpServer()\n\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Airtable MCP server.\n\n    Args:\n        scenario (dict): Scenario dictionary matching AirtableScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Airtable state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef list_bases() -> dict:\n    \"\"\"\n    Retrieve all bases accessible to the authenticated Airtable workspace.\n\n    Returns:\n        bases (array): List of bases, each with id (str), name (str), and permissionLevel (str).\n    \"\"\"\n    try:\n        return api.list_bases()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef list_tables(base_id: str) -> dict:\n    \"\"\"\n    Fetch schema and metadata for every table inside a specified base.\n\n    Args:\n        base_id (str): The unique identifier of the Airtable base whose tables are to be listed.\n\n    Returns:\n        base_id (str): The unique identifier of the Airtable base whose tables are returned.\n        tables (array): Collection of tables with id, name, description, fields, and views.\n    \"\"\"\n    try:\n        if not base_id or not isinstance(base_id, str):\n            raise ValueError(\"base_id must be a non-empty string\")\n        return api.list_tables(base_id)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef list_records(\n    base_id: str,\n    table_id: str,\n    view: Optional[str] = None,\n    filter_by_formula: Optional[str] = None,\n    max_records: Optional[int] = None,\n    page_size: Optional[int] = None,\n    offset: Optional[str] = None,\n) -> dict:\n    \"\"\"\n    Query and paginate through records in a table, optionally filtered by a view or formula.\n\n    Args:\n        base_id (str): The unique identifier of the Airtable base containing the table.\n        table_id (str): The table ID or table name whose records are to be listed.\n        view (str): [Optional] View name or ID that pre-orders or pre-filters the records.\n        filter_by_formula (str): [Optional] Airtable formula string used to filter records.\n        max_records (int): [Optional] Maximum number of records to return (default 100, max 100).\n        page_size (int): [Optional] Number of records per page (default 100).\n        offset (str): [Optional] Pagination cursor returned from a previous call.\n\n    Returns:\n        records (array): Array of record objects with id, createdTime, and fields.\n        offset (str): Cursor for retrieving the next page; absent when no further pages exist.\n    \"\"\"\n    try:\n        if not base_id or not isinstance(base_id, str):\n            raise ValueError(\"base_id must be a non-empty string\")\n        if not table_id or not isinstance(table_id, str):\n            raise ValueError(\"table_id must be a non-empty string\")\n        return api.list_records(base_id, table_id, view, filter_by_formula, max_records, page_size, offset)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef create_record(base_id: str, table_id: str, fields: dict) -> dict:\n    \"\"\"\n    Insert a new record into the specified table with the provided field values.\n\n    Args:\n        base_id (str): The unique identifier of the Airtable base containing the table.\n        table_id (str): The table ID or table name where the new record will be created.\n        fields (dict): Map of field names or IDs to the values assigned to the new record.\n\n    Returns:\n        id (str): The unique identifier of the newly created record.\n        createdTime (str): ISO 8601 timestamp indicating when the record was created.\n        fields (dict): Complete set of field values as stored for the new record.\n    \"\"\"\n    try:\n        if not base_id or not isinstance(base_id, str):\n            raise ValueError(\"base_id must be a non-empty string\")\n        if not table_id or not isinstance(table_id, str):\n            raise ValueError(\"table_id must be a non-empty string\")\n        if not isinstance(fields, dict):\n            raise ValueError(\"fields must be a dictionary\")\n        return api.create_record(base_id, table_id, fields)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef update_record(base_id: str, table_id: str, record_id: str, fields: dict) -> dict:\n    \"\"\"\n    Modify specific fields of an existing record without altering others.\n\n    Args:\n        base_id (str): The unique identifier of the Airtable base containing the table.\n        table_id (str): The table ID or table name that holds the record to update.\n        record_id (str): The unique identifier of the record to be updated.\n        fields (dict): Map of field names or IDs to the new values; omitted fields remain unchanged.\n\n    Returns:\n        id (str): The unique identifier of the updated record.\n        createdTime (str): ISO 8601 timestamp indicating when the record was originally created.\n        fields (dict): Full set of field values reflecting the update.\n    \"\"\"\n    try:\n        if not base_id or not isinstance(base_id, str):\n            raise ValueError(\"base_id must be a non-empty string\")\n        if not table_id or not isinstance(table_id, str):\n            raise ValueError(\"table_id must be a non-empty string\")\n        if not record_id or not isinstance(record_id, str):\n            raise ValueError(\"record_id must be a non-empty string\")\n        if not isinstance(fields, dict):\n            raise ValueError(\"fields must be a dictionary\")\n        result = api.update_record(base_id, table_id, record_id, fields)\n        if result is None:\n            raise ValueError(f\"Record {record_id} not found in base {base_id}, table {table_id}\")\n        return result\n    except Exception as e:\n        raise e\n\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-04-17T09:45:39.301970",
+      "revision_number": null
+    },
+    {
+      "version": 1,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n\n# Section 1: Schema\n\nclass AirtableBase(BaseModel):\n    id: str\n    name: str\n    permissionLevel: str\n\nclass AirtableTable(BaseModel):\n    id: str\n    name: str\n    description: Optional[str] = None\n    fields: List[Any] = []\n    views: List[Any] = []\n\nclass AirtableRecord(BaseModel):\n    id: str\n    createdTime: str\n    fields: Dict[str, Any] = {}\n\nclass AirtableScenario(BaseModel):\n    bases: List[AirtableBase] = []\n    tables: Dict[str, List[AirtableTable]] = {}\n    records: Dict[str, Dict[str, List[AirtableRecord]]] = {}\n    record_counter: int = 0\n    current_time: str = \"2026-04-17T01:43:20\"\n\nScenario_Schema = [AirtableBase, AirtableTable, AirtableRecord, AirtableScenario]\n\n\n# Section 2: Class\n\nclass AirtableMcpServer:\n    def __init__(self):\n        self.bases: List[AirtableBase] = []\n        self.tables: Dict[str, List[AirtableTable]] = {}\n        self.records: Dict[str, Dict[str, List[AirtableRecord]]] = {}\n        self.record_counter: int = 0\n        self.current_time: str = \"\"\n\n    def load_scenario(self, scenario: dict) -> None:\n        model = AirtableScenario(**scenario)\n        self.bases = model.bases\n        self.tables = model.tables\n        self.records = {\n            base_id: {\n                table_id: [AirtableRecord(**r) if isinstance(r, dict) else r for r in recs]\n                for table_id, recs in table_map.items()\n            }\n            for base_id, table_map in model.records.items()\n        }\n        self.record_counter = model.record_counter\n        self.current_time = model.current_time\n\n    def save_scenario(self) -> dict:\n        return {\n            \"bases\": [b.model_dump() for b in self.bases],\n            \"tables\": {\n                base_id: [t.model_dump() for t in tables]\n                for base_id, tables in self.tables.items()\n            },\n            \"records\": {\n                base_id: {\n                    table_id: [r.model_dump() for r in recs]\n                    for table_id, recs in table_map.items()\n                }\n                for base_id, table_map in self.records.items()\n            },\n            \"record_counter\": self.record_counter,\n            \"current_time\": self.current_time,\n        }\n\n    def list_bases(self) -> dict:\n        return {\"bases\": [b.model_dump() for b in self.bases]}\n\n    def list_tables(self, base_id: str) -> dict:\n        tables = self.tables.get(base_id, [])\n        return {\"base_id\": base_id, \"tables\": [t.model_dump() for t in tables]}\n\n    def list_records(self, base_id: str, table_id: str, view, filter_by_formula, max_records, page_size, offset) -> dict:\n        all_records = self.records.get(base_id, {}).get(table_id, [])\n        start = 0\n        if offset:\n            try:\n                start = int(offset)\n            except ValueError:\n                start = 0\n        limit = min(min(max_records or 100, 100), min(page_size or 100, 100))\n        page_records = all_records[start:start + limit]\n        result = {\"records\": [r.model_dump() for r in page_records]}\n        next_start = start + limit\n        if next_start < len(all_records):\n            result[\"offset\"] = str(next_start)\n        return result\n\n    def create_record(self, base_id: str, table_id: str, fields: dict) -> dict:\n        self.record_counter += 1\n        record = AirtableRecord(id=f\"rec{self.record_counter:010d}\", createdTime=self.current_time, fields=fields)\n        self.records.setdefault(base_id, {}).setdefault(table_id, []).append(record)\n        return record.model_dump()\n\n    def update_record(self, base_id: str, table_id: str, record_id: str, fields: dict) -> dict:\n        for record in self.records.get(base_id, {}).get(table_id, []):\n            if record.id == record_id:\n                record.fields.update(fields)\n                return record.model_dump()\n        return None\n\n\n# Section 3: MCP Tools\n\nmcp = FastMCP(name=\"AirtableMcpServer\")\napi = AirtableMcpServer()\n\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Airtable MCP server.\n\n    Args:\n        scenario (dict): Scenario dictionary matching AirtableScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Airtable state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef list_bases() -> dict:\n    \"\"\"\n    Retrieve all bases accessible to the authenticated Airtable workspace.\n\n    Returns:\n        bases (array): List of bases, each with id (str), name (str), and permissionLevel (str).\n    \"\"\"\n    try:\n        return api.list_bases()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef list_tables(base_id: str) -> dict:\n    \"\"\"\n    Fetch schema and metadata for every table inside a specified base.\n\n    Args:\n        base_id (str): The unique identifier of the Airtable base whose tables are to be listed.\n\n    Returns:\n        base_id (str): The unique identifier of the Airtable base whose tables are returned.\n        tables (array): Collection of tables with id, name, description, fields, and views.\n    \"\"\"\n    try:\n        if not base_id or not isinstance(base_id, str):\n            raise ValueError(\"base_id must be a non-empty string\")\n        return api.list_tables(base_id)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef list_records(\n    base_id: str,\n    table_id: str,\n    view: Optional[str] = None,\n    filter_by_formula: Optional[str] = None,\n    max_records: Optional[int] = None,\n    page_size: Optional[int] = None,\n    offset: Optional[str] = None,\n) -> dict:\n    \"\"\"\n    Query and paginate through records in a table, optionally filtered by a view or formula.\n\n    Args:\n        base_id (str): The unique identifier of the Airtable base containing the table.\n        table_id (str): The table ID or table name whose records are to be listed.\n        view (str): [Optional] View name or ID that pre-orders or pre-filters the records.\n        filter_by_formula (str): [Optional] Airtable formula string used to filter records.\n        max_records (int): [Optional] Maximum number of records to return (default 100, max 100).\n        page_size (int): [Optional] Number of records per page (default 100).\n        offset (str): [Optional] Pagination cursor returned from a previous call.\n\n    Returns:\n        records (array): Array of record objects with id, createdTime, and fields.\n        offset (str): Cursor for retrieving the next page; absent when no further pages exist.\n    \"\"\"\n    try:\n        if not base_id or not isinstance(base_id, str):\n            raise ValueError(\"base_id must be a non-empty string\")\n        if not table_id or not isinstance(table_id, str):\n            raise ValueError(\"table_id must be a non-empty string\")\n        return api.list_records(base_id, table_id, view, filter_by_formula, max_records, page_size, offset)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef create_record(base_id: str, table_id: str, fields: dict) -> dict:\n    \"\"\"\n    Insert a new record into the specified table with the provided field values.\n\n    Args:\n        base_id (str): The unique identifier of the Airtable base containing the table.\n        table_id (str): The table ID or table name where the new record will be created.\n        fields (dict): Map of field names or IDs to the values assigned to the new record.\n\n    Returns:\n        id (str): The unique identifier of the newly created record.\n        createdTime (str): ISO 8601 timestamp indicating when the record was created.\n        fields (dict): Complete set of field values as stored for the new record.\n    \"\"\"\n    try:\n        if not base_id or not isinstance(base_id, str):\n            raise ValueError(\"base_id must be a non-empty string\")\n        if not table_id or not isinstance(table_id, str):\n            raise ValueError(\"table_id must be a non-empty string\")\n        if not isinstance(fields, dict):\n            raise ValueError(\"fields must be a dictionary\")\n        return api.create_record(base_id, table_id, fields)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef update_record(base_id: str, table_id: str, record_id: str, fields: dict) -> dict:\n    \"\"\"\n    Modify specific fields of an existing record without altering others.\n\n    Args:\n        base_id (str): The unique identifier of the Airtable base containing the table.\n        table_id (str): The table ID or table name that holds the record to update.\n        record_id (str): The unique identifier of the record to be updated.\n        fields (dict): Map of field names or IDs to the new values; omitted fields remain unchanged.\n\n    Returns:\n        id (str): The unique identifier of the updated record.\n        createdTime (str): ISO 8601 timestamp indicating when the record was originally created.\n        fields (dict): Full set of field values reflecting the update.\n    \"\"\"\n    try:\n        if not base_id or not isinstance(base_id, str):\n            raise ValueError(\"base_id must be a non-empty string\")\n        if not table_id or not isinstance(table_id, str):\n            raise ValueError(\"table_id must be a non-empty string\")\n        if not record_id or not isinstance(record_id, str):\n            raise ValueError(\"record_id must be a non-empty string\")\n        if not isinstance(fields, dict):\n            raise ValueError(\"fields must be a dictionary\")\n        result = api.update_record(base_id, table_id, record_id, fields)\n        if result is None:\n            raise ValueError(f\"Record {record_id} not found in base {base_id}, table {table_id}\")\n        return result\n    except Exception as e:\n        raise e\n\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-04-17T09:45:39.301973",
+      "revision_number": 1
+    },
+    {
+      "version": 2,
+      "code": "\n\n```python\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n\n# Section 1: Schema\n\nclass AirtableBase(BaseModel):\n    id: str\n    name: str\n    permissionLevel: str\n\nclass AirtableTable(BaseModel):\n    id: str\n    name: str\n    tableDescription: Optional[str] = None\n    fields: List[Any] = []\n    views: List[Any] = []\n\nclass AirtableRecord(BaseModel):\n    id: str\n    createdTime: str\n    fields: Dict[str, Any] = {}\n\nclass AirtableScenario(BaseModel):\n    bases: List[AirtableBase] = []\n    tables: Dict[str, List[AirtableTable]] = {}\n    records: Dict[str, Dict[str, List[AirtableRecord]]] = {}\n    record_counter: int = 0\n    current_time: str = \"2026-04-17T01:43:20\"\n\nScenario_Schema = [AirtableBase, AirtableTable, AirtableRecord, AirtableScenario]\n\n\n# Section 2: Class\n\nclass AirtableMcpServer:\n    def __init__(self):\n        self.bases: List[AirtableBase] = []\n        self.tables: Dict[str, List[AirtableTable]] = {}\n        self.records: Dict[str, Dict[str, List[AirtableRecord]]] = {}\n        self.record_counter: int = 0\n        self.current_time: str = \"\"\n\n    def load_scenario(self, scenario: dict) -> None:\n        # Remap legacy 'description' key to 'tableDescription' in tables\n        for base_tables in scenario.get(\"tables\", {}).values():\n            for t in base_tables:\n                if isinstance(t, dict) and \"description\" in t and \"tableDescription\" not in t:\n                    t[\"tableDescription\"] = t.pop(\"description\")\n        model = AirtableScenario(**scenario)\n        self.bases = model.bases\n        self.tables = model.tables\n        self.records = {\n            base_id: {\n                table_id: [AirtableRecord(**r) if isinstance(r, dict) else r for r in recs]\n                for table_id, recs in table_map.items()\n            }\n            for base_id, table_map in model.records.items()\n        }\n        self.record_counter = model.record_counter\n        self.current_time = model.current_time\n\n    def save_scenario(self) -> dict:\n        return {\n            \"bases\": [b.model_dump() for b in self.bases],\n            \"tables\": {\n                base_id: [t.model_dump() for t in tables]\n                for base_id, tables in self.tables.items()\n            },\n            \"records\": {\n                base_id: {\n                    table_id: [r.model_dump() for r in recs]\n                    for table_id, recs in table_map.items()\n                }\n                for base_id, table_map in self.records.items()\n            },\n            \"record_counter\": self.record_counter,\n            \"current_time\": self.current_time,\n        }\n\n    def list_bases(self) -> dict:\n        return {\"bases\": [b.model_dump() for b in self.bases]}\n\n    def list_tables(self, base_id: str) -> dict:\n        tables = self.tables.get(base_id, [])\n        return {\"base_id\": base_id, \"tables\": [t.model_dump() for t in tables]}\n\n    def list_records(self, base_id: str, table_id: str, view, filter_by_formula, max_records, page_size, offset) -> dict:\n        all_records = self.records.get(base_id, {}).get(table_id, [])\n        start = 0\n        if offset:\n            try:\n                start = int(offset)\n            except ValueError:\n                start = 0\n        limit = min(min(max_records or 100, 100), min(page_size or 100, 100))\n        page_records = all_records[start:start + limit]\n        result = {\"records\": [r.model_dump() for r in page_records]}\n        next_start = start + limit\n        if next_start < len(all_records):\n            result[\"offset\"] = str(next_start)\n        return result\n\n    def create_record(self, base_id: str, table_id: str, fields: dict) -> dict:\n        self.record_counter += 1\n        record = AirtableRecord(id=f\"rec{self.record_counter:010d}\", createdTime=self.current_time, fields=fields)\n        self.records.setdefault(base_id, {}).setdefault(table_id, []).append(record)\n        return record.model_dump()\n\n    def update_record(self, base_id: str, table_id: str, record_id: str, fields: dict) -> dict:\n        for record in self.records.get(base_id, {}).get(table_id, []):\n            if record.id == record_id:\n                record.fields.update(fields)\n                return record.model_dump()\n        return None\n\n\n# Section 3: MCP Tools\n\nmcp = FastMCP(name=\"AirtableMcpServer\")\napi = AirtableMcpServer()\n\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Airtable MCP server.\n\n    Args:\n        scenario (dict): Scenario dictionary matching AirtableScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Airtable state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef list_bases() -> dict:\n    \"\"\"\n    Retrieve all bases accessible to the authenticated Airtable workspace.\n\n    Returns:\n        bases (array): List of bases, each with id (str), name (str), and permissionLevel (str).\n    \"\"\"\n    try:\n        return api.list_bases()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef list_tables(base_id: str) -> dict:\n    \"\"\"\n    Fetch schema and metadata for every table inside a specified base.\n\n    Args:\n        base_id (str): The unique identifier of the Airtable base whose tables are to be listed.\n\n    Returns:\n        base_id (str): The unique identifier of the Airtable base whose tables are returned.\n        tables (array): Collection of tables with id, name, tableDescription, fields, and views.\n    \"\"\"\n    try:\n        if not base_id or not isinstance(base_id, str):\n            raise ValueError(\"base_id must be a non-empty string\")\n        return api.list_tables(base_id)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef list_records(\n    base_id: str,\n    table_id: str,\n    view: Optional[str] = None,\n    filter_by_formula: Optional[str] = None,\n    max_records: Optional[int] = None,\n    page_size: Optional[int] = None,\n    offset: Optional[str] = None,\n) -> dict:\n    \"\"\"\n    Query and paginate through records in a table, optionally filtered by a view or formula.\n\n    Args:\n        base_id (str): The unique identifier of the Airtable base containing the table.\n        table_id (str): The table ID or table name whose records are to be listed.\n        view (str): [Optional] View name or ID that pre-orders or pre-filters the records.\n        filter_by_formula (str): [Optional] Airtable formula string used to filter records.\n        max_records (int): [Optional] Maximum number of records to return (default 100, max 100).\n        page_size (int): [Optional] Number of records per page (default 100).\n        offset (str): [Optional] Pagination cursor returned from a previous call.\n\n    Returns:\n        records (array): Array of record objects with id, createdTime, and fields.\n        offset (str): Cursor for retrieving the next page; absent when no further pages exist.\n    \"\"\"\n    try:\n        if not base_id or not isinstance(base_id, str):\n            raise ValueError(\"base_id must be a non-empty string\")\n        if not table_id or not isinstance(table_id, str):\n            raise ValueError(\"table_id must be a non-empty string\")\n        return api.list_records(base_id, table_id, view, filter_by_formula, max_records, page_size, offset)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef create_record(base_id: str, table_id: str, fields: dict) -> dict:\n    \"\"\"\n    Insert a new record into the specified table with the provided field values.\n\n    Args:\n        base_id (str): The unique identifier of the Airtable base containing the table.\n        table_id (str): The table ID or table name where the new record will be created.\n        fields (dict): Map of field names or IDs to the values assigned to the new record.\n\n    Returns:\n        id (str): The unique identifier of the newly created record.\n        createdTime (str): ISO 8601 timestamp indicating when the record was created.\n        fields (dict): Complete set of field values as stored for the new record.\n    \"\"\"\n    try:\n        if not base_id or not isinstance(base_id, str):\n            raise ValueError(\"base_id must be a non-empty string\")\n        if not table_id or not isinstance(table_id, str):\n            raise ValueError(\"table_id must be a non-empty string\")\n        if not isinstance(fields, dict):\n            raise ValueError(\"fields must be a dictionary\")\n        return api.create_record(base_id, table_id, fields)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef update_record(base_id: str, table_id: str, record_id: str, fields: dict) -> dict:\n    \"\"\"\n    Modify specific fields of an existing record without altering others.\n\n    Args:\n        base_id (str): The unique identifier of the Airtable base containing the table.\n        table_id (str): The table ID or table name that holds the record to update.\n        record_id (str): The unique identifier of the record to be updated.\n        fields (dict): Map of field names or IDs to the new values; omitted fields remain unchanged.\n\n    Returns:\n        id (str): The unique identifier of the updated record.\n        createdTime (str): ISO 8601 timestamp indicating when the record was originally created.\n        fields (dict): Full set of field values reflecting the update.\n    \"\"\"\n    try:\n        if not base_id or not isinstance(base_id, str):\n            raise ValueError(\"base_id must be a non-empty string\")\n        if not table_id or not isinstance(table_id, str):\n            raise ValueError(\"table_id must be a non-empty string\")\n        if not record_id or not isinstance(record_id, str):\n            raise ValueError(\"record_id must be a non-empty string\")\n        if not isinstance(fields, dict):\n            raise ValueError(\"fields must be a dictionary\")\n        result = api.update_record(base_id, table_id, record_id, fields)\n        if result is None:\n            raise ValueError(f\"Record {record_id} not found in base {base_id}, table {table_id}\")\n        return result\n    except Exception as e:\n        raise e\n\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n```\n\n",
+      "timestamp": "2026-04-17T09:45:39.301975",
+      "revision_number": 2
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Single base with one table and two records — tests basic read/list operations",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "bases": [
+          {
+            "id": "appABC001",
+            "name": "Project Tracker",
+            "permissionLevel": "create"
+          }
+        ],
+        "tables": {
+          "appABC001": [
+            {
+              "id": "tblT001",
+              "name": "Tasks",
+              "description": "Task list",
+              "fields": [],
+              "views": []
+            }
+          ]
+        },
+        "records": {
+          "appABC001": {
+            "tblT001": [
+              {
+                "id": "recR001",
+                "createdTime": "2026-04-01T10:00:00",
+                "fields": {
+                  "Name": "Design mockups",
+                  "Status": "In Progress"
+                }
+              },
+              {
+                "id": "recR002",
+                "createdTime": "2026-04-02T09:00:00",
+                "fields": {
+                  "Name": "Write specs",
+                  "Status": "Done"
+                }
+              }
+            ]
+          }
+        },
+        "record_counter": 2,
+        "current_time": "2026-04-17T01:43:20"
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Two bases each with multiple tables and varied records — tests cross-base operations and field diversity",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "bases": [
+          {
+            "id": "appABC002",
+            "name": "Sales CRM",
+            "permissionLevel": "create"
+          },
+          {
+            "id": "appABC003",
+            "name": "HR Management",
+            "permissionLevel": "read"
+          }
+        ],
+        "tables": {
+          "appABC002": [
+            {
+              "id": "tblT002",
+              "name": "Contacts",
+              "description": "Customer contacts",
+              "fields": [
+                {
+                  "name": "Name",
+                  "type": "singleLineText"
+                },
+                {
+                  "name": "Email",
+                  "type": "email"
+                }
+              ],
+              "views": [
+                {
+                  "id": "viwV001",
+                  "name": "All Contacts",
+                  "type": "grid"
+                }
+              ]
+            },
+            {
+              "id": "tblT003",
+              "name": "Deals",
+              "description": "Active deals",
+              "fields": [],
+              "views": []
+            }
+          ],
+          "appABC003": [
+            {
+              "id": "tblT004",
+              "name": "Employees",
+              "description": null,
+              "fields": [],
+              "views": []
+            }
+          ]
+        },
+        "records": {
+          "appABC002": {
+            "tblT002": [
+              {
+                "id": "recR003",
+                "createdTime": "2026-03-10T08:00:00",
+                "fields": {
+                  "Name": "Alice Smith",
+                  "Email": "alice@example.com",
+                  "Company": "Acme"
+                }
+              },
+              {
+                "id": "recR004",
+                "createdTime": "2026-03-11T08:00:00",
+                "fields": {
+                  "Name": "Bob Jones",
+                  "Email": "bob@example.com",
+                  "Company": "Globex"
+                }
+              },
+              {
+                "id": "recR005",
+                "createdTime": "2026-03-12T08:00:00",
+                "fields": {
+                  "Name": "Carol White",
+                  "Email": "carol@example.com"
+                }
+              }
+            ],
+            "tblT003": [
+              {
+                "id": "recR006",
+                "createdTime": "2026-03-15T10:00:00",
+                "fields": {
+                  "Deal Name": "Enterprise License",
+                  "Value": 50000,
+                  "Stage": "Proposal"
+                }
+              },
+              {
+                "id": "recR007",
+                "createdTime": "2026-03-20T10:00:00",
+                "fields": {
+                  "Deal Name": "Starter Pack",
+                  "Value": 1200,
+                  "Stage": "Closed Won"
+                }
+              }
+            ]
+          },
+          "appABC003": {
+            "tblT004": [
+              {
+                "id": "recR008",
+                "createdTime": "2026-01-05T09:00:00",
+                "fields": {
+                  "Name": "Diana Prince",
+                  "Department": "Engineering",
+                  "Active": true
+                }
+              },
+              {
+                "id": "recR009",
+                "createdTime": "2026-01-06T09:00:00",
+                "fields": {
+                  "Name": "Evan Rogers",
+                  "Department": "Sales",
+                  "Active": false
+                }
+              }
+            ]
+          }
+        },
+        "record_counter": 9,
+        "current_time": "2026-04-17T01:43:20"
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich workspace with three bases, multiple tables per base, diverse field types, and nested record data — tests filtering, lookup, and record manipulation",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "bases": [
+          {
+            "id": "appCMP001",
+            "name": "Product Roadmap",
+            "permissionLevel": "create"
+          },
+          {
+            "id": "appCMP002",
+            "name": "Content Calendar",
+            "permissionLevel": "create"
+          },
+          {
+            "id": "appCMP003",
+            "name": "Finance",
+            "permissionLevel": "read"
+          }
+        ],
+        "tables": {
+          "appCMP001": [
+            {
+              "id": "tblP001",
+              "name": "Features",
+              "description": "Planned features",
+              "fields": [
+                {
+                  "name": "Title",
+                  "type": "singleLineText"
+                },
+                {
+                  "name": "Priority",
+                  "type": "singleSelect"
+                },
+                {
+                  "name": "Points",
+                  "type": "number"
+                }
+              ],
+              "views": [
+                {
+                  "id": "viwP001",
+                  "name": "Backlog",
+                  "type": "grid"
+                }
+              ]
+            },
+            {
+              "id": "tblP002",
+              "name": "Sprints",
+              "description": "Sprint cycles",
+              "fields": [],
+              "views": []
+            }
+          ],
+          "appCMP002": [
+            {
+              "id": "tblC001",
+              "name": "Posts",
+              "description": "Blog and social posts",
+              "fields": [],
+              "views": []
+            },
+            {
+              "id": "tblC002",
+              "name": "Authors",
+              "description": null,
+              "fields": [],
+              "views": []
+            }
+          ],
+          "appCMP003": [
+            {
+              "id": "tblF001",
+              "name": "Expenses",
+              "description": "Monthly expenses",
+              "fields": [],
+              "views": []
+            }
+          ]
+        },
+        "records": {
+          "appCMP001": {
+            "tblP001": [
+              {
+                "id": "recF001",
+                "createdTime": "2026-02-01T10:00:00",
+                "fields": {
+                  "Title": "OAuth integration",
+                  "Priority": "High",
+                  "Points": 8,
+                  "Assignee": "eng-team"
+                }
+              },
+              {
+                "id": "recF002",
+                "createdTime": "2026-02-03T10:00:00",
+                "fields": {
+                  "Title": "Dark mode",
+                  "Priority": "Medium",
+                  "Points": 5
+                }
+              },
+              {
+                "id": "recF003",
+                "createdTime": "2026-02-05T10:00:00",
+                "fields": {
+                  "Title": "CSV export",
+                  "Priority": "Low",
+                  "Points": 3,
+                  "Tags": [
+                    "export",
+                    "data"
+                  ]
+                }
+              },
+              {
+                "id": "recF004",
+                "createdTime": "2026-02-07T10:00:00",
+                "fields": {
+                  "Title": "Bulk delete",
+                  "Priority": "High",
+                  "Points": 5
+                }
+              },
+              {
+                "id": "recF005",
+                "createdTime": "2026-02-10T10:00:00",
+                "fields": {
+                  "Title": "API rate limiting",
+                  "Priority": "High",
+                  "Points": 13
+                }
+              }
+            ],
+            "tblP002": [
+              {
+                "id": "recS001",
+                "createdTime": "2026-03-01T00:00:00",
+                "fields": {
+                  "Sprint": "Sprint 1",
+                  "Start": "2026-03-01",
+                  "End": "2026-03-14",
+                  "Completed": true
+                }
+              },
+              {
+                "id": "recS002",
+                "createdTime": "2026-03-15T00:00:00",
+                "fields": {
+                  "Sprint": "Sprint 2",
+                  "Start": "2026-03-15",
+                  "End": "2026-03-28",
+                  "Completed": false
+                }
+              }
+            ]
+          },
+          "appCMP002": {
+            "tblC001": [
+              {
+                "id": "recC001",
+                "createdTime": "2026-03-05T08:00:00",
+                "fields": {
+                  "Title": "10 Tips for Productivity",
+                  "Status": "Published",
+                  "PublishDate": "2026-03-10"
+                }
+              },
+              {
+                "id": "recC002",
+                "createdTime": "2026-03-12T08:00:00",
+                "fields": {
+                  "Title": "Intro to Airtable APIs",
+                  "Status": "Draft",
+                  "PublishDate": "2026-04-20"
+                }
+              },
+              {
+                "id": "recC003",
+                "createdTime": "2026-03-20T08:00:00",
+                "fields": {
+                  "Title": "2026 Tech Trends",
+                  "Status": "In Review",
+                  "PublishDate": "2026-05-01"
+                }
+              }
+            ],
+            "tblC002": [
+              {
+                "id": "recA001",
+                "createdTime": "2026-01-10T09:00:00",
+                "fields": {
+                  "Name": "Jane Doe",
+                  "Bio": "Tech writer",
+                  "PostCount": 12
+                }
+              },
+              {
+                "id": "recA002",
+                "createdTime": "2026-01-15T09:00:00",
+                "fields": {
+                  "Name": "Mark Lee",
+                  "Bio": "Developer advocate",
+                  "PostCount": 7
+                }
+              }
+            ]
+          },
+          "appCMP003": {
+            "tblF001": [
+              {
+                "id": "recE001",
+                "createdTime": "2026-01-31T23:59:00",
+                "fields": {
+                  "Month": "January",
+                  "Amount": 12400.5,
+                  "Category": "Infrastructure"
+                }
+              },
+              {
+                "id": "recE002",
+                "createdTime": "2026-02-28T23:59:00",
+                "fields": {
+                  "Month": "February",
+                  "Amount": 9800.0,
+                  "Category": "Infrastructure"
+                }
+              },
+              {
+                "id": "recE003",
+                "createdTime": "2026-03-31T23:59:00",
+                "fields": {
+                  "Month": "March",
+                  "Amount": 15200.75,
+                  "Category": "Payroll"
+                }
+              }
+            ]
+          }
+        },
+        "record_counter": 18,
+        "current_time": "2026-04-17T01:43:20"
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty workspace — no bases, tables, or records; tests graceful handling of empty state",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "bases": [],
+        "tables": {},
+        "records": {},
+        "record_counter": 0,
+        "current_time": "2026-04-17T01:43:20"
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 0,
+      "failed_scenarios": 4,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014419126222444a3YRUWzb)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014419126222444a3YRUWzb)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 202604170144191106264536Eu6FDVT)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 202604170144191106264536Eu6FDVT)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014419108327442l74LxCth)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014419108327442l74LxCth)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014419560138823QTPj7zCY)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014419560138823QTPj7zCY)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 0,
+      "failed_scenarios": 4,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014538692341699MlJT6xWS)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014538692341699MlJT6xWS)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014538686204748wF4FREwm)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014538686204748wF4FREwm)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014538701100619YZGfxUZ0)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014538701100619YZGfxUZ0)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014539154915737omb8DoZ4)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014539154915737omb8DoZ4)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_001",
+        "scenario_002",
+        "scenario_003",
+        "scenario_004"
+      ],
+      "aggregated_errors": {
+        "total_failed": 4,
+        "scenario_ids": [
+          "scenario_001",
+          "scenario_002",
+          "scenario_003",
+          "scenario_004"
+        ],
+        "error_categories": {
+          "critical": [],
+          "high": [],
+          "medium": [],
+          "low": [
+            {
+              "scenario_id": "scenario_001",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014419126222444a3YRUWzb)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014419126222444a3YRUWzb)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_002",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 202604170144191106264536Eu6FDVT)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 202604170144191106264536Eu6FDVT)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014419108327442l74LxCth)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014419108327442l74LxCth)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_004",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014419560138823QTPj7zCY)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014419560138823QTPj7zCY)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            }
+          ]
+        },
+        "error_patterns": [
+          {
+            "type": "Validation Error",
+            "location": "validate_scenario",
+            "count": 4,
+            "scenario_ids": [
+              "scenario_001",
+              "scenario_002",
+              "scenario_003",
+              "scenario_004"
+            ]
+          }
+        ],
+        "severity_summary": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 4
+        }
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 0,
+        "failed_scenarios": 4,
+        "all_passed": false,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014455916050058wIFnk6pf)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014455916050058wIFnk6pf)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "simple",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014455963361755y2OVNqm1)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014455963361755y2OVNqm1)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "medium",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014455976372565VyNvnGFH)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014455976372565VyNvnGFH)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "complex",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014456324006754i42DFh2L)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014456324006754i42DFh2L)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "boundary",
+            "execution_time": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "revision_number": 2,
+      "failed_scenario_ids": [
+        "scenario_001",
+        "scenario_002",
+        "scenario_003",
+        "scenario_004"
+      ],
+      "aggregated_errors": {
+        "total_failed": 4,
+        "scenario_ids": [
+          "scenario_001",
+          "scenario_002",
+          "scenario_003",
+          "scenario_004"
+        ],
+        "error_categories": {
+          "critical": [],
+          "high": [],
+          "medium": [],
+          "low": [
+            {
+              "scenario_id": "scenario_001",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014455916050058wIFnk6pf)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014455916050058wIFnk6pf)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_002",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014455963361755y2OVNqm1)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014455963361755y2OVNqm1)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014455976372565VyNvnGFH)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014455976372565VyNvnGFH)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_004",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014456324006754i42DFh2L)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014456324006754i42DFh2L)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            }
+          ]
+        },
+        "error_patterns": [
+          {
+            "type": "Validation Error",
+            "location": "validate_scenario",
+            "count": 4,
+            "scenario_ids": [
+              "scenario_001",
+              "scenario_002",
+              "scenario_003",
+              "scenario_004"
+            ]
+          }
+        ],
+        "severity_summary": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 4
+        }
+      },
+      "revised_code_version": 2,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 0,
+        "failed_scenarios": 4,
+        "all_passed": false,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014538692341699MlJT6xWS)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014538692341699MlJT6xWS)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "simple",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014538686204748wF4FREwm)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014538686204748wF4FREwm)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "medium",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014538701100619YZGfxUZ0)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014538701100619YZGfxUZ0)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "complex",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014539154915737omb8DoZ4)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014539154915737omb8DoZ4)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "boundary",
+            "execution_time": 0.0
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 2,
+    "total_time": 0.0,
+    "success": false,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/AirtableMcpServer.py"
+  }
+}

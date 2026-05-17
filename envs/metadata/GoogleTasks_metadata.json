@@ -1,0 +1,595 @@
+{
+  "class_name": "GoogleTasks",
+  "description": "A server for managing Google Tasks, providing operations for task lists and individual tasks including creation, retrieval, updates, deletion, and organization.",
+  "tools": [
+    {
+      "name": "list_task_lists",
+      "description": "List all task lists for the authenticated user with optional pagination.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "max_results": {
+            "type": "integer",
+            "description": "Maximum number of task lists to return per page."
+          },
+          "page_token": {
+            "type": "string",
+            "description": "Token for retrieving the next page of results; omit for the first page."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "task_lists": {
+            "type": "array",
+            "description": "Collection of task lists belonging to the authenticated user.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tasklist_id": {
+                  "type": "string",
+                  "description": "The unique identifier of the task list."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The display title of the task list."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_task_list",
+      "description": "Retrieve a specific task list by its unique identifier.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tasklist_id": {
+            "type": "string",
+            "description": "The unique identifier of the task list."
+          }
+        },
+        "required": [
+          "tasklist_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "tasklist_id": {
+            "type": "string",
+            "description": "The unique identifier of the task list."
+          },
+          "title": {
+            "type": "string",
+            "description": "The display title of the task list."
+          }
+        }
+      }
+    },
+    {
+      "name": "create_task_list",
+      "description": "Create a new task list with the specified title.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tasklist_title": {
+            "type": "string",
+            "description": "Title for the new task list; maximum 1024 characters."
+          }
+        },
+        "required": [
+          "tasklist_title"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "tasklist_id": {
+            "type": "string",
+            "description": "The unique identifier of the newly created task list."
+          },
+          "title": {
+            "type": "string",
+            "description": "The display title of the task list."
+          }
+        }
+      }
+    },
+    {
+      "name": "update_task_list",
+      "description": "Update the title of an existing task list.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tasklist_id": {
+            "type": "string",
+            "description": "The unique identifier of the task list to be updated."
+          },
+          "title": {
+            "type": "string",
+            "description": "New title for the task list; maximum 1024 characters."
+          }
+        },
+        "required": [
+          "tasklist_id",
+          "title"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "tasklist_id": {
+            "type": "string",
+            "description": "The unique identifier of the updated task list."
+          },
+          "title": {
+            "type": "string",
+            "description": "The updated display title of the task list."
+          }
+        }
+      }
+    },
+    {
+      "name": "delete_task_list",
+      "description": "Permanently delete a task list and all tasks contained within it.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tasklist_id": {
+            "type": "string",
+            "description": "The unique identifier of the task list to be deleted."
+          }
+        },
+        "required": [
+          "tasklist_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "list_tasks",
+      "description": "List tasks from a specific task list with optional filtering by completion status and due date range.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tasklist_id": {
+            "type": "string",
+            "description": "The unique identifier of the task list; use '@default' for the default list."
+          },
+          "max_results": {
+            "type": "integer",
+            "description": "Maximum number of tasks to return; default is 20, maximum is 100."
+          },
+          "show_completed": {
+            "type": "boolean",
+            "description": "Whether to include completed tasks in the results; defaults to true."
+          },
+          "due_min": {
+            "type": "string",
+            "description": "Exclude tasks due before this date/time in RFC3339 format (e.g., '2025-09-22T13:48:27Z')."
+          },
+          "due_max": {
+            "type": "string",
+            "description": "Exclude tasks due after this date/time in RFC3339 format (e.g., '2025-09-22T13:48:27Z')."
+          }
+        },
+        "required": [
+          "tasklist_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "tasks": {
+            "type": "array",
+            "description": "Collection of tasks matching the specified filter criteria.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "task_id": {
+                  "type": "string",
+                  "description": "The unique identifier of the task."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The title or name of the task."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "Current status of the task; either 'needsAction' or 'completed'."
+                },
+                "due": {
+                  "type": "string",
+                  "description": "Due date/time of the task in RFC3339 format."
+                },
+                "completed": {
+                  "type": "string",
+                  "description": "Date/time when the task was completed in RFC3339 format."
+                },
+                "notes": {
+                  "type": "string",
+                  "description": "Additional details or description of the task."
+                },
+                "tasklist_id": {
+                  "type": "string",
+                  "description": "The unique identifier of the task list containing this task."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_task",
+      "description": "Retrieve a specific task by its unique identifier from a task list.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "The unique identifier of the task."
+          },
+          "tasklist_id": {
+            "type": "string",
+            "description": "The unique identifier of the task list containing the task."
+          }
+        },
+        "required": [
+          "task_id",
+          "tasklist_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "The unique identifier of the task."
+          },
+          "title": {
+            "type": "string",
+            "description": "The title or name of the task."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the task; either 'needsAction' or 'completed'."
+          },
+          "due": {
+            "type": "string",
+            "description": "Due date/time of the task in RFC3339 format."
+          },
+          "completed": {
+            "type": "string",
+            "description": "Date/time when the task was completed in RFC3339 format."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional details or description of the task."
+          },
+          "tasklist_id": {
+            "type": "string",
+            "description": "The unique identifier of the task list containing this task."
+          }
+        }
+      }
+    },
+    {
+      "name": "create_task",
+      "description": "Create a new task in a task list, optionally as a subtask or positioned after another task.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tasklist_id": {
+            "type": "string",
+            "description": "The unique identifier of the task list where the task will be created."
+          },
+          "title": {
+            "type": "string",
+            "description": "Title or name of the task; maximum 1024 characters."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional details or description of the task; maximum 8192 characters."
+          },
+          "due": {
+            "type": "string",
+            "description": "Due date/time in RFC3339 format (e.g., '2025-09-22T13:48:27Z')."
+          },
+          "status": {
+            "type": "string",
+            "description": "Initial status of the task; either 'needsAction' or 'completed'; defaults to 'needsAction'."
+          },
+          "completed": {
+            "type": "string",
+            "description": "Date/time when the task was completed in RFC3339 format."
+          },
+          "task_parent": {
+            "type": "string",
+            "description": "The unique identifier of the parent task to create this task as a subtask."
+          },
+          "task_previous": {
+            "type": "string",
+            "description": "The unique identifier of the task after which to position this new task."
+          }
+        },
+        "required": [
+          "tasklist_id",
+          "title"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "The unique identifier of the newly created task."
+          },
+          "title": {
+            "type": "string",
+            "description": "The title or name of the task."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the task; either 'needsAction' or 'completed'."
+          },
+          "due": {
+            "type": "string",
+            "description": "Due date/time of the task in RFC3339 format."
+          },
+          "completed": {
+            "type": "string",
+            "description": "Date/time when the task was completed in RFC3339 format."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional details or description of the task."
+          },
+          "tasklist_id": {
+            "type": "string",
+            "description": "The unique identifier of the task list containing this task."
+          }
+        }
+      }
+    },
+    {
+      "name": "update_task",
+      "description": "Update an existing task with new values; only provided attributes will be modified.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tasklist_id": {
+            "type": "string",
+            "description": "The unique identifier of the task list containing the task."
+          },
+          "task_id": {
+            "type": "string",
+            "description": "The unique identifier of the task to be updated."
+          },
+          "title": {
+            "type": "string",
+            "description": "New title or name for the task."
+          },
+          "notes": {
+            "type": "string",
+            "description": "New additional details or description for the task."
+          },
+          "due": {
+            "type": "string",
+            "description": "New due date/time in RFC3339 format (e.g., '2025-09-22T13:48:27Z')."
+          },
+          "status": {
+            "type": "string",
+            "description": "New status for the task; either 'needsAction' or 'completed'."
+          },
+          "completed": {
+            "type": "string",
+            "description": "Date/time when the task was completed in RFC3339 format."
+          }
+        },
+        "required": [
+          "tasklist_id",
+          "task_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "The unique identifier of the updated task."
+          },
+          "title": {
+            "type": "string",
+            "description": "The title or name of the task."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the task; either 'needsAction' or 'completed'."
+          },
+          "due": {
+            "type": "string",
+            "description": "Due date/time of the task in RFC3339 format."
+          },
+          "completed": {
+            "type": "string",
+            "description": "Date/time when the task was completed in RFC3339 format."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional details or description of the task."
+          },
+          "tasklist_id": {
+            "type": "string",
+            "description": "The unique identifier of the task list containing this task."
+          }
+        }
+      }
+    },
+    {
+      "name": "delete_task",
+      "description": "Permanently delete a specific task from a task list.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "The unique identifier of the task to be deleted."
+          },
+          "tasklist_id": {
+            "type": "string",
+            "description": "The unique identifier of the task list containing the task."
+          }
+        },
+        "required": [
+          "task_id",
+          "tasklist_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "move_task",
+      "description": "Move a task to another position within the same task list or to a different task list.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tasklist_id": {
+            "type": "string",
+            "description": "The unique identifier of the task list currently containing the task."
+          },
+          "task_id": {
+            "type": "string",
+            "description": "The unique identifier of the task to be moved."
+          },
+          "destination_tasklist": {
+            "type": "string",
+            "description": "The unique identifier of the destination task list; if provided, moves the task to this list."
+          },
+          "parent": {
+            "type": "string",
+            "description": "The unique identifier of the new parent task; if not provided, moves to top level."
+          },
+          "previous": {
+            "type": "string",
+            "description": "The unique identifier of the task after which to position this task; if not provided, moves to first position."
+          }
+        },
+        "required": [
+          "tasklist_id",
+          "task_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "The unique identifier of the moved task."
+          },
+          "tasklist_id": {
+            "type": "string",
+            "description": "The unique identifier of the task list now containing the task."
+          }
+        }
+      }
+    },
+    {
+      "name": "clear_tasks",
+      "description": "Permanently remove all completed tasks from a task list.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tasklist_id": {
+            "type": "string",
+            "description": "The unique identifier of the task list; use '@default' for the default list."
+          }
+        },
+        "required": [
+          "tasklist_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "get_upcoming_tasks",
+      "description": "Retrieve tasks that are due within a specified number of days to identify upcoming deadlines.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tasklist_id": {
+            "type": "string",
+            "description": "The unique identifier of the task list; use '@default' for the default list."
+          },
+          "days_ahead": {
+            "type": "integer",
+            "description": "Number of days ahead to look for tasks with due dates; defaults to 7."
+          },
+          "max_results": {
+            "type": "integer",
+            "description": "Maximum number of tasks to return."
+          }
+        },
+        "required": [
+          "tasklist_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "tasks": {
+            "type": "array",
+            "description": "Collection of tasks with due dates within the specified timeframe.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "task_id": {
+                  "type": "string",
+                  "description": "The unique identifier of the task."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The title or name of the task."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "Current status of the task; either 'needsAction' or 'completed'."
+                },
+                "due": {
+                  "type": "string",
+                  "description": "Due date/time of the task in RFC3339 format."
+                },
+                "completed": {
+                  "type": "string",
+                  "description": "Date/time when the task was completed in RFC3339 format."
+                },
+                "notes": {
+                  "type": "string",
+                  "description": "Additional details or description of the task."
+                },
+                "tasklist_id": {
+                  "type": "string",
+                  "description": "The unique identifier of the task list containing this task."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

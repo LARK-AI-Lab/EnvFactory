@@ -1,0 +1,438 @@
+{
+  "class_name": "EtsyServer",
+  "description": "MCP server for interacting with the Etsy marketplace API, enabling search, listing management, shop operations, and order retrieval.",
+  "tools": [
+    {
+      "name": "search_listings",
+      "description": "Searches for active listings on the Etsy marketplace using keywords and optional filters for category and price range.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "keywords": {
+            "type": "string",
+            "description": "Search keywords or query terms to match against listing titles, tags, and descriptions."
+          },
+          "category": {
+            "type": "string",
+            "description": "Category slug to filter results to a specific Etsy category (e.g., 'jewelry', 'vintage')."
+          },
+          "min_price": {
+            "type": "number",
+            "description": "Minimum price threshold to filter listings by item cost."
+          },
+          "max_price": {
+            "type": "number",
+            "description": "Maximum price threshold to filter listings by item cost."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of search results to return (default: 10, maximum: 100).",
+            "default": 10
+          }
+        },
+        "required": [
+          "keywords"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "The total number of listings matching the search criteria."
+          },
+          "results": {
+            "type": "array",
+            "description": "Array of listing objects matching the search query.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "listing_id": {
+                  "type": "integer",
+                  "description": "The unique identifier of the Etsy listing."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The display title of the listing."
+                },
+                "price": {
+                  "type": "object",
+                  "description": "The monetary price information for the listing.",
+                  "properties": {
+                    "amount": {
+                      "type": "number",
+                      "description": "The numeric price value."
+                    },
+                    "currency": {
+                      "type": "string",
+                      "description": "The three-letter ISO currency code (e.g., USD, EUR)."
+                    }
+                  }
+                },
+                "quantity": {
+                  "type": "integer",
+                  "description": "The available stock quantity for the item."
+                },
+                "shop_name": {
+                  "type": "string",
+                  "description": "The name of the Etsy shop offering the listing."
+                },
+                "url": {
+                  "type": "string",
+                  "description": "The direct URL to view the listing on Etsy."
+                },
+                "images": {
+                  "type": "array",
+                  "description": "Array of image URLs for the listing.",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_listing_details",
+      "description": "Retrieves comprehensive details for a specific Etsy listing including description, materials, tags, shop information, and high-resolution images.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "listing_id": {
+            "type": "integer",
+            "description": "The unique identifier of the Etsy listing to retrieve."
+          }
+        },
+        "required": [
+          "listing_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "listing_id": {
+            "type": "integer",
+            "description": "The unique identifier of the Etsy listing."
+          },
+          "title": {
+            "type": "string",
+            "description": "The display title of the listing."
+          },
+          "description": {
+            "type": "string",
+            "description": "The detailed HTML or text description of the item."
+          },
+          "price": {
+            "type": "object",
+            "description": "The monetary price information including divisor for formatting.",
+            "properties": {
+              "amount": {
+                "type": "number",
+                "description": "The raw numeric price value before divisor application."
+              },
+              "currency": {
+                "type": "string",
+                "description": "The three-letter ISO currency code (e.g., USD, EUR)."
+              },
+              "divisor": {
+                "type": "integer",
+                "description": "The divisor to convert the raw amount into the display price."
+              }
+            }
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "The available stock quantity for the item."
+          },
+          "shop": {
+            "type": "object",
+            "description": "Information about the shop selling the item.",
+            "properties": {
+              "shop_id": {
+                "type": "integer",
+                "description": "The unique identifier of the Etsy shop."
+              },
+              "shop_name": {
+                "type": "string",
+                "description": "The display name of the shop."
+              },
+              "url": {
+                "type": "string",
+                "description": "The URL to the shop's Etsy page."
+              },
+              "rating": {
+                "type": "number",
+                "description": "The average customer rating score for the shop."
+              }
+            }
+          },
+          "images": {
+            "type": "array",
+            "description": "Array of image objects with dimension metadata.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "description": "The URL to the full-resolution image."
+                },
+                "full_height": {
+                  "type": "integer",
+                  "description": "The height of the image in pixels."
+                },
+                "full_width": {
+                  "type": "integer",
+                  "description": "The width of the image in pixels."
+                }
+              }
+            }
+          },
+          "tags": {
+            "type": "array",
+            "description": "Array of search tags associated with the listing.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "materials": {
+            "type": "array",
+            "description": "Array of materials used to create the item.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "shipping_profile": {
+            "type": "object",
+            "description": "Shipping configuration and cost details for the listing."
+          }
+        }
+      }
+    },
+    {
+      "name": "create_listing",
+      "description": "Creates a new product listing within a specified Etsy shop. Requires OAuth authentication with appropriate write permissions.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "shop_id": {
+            "type": "integer",
+            "description": "The unique identifier of the Etsy shop where the listing will be created."
+          },
+          "title": {
+            "type": "string",
+            "description": "The listing title (maximum 140 characters)."
+          },
+          "description": {
+            "type": "string",
+            "description": "The detailed item description supporting HTML formatting."
+          },
+          "price": {
+            "type": "number",
+            "description": "The item price in the shop's default currency."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "The available quantity for sale."
+          },
+          "taxonomy_id": {
+            "type": "integer",
+            "description": "The Etsy taxonomy/category classification ID for proper categorization."
+          },
+          "who_made": {
+            "type": "string",
+            "description": "Indicates who manufactured the item (e.g., 'i_did', 'collective', 'someone_else').",
+            "default": "i_did"
+          }
+        },
+        "required": [
+          "shop_id",
+          "title",
+          "description",
+          "price",
+          "quantity",
+          "taxonomy_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "listing_id": {
+            "type": "integer",
+            "description": "The unique identifier of the newly created Etsy listing."
+          },
+          "title": {
+            "type": "string",
+            "description": "The title of the created listing."
+          },
+          "state": {
+            "type": "string",
+            "description": "The current state of the listing (e.g., 'draft', 'active', 'inactive')."
+          },
+          "creation_tsz": {
+            "type": "number",
+            "description": "Unix timestamp indicating when the listing was created."
+          },
+          "url": {
+            "type": "string",
+            "description": "The URL to view the newly created listing."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_shop_listings",
+      "description": "Retrieves all listings for a specific Etsy shop with optional filtering by listing status.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "shop_id": {
+            "type": "integer",
+            "description": "The unique identifier of the Etsy shop."
+          },
+          "status": {
+            "type": "string",
+            "description": "Filter listings by current state (active, inactive, expired, sold_out, draft).",
+            "default": "active"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of listings to return per page (default: 25, maximum: 100).",
+            "default": 25
+          }
+        },
+        "required": [
+          "shop_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "The total number of listings returned for the shop."
+          },
+          "results": {
+            "type": "array",
+            "description": "Array of listing summary objects for the shop.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "listing_id": {
+                  "type": "integer",
+                  "description": "The unique identifier of the Etsy listing."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The display title of the listing."
+                },
+                "state": {
+                  "type": "string",
+                  "description": "The current state of the listing (e.g., 'active', 'inactive')."
+                },
+                "price": {
+                  "type": "object",
+                  "description": "The monetary price information for the listing.",
+                  "properties": {
+                    "amount": {
+                      "type": "number",
+                      "description": "The numeric price value."
+                    },
+                    "currency": {
+                      "type": "string",
+                      "description": "The three-letter ISO currency code (e.g., USD, EUR)."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_receipts",
+      "description": "Retrieves order receipts (sales transactions) for a seller's shop, optionally filtered by creation date range.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "shop_id": {
+            "type": "integer",
+            "description": "The unique identifier of the Etsy shop."
+          },
+          "min_created": {
+            "type": "integer",
+            "description": "Minimum creation timestamp (Unix epoch seconds) to filter orders from a specific start date."
+          },
+          "max_created": {
+            "type": "integer",
+            "description": "Maximum creation timestamp (Unix epoch seconds) to filter orders up to a specific end date."
+          }
+        },
+        "required": [
+          "shop_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "The total number of receipts matching the query criteria."
+          },
+          "results": {
+            "type": "array",
+            "description": "Array of order receipt objects representing completed sales.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "receipt_id": {
+                  "type": "integer",
+                  "description": "The unique identifier of the order receipt."
+                },
+                "buyer_email": {
+                  "type": "string",
+                  "description": "The email address of the buyer."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The full name of the buyer."
+                },
+                "grandtotal": {
+                  "type": "object",
+                  "description": "The total monetary amount charged for the order including shipping and taxes.",
+                  "properties": {
+                    "amount": {
+                      "type": "number",
+                      "description": "The numeric total value."
+                    },
+                    "currency": {
+                      "type": "string",
+                      "description": "The three-letter ISO currency code (e.g., USD, EUR)."
+                    }
+                  }
+                },
+                "status": {
+                  "type": "string",
+                  "description": "The current fulfillment status of the order (e.g., 'paid', 'shipped', 'canceled')."
+                },
+                "created_tsz": {
+                  "type": "number",
+                  "description": "Unix timestamp when the order was created."
+                },
+                "transactions": {
+                  "type": "array",
+                  "description": "Array of individual transaction objects comprising the order.",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

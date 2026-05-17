@@ -1,0 +1,831 @@
+{
+  "class_name": "TradingBot",
+  "description": "A comprehensive trading platform server that manages user authentication, account operations, market data retrieval, stock trading, order management, and watchlist functionality for equity markets.",
+  "tools": [
+    {
+      "name": "login",
+      "description": "Authenticate a user with credentials and establish a trading session, returning a session token for subsequent authenticated operations.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "The username credential for authenticating the user account."
+          },
+          "password": {
+            "type": "string",
+            "description": "The password credential for authenticating the user account."
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Authentication result status indicating whether login was successful or failed."
+          },
+          "session_token": {
+            "type": "string",
+            "description": "Session token issued upon successful authentication, used for subsequent authenticated requests. Only present if login succeeds."
+          }
+        }
+      }
+    },
+    {
+      "name": "logout",
+      "description": "Terminate the current user session and invalidate the authentication token, ending all trading operations for the session.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Logout operation result status indicating whether session termination was successful or failed."
+          }
+        }
+      }
+    },
+    {
+      "name": "check_login_status",
+      "description": "Verify whether a user session is currently active and authenticated, checking session validity.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "is_authenticated": {
+            "type": "boolean",
+            "description": "Boolean flag indicating whether the current session is authenticated and valid for trading operations."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_market_status",
+      "description": "Retrieve the current trading market status to determine if the market is open for trading operations or closed.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Current market operational status. Enum values: 'Open' (market is accepting trades), 'Closed' (market is not accepting trades).",
+            "enum": [
+              "Open",
+              "Closed"
+            ]
+          },
+          "current_time": {
+            "type": "string",
+            "description": "Current market time in HH:MM AM/PM format used to determine market hours."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_account_info",
+      "description": "Retrieve comprehensive account information including balance, account identifier, and linked payment details for the authenticated user.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "integer",
+            "description": "Unique identifier for the trading account."
+          },
+          "balance": {
+            "type": "number",
+            "description": "Current available account balance in the account's currency, representing funds available for trading."
+          },
+          "binding_card": {
+            "type": "integer",
+            "description": "Card number associated with the account for deposits and withdrawals. Only present if a card is linked."
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency denomination for the account balance, typically 'USD'."
+          }
+        }
+      }
+    },
+    {
+      "name": "make_transaction",
+      "description": "Execute a deposit or withdrawal transaction on the authenticated user's account, updating the account balance. Withdrawals require the market to be open.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "transaction_type": {
+            "type": "string",
+            "description": "Type of financial transaction to execute. Enum values: 'deposit' (add funds to account), 'withdrawal' (remove funds from account).",
+            "enum": [
+              "deposit",
+              "withdrawal"
+            ]
+          },
+          "amount": {
+            "type": "number",
+            "description": "The monetary amount to deposit or withdraw. Must be a positive value."
+          }
+        },
+        "required": [
+          "transaction_type",
+          "amount"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Transaction execution result status indicating whether the operation was successful or failed."
+          },
+          "new_balance": {
+            "type": "number",
+            "description": "Updated account balance after the transaction has been processed."
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "Transaction execution timestamp in YYYY-MM-DD HH:MM:SS format, recording when the transaction was completed."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_transaction_history",
+      "description": "Retrieve the authenticated user's transaction history with optional date range filtering to view past deposits and withdrawals.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "start_date": {
+            "type": "string",
+            "description": "Optional start date for filtering transactions in YYYY-MM-DD format. If not provided, retrieves all historical transactions from the beginning."
+          },
+          "end_date": {
+            "type": "string",
+            "description": "Optional end date for filtering transactions in YYYY-MM-DD format. If not provided, retrieves all transactions up to the present."
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "transactions": {
+            "type": "array",
+            "description": "List of transaction records matching the specified date range criteria.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "transaction_id": {
+                  "type": "string",
+                  "description": "Unique identifier for the transaction record."
+                },
+                "type": {
+                  "type": "string",
+                  "description": "Type of financial transaction. Enum values: 'deposit', 'withdrawal'.",
+                  "enum": [
+                    "deposit",
+                    "withdrawal"
+                  ]
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "The monetary amount of the transaction."
+                },
+                "timestamp": {
+                  "type": "string",
+                  "description": "Transaction execution timestamp in YYYY-MM-DD HH:MM:SS format."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_stock_symbol",
+      "description": "Look up the stock ticker symbol for a given company name from the supported list of tradable companies.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "company_name": {
+            "type": "string",
+            "description": "The name of the company to look up. Enum values: 'Apple', 'Google', 'Tesla', 'Microsoft', 'Nvidia', 'Amazon', 'Zeta Corp', 'Alpha Tech', 'Omega Industries', 'Quasar Ltd.', 'Neptune Systems', 'Synex Solutions'.",
+            "enum": [
+              "Apple",
+              "Google",
+              "Tesla",
+              "Microsoft",
+              "Nvidia",
+              "Amazon",
+              "Zeta Corp",
+              "Alpha Tech",
+              "Omega Industries",
+              "Quasar Ltd.",
+              "Neptune Systems",
+              "Synex Solutions"
+            ]
+          }
+        },
+        "required": [
+          "company_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "The stock ticker symbol for the specified company, used to identify the stock in trading operations and market data queries."
+          },
+          "company_name": {
+            "type": "string",
+            "description": "The company name that was queried, echoed back for confirmation."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_stock_info",
+      "description": "Retrieve comprehensive real-time information about a specific stock including current price, trading volume, percentage change, and technical indicators (moving averages).",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "The stock ticker symbol to retrieve information for (e.g., 'AAPL', 'GOOG', 'TSLA'). Can be obtained from get_stock_symbol or get_available_stocks."
+          }
+        },
+        "required": [
+          "symbol"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "The stock ticker symbol for which information is provided."
+          },
+          "price": {
+            "type": "number",
+            "description": "Current market price per share of the stock."
+          },
+          "percent_change": {
+            "type": "number",
+            "description": "Percentage change in stock price, indicating price movement direction and magnitude."
+          },
+          "volume": {
+            "type": "number",
+            "description": "Trading volume representing the number of shares traded."
+          },
+          "ma_5": {
+            "type": "number",
+            "description": "5-day moving average price, a short-term technical indicator for trend analysis."
+          },
+          "ma_20": {
+            "type": "number",
+            "description": "20-day moving average price, a medium-term technical indicator for trend analysis."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_available_stocks",
+      "description": "Retrieve a list of stock ticker symbols available for trading within a specific market sector.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "sector": {
+            "type": "string",
+            "description": "The market sector to retrieve tradable stocks from. Enum values: 'Technology', 'Automobile', 'Finance', 'Healthcare', 'Energy'.",
+            "enum": [
+              "Technology",
+              "Automobile",
+              "Finance",
+              "Healthcare",
+              "Energy"
+            ]
+          }
+        },
+        "required": [
+          "sector"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "symbols": {
+            "type": "array",
+            "description": "List of stock ticker symbols available for trading in the specified sector. These symbols can be used with get_stock_info to retrieve detailed market data.",
+            "items": {
+              "type": "string",
+              "description": "Stock ticker symbol representing a tradable equity in the sector."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "filter_stocks_by_price",
+      "description": "Filter a provided list of stock symbols to return only those with current prices within a specified price range.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "symbols": {
+            "type": "array",
+            "description": "List of stock ticker symbols to filter by price. Can be obtained from get_available_stocks.",
+            "items": {
+              "type": "string",
+              "description": "Stock ticker symbol to evaluate against the price range criteria."
+            }
+          },
+          "min_price": {
+            "type": "number",
+            "description": "Minimum stock price threshold for filtering. Stocks below this price are excluded."
+          },
+          "max_price": {
+            "type": "number",
+            "description": "Maximum stock price threshold for filtering. Stocks above this price are excluded."
+          }
+        },
+        "required": [
+          "symbols",
+          "min_price",
+          "max_price"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "filtered_symbols": {
+            "type": "array",
+            "description": "List of stock ticker symbols with current prices within the specified range. These symbols can be used with get_stock_info for detailed information.",
+            "items": {
+              "type": "string",
+              "description": "Stock ticker symbol that meets the price range criteria."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "place_order",
+      "description": "Submit a buy or sell order for a specified stock at a given price and quantity. Requires authentication and the market must be open.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_type": {
+            "type": "string",
+            "description": "The type of trading order to place. Enum values: 'Buy' (purchase shares), 'Sell' (sell shares).",
+            "enum": [
+              "Buy",
+              "Sell"
+            ]
+          },
+          "symbol": {
+            "type": "string",
+            "description": "The stock ticker symbol to trade. Can be obtained from get_stock_symbol or get_available_stocks."
+          },
+          "price": {
+            "type": "number",
+            "description": "The limit price per share at which to place the order. Must be a positive value."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "The number of shares to trade in this order. Must be a positive integer."
+          }
+        },
+        "required": [
+          "order_type",
+          "symbol",
+          "price",
+          "quantity"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "integer",
+            "description": "Unique identifier assigned to the placed order, used to track, query, or cancel the order."
+          },
+          "order_type": {
+            "type": "string",
+            "description": "The type of trading order that was placed. Enum values: 'Buy', 'Sell'.",
+            "enum": [
+              "Buy",
+              "Sell"
+            ]
+          },
+          "symbol": {
+            "type": "string",
+            "description": "The stock ticker symbol for which the order was placed."
+          },
+          "price": {
+            "type": "number",
+            "description": "The limit price per share specified in the order."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "The number of shares specified in the order."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current order status. Enum values: 'Pending' (awaiting processing), 'Open' (active in market), 'Completed' (fully executed), 'Cancelled' (order cancelled).",
+            "enum": [
+              "Pending",
+              "Open",
+              "Completed",
+              "Cancelled"
+            ]
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "Order placement timestamp recording when the order was submitted to the system."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_order_details",
+      "description": "Retrieve comprehensive details about a specific order including its current status, execution information, and all order parameters.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "integer",
+            "description": "The unique identifier of the order to retrieve. Can be obtained from place_order or get_order_history."
+          }
+        },
+        "required": [
+          "order_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "integer",
+            "description": "Unique identifier of the order being queried."
+          },
+          "order_type": {
+            "type": "string",
+            "description": "The type of trading order. Enum values: 'Buy', 'Sell'.",
+            "enum": [
+              "Buy",
+              "Sell"
+            ]
+          },
+          "symbol": {
+            "type": "string",
+            "description": "The stock ticker symbol for which the order was placed."
+          },
+          "price": {
+            "type": "number",
+            "description": "The limit price per share specified in the order."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "The number of shares specified in the order."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current order status. Enum values: 'Open' (active in market), 'Pending' (awaiting processing), 'Completed' (fully executed), 'Cancelled' (order cancelled).",
+            "enum": [
+              "Open",
+              "Pending",
+              "Completed",
+              "Cancelled"
+            ]
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "Order placement timestamp recording when the order was submitted to the system."
+          },
+          "execution_price": {
+            "type": "number",
+            "description": "Actual price per share at which the order was executed. Only present if the order status is 'Completed'."
+          }
+        }
+      }
+    },
+    {
+      "name": "cancel_order",
+      "description": "Cancel a pending or open order, removing it from the market. Completed orders cannot be cancelled. Requires authentication.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "integer",
+            "description": "The unique identifier of the order to cancel. Can be obtained from place_order or get_order_history."
+          }
+        },
+        "required": [
+          "order_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "integer",
+            "description": "Unique identifier of the order that was targeted for cancellation."
+          },
+          "status": {
+            "type": "string",
+            "description": "Result of the cancellation operation. Enum values: 'Cancelled' (order successfully cancelled), 'Error' (cancellation failed).",
+            "enum": [
+              "Cancelled",
+              "Error"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message explaining why the cancellation failed. Only present if status is 'Error'."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_order_history",
+      "description": "Retrieve the authenticated user's order history with optional filtering by order status or stock symbol to review past trading activity.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Optional filter to retrieve only orders with a specific status. Enum values: 'Open', 'Pending', 'Completed', 'Cancelled'. If not provided, returns orders with all statuses.",
+            "enum": [
+              "Open",
+              "Pending",
+              "Completed",
+              "Cancelled"
+            ]
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Optional filter to retrieve only orders for a specific stock ticker symbol. If not provided, returns orders for all stocks."
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "orders": {
+            "type": "array",
+            "description": "List of order summaries matching the specified filter criteria. Order IDs can be used with get_order_details to retrieve complete order information.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "order_id": {
+                  "type": "integer",
+                  "description": "Unique identifier of the order, used to retrieve full details or cancel the order."
+                },
+                "order_type": {
+                  "type": "string",
+                  "description": "The type of trading order. Enum values: 'Buy', 'Sell'."
+                },
+                "symbol": {
+                  "type": "string",
+                  "description": "The stock ticker symbol for which the order was placed."
+                },
+                "price": {
+                  "type": "number",
+                  "description": "The limit price per share specified in the order."
+                },
+                "quantity": {
+                  "type": "integer",
+                  "description": "The number of shares specified in the order."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "Current order status."
+                },
+                "timestamp": {
+                  "type": "string",
+                  "description": "Order placement timestamp recording when the order was submitted."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_watchlist",
+      "description": "Retrieve the authenticated user's watchlist containing stock symbols they are monitoring for trading opportunities.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "watchlist_symbols": {
+            "type": "array",
+            "description": "List of stock ticker symbols currently in the user's watchlist. These symbols can be used with get_stock_info to retrieve current prices and market data.",
+            "items": {
+              "type": "string",
+              "description": "Stock ticker symbol being monitored in the watchlist."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "add_to_watchlist",
+      "description": "Add a stock symbol to the authenticated user's watchlist for monitoring and quick access to market data.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "The stock ticker symbol to add to the watchlist. Can be obtained from get_stock_symbol or get_available_stocks."
+          }
+        },
+        "required": [
+          "symbol"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Operation result status indicating whether the symbol was successfully added to the watchlist or if the operation failed."
+          },
+          "symbol": {
+            "type": "string",
+            "description": "The stock ticker symbol that was added to the watchlist."
+          },
+          "watchlist": {
+            "type": "array",
+            "description": "Updated complete list of stock ticker symbols in the user's watchlist after the addition.",
+            "items": {
+              "type": "string",
+              "description": "Stock ticker symbol in the updated watchlist."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "remove_from_watchlist",
+      "description": "Remove a stock symbol from the authenticated user's watchlist, stopping monitoring of that stock.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "The stock ticker symbol to remove from the watchlist. Can be obtained from get_watchlist."
+          }
+        },
+        "required": [
+          "symbol"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Operation result status indicating whether the symbol was successfully removed from the watchlist or if the operation failed."
+          },
+          "symbol": {
+            "type": "string",
+            "description": "The stock ticker symbol that was removed from the watchlist."
+          },
+          "watchlist": {
+            "type": "array",
+            "description": "Updated complete list of stock ticker symbols in the user's watchlist after the removal.",
+            "items": {
+              "type": "string",
+              "description": "Stock ticker symbol in the updated watchlist."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "notify_price_change",
+      "description": "Monitor a list of stock symbols and identify those with significant price changes exceeding a specified percentage threshold.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "symbols": {
+            "type": "array",
+            "description": "List of stock ticker symbols to monitor for price changes. Can be obtained from get_watchlist or get_available_stocks.",
+            "items": {
+              "type": "string",
+              "description": "Stock ticker symbol to check for significant price movement."
+            }
+          },
+          "threshold": {
+            "type": "number",
+            "description": "Percentage change threshold to trigger notification. Stocks with absolute percentage changes exceeding this value will be reported. Must be a positive value."
+          }
+        },
+        "required": [
+          "symbols",
+          "threshold"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "notification": {
+            "type": "string",
+            "description": "Summary message describing the price change monitoring results and any significant movements detected."
+          },
+          "changed_stocks": {
+            "type": "array",
+            "description": "List of stock ticker symbols that experienced price changes exceeding the threshold. Only present if significant changes were detected.",
+            "items": {
+              "type": "string",
+              "description": "Stock ticker symbol with significant price movement."
+            }
+          },
+          "details": {
+            "type": "array",
+            "description": "Detailed information about each stock with significant price changes. Only present if significant changes were detected.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "symbol": {
+                  "type": "string",
+                  "description": "The stock ticker symbol with significant price movement."
+                },
+                "current_price": {
+                  "type": "number",
+                  "description": "Current market price per share of the stock."
+                },
+                "percent_change": {
+                  "type": "number",
+                  "description": "Percentage change in stock price that exceeded the threshold."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "update_stock_price",
+      "description": "Manually update the price of a stock, typically used for testing, simulation, or administrative purposes to modify market data.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "The stock ticker symbol to update. Can be obtained from get_stock_symbol or get_available_stocks."
+          },
+          "new_price": {
+            "type": "number",
+            "description": "The new price per share to set for the stock. Must be a positive value."
+          }
+        },
+        "required": [
+          "symbol",
+          "new_price"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "The stock ticker symbol that was updated."
+          },
+          "old_price": {
+            "type": "number",
+            "description": "Previous price per share before the update was applied."
+          },
+          "new_price": {
+            "type": "number",
+            "description": "Updated price per share after the change was applied."
+          },
+          "percent_change": {
+            "type": "number",
+            "description": "Calculated percentage change between the old and new price, showing the magnitude of the price update."
+          }
+        }
+      }
+    }
+  ]
+}

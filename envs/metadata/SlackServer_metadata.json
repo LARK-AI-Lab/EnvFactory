@@ -1,0 +1,314 @@
+{
+  "class_name": "SlackServer",
+  "description": "Provides read and write access to Slack conversations, channels, and messages, including search and threaded replies.",
+  "tools": [
+    {
+      "name": "channels_list",
+      "description": "List Slack conversations such as public channels, private channels, DMs, and group DMs.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "channel_types": {
+            "type": "string",
+            "description": "Comma-separated channel types such as \"public_channel,private_channel,im\"."
+          },
+          "sort": {
+            "type": "string",
+            "description": "Sort mode such as \"popularity\"."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of channels to return (default 100)."
+          },
+          "cursor": {
+            "type": "string",
+            "description": "Pagination cursor from a previous response."
+          }
+        },
+        "required": [
+          "channel_types"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "channels": {
+            "type": "array",
+            "description": "List of channel objects.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The unique identifier of the channel."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The display name of the channel."
+                },
+                "is_channel": {
+                  "type": "boolean",
+                  "description": "True if the conversation is a channel."
+                },
+                "is_private": {
+                  "type": "boolean",
+                  "description": "True if the conversation is private."
+                },
+                "is_im": {
+                  "type": "boolean",
+                  "description": "True if the conversation is a direct message."
+                },
+                "num_members": {
+                  "type": "integer",
+                  "description": "Number of members in the channel."
+                },
+                "topic": {
+                  "type": "string",
+                  "description": "The topic of the channel."
+                }
+              }
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Cursor for the next page of results."
+          }
+        }
+      }
+    },
+    {
+      "name": "conversations_history",
+      "description": "Fetch messages from a Slack channel, DM, or group DM.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "channel_id": {
+            "type": "string",
+            "description": "Channel ID or name such as \"C1234567890\" or \"#general\"."
+          },
+          "limit": {
+            "type": "string",
+            "description": "Time window or message count such as \"1d\", \"30d\", \"90d\", or \"50\"."
+          },
+          "cursor": {
+            "type": "string",
+            "description": "Pagination cursor from a previous response."
+          },
+          "include_activity_messages": {
+            "type": "boolean",
+            "description": "Include channel join/leave and other activity messages."
+          }
+        },
+        "required": [
+          "channel_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "description": "List of message objects.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "The type of message."
+                },
+                "user": {
+                  "type": "string",
+                  "description": "The unique identifier of the user who sent the message."
+                },
+                "text": {
+                  "type": "string",
+                  "description": "The text content of the message."
+                },
+                "ts": {
+                  "type": "string",
+                  "description": "The timestamp of the message."
+                },
+                "thread_ts": {
+                  "type": "string",
+                  "description": "The timestamp of the parent message if this is a reply."
+                },
+                "reactions": {
+                  "type": "array",
+                  "description": "List of reaction objects."
+                }
+              }
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Cursor for the next page of results."
+          }
+        }
+      }
+    },
+    {
+      "name": "conversations_replies",
+      "description": "Fetch replies in a Slack message thread.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "channel_id": {
+            "type": "string",
+            "description": "Channel ID or name containing the thread."
+          },
+          "thread_ts": {
+            "type": "string",
+            "description": "Timestamp of the parent message or a message in the thread."
+          },
+          "limit": {
+            "type": "string",
+            "description": "Time window or message count."
+          },
+          "cursor": {
+            "type": "string",
+            "description": "Pagination cursor from a previous response."
+          },
+          "include_activity_messages": {
+            "type": "boolean",
+            "description": "Include channel activity messages."
+          }
+        },
+        "required": [
+          "channel_id",
+          "thread_ts"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "description": "List of message objects in the thread.",
+            "items": {
+              "type": "object"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Cursor for the next page of results."
+          },
+          "thread_ts": {
+            "type": "string",
+            "description": "The timestamp of the parent message in the thread."
+          }
+        }
+      }
+    },
+    {
+      "name": "conversations_search_messages",
+      "description": "Search Slack messages across channels, DMs, and threads.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "search_query": {
+            "type": "string",
+            "description": "Text query or Slack message URL."
+          },
+          "filter_in_channel": {
+            "type": "string",
+            "description": "Channel ID or name to restrict the search."
+          },
+          "filter_users_from": {
+            "type": "string",
+            "description": "User ID or display name of message sender."
+          },
+          "filter_date_after": {
+            "type": "string",
+            "description": "Earliest message date in YYYY-MM-DD format."
+          },
+          "filter_date_before": {
+            "type": "string",
+            "description": "Latest message date in YYYY-MM-DD format."
+          },
+          "filter_threads_only": {
+            "type": "boolean",
+            "description": "Return only messages that are part of threads."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of matching messages."
+          },
+          "cursor": {
+            "type": "string",
+            "description": "Pagination cursor from a previous response."
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "description": "List of matching message objects.",
+            "items": {
+              "type": "object"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Cursor for the next page of results."
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total number of matching messages."
+          }
+        }
+      }
+    },
+    {
+      "name": "conversations_add_message",
+      "description": "Add a message to a Slack channel, DM, or thread.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "channel_id": {
+            "type": "string",
+            "description": "Channel ID or name where the message should be posted."
+          },
+          "payload": {
+            "type": "string",
+            "description": "Message content."
+          },
+          "thread_ts": {
+            "type": "string",
+            "description": "Thread timestamp for a reply."
+          },
+          "content_type": {
+            "type": "string",
+            "description": "Payload content type such as \"text/markdown\" or \"text/plain\"."
+          }
+        },
+        "required": [
+          "channel_id",
+          "payload"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "True if the message was posted successfully."
+          },
+          "channel": {
+            "type": "string",
+            "description": "The unique identifier of the channel where the message was posted."
+          },
+          "ts": {
+            "type": "string",
+            "description": "The timestamp of the posted message."
+          },
+          "message": {
+            "type": "object",
+            "description": "The full message object that was posted."
+          }
+        }
+      }
+    }
+  ]
+}

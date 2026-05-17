@@ -1,0 +1,604 @@
+{
+  "metadata": {
+    "class_name": "Calculator",
+    "metadata_path": "envs/metadata/Calculator_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-04-17T09:44:02.991678",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "Calculator",
+    "description": "A math utility server that safely evaluates mathematical expressions with built-in functions and constants.",
+    "tools": [
+      {
+        "name": "calculate",
+        "description": "Evaluate a mathematical expression and return the result with optional error feedback.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "expression": {
+              "type": "string",
+              "description": "The mathematical expression to evaluate, e.g. \"2 + 3 * 4\", \"sqrt(16)\", or \"sin(pi / 4)\"."
+            }
+          },
+          "required": [
+            "expression"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "expression": {
+              "type": "string",
+              "description": "The original mathematical expression that was evaluated."
+            },
+            "result": {
+              "type": "number",
+              "description": "The numerical result of the evaluated expression. Present only when evaluation succeeds."
+            },
+            "error": {
+              "type": "string",
+              "description": "A descriptive error message if the expression is invalid or evaluation fails. Absent when evaluation succeeds."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nimport math\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass CalculatorScenario(BaseModel):\n    \"\"\"Main scenario model for calculator state.\"\"\"\n    history: List[Dict[str, Any]] = Field(default=[], description=\"History of evaluated expressions\")\n\nScenario_Schema = [CalculatorScenario]\n\n# Section 2: Class\nclass CalculatorAPI:\n    def __init__(self):\n        \"\"\"Initialize calculator API with empty state.\"\"\"\n        self.history: List[Dict[str, Any]] = []\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = CalculatorScenario(**scenario)\n        self.history = model.history\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\"history\": self.history}\n\n    def calculate(self, expression: str) -> dict:\n        \"\"\"Evaluate a mathematical expression and return the result.\"\"\"\n        safe_globals = {k: getattr(math, k) for k in dir(math) if not k.startswith(\"_\")}\n        safe_globals[\"__builtins__\"] = {}\n        result = eval(expression, safe_globals)  # noqa: S307\n        entry = {\"expression\": expression, \"result\": result}\n        self.history.append(entry)\n        return entry\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"Calculator\")\napi = CalculatorAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the calculator API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching CalculatorScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current calculator state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef calculate(expression: str) -> dict:\n    \"\"\"\n    Evaluate a mathematical expression and return the result with optional error feedback.\n\n    Args:\n        expression (str): The mathematical expression to evaluate, e.g. \"2 + 3 * 4\", \"sqrt(16)\", or \"sin(pi / 4)\".\n\n    Returns:\n        expression (str): The original mathematical expression that was evaluated.\n        result (float): The numerical result of the evaluated expression. Present only when evaluation succeeds.\n        error (str): A descriptive error message if the expression is invalid or evaluation fails. Absent when evaluation succeeds.\n    \"\"\"\n    try:\n        if not expression or not isinstance(expression, str):\n            raise ValueError(\"Expression must be a non-empty string\")\n        return api.calculate(expression)\n    except Exception as e:\n        return {\"expression\": expression, \"error\": str(e)}\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-04-17T09:44:02.991722",
+      "revision_number": null
+    },
+    {
+      "version": 1,
+      "code": "\nimport math\nfrom pydantic import BaseModel\nfrom typing import Dict, List, Any\nfrom mcp.server.fastmcp import FastMCP\n\n\nclass CalculatorScenario(BaseModel):\n    \"\"\"Main scenario model for calculator state.\"\"\"\n    history: List[Dict[str, Any]] = []\n\nScenario_Schema = [CalculatorScenario]\n\n\nclass CalculatorAPI:\n    def __init__(self):\n        self.history: List[Dict[str, Any]] = []\n\n    def load_scenario(self, scenario: dict) -> None:\n        model = CalculatorScenario(**scenario)\n        self.history = model.history\n\n    def save_scenario(self) -> dict:\n        return {\"history\": self.history}\n\n    def calculate(self, expression: str) -> dict:\n        safe_globals = {k: getattr(math, k) for k in dir(math) if not k.startswith(\"_\")}\n        safe_globals[\"__builtins__\"] = {}\n        result = eval(expression, safe_globals)  # noqa: S307\n        entry = {\"expression\": expression, \"result\": result}\n        self.history.append(entry)\n        return entry\n\n\nmcp = FastMCP(name=\"Calculator\")\napi = CalculatorAPI()\n\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the calculator API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching CalculatorScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current calculator state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef calculate(expression: str) -> dict:\n    \"\"\"\n    Evaluate a mathematical expression and return the result with optional error feedback.\n\n    Args:\n        expression (str): The mathematical expression to evaluate, e.g. \"2 + 3 * 4\", \"sqrt(16)\", or \"sin(pi / 4)\".\n\n    Returns:\n        expression (str): The original mathematical expression that was evaluated.\n        result (float): The numerical result of the evaluated expression. Present only when evaluation succeeds.\n        error (str): A descriptive error message if the expression is invalid or evaluation fails. Absent when evaluation succeeds.\n    \"\"\"\n    try:\n        if not expression or not isinstance(expression, str):\n            raise ValueError(\"Expression must be a non-empty string\")\n        return api.calculate(expression)\n    except Exception as e:\n        return {\"expression\": expression, \"error\": str(e)}\n\n\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-04-17T09:44:02.991731",
+      "revision_number": 1
+    },
+    {
+      "version": 2,
+      "code": "\nimport math\nfrom pydantic import BaseModel\nfrom typing import Dict, List, Any\nfrom mcp.server.fastmcp import FastMCP\n\n\nclass CalculatorScenario(BaseModel):\n    \"\"\"Main scenario model for calculator state.\"\"\"\n    history: List[Dict[str, Any]] = []\n\nScenario_Schema = [CalculatorScenario]\n\n\nclass CalculatorAPI:\n    def __init__(self):\n        self.history: List[Dict[str, Any]] = []\n\n    def load_scenario(self, scenario: dict) -> None:\n        model = CalculatorScenario(**scenario)\n        self.history = model.history\n\n    def save_scenario(self) -> dict:\n        return {\"history\": self.history}\n\n    def calculate(self, expression: str) -> dict:\n        safe_globals = {k: getattr(math, k) for k in dir(math) if not k.startswith(\"_\")}\n        safe_globals[\"__builtins__\"] = {}\n        result = eval(expression, safe_globals)  # noqa: S307\n        entry = {\"expression\": expression, \"result\": result}\n        self.history.append(entry)\n        return entry\n\n\nmcp = FastMCP(name=\"Calculator\")\napi = CalculatorAPI()\n\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"Load scenario data into the calculator API.\"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"Save current calculator state as scenario dictionary.\"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef calculate(expression: str) -> dict:\n    \"\"\"\n    Evaluate a mathematical expression and return the result.\n\n    Args:\n        expression (str): The mathematical expression to evaluate, e.g. \"2 + 3 * 4\", \"sqrt(16)\", or \"sin(pi / 4)\".\n    \"\"\"\n    try:\n        if not expression or not isinstance(expression, str):\n            raise ValueError(\"Expression must be a non-empty string\")\n        return api.calculate(expression)\n    except Exception as e:\n        return {\"expression\": expression, \"error\": str(e)}\n\n\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-04-17T09:44:02.991735",
+      "revision_number": 2
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Empty history — tests calculator with no prior expressions",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "history": []
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "History with basic arithmetic expressions",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "history": [
+          {
+            "expression": "2 + 3",
+            "result": 5
+          },
+          {
+            "expression": "10 - 4",
+            "result": 6
+          },
+          {
+            "expression": "3 * 7",
+            "result": 21
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "History with mixed operations including floats, division, and nested expressions",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "history": [
+          {
+            "expression": "100 / 4",
+            "result": 25.0
+          },
+          {
+            "expression": "2 ** 10",
+            "result": 1024
+          },
+          {
+            "expression": "sqrt(144)",
+            "result": 12.0
+          },
+          {
+            "expression": "(3 + 5) * (2 - 8)",
+            "result": -48
+          },
+          {
+            "expression": "1 / 3",
+            "result": 0.3333333333333333
+          },
+          {
+            "expression": "0.1 + 0.2",
+            "result": 0.30000000000000004
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "History entry with a division-by-zero expression that should be rejected",
+      "expected_behavior": "validation_error",
+      "scenario_data": {
+        "history": [
+          {
+            "expression": "5 / 0",
+            "result": null
+          }
+        ]
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 0,
+      "failed_scenarios": 4,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014337467123654CVusYnwS)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014337467123654CVusYnwS)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014337857715155PdVwSHqO)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014337857715155PdVwSHqO)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014337871578693BjGbTCq4)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014337871578693BjGbTCq4)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014337832725377wp75QIeQ)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014337832725377wp75QIeQ)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 0,
+      "failed_scenarios": 4,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014402361015125vJQkiO2x)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014402361015125vJQkiO2x)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014402383660907wFbPSpcK)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014402383660907wFbPSpcK)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014402359024756mhmOIwOx)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014402359024756mhmOIwOx)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014402816936964UIQhlVK5)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014402816936964UIQhlVK5)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_001",
+        "scenario_002",
+        "scenario_003",
+        "scenario_004"
+      ],
+      "aggregated_errors": {
+        "total_failed": 4,
+        "scenario_ids": [
+          "scenario_001",
+          "scenario_002",
+          "scenario_003",
+          "scenario_004"
+        ],
+        "error_categories": {
+          "critical": [],
+          "high": [],
+          "medium": [],
+          "low": [
+            {
+              "scenario_id": "scenario_001",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014337467123654CVusYnwS)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014337467123654CVusYnwS)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_002",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014337857715155PdVwSHqO)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014337857715155PdVwSHqO)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014337871578693BjGbTCq4)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014337871578693BjGbTCq4)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_004",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014337832725377wp75QIeQ)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014337832725377wp75QIeQ)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            }
+          ]
+        },
+        "error_patterns": [
+          {
+            "type": "Validation Error",
+            "location": "validate_scenario",
+            "count": 4,
+            "scenario_ids": [
+              "scenario_001",
+              "scenario_002",
+              "scenario_003",
+              "scenario_004"
+            ]
+          }
+        ],
+        "severity_summary": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 4
+        }
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 0,
+        "failed_scenarios": 4,
+        "all_passed": false,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 2026041701435082624338nWikriRi)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 2026041701435082624338nWikriRi)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "simple",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014350100211009vJVOZMak)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014350100211009vJVOZMak)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "medium",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 2026041701435093619441wjzsMGKX)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 2026041701435093619441wjzsMGKX)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "complex",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014350486787814s7i8r6DU)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014350486787814s7i8r6DU)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "boundary",
+            "execution_time": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "revision_number": 2,
+      "failed_scenario_ids": [
+        "scenario_001",
+        "scenario_002",
+        "scenario_003",
+        "scenario_004"
+      ],
+      "aggregated_errors": {
+        "total_failed": 4,
+        "scenario_ids": [
+          "scenario_001",
+          "scenario_002",
+          "scenario_003",
+          "scenario_004"
+        ],
+        "error_categories": {
+          "critical": [],
+          "high": [],
+          "medium": [],
+          "low": [
+            {
+              "scenario_id": "scenario_001",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 2026041701435082624338nWikriRi)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 2026041701435082624338nWikriRi)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_002",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014350100211009vJVOZMak)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014350100211009vJVOZMak)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 2026041701435093619441wjzsMGKX)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 2026041701435093619441wjzsMGKX)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_004",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014350486787814s7i8r6DU)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014350486787814s7i8r6DU)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            }
+          ]
+        },
+        "error_patterns": [
+          {
+            "type": "Validation Error",
+            "location": "validate_scenario",
+            "count": 4,
+            "scenario_ids": [
+              "scenario_001",
+              "scenario_002",
+              "scenario_003",
+              "scenario_004"
+            ]
+          }
+        ],
+        "severity_summary": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 4
+        }
+      },
+      "revised_code_version": 2,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 0,
+        "failed_scenarios": 4,
+        "all_passed": false,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014402361015125vJQkiO2x)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014402361015125vJQkiO2x)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "simple",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014402383660907wFbPSpcK)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014402383660907wFbPSpcK)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "medium",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014402359024756mhmOIwOx)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014402359024756mhmOIwOx)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "complex",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014402816936964UIQhlVK5)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014402816936964UIQhlVK5)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "boundary",
+            "execution_time": 0.0
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 2,
+    "total_time": 0.0,
+    "success": false,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/Calculator.py"
+  }
+}

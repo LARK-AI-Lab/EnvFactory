@@ -1,0 +1,291 @@
+{
+  "class_name": "WikipediaServer",
+  "description": "Provides read-only access to Wikipedia articles, summaries, search results, and related pages via the MediaWiki REST API.",
+  "tools": [
+    {
+      "name": "search_wikipedia",
+      "description": "Search Wikipedia for pages matching a query and return a ranked list of results with excerpts and thumbnails.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The search string used to find matching Wikipedia pages."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of search results to return (default 5)."
+          },
+          "language": {
+            "type": "string",
+            "description": "The Wikipedia language code (e.g., 'en' for English) to search within."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The original search query string echoed back."
+          },
+          "results": {
+            "type": "array",
+            "description": "List of matching Wikipedia page summaries.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "The display title of the Wikipedia page."
+                },
+                "pageid": {
+                  "type": "integer",
+                  "description": "The unique numeric identifier of the Wikipedia page."
+                },
+                "excerpt": {
+                  "type": "string",
+                  "description": "A short text snippet highlighting the matched query context."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "A concise subtitle or description of the page topic."
+                },
+                "thumbnail": {
+                  "type": "object",
+                  "description": "Thumbnail image metadata (url, width, height) if available."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_article",
+      "description": "Retrieve the full Wikipedia article content, metadata, and hierarchical section breakdown for a given page title.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The exact Wikipedia page title whose full article is requested."
+          },
+          "language": {
+            "type": "string",
+            "description": "The Wikipedia language code (e.g., 'en' for English) hosting the article."
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The display title of the retrieved Wikipedia page."
+          },
+          "pageid": {
+            "type": "integer",
+            "description": "The unique numeric identifier of the Wikipedia page."
+          },
+          "summary": {
+            "type": "string",
+            "description": "A brief lead paragraph summarizing the article topic."
+          },
+          "text": {
+            "type": "string",
+            "description": "The complete article text including all sections."
+          },
+          "url": {
+            "type": "string",
+            "description": "The canonical web URL of the Wikipedia page."
+          },
+          "sections": {
+            "type": "array",
+            "description": "Hierarchical list of article sections with headings and nested subsections.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "Heading text of the section."
+                },
+                "level": {
+                  "type": "integer",
+                  "description": "Nesting depth of the section (1 for top-level)."
+                },
+                "text": {
+                  "type": "string",
+                  "description": "Full wikitext content of the section."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_summary",
+      "description": "Retrieve a concise summary extract and basic metadata for a Wikipedia article.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The exact Wikipedia page title whose summary is requested."
+          },
+          "language": {
+            "type": "string",
+            "description": "The Wikipedia language code (e.g., 'en' for English) hosting the article."
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The display title of the Wikipedia page."
+          },
+          "extract": {
+            "type": "string",
+            "description": "A concise plain-text summary of the article topic."
+          },
+          "description": {
+            "type": "string",
+            "description": "A short subtitle or description of the page topic."
+          },
+          "thumbnail": {
+            "type": "object",
+            "description": "Thumbnail image metadata (url, width, height) if available."
+          },
+          "lang": {
+            "type": "string",
+            "description": "The language code of the returned summary."
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 timestamp indicating when the summary was last updated."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_page_sections",
+      "description": "Retrieve the hierarchical section headings and corresponding text fragments of a Wikipedia article.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The exact Wikipedia page title whose section outline is requested."
+          },
+          "language": {
+            "type": "string",
+            "description": "The Wikipedia language code (e.g., 'en' for English) hosting the article."
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The display title of the Wikipedia page."
+          },
+          "sections": {
+            "type": "array",
+            "description": "Ordered list of article sections with their heading level and text content.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "Heading text of the section."
+                },
+                "level": {
+                  "type": "integer",
+                  "description": "Nesting depth of the section (1 for top-level)."
+                },
+                "text": {
+                  "type": "string",
+                  "description": "Plain-text content of the section."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_related_pages",
+      "description": "Retrieve a list of Wikipedia pages thematically related to a given article.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The exact Wikipedia page title whose related pages are requested."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of related pages to return (default 10)."
+          },
+          "language": {
+            "type": "string",
+            "description": "The Wikipedia language code (e.g., 'en' for English) hosting the article."
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The display title of the source Wikipedia page."
+          },
+          "related": {
+            "type": "array",
+            "description": "List of Wikipedia pages thematically linked to the source page.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "The display title of the related Wikipedia page."
+                },
+                "pageid": {
+                  "type": "integer",
+                  "description": "The unique numeric identifier of the related Wikipedia page."
+                },
+                "extract": {
+                  "type": "string",
+                  "description": "A brief summary extract of the related page."
+                },
+                "url": {
+                  "type": "string",
+                  "description": "The canonical web URL of the related Wikipedia page."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

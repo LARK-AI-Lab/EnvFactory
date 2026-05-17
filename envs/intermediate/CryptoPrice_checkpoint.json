@@ -1,0 +1,3714 @@
+{
+  "metadata": {
+    "class_name": "CryptoPrice",
+    "metadata_path": "envs\\metadata\\CryptoPrice_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-03T18:33:13.018252",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "CryptoPrice",
+    "description": "A cryptocurrency market data server providing real-time prices, market analysis, and historical trend analysis across multiple exchanges.",
+    "tools": [
+      {
+        "name": "get_crypto_price",
+        "description": "Get current price and 24-hour statistics for a specific cryptocurrency, optionally filtered by exchanges.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "The ticker symbol of the cryptocurrency to query (e.g., 'BTC', 'ETH', 'SOL')."
+            },
+            "exchanges": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Optional list of exchange names to retrieve prices from (e.g., ['binance', 'coinbase', 'kraken']). If omitted, aggregated data is returned."
+            }
+          },
+          "required": [
+            "symbol"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "price_usd": {
+              "type": "number",
+              "description": "The current price of the cryptocurrency in US dollars."
+            },
+            "change_24h_percent": {
+              "type": "number",
+              "description": "The percentage change in price over the last 24 hours."
+            },
+            "volume_24h": {
+              "type": "number",
+              "description": "The total trading volume in the last 24 hours, measured in USD."
+            },
+            "market_cap": {
+              "type": "number",
+              "description": "The total market capitalization of the cryptocurrency in USD."
+            },
+            "market_rank": {
+              "type": "integer",
+              "description": "The cryptocurrency's rank by market capitalization."
+            },
+            "exchanges_prices": {
+              "type": "object",
+              "description": "Price and volume data from specific exchanges, keyed by exchange name. Each entry contains 'price' (current price on that exchange) and 'volume' (24h volume on that exchange)."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_market_analysis",
+        "description": "Provide detailed market analysis for a cryptocurrency including exchange comparisons, volume distribution, and volume-weighted average price.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "The ticker symbol of the cryptocurrency to query (e.g., 'BTC', 'ETH', 'SOL')."
+            },
+            "exchanges": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Optional list of exchange names to retrieve prices from (e.g., ['binance', 'coinbase', 'kraken']). If omitted, aggregated data is returned."
+            }
+          },
+          "required": [
+            "symbol"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "top_exchanges": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "description": "The top 5 exchanges ranked by trading volume for this cryptocurrency, including exchange name, price, and volume details."
+            },
+            "price_variations": {
+              "type": "object",
+              "description": "Price variation metrics across different exchanges, including spread and arbitrage opportunities."
+            },
+            "volume_distribution": {
+              "type": "object",
+              "description": "Analysis of trading volume distribution across exchanges and trading pairs."
+            },
+            "vwap": {
+              "type": "number",
+              "description": "The Volume Weighted Average Price, calculated across all considered exchanges."
+            },
+            "exchanges_prices": {
+              "type": "object",
+              "description": "Price and volume data from specific exchanges, keyed by exchange name. Each entry contains 'price' (current price on that exchange) and 'volume' (24h volume on that exchange)."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_historical_analysis",
+        "description": "Analyze historical price data, trends, and volatility metrics for a cryptocurrency over a specified time period.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "The ticker symbol of the cryptocurrency to query (e.g., 'BTC', 'ETH', 'SOL')."
+            },
+            "interval": {
+              "type": "string",
+              "enum": [
+                "5m",
+                "15m",
+                "30m",
+                "1h",
+                "4h",
+                "1d"
+              ],
+              "description": "The time interval between data points for historical analysis. Options: '5m', '15m', '30m', '1h', '4h', '1d'. Default is '1d'."
+            },
+            "days": {
+              "type": "integer",
+              "description": "The number of days of historical data to analyze, with a maximum of 30 days. Default is 7 days."
+            }
+          },
+          "required": [
+            "symbol"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "price_trends": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "A time series of historical prices at the specified interval, ordered chronologically."
+            },
+            "volatility_metrics": {
+              "type": "object",
+              "description": "Volatility analysis including standard deviation, average true range, and other risk indicators."
+            },
+            "high_price": {
+              "type": "number",
+              "description": "The highest price reached during the analyzed time period, in USD."
+            },
+            "low_price": {
+              "type": "number",
+              "description": "The lowest price reached during the analyzed time period, in USD."
+            },
+            "analysis_summary": {
+              "type": "string",
+              "description": "A human-readable summary of the historical analysis, including trend direction and key observations."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Union, Any\nfrom mcp.server.fastmcp import FastMCP\nimport random\n\n# Section 1: Schema\nclass ExchangePriceData(BaseModel):\n    \"\"\"Represents price and volume data for an exchange.\"\"\"\n    price: float = Field(..., ge=0, description=\"Current price on exchange\")\n    volume: float = Field(..., ge=0, description=\"24h volume on exchange\")\n\nclass CryptoData(BaseModel):\n    \"\"\"Represents current cryptocurrency data.\"\"\"\n    price_usd: float = Field(..., ge=0, description=\"Current price in USD\")\n    change_24h_percent: float = Field(..., description=\"24h price change percentage\")\n    volume_24h: float = Field(..., ge=0, description=\"24h trading volume in USD\")\n    market_cap: float = Field(..., ge=0, description=\"Market capitalization in USD\")\n    market_rank: int = Field(..., ge=1, description=\"Market cap rank\")\n\nclass MarketAnalysis(BaseModel):\n    \"\"\"Represents market analysis data.\"\"\"\n    top_exchanges: List[Dict[str, Any]] = Field(default=[], description=\"Top 5 exchanges by volume\")\n    price_variations: Dict[str, Any] = Field(default={}, description=\"Price variation metrics\")\n    volume_distribution: Dict[str, Any] = Field(default={}, description=\"Volume distribution analysis\")\n    vwap: float = Field(..., ge=0, description=\"Volume weighted average price\")\n\nclass HistoricalData(BaseModel):\n    \"\"\"Represents historical price analysis.\"\"\"\n    price_trends: List[float] = Field(default=[], description=\"Historical price time series\")\n    volatility_metrics: Dict[str, Any] = Field(default={}, description=\"Volatility analysis\")\n    high_price: float = Field(..., ge=0, description=\"Highest price in period\")\n    low_price: float = Field(..., ge=0, description=\"Lowest price in period\")\n    analysis_summary: str = Field(..., description=\"Human-readable analysis summary\")\n\nclass CryptoScenario(BaseModel):\n    \"\"\"Main scenario model for cryptocurrency market data.\"\"\"\n    crypto_prices: Dict[str, CryptoData] = Field(default={}, description=\"Current crypto prices\")\n    exchange_data: Dict[str, Dict[str, ExchangePriceData]] = Field(default={}, description=\"Exchange-specific data\")\n    market_analyses: Dict[str, MarketAnalysis] = Field(default={}, description=\"Market analyses\")\n    historical_data: Dict[str, Dict[str, HistoricalData]] = Field(default={}, description=\"Historical price data\")\n    supported_symbols: List[str] = Field(default=[\"BTC\", \"ETH\", \"SOL\", \"ADA\", \"DOT\", \"LINK\", \"UNI\", \"AVAX\", \"MATIC\", \"LTC\"], description=\"Supported cryptocurrency symbols\")\n    supported_exchanges: List[str] = Field(default=[\"binance\", \"coinbase\", \"kraken\", \"bitfinex\", \"huobi\", \"okex\", \"kucoin\", \"gateio\", \"bybit\", \"mexc\"], description=\"Supported exchanges\")\n    random_seed: Optional[int] = Field(default=None, description=\"Random seed for reproducible results\")\n\nScenario_Schema = [ExchangePriceData, CryptoData, MarketAnalysis, HistoricalData, CryptoScenario]\n\n# Section 2: Class\nclass CryptoPriceAPI:\n    def __init__(self):\n        \"\"\"Initialize crypto price API with empty state.\"\"\"\n        self.crypto_prices: Dict[str, CryptoData] = {}\n        self.exchange_data: Dict[str, Dict[str, ExchangePriceData]] = {}\n        self.market_analyses: Dict[str, MarketAnalysis] = {}\n        self.historical_data: Dict[str, Dict[str, HistoricalData]] = {}\n        self.supported_symbols: List[str] = []\n        self.supported_exchanges: List[str] = []\n        self.random_seed: Optional[int] = None\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = CryptoScenario(**scenario)\n        self.crypto_prices = model.crypto_prices\n        self.exchange_data = model.exchange_data\n        self.market_analyses = model.market_analyses\n        self.historical_data = model.historical_data\n        self.supported_symbols = model.supported_symbols\n        self.supported_exchanges = model.supported_exchanges\n        self.random_seed = model.random_seed\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"crypto_prices\": {k: v.dict() for k, v in self.crypto_prices.items()},\n            \"exchange_data\": {\n                symbol: {ex: data.dict() for ex, data in exchanges.items()}\n                for symbol, exchanges in self.exchange_data.items()\n            },\n            \"market_analyses\": {k: v.dict() for k, v in self.market_analyses.items()},\n            \"historical_data\": {\n                symbol: {interval: data.dict() for interval, data in intervals.items()}\n                for symbol, intervals in self.historical_data.items()\n            },\n            \"supported_symbols\": self.supported_symbols,\n            \"supported_exchanges\": self.supported_exchanges,\n            \"random_seed\": self.random_seed\n        }\n\n    def get_crypto_price(self, symbol: str, exchanges: Optional[List[str]] = None) -> dict:\n        \"\"\"Get current price and 24-hour statistics for a cryptocurrency.\"\"\"\n        if self.random_seed is not None:\n            random.seed(self.random_seed)\n            \n        if symbol not in self.crypto_prices:\n            # Generate mock data based on symbol\n            base_price = {\"BTC\": 45000, \"ETH\": 3000, \"SOL\": 100, \"ADA\": 0.5, \"DOT\": 10,\n                         \"LINK\": 15, \"UNI\": 20, \"AVAX\": 50, \"MATIC\": 1, \"LTC\": 80}.get(symbol, random.randint(10, 1000))\n            \n            self.crypto_prices[symbol] = CryptoData(\n                price_usd=base_price * (1 + random.uniform(-0.1, 0.1)),\n                change_24h_percent=random.uniform(-15, 15),\n                volume_24h=random.randint(100000000, 5000000000),\n                market_cap=random.randint(1000000000, 1000000000000),\n                market_rank=random.randint(1, 100)\n            )\n        \n        crypto_data = self.crypto_prices[symbol]\n        result = {\n            \"price_usd\": crypto_data.price_usd,\n            \"change_24h_percent\": crypto_data.change_24h_percent,\n            \"volume_24h\": crypto_data.volume_24h,\n            \"market_cap\": crypto_data.market_cap,\n            \"market_rank\": crypto_data.market_rank,\n            \"exchanges_prices\": {}\n        }\n        \n        # Add exchange-specific data if requested\n        if exchanges:\n            for exchange in exchanges:\n                if exchange in self.supported_exchanges:\n                    if symbol not in self.exchange_data:\n                        self.exchange_data[symbol] = {}\n                    if exchange not in self.exchange_data[symbol]:\n                        self.exchange_data[symbol][exchange] = ExchangePriceData(\n                            price=crypto_data.price_usd * (1 + random.uniform(-0.02, 0.02)),\n                            volume=crypto_data.volume_24h * random.uniform(0.05, 0.3)\n                        )\n                    exchange_data = self.exchange_data[symbol][exchange]\n                    result[\"exchanges_prices\"][exchange] = {\n                        \"price\": exchange_data.price,\n                        \"volume\": exchange_data.volume\n                    }\n        \n        return result\n\n    def get_market_analysis(self, symbol: str, exchanges: Optional[List[str]] = None) -> dict:\n        \"\"\"Provide detailed market analysis for a cryptocurrency.\"\"\"\n        if self.random_seed is not None:\n            random.seed(self.random_seed)\n            \n        if symbol not in self.market_analyses:\n            # Generate top exchanges\n            top_exchanges = []\n            for i, exchange in enumerate(random.sample(self.supported_exchanges, 5)):\n                volume = random.randint(50000000, 500000000)\n                price = self.crypto_prices.get(symbol, CryptoData(\n                    price_usd=random.randint(100, 10000),\n                    change_24h_percent=0,\n                    volume_24h=0,\n                    market_cap=0,\n                    market_rank=0\n                )).price_usd * (1 + random.uniform(-0.05, 0.05))\n                top_exchanges.append({\n                    \"rank\": i + 1,\n                    \"exchange\": exchange,\n                    \"price\": price,\n                    \"volume\": volume,\n                    \"market_share\": random.uniform(5, 25)\n                })\n            \n            # Calculate VWAP\n            total_volume = sum(ex[\"volume\"] for ex in top_exchanges)\n            vwap = sum(ex[\"price\"] * ex[\"volume\"] for ex in top_exchanges) / total_volume if total_volume > 0 else 0\n            \n            self.market_analyses[symbol] = MarketAnalysis(\n                top_exchanges=top_exchanges,\n                price_variations={\n                    \"spread\": random.uniform(0.1, 2.0),\n                    \"arbitrage_opportunities\": random.randint(1, 5),\n                    \"price_std_dev\": random.uniform(0.5, 5.0)\n                },\n                volume_distribution={\n                    \"total_volume\": total_volume,\n                    \"exchange_count\": len(self.supported_exchanges),\n                    \"concentration_ratio\": random.uniform(0.3, 0.8)\n                },\n                vwap=vwap\n            )\n        \n        analysis = self.market_analyses[symbol]\n        result = {\n            \"top_exchanges\": analysis.top_exchanges,\n            \"price_variations\": analysis.price_variations,\n            \"volume_distribution\": analysis.volume_distribution,\n            \"vwap\": analysis.vwap,\n            \"exchanges_prices\": {}\n        }\n        \n        # Add exchange-specific data if requested\n        if exchanges:\n            for exchange in exchanges:\n                if exchange in self.supported_exchanges:\n                    if symbol not in self.exchange_data:\n                        self.exchange_data[symbol] = {}\n                    if exchange not in self.exchange_data[symbol]:\n                        base_price = self.crypto_prices.get(symbol, CryptoData(\n                            price_usd=random.randint(100, 10000),\n                            change_24h_percent=0,\n                            volume_24h=0,\n                            market_cap=0,\n                            market_rank=0\n                        )).price_usd\n                        self.exchange_data[symbol][exchange] = ExchangePriceData(\n                            price=base_price * (1 + random.uniform(-0.02, 0.02)),\n                            volume=random.randint(10000000, 200000000)\n                        )\n                    exchange_data = self.exchange_data[symbol][exchange]\n                    result[\"exchanges_prices\"][exchange] = {\n                        \"price\": exchange_data.price,\n                        \"volume\": exchange_data.volume\n                    }\n        \n        return result\n\n    def get_historical_analysis(self, symbol: str, interval: str = \"1d\", days: int = 7) -> dict:\n        \"\"\"Analyze historical price data, trends, and volatility metrics.\"\"\"\n        if self.random_seed is not None:\n            random.seed(self.random_seed)\n            \n        if symbol not in self.historical_data:\n            self.historical_data[symbol] = {}\n        \n        if interval not in self.historical_data[symbol]:\n            # Generate historical price trends\n            current_price = self.crypto_prices.get(symbol, CryptoData(\n                price_usd=random.randint(100, 10000),\n                change_24h_percent=0,\n                volume_24h=0,\n                market_cap=0,\n                market_rank=0\n            )).price_usd\n            \n            price_trends = []\n            for i in range(days):\n                if i == 0:\n                    price = current_price\n                else:\n                    price = price * (1 + random.uniform(-0.05, 0.05))\n                price_trends.append(price)\n            \n            high_price = max(price_trends)\n            low_price = min(price_trends)\n            \n            # Calculate volatility metrics\n            returns = [(price_trends[i] - price_trends[i-1]) / price_trends[i-1] * 100 \n                      for i in range(1, len(price_trends))]\n            volatility = (sum(r**2 for r in returns) / len(returns))**0.5 if returns else 0\n            \n            # Determine trend\n            if price_trends[-1] > price_trends[0]:\n                trend = \"bullish\"\n            elif price_trends[-1] < price_trends[0]:\n                trend = \"bearish\"\n            else:\n                trend = \"neutral\"\n            \n            self.historical_data[symbol][interval] = HistoricalData(\n                price_trends=price_trends,\n                volatility_metrics={\n                    \"standard_deviation\": volatility,\n                    \"average_true_range\": random.uniform(0.5, 5.0),\n                    \"sharpe_ratio\": random.uniform(-2, 2),\n                    \"max_drawdown\": random.uniform(5, 30)\n                },\n                high_price=high_price,\n                low_price=low_price,\n                analysis_summary=f\"Historical analysis shows {trend} trend over {days} days with {volatility:.2f}% volatility. Price ranged from ${low_price:.2f} to ${high_price:.2f}.\"\n            )\n        \n        historical = self.historical_data[symbol][interval]\n        return {\n            \"price_trends\": historical.price_trends,\n            \"volatility_metrics\": historical.volatility_metrics,\n            \"high_price\": historical.high_price,\n            \"low_price\": historical.low_price,\n            \"analysis_summary\": historical.analysis_summary\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"CryptoPrice\")\napi = CryptoPriceAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the crypto price API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching CryptoScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current crypto state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_crypto_price(symbol: str, exchanges: Optional[List[str]] = None) -> dict:\n    \"\"\"\n    Get current price and 24-hour statistics for a specific cryptocurrency.\n    \n    Args:\n        symbol (str): The ticker symbol of the cryptocurrency to query.\n        exchanges (list): [Optional] List of exchange names to retrieve prices from.\n    \n    Returns:\n        price_usd (float): Current price in USD.\n        change_24h_percent (float): 24h price change percentage.\n        volume_24h (float): 24h trading volume in USD.\n        market_cap (float): Market capitalization in USD.\n        market_rank (int): Market cap rank.\n        exchanges_prices (dict): Exchange-specific price and volume data.\n    \"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        if exchanges and not isinstance(exchanges, list):\n            raise ValueError(\"Exchanges must be a list\")\n        return api.get_crypto_price(symbol, exchanges)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_market_analysis(symbol: str, exchanges: Optional[List[str]] = None) -> dict:\n    \"\"\"\n    Provide detailed market analysis for a cryptocurrency.\n    \n    Args:\n        symbol (str): The ticker symbol of the cryptocurrency to query.\n        exchanges (list): [Optional] List of exchange names to analyze.\n    \n    Returns:\n        top_exchanges (list): Top 5 exchanges by volume.\n        price_variations (dict): Price variation metrics.\n        volume_distribution (dict): Volume distribution analysis.\n        vwap (float): Volume weighted average price.\n        exchanges_prices (dict): Exchange-specific price and volume data.\n    \"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        if exchanges and not isinstance(exchanges, list):\n            raise ValueError(\"Exchanges must be a list\")\n        return api.get_market_analysis(symbol, exchanges)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_historical_analysis(symbol: str, interval: str = \"1d\", days: int = 7) -> dict:\n    \"\"\"\n    Analyze historical price data, trends, and volatility metrics.\n    \n    Args:\n        symbol (str): The ticker symbol of the cryptocurrency to query.\n        interval (str): [Optional] Time interval between data points. Default '1d'.\n        days (int): [Optional] Number of days of data. Default 7.\n    \n    Returns:\n        price_trends (list): Historical price time series.\n        volatility_metrics (dict): Volatility analysis.\n        high_price (float): Highest price in period.\n        low_price (float): Lowest price in period.\n        analysis_summary (str): Human-readable analysis summary.\n    \"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        if not isinstance(interval, str):\n            raise ValueError(\"Interval must be a string\")\n        if not isinstance(days, int) or days <= 0 or days > 30:\n            raise ValueError(\"Days must be an integer between 1 and 30\")\n        if interval not in [\"5m\", \"15m\", \"30m\", \"1h\", \"4h\", \"1d\"]:\n            raise ValueError(\"Interval must be one of: 5m, 15m, 30m, 1h, 4h, 1d\")\n        return api.get_historical_analysis(symbol, interval, days)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-03T18:33:13.018252",
+      "revision_number": null
+    },
+    {
+      "version": 1,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Union, Any\nfrom mcp.server.fastmcp import FastMCP\nimport random\n\n# Section 1: Schema\nclass ExchangePriceData(BaseModel):\n    \"\"\"Represents price and volume data for an exchange.\"\"\"\n    price: float = Field(..., ge=0, description=\"Current price on exchange\")\n    volume: float = Field(..., ge=0, description=\"24h volume on exchange\")\n\nclass CryptoData(BaseModel):\n    \"\"\"Represents current cryptocurrency data.\"\"\"\n    price_usd: float = Field(..., ge=0, description=\"Current price in USD\")\n    change_24h_percent: float = Field(..., description=\"24h price change percentage\")\n    volume_24h: float = Field(..., ge=0, description=\"24h trading volume in USD\")\n    market_cap: float = Field(..., ge=0, description=\"Market capitalization in USD\")\n    market_rank: int = Field(..., ge=1, description=\"Market cap rank\")\n\nclass MarketAnalysis(BaseModel):\n    \"\"\"Represents market analysis data.\"\"\"\n    top_exchanges: List[Dict[str, Any]] = Field(default=[], description=\"Top 5 exchanges by volume\")\n    price_variations: Dict[str, Any] = Field(default={}, description=\"Price variation metrics\")\n    volume_distribution: Dict[str, Any] = Field(default={}, description=\"Volume distribution analysis\")\n    vwap: float = Field(..., ge=0, description=\"Volume weighted average price\")\n\nclass HistoricalData(BaseModel):\n    \"\"\"Represents historical price analysis.\"\"\"\n    price_trends: List[float] = Field(default=[], description=\"Historical price time series\")\n    volatility_metrics: Dict[str, Any] = Field(default={}, description=\"Volatility analysis\")\n    high_price: float = Field(..., ge=0, description=\"Highest price in period\")\n    low_price: float = Field(..., ge=0, description=\"Lowest price in period\")\n    analysis_summary: str = Field(..., description=\"Human-readable analysis summary\")\n\nclass CryptoScenario(BaseModel):\n    \"\"\"Main scenario model for cryptocurrency market data.\"\"\"\n    crypto_prices: Dict[str, CryptoData] = Field(default={}, description=\"Current crypto prices\")\n    exchange_data: Dict[str, Dict[str, ExchangePriceData]] = Field(default={}, description=\"Exchange-specific data\")\n    market_analyses: Dict[str, MarketAnalysis] = Field(default={}, description=\"Market analyses\")\n    historical_data: Dict[str, Dict[str, HistoricalData]] = Field(default={}, description=\"Historical price data\")\n    supported_symbols: List[str] = Field(default=[\"BTC\", \"ETH\", \"SOL\", \"ADA\", \"DOT\", \"LINK\", \"UNI\", \"AVAX\", \"MATIC\", \"LTC\"], description=\"Supported cryptocurrency symbols\")\n    supported_exchanges: List[str] = Field(default=[\"binance\", \"coinbase\", \"kraken\", \"bitfinex\", \"huobi\", \"okex\", \"kucoin\", \"gateio\", \"bybit\", \"mexc\"], description=\"Supported exchanges\")\n    random_seed: Optional[int] = Field(default=None, description=\"Random seed for reproducible results\")\n\nScenario_Schema = [ExchangePriceData, CryptoData, MarketAnalysis, HistoricalData, CryptoScenario]\n\n# Section 2: Class\nclass CryptoPriceAPI:\n    def __init__(self):\n        \"\"\"Initialize crypto price API with empty state.\"\"\"\n        self.crypto_prices: Dict[str, CryptoData] = {}\n        self.exchange_data: Dict[str, Dict[str, ExchangePriceData]] = {}\n        self.market_analyses: Dict[str, MarketAnalysis] = {}\n        self.historical_data: Dict[str, Dict[str, HistoricalData]] = {}\n        self.supported_symbols: List[str] = []\n        self.supported_exchanges: List[str] = []\n        self.random_seed: Optional[int] = None\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = CryptoScenario(**scenario)\n        self.crypto_prices = model.crypto_prices\n        self.exchange_data = model.exchange_data\n        self.market_analyses = model.market_analyses\n        self.historical_data = model.historical_data\n        self.supported_symbols = model.supported_symbols\n        self.supported_exchanges = model.supported_exchanges\n        self.random_seed = model.random_seed\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"crypto_prices\": {k: v.dict() for k, v in self.crypto_prices.items()},\n            \"exchange_data\": {\n                symbol: {ex: data.dict() for ex, data in exchanges.items()}\n                for symbol, exchanges in self.exchange_data.items()\n            },\n            \"market_analyses\": {k: v.dict() for k, v in self.market_analyses.items()},\n            \"historical_data\": {\n                symbol: {interval: data.dict() for interval, data in intervals.items()}\n                for symbol, intervals in self.historical_data.items()\n            },\n            \"supported_symbols\": self.supported_symbols,\n            \"supported_exchanges\": self.supported_exchanges,\n            \"random_seed\": self.random_seed\n        }\n\n    def get_crypto_price(self, symbol: str, exchanges: Optional[List[str]] = None) -> dict:\n        \"\"\"Get current price and 24-hour statistics for a cryptocurrency.\"\"\"\n        if self.random_seed is not None:\n            random.seed(self.random_seed)\n            \n        # Validate symbol is supported\n        if symbol not in self.supported_symbols:\n            raise ValueError(f\"Symbol '{symbol}' is not supported. Supported symbols: {self.supported_symbols}\")\n            \n        if symbol not in self.crypto_prices:\n            # Generate mock data based on symbol\n            base_price = {\"BTC\": 45000, \"ETH\": 3000, \"SOL\": 100, \"ADA\": 0.5, \"DOT\": 10,\n                         \"LINK\": 15, \"UNI\": 20, \"AVAX\": 50, \"MATIC\": 1, \"LTC\": 80}.get(symbol, random.randint(10, 1000))\n            \n            self.crypto_prices[symbol] = CryptoData(\n                price_usd=base_price * (1 + random.uniform(-0.1, 0.1)),\n                change_24h_percent=random.uniform(-15, 15),\n                volume_24h=random.randint(100000000, 5000000000),\n                market_cap=random.randint(1000000000, 1000000000000),\n                market_rank=random.randint(1, 100)\n            )\n        \n        crypto_data = self.crypto_prices[symbol]\n        result = {\n            \"price_usd\": crypto_data.price_usd,\n            \"change_24h_percent\": crypto_data.change_24h_percent,\n            \"volume_24h\": crypto_data.volume_24h,\n            \"market_cap\": crypto_data.market_cap,\n            \"market_rank\": crypto_data.market_rank,\n            \"exchanges_prices\": {}\n        }\n        \n        # Add exchange-specific data if requested\n        if exchanges:\n            for exchange in exchanges:\n                if exchange in self.supported_exchanges:\n                    if symbol not in self.exchange_data:\n                        self.exchange_data[symbol] = {}\n                    if exchange not in self.exchange_data[symbol]:\n                        self.exchange_data[symbol][exchange] = ExchangePriceData(\n                            price=crypto_data.price_usd * (1 + random.uniform(-0.02, 0.02)),\n                            volume=crypto_data.volume_24h * random.uniform(0.05, 0.3)\n                        )\n                    exchange_data = self.exchange_data[symbol][exchange]\n                    result[\"exchanges_prices\"][exchange] = {\n                        \"price\": exchange_data.price,\n                        \"volume\": exchange_data.volume\n                    }\n        \n        return result\n\n    def get_market_analysis(self, symbol: str, exchanges: Optional[List[str]] = None) -> dict:\n        \"\"\"Provide detailed market analysis for a cryptocurrency.\"\"\"\n        if self.random_seed is not None:\n            random.seed(self.random_seed)\n            \n        # Validate symbol is supported\n        if symbol not in self.supported_symbols:\n            raise ValueError(f\"Symbol '{symbol}' is not supported. Supported symbols: {self.supported_symbols}\")\n            \n        if symbol not in self.market_analyses:\n            # Ensure we have crypto data for this symbol first\n            if symbol not in self.crypto_prices:\n                self.get_crypto_price(symbol)\n                \n            # Generate top exchanges - ensure we don't sample more than available\n            available_exchanges = self.supported_exchanges.copy()\n            if exchanges:\n                available_exchanges = [ex for ex in exchanges if ex in self.supported_exchanges]\n            \n            num_exchanges_to_sample = min(5, len(available_exchanges))\n            if num_exchanges_to_sample == 0:\n                # Use default exchanges if filtered list is empty\n                available_exchanges = self.supported_exchanges[:5]\n                num_exchanges_to_sample = min(5, len(available_exchanges))\n            \n            selected_exchanges = random.sample(available_exchanges, num_exchanges_to_sample)\n            \n            top_exchanges = []\n            for i, exchange in enumerate(selected_exchanges):\n                volume = random.randint(50000000, 500000000)\n                base_price = self.crypto_prices[symbol].price_usd\n                price = base_price * (1 + random.uniform(-0.05, 0.05))\n                top_exchanges.append({\n                    \"rank\": i + 1,\n                    \"exchange\": exchange,\n                    \"price\": price,\n                    \"volume\": volume,\n                    \"market_share\": random.uniform(5, 25)\n                })\n            \n            # Calculate VWAP\n            total_volume = sum(ex[\"volume\"] for ex in top_exchanges)\n            vwap = sum(ex[\"price\"] * ex[\"volume\"] for ex in top_exchanges) / total_volume if total_volume > 0 else 0\n            \n            self.market_analyses[symbol] = MarketAnalysis(\n                top_exchanges=top_exchanges,\n                price_variations={\n                    \"spread\": random.uniform(0.1, 2.0),\n                    \"arbitrage_opportunities\": random.randint(1, 5),\n                    \"price_std_dev\": random.uniform(0.5, 5.0)\n                },\n                volume_distribution={\n                    \"total_volume\": total_volume,\n                    \"exchange_count\": len(self.supported_exchanges),\n                    \"concentration_ratio\": random.uniform(0.3, 0.8)\n                },\n                vwap=vwap\n            )\n        \n        analysis = self.market_analyses[symbol]\n        result = {\n            \"top_exchanges\": analysis.top_exchanges,\n            \"price_variations\": analysis.price_variations,\n            \"volume_distribution\": analysis.volume_distribution,\n            \"vwap\": analysis.vwap,\n            \"exchanges_prices\": {}\n        }\n        \n        # Add exchange-specific data if requested\n        if exchanges:\n            for exchange in exchanges:\n                if exchange in self.supported_exchanges:\n                    if symbol not in self.exchange_data:\n                        self.exchange_data[symbol] = {}\n                    if exchange not in self.exchange_data[symbol]:\n                        base_price = self.crypto_prices[symbol].price_usd\n                        self.exchange_data[symbol][exchange] = ExchangePriceData(\n                            price=base_price * (1 + random.uniform(-0.02, 0.02)),\n                            volume=random.randint(10000000, 200000000)\n                        )\n                    exchange_data = self.exchange_data[symbol][exchange]\n                    result[\"exchanges_prices\"][exchange] = {\n                        \"price\": exchange_data.price,\n                        \"volume\": exchange_data.volume\n                    }\n        \n        return result\n\n    def get_historical_analysis(self, symbol: str, interval: str = \"1d\", days: int = 7) -> dict:\n        \"\"\"Analyze historical price data, trends, and volatility metrics.\"\"\"\n        if self.random_seed is not None:\n            random.seed(self.random_seed)\n            \n        # Validate symbol is supported\n        if symbol not in self.supported_symbols:\n            raise ValueError(f\"Symbol '{symbol}' is not supported. Supported symbols: {self.supported_symbols}\")\n            \n        if symbol not in self.historical_data:\n            self.historical_data[symbol] = {}\n        \n        if interval not in self.historical_data[symbol]:\n            # Ensure we have crypto data for this symbol first\n            if symbol not in self.crypto_prices:\n                self.get_crypto_price(symbol)\n                \n            # Generate historical price trends\n            current_price = self.crypto_prices[symbol].price_usd\n            \n            price_trends = []\n            for i in range(days):\n                if i == 0:\n                    price = current_price\n                else:\n                    price = price * (1 + random.uniform(-0.05, 0.05))\n                price_trends.append(price)\n            \n            high_price = max(price_trends)\n            low_price = min(price_trends)\n            \n            # Calculate volatility metrics\n            returns = [(price_trends[i] - price_trends[i-1]) / price_trends[i-1] * 100 \n                      for i in range(1, len(price_trends))]\n            volatility = (sum(r**2 for r in returns) / len(returns))**0.5 if returns else 0\n            \n            # Determine trend\n            if price_trends[-1] > price_trends[0]:\n                trend = \"bullish\"\n            elif price_trends[-1] < price_trends[0]:\n                trend = \"bearish\"\n            else:\n                trend = \"neutral\"\n            \n            self.historical_data[symbol][interval] = HistoricalData(\n                price_trends=price_trends,\n                volatility_metrics={\n                    \"standard_deviation\": volatility,\n                    \"average_true_range\": random.uniform(0.5, 5.0),\n                    \"sharpe_ratio\": random.uniform(-2, 2),\n                    \"max_drawdown\": random.uniform(5, 30)\n                },\n                high_price=high_price,\n                low_price=low_price,\n                analysis_summary=f\"Historical analysis shows {trend} trend over {days} days with {volatility:.2f}% volatility. Price ranged from ${low_price:.2f} to ${high_price:.2f}.\"\n            )\n        \n        historical = self.historical_data[symbol][interval]\n        return {\n            \"price_trends\": historical.price_trends,\n            \"volatility_metrics\": historical.volatility_metrics,\n            \"high_price\": historical.high_price,\n            \"low_price\": historical.low_price,\n            \"analysis_summary\": historical.analysis_summary\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"CryptoPrice\")\napi = CryptoPriceAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the crypto price API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching CryptoScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current crypto state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_crypto_price(symbol: str, exchanges: Optional[List[str]] = None) -> dict:\n    \"\"\"\n    Get current price and 24-hour statistics for a specific cryptocurrency.\n    \n    Args:\n        symbol (str): The ticker symbol of the cryptocurrency to query.\n        exchanges (list): [Optional] List of exchange names to retrieve prices from.\n    \n    Returns:\n        price_usd (float): Current price in USD.\n        change_24h_percent (float): 24h price change percentage.\n        volume_24h (float): 24h trading volume in USD.\n        market_cap (float): Market capitalization in USD.\n        market_rank (int): Market cap rank.\n        exchanges_prices (dict): Exchange-specific price and volume data.\n    \"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        if exchanges and not isinstance(exchanges, list):\n            raise ValueError(\"Exchanges must be a list\")\n        return api.get_crypto_price(symbol, exchanges)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_market_analysis(symbol: str, exchanges: Optional[List[str]] = None) -> dict:\n    \"\"\"\n    Provide detailed market analysis for a cryptocurrency.\n    \n    Args:\n        symbol (str): The ticker symbol of the cryptocurrency to query.\n        exchanges (list): [Optional] List of exchange names to analyze.\n    \n    Returns:\n        top_exchanges (list): Top 5 exchanges by volume.\n        price_variations (dict): Price variation metrics.\n        volume_distribution (dict): Volume distribution analysis.\n        vwap (float): Volume weighted average price.\n        exchanges_prices (dict): Exchange-specific price and volume data.\n    \"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        if exchanges and not isinstance(exchanges, list):\n            raise ValueError(\"Exchanges must be a list\")\n        return api.get_market_analysis(symbol, exchanges)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_historical_analysis(symbol: str, interval: str = \"1d\", days: int = 7) -> dict:\n    \"\"\"\n    Analyze historical price data, trends, and volatility metrics.\n    \n    Args:\n        symbol (str): The ticker symbol of the cryptocurrency to query.\n        interval (str): [Optional] Time interval between data points. Default '1d'.\n        days (int): [Optional] Number of days of data. Default 7.\n    \n    Returns:\n        price_trends (list): Historical price time series.\n        volatility_metrics (dict): Volatility analysis.\n        high_price (float): Highest price in period.\n        low_price (float): Lowest price in period.\n        analysis_summary (str): Human-readable analysis summary.\n    \"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        if not isinstance(interval, str):\n            raise ValueError(\"Interval must be a string\")\n        if not isinstance(days, int) or days <= 0 or days > 30:\n            raise ValueError(\"Days must be an integer between 1 and 30\")\n        if interval not in [\"5m\", \"15m\", \"30m\", \"1h\", \"4h\", \"1d\"]:\n            raise ValueError(\"Interval must be one of: 5m, 15m, 30m, 1h, 4h, 1d\")\n        return api.get_historical_analysis(symbol, interval, days)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-03T18:33:13.018252",
+      "revision_number": 1
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with single cryptocurrency (BTC) and minimal data",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "crypto_prices": {
+          "BTC": {
+            "price_usd": 45000.0,
+            "change_24h_percent": 2.5,
+            "volume_24h": 25000000000.0,
+            "market_cap": 880000000000.0,
+            "market_rank": 1
+          }
+        },
+        "exchange_data": {
+          "BTC": {
+            "binance": {
+              "price": 45010.0,
+              "volume": 8000000000.0
+            },
+            "coinbase": {
+              "price": 44995.0,
+              "volume": 5000000000.0
+            }
+          }
+        },
+        "market_analyses": {},
+        "historical_data": {},
+        "supported_symbols": [
+          "BTC",
+          "ETH",
+          "SOL"
+        ],
+        "supported_exchanges": [
+          "binance",
+          "coinbase",
+          "kraken"
+        ],
+        "random_seed": 42
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple cryptocurrencies with exchange data and market analysis",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "crypto_prices": {
+          "BTC": {
+            "price_usd": 43500.0,
+            "change_24h_percent": -1.8,
+            "volume_24h": 28000000000.0,
+            "market_cap": 850000000000.0,
+            "market_rank": 1
+          },
+          "ETH": {
+            "price_usd": 2300.0,
+            "change_24h_percent": 3.2,
+            "volume_24h": 15000000000.0,
+            "market_cap": 276000000000.0,
+            "market_rank": 2
+          },
+          "SOL": {
+            "price_usd": 98.5,
+            "change_24h_percent": 5.7,
+            "volume_24h": 2500000000.0,
+            "market_cap": 42000000000.0,
+            "market_rank": 5
+          }
+        },
+        "exchange_data": {
+          "BTC": {
+            "binance": {
+              "price": 43520.0,
+              "volume": 9000000000.0
+            },
+            "coinbase": {
+              "price": 43485.0,
+              "volume": 6000000000.0
+            },
+            "kraken": {
+              "price": 43495.0,
+              "volume": 4500000000.0
+            }
+          },
+          "ETH": {
+            "binance": {
+              "price": 2302.0,
+              "volume": 5000000000.0
+            },
+            "coinbase": {
+              "price": 2298.5,
+              "volume": 3500000000.0
+            }
+          }
+        },
+        "market_analyses": {
+          "BTC": {
+            "top_exchanges": [
+              {
+                "exchange": "binance",
+                "volume": 9000000000.0,
+                "price": 43520.0
+              },
+              {
+                "exchange": "coinbase",
+                "volume": 6000000000.0,
+                "price": 43485.0
+              },
+              {
+                "exchange": "kraken",
+                "volume": 4500000000.0,
+                "price": 43495.0
+              }
+            ],
+            "price_variations": {
+              "max_price": 43520.0,
+              "min_price": 43485.0,
+              "spread_percent": 0.08
+            },
+            "volume_distribution": {
+              "total_volume": 19500000000.0,
+              "binance_share": 46.15,
+              "coinbase_share": 30.77
+            },
+            "vwap": 43503.46
+          }
+        },
+        "historical_data": {},
+        "supported_symbols": [
+          "BTC",
+          "ETH",
+          "SOL",
+          "ADA",
+          "DOT"
+        ],
+        "supported_exchanges": [
+          "binance",
+          "coinbase",
+          "kraken",
+          "bitfinex",
+          "huobi"
+        ],
+        "random_seed": 123
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Comprehensive scenario with multiple cryptos, exchanges, market analysis, and historical data",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "crypto_prices": {
+          "BTC": {
+            "price_usd": 47250.0,
+            "change_24h_percent": 4.2,
+            "volume_24h": 32000000000.0,
+            "market_cap": 925000000000.0,
+            "market_rank": 1
+          },
+          "ETH": {
+            "price_usd": 2450.0,
+            "change_24h_percent": 6.8,
+            "volume_24h": 18000000000.0,
+            "market_cap": 294000000000.0,
+            "market_rank": 2
+          },
+          "SOL": {
+            "price_usd": 105.0,
+            "change_24h_percent": 8.5,
+            "volume_24h": 3200000000.0,
+            "market_cap": 45000000000.0,
+            "market_rank": 5
+          },
+          "ADA": {
+            "price_usd": 0.58,
+            "change_24h_percent": 2.1,
+            "volume_24h": 850000000.0,
+            "market_cap": 20500000000.0,
+            "market_rank": 8
+          }
+        },
+        "exchange_data": {
+          "BTC": {
+            "binance": {
+              "price": 47265.0,
+              "volume": 10500000000.0
+            },
+            "coinbase": {
+              "price": 47240.0,
+              "volume": 7200000000.0
+            },
+            "kraken": {
+              "price": 47255.0,
+              "volume": 5800000000.0
+            },
+            "bitfinex": {
+              "price": 47245.0,
+              "volume": 4200000000.0
+            }
+          },
+          "ETH": {
+            "binance": {
+              "price": 2452.0,
+              "volume": 6000000000.0
+            },
+            "coinbase": {
+              "price": 2448.0,
+              "volume": 4500000000.0
+            },
+            "kraken": {
+              "price": 2450.5,
+              "volume": 3200000000.0
+            }
+          },
+          "SOL": {
+            "binance": {
+              "price": 105.2,
+              "volume": 1200000000.0
+            },
+            "coinbase": {
+              "price": 104.8,
+              "volume": 900000000.0
+            }
+          }
+        },
+        "market_analyses": {
+          "BTC": {
+            "top_exchanges": [
+              {
+                "exchange": "binance",
+                "volume": 10500000000.0,
+                "price": 47265.0
+              },
+              {
+                "exchange": "coinbase",
+                "volume": 7200000000.0,
+                "price": 47240.0
+              },
+              {
+                "exchange": "kraken",
+                "volume": 5800000000.0,
+                "price": 47255.0
+              },
+              {
+                "exchange": "bitfinex",
+                "volume": 4200000000.0,
+                "price": 47245.0
+              }
+            ],
+            "price_variations": {
+              "max_price": 47265.0,
+              "min_price": 47240.0,
+              "spread_percent": 0.053,
+              "std_dev": 10.2
+            },
+            "volume_distribution": {
+              "total_volume": 27700000000.0,
+              "binance_share": 37.9,
+              "coinbase_share": 26.0,
+              "kraken_share": 20.9
+            },
+            "vwap": 47253.8
+          },
+          "ETH": {
+            "top_exchanges": [
+              {
+                "exchange": "binance",
+                "volume": 6000000000.0,
+                "price": 2452.0
+              },
+              {
+                "exchange": "coinbase",
+                "volume": 4500000000.0,
+                "price": 2448.0
+              },
+              {
+                "exchange": "kraken",
+                "volume": 3200000000.0,
+                "price": 2450.5
+              }
+            ],
+            "price_variations": {
+              "max_price": 2452.0,
+              "min_price": 2448.0,
+              "spread_percent": 0.163
+            },
+            "volume_distribution": {
+              "total_volume": 13700000000.0,
+              "binance_share": 43.8,
+              "coinbase_share": 32.8
+            },
+            "vwap": 2450.29
+          }
+        },
+        "historical_data": {
+          "BTC": {
+            "7d": {
+              "price_trends": [
+                44500.0,
+                45200.0,
+                44800.0,
+                46100.0,
+                46800.0,
+                47000.0,
+                47250.0
+              ],
+              "volatility_metrics": {
+                "std_dev": 1025.3,
+                "variance": 1051240.09,
+                "coefficient_of_variation": 2.23
+              },
+              "high_price": 47500.0,
+              "low_price": 44200.0,
+              "analysis_summary": "BTC showed strong upward momentum over the past 7 days, gaining 6.2% with moderate volatility. Price broke through resistance at $46,000 and is consolidating near $47,000."
+            },
+            "30d": {
+              "price_trends": [
+                42000.0,
+                43500.0,
+                44200.0,
+                45800.0,
+                47250.0
+              ],
+              "volatility_metrics": {
+                "std_dev": 1850.5,
+                "variance": 3424350.25,
+                "coefficient_of_variation": 4.15
+              },
+              "high_price": 48200.0,
+              "low_price": 41500.0,
+              "analysis_summary": "BTC demonstrated bullish trend over 30 days with 12.5% gain. Higher volatility observed mid-month due to macroeconomic events, but overall trajectory remains positive."
+            }
+          },
+          "ETH": {
+            "7d": {
+              "price_trends": [
+                2250.0,
+                2280.0,
+                2310.0,
+                2350.0,
+                2380.0,
+                2420.0,
+                2450.0
+              ],
+              "volatility_metrics": {
+                "std_dev": 68.2,
+                "variance": 4651.24,
+                "coefficient_of_variation": 2.91
+              },
+              "high_price": 2465.0,
+              "low_price": 2235.0,
+              "analysis_summary": "ETH outperformed BTC with 8.9% weekly gain, showing consistent upward momentum. Strong correlation with DeFi sector growth."
+            }
+          }
+        },
+        "supported_symbols": [
+          "BTC",
+          "ETH",
+          "SOL",
+          "ADA",
+          "DOT",
+          "LINK",
+          "UNI",
+          "AVAX"
+        ],
+        "supported_exchanges": [
+          "binance",
+          "coinbase",
+          "kraken",
+          "bitfinex",
+          "huobi",
+          "okex",
+          "kucoin"
+        ],
+        "random_seed": 456
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Edge case with empty crypto data and extreme values",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "crypto_prices": {
+          "MATIC": {
+            "price_usd": 0.0001,
+            "change_24h_percent": -99.9,
+            "volume_24h": 0.0,
+            "market_cap": 1000.0,
+            "market_rank": 999
+          }
+        },
+        "exchange_data": {},
+        "market_analyses": {
+          "MATIC": {
+            "top_exchanges": [],
+            "price_variations": {},
+            "volume_distribution": {},
+            "vwap": 0.0001
+          }
+        },
+        "historical_data": {
+          "MATIC": {
+            "1d": {
+              "price_trends": [],
+              "volatility_metrics": {},
+              "high_price": 0.0002,
+              "low_price": 0.0001,
+              "analysis_summary": "Extremely low trading activity with minimal price movement."
+            }
+          }
+        },
+        "supported_symbols": [
+          "MATIC"
+        ],
+        "supported_exchanges": [
+          "binance"
+        ],
+        "random_seed": 999
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 0,
+      "failed_scenarios": 4,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Tool execution error",
+              "error_location": "get_market_analysis",
+              "error_details": "Sample larger than population or is negative",
+              "expected_vs_actual": "Expected: Successful market analysis for BTC. Actual: Error raised about sample size",
+              "root_cause": "The get_market_analysis function appears to be trying to sample from a population (likely exchanges) that is too small. With only 2 exchanges in the scenario data (binance, coinbase), the function may be trying to select more items than available, causing a random.sample() error.",
+              "expected_error": false
+            },
+            {
+              "error_type": "Tool execution error",
+              "error_location": "get_historical_analysis",
+              "error_details": "1 validation error for CryptoData: market_rank - Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]",
+              "expected_vs_actual": "Expected: Successful historical analysis for BTC. Actual: Pydantic validation error for market_rank field",
+              "root_cause": "The get_historical_analysis function is generating historical data points with market_rank=0, which violates the Pydantic schema constraint that market_rank must be >= 1. This suggests the historical data generation logic is not properly setting the market_rank field or is initializing it to 0.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_crypto_price",
+                "passed": true,
+                "error": null,
+                "test_cases": [
+                  {
+                    "description": "Valid case - BTC without exchanges",
+                    "input": {
+                      "symbol": "BTC"
+                    },
+                    "success": true
+                  },
+                  {
+                    "description": "Valid case - BTC with exchanges",
+                    "input": {
+                      "symbol": "BTC",
+                      "exchanges": [
+                        "binance",
+                        "coinbase"
+                      ]
+                    },
+                    "success": true
+                  },
+                  {
+                    "description": "Valid case - ETH (generates random data)",
+                    "input": {
+                      "symbol": "ETH"
+                    },
+                    "success": true
+                  },
+                  {
+                    "description": "Error case - empty symbol",
+                    "input": {
+                      "symbol": ""
+                    },
+                    "success": true,
+                    "note": "Correctly rejected with validation error"
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_market_analysis",
+                "passed": false,
+                "error": "Sample larger than population or is negative",
+                "test_cases": [
+                  {
+                    "description": "Valid case - BTC without exchanges",
+                    "input": {
+                      "symbol": "BTC"
+                    },
+                    "success": false,
+                    "error": "Sample larger than population or is negative"
+                  },
+                  {
+                    "description": "Valid case - BTC with single exchange",
+                    "input": {
+                      "symbol": "BTC",
+                      "exchanges": [
+                        "binance"
+                      ]
+                    },
+                    "success": false,
+                    "error": "Sample larger than population or is negative"
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_historical_analysis",
+                "passed": false,
+                "error": "Validation error for CryptoData - market_rank must be >= 1",
+                "test_cases": [
+                  {
+                    "description": "Valid case - BTC with default parameters",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "1d",
+                      "days": 7
+                    },
+                    "success": false,
+                    "error": "1 validation error for CryptoData market_rank - Input should be greater than or equal to 1"
+                  },
+                  {
+                    "description": "Valid case - BTC with different interval",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "1h",
+                      "days": 3
+                    },
+                    "success": false,
+                    "error": "1 validation error for CryptoData market_rank - Input should be greater than or equal to 1"
+                  },
+                  {
+                    "description": "Error case - invalid interval",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "invalid",
+                      "days": 7
+                    },
+                    "success": true,
+                    "note": "Correctly rejected with validation error"
+                  }
+                ]
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "note": "State saved successfully. ETH data was added (generated), and historical_data for BTC was initialized as empty dict."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 63.025033950805664
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Tool execution error",
+              "error_location": "get_market_analysis tool - when exchanges parameter is provided",
+              "error_details": "1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]",
+              "expected_vs_actual": "Expected: Successful market analysis with filtered exchanges. Actual: Pydantic validation error indicating market_rank=0",
+              "root_cause": "The tool's internal logic is likely creating a temporary CryptoData object with market_rank=0 when filtering exchanges, which violates the Pydantic schema constraint that market_rank must be >= 1. The API method needs to properly initialize market_rank when creating intermediate data structures.",
+              "expected_error": false
+            },
+            {
+              "error_type": "Tool execution error",
+              "error_location": "get_historical_analysis tool - all valid executions",
+              "error_details": "1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]",
+              "expected_vs_actual": "Expected: Historical analysis with price trends and volatility metrics. Actual: Pydantic validation error indicating market_rank=0",
+              "root_cause": "The tool's internal logic is creating a CryptoData object with market_rank=0 during historical analysis generation. This suggests the API method is not properly setting market_rank when constructing return data, or is using a default value of 0 which violates the schema constraint (market_rank >= 1).",
+              "expected_error": false
+            },
+            {
+              "error_type": "State inconsistency",
+              "error_location": "save_scenario - historical_data field",
+              "error_details": "Original scenario had historical_data={}, but saved scenario has historical_data={\"BTC\": {}}",
+              "expected_vs_actual": "Expected: historical_data to remain empty or be properly populated. Actual: BTC key added with empty dict value",
+              "root_cause": "The get_historical_analysis tool attempts were made for BTC, and even though they failed, the API appears to have initialized an empty historical_data entry for BTC. This indicates state mutation is occurring even when tool execution fails.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_crypto_price",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - BTC without exchanges",
+                    "input": {
+                      "symbol": "BTC"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - ETH with exchanges",
+                    "input": {
+                      "symbol": "ETH",
+                      "exchanges": [
+                        "binance",
+                        "coinbase"
+                      ]
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - SOL without exchanges",
+                    "input": {
+                      "symbol": "SOL"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "test_name": "Error case - empty symbol",
+                    "input": {
+                      "symbol": ""
+                    },
+                    "passed": true,
+                    "error": "Symbol must be a non-empty string",
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_market_analysis",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - BTC without exchanges",
+                    "input": {
+                      "symbol": "BTC"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - ETH with specific exchanges",
+                    "input": {
+                      "symbol": "ETH",
+                      "exchanges": [
+                        "binance"
+                      ]
+                    },
+                    "passed": false,
+                    "error": "Error executing tool get_market_analysis: 1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]"
+                  }
+                ],
+                "passed": false,
+                "error": "Pydantic validation error when filtering exchanges"
+              },
+              {
+                "tool_name": "get_historical_analysis",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - BTC with default parameters",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "1d",
+                      "days": 7
+                    },
+                    "passed": false,
+                    "error": "Error executing tool get_historical_analysis: 1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]"
+                  },
+                  {
+                    "test_name": "Valid case - BTC with 1h interval",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "1h",
+                      "days": 3
+                    },
+                    "passed": false,
+                    "error": "Error executing tool get_historical_analysis: 1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]"
+                  },
+                  {
+                    "test_name": "Error case - invalid interval",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "invalid",
+                      "days": 7
+                    },
+                    "passed": true,
+                    "error": "Interval must be one of: 5m, 15m, 30m, 1h, 4h, 1d",
+                    "note": "Correctly rejected invalid input"
+                  },
+                  {
+                    "test_name": "Error case - days out of range",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "1d",
+                      "days": 50
+                    },
+                    "passed": true,
+                    "error": "Days must be an integer between 1 and 30",
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": false,
+                "error": "Pydantic validation error on all valid executions"
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": false,
+              "error": "Minor inconsistency: historical_data was modified from {} to {\"BTC\": {}} during execution"
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 73.8438572883606
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Tool execution error - Pydantic validation failure",
+              "error_location": "get_historical_analysis tool",
+              "error_details": "1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal",
+              "expected_vs_actual": "Expected: Tool should successfully retrieve historical analysis data from the loaded scenario.\nActual: Tool fails with Pydantic validation error indicating market_rank=0, which violates the constraint that market_rank must be >= 1.",
+              "root_cause": "The get_historical_analysis tool implementation appears to be creating or returning a CryptoData object with market_rank=0 (default/uninitialized value). This suggests the tool is not properly retrieving or constructing the crypto data object when accessing historical data. The historical_data in the scenario doesn't include market_rank information, and the tool likely defaults to 0 when this field is missing, violating the Pydantic model constraint that requires market_rank >= 1.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_crypto_price",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - BTC without exchanges filter",
+                    "input": {
+                      "symbol": "BTC"
+                    },
+                    "success": true,
+                    "output": {
+                      "price_usd": 47250.0,
+                      "change_24h_percent": 4.2,
+                      "volume_24h": 32000000000.0,
+                      "market_cap": 925000000000.0,
+                      "market_rank": 1
+                    }
+                  },
+                  {
+                    "description": "Valid case - ETH with exchanges filter",
+                    "input": {
+                      "symbol": "ETH",
+                      "exchanges": [
+                        "binance",
+                        "coinbase"
+                      ]
+                    },
+                    "success": true,
+                    "output": {
+                      "price_usd": 2450.0,
+                      "exchanges_prices": {
+                        "binance": {
+                          "price": 2452.0,
+                          "volume": 6000000000.0
+                        },
+                        "coinbase": {
+                          "price": 2448.0,
+                          "volume": 4500000000.0
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "description": "Valid case - SOL with single exchange",
+                    "input": {
+                      "symbol": "SOL",
+                      "exchanges": [
+                        "binance"
+                      ]
+                    },
+                    "success": true,
+                    "output": {
+                      "price_usd": 105.0,
+                      "exchanges_prices": {
+                        "binance": {
+                          "price": 105.2,
+                          "volume": 1200000000.0
+                        }
+                      }
+                    }
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_market_analysis",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - BTC without exchanges filter",
+                    "input": {
+                      "symbol": "BTC"
+                    },
+                    "success": true,
+                    "output": {
+                      "top_exchanges": [
+                        {
+                          "exchange": "binance",
+                          "volume": 10500000000.0,
+                          "price": 47265.0
+                        },
+                        {
+                          "exchange": "coinbase",
+                          "volume": 7200000000.0,
+                          "price": 47240.0
+                        }
+                      ],
+                      "vwap": 47253.8
+                    }
+                  },
+                  {
+                    "description": "Valid case - ETH with exchanges filter",
+                    "input": {
+                      "symbol": "ETH",
+                      "exchanges": [
+                        "binance",
+                        "kraken"
+                      ]
+                    },
+                    "success": true,
+                    "output": {
+                      "top_exchanges": [
+                        {
+                          "exchange": "binance",
+                          "volume": 6000000000.0,
+                          "price": 2452.0
+                        },
+                        {
+                          "exchange": "coinbase",
+                          "volume": 4500000000.0,
+                          "price": 2448.0
+                        }
+                      ],
+                      "vwap": 2450.29
+                    }
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_historical_analysis",
+                "passed": false,
+                "test_cases": [
+                  {
+                    "description": "Valid case - BTC 7 days",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "1d",
+                      "days": 7
+                    },
+                    "success": false,
+                    "error": "Error executing tool get_historical_analysis: 1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]"
+                  },
+                  {
+                    "description": "Valid case - ETH 7 days",
+                    "input": {
+                      "symbol": "ETH",
+                      "interval": "1d",
+                      "days": 7
+                    },
+                    "success": false,
+                    "error": "Error executing tool get_historical_analysis: 1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]"
+                  },
+                  {
+                    "description": "Boundary case - BTC 30 days with 4h interval",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "4h",
+                      "days": 30
+                    },
+                    "success": false,
+                    "error": "Error executing tool get_historical_analysis: 1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]"
+                  },
+                  {
+                    "description": "Boundary case - SOL 1 day with 1h interval",
+                    "input": {
+                      "symbol": "SOL",
+                      "interval": "1h",
+                      "days": 1
+                    },
+                    "success": false,
+                    "error": "Error executing tool get_historical_analysis: 1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]"
+                  }
+                ],
+                "error": "Tool consistently fails with Pydantic validation error for market_rank field"
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "differences": [
+                {
+                  "field": "historical_data.SOL",
+                  "original": "not present",
+                  "saved": "empty dict {}",
+                  "note": "Minor difference - SOL historical data initialized as empty dict"
+                }
+              ],
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 69.228191614151
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Missing Symbol Validation",
+              "error_location": "get_crypto_price tool",
+              "error_details": "When querying symbol 'INVALID' (not in supported_symbols list), the tool generated random data instead of raising an error",
+              "expected_vs_actual": "Expected: Error indicating symbol not supported. Actual: Generated random price data for unsupported symbol",
+              "root_cause": "The get_crypto_price method doesn't validate that the requested symbol exists in the supported_symbols list before processing",
+              "expected_error": false
+            },
+            {
+              "error_type": "State Pollution",
+              "error_location": "CryptoPriceAPI state management",
+              "error_details": "Querying an unsupported symbol caused it to be added to the internal state, polluting the scenario data",
+              "expected_vs_actual": "Expected: Original scenario with only MATIC. Actual: Saved scenario includes INVALID symbol with generated data",
+              "root_cause": "The API stores generated data for any queried symbol, even if it's not in the supported_symbols list",
+              "expected_error": false
+            },
+            {
+              "error_type": "Data Generation Validation Error",
+              "error_location": "get_historical_analysis tool",
+              "error_details": "When requesting historical data with intervals other than '1d', the tool fails with: 'market_rank Input should be greater than or equal to 1 [input_value=0]'",
+              "expected_vs_actual": "Expected: Historical analysis data for requested interval. Actual: Validation error due to market_rank=0 in generated data",
+              "root_cause": "The API's random data generation for historical analysis creates CryptoData objects with market_rank=0, which violates the schema constraint (market_rank >= 1). This only occurs when generating new data, not when using pre-loaded scenario data",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_crypto_price",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - Query MATIC without exchanges",
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Query MATIC with binance exchange",
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Empty symbol string",
+                    "passed": true,
+                    "error": null,
+                    "note": "Correctly rejected with validation error"
+                  },
+                  {
+                    "description": "Boundary case - Invalid symbol (INVALID)",
+                    "passed": false,
+                    "error": "Tool should reject unsupported symbols but instead generated random data"
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_market_analysis",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - Query MATIC without exchanges",
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Query MATIC with binance exchange",
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Empty symbol string",
+                    "passed": true,
+                    "error": null,
+                    "note": "Correctly rejected with validation error"
+                  }
+                ]
+              },
+              {
+                "tool_name": "get_historical_analysis",
+                "passed": false,
+                "test_cases": [
+                  {
+                    "description": "Valid case - Query MATIC with 1d interval and 7 days",
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Boundary case - Query with 1h interval and 1 day",
+                    "passed": false,
+                    "error": "Validation error: market_rank must be >= 1, got 0"
+                  },
+                  {
+                    "description": "Boundary case - Query with 5m interval and 30 days",
+                    "passed": false,
+                    "error": "Validation error: market_rank must be >= 1, got 0"
+                  },
+                  {
+                    "description": "Error case - Empty symbol string",
+                    "passed": true,
+                    "error": null,
+                    "note": "Correctly rejected with validation error"
+                  },
+                  {
+                    "description": "Error case - Invalid interval",
+                    "passed": true,
+                    "error": null,
+                    "note": "Correctly rejected with validation error"
+                  },
+                  {
+                    "description": "Error case - Days out of range (0)",
+                    "passed": true,
+                    "error": null,
+                    "note": "Correctly rejected with validation error"
+                  }
+                ]
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": false,
+              "error": "State inconsistency detected: saved scenario contains additional symbol 'INVALID' not present in original scenario"
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 76.12853193283081
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_crypto_price",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get BTC price with specific exchanges",
+                    "input": {
+                      "symbol": "BTC",
+                      "exchanges": [
+                        "binance",
+                        "coinbase"
+                      ]
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved BTC price data with exchange-specific prices for binance and coinbase"
+                  },
+                  {
+                    "description": "Valid case: Get ETH price without exchange filter",
+                    "input": {
+                      "symbol": "ETH"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved ETH price data with generated market data"
+                  },
+                  {
+                    "description": "Valid case: Get BTC price without exchange filter",
+                    "input": {
+                      "symbol": "BTC"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved BTC price data from loaded scenario"
+                  },
+                  {
+                    "description": "Error case: Empty symbol string",
+                    "input": {
+                      "symbol": ""
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error: 'Symbol must be a non-empty string'"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_market_analysis",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get BTC market analysis with specific exchanges",
+                    "input": {
+                      "symbol": "BTC",
+                      "exchanges": [
+                        "binance",
+                        "coinbase"
+                      ]
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved market analysis with top exchanges, price variations, volume distribution, and VWAP"
+                  },
+                  {
+                    "description": "Valid case: Get SOL market analysis without exchange filter",
+                    "input": {
+                      "symbol": "SOL"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved SOL market analysis with generated exchange data"
+                  },
+                  {
+                    "description": "Error case: Empty symbol string",
+                    "input": {
+                      "symbol": ""
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error: 'Symbol must be a non-empty string'"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_historical_analysis",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get BTC historical data with default parameters",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "1d",
+                      "days": 7
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved 7-day historical analysis with price trends, volatility metrics, and analysis summary"
+                  },
+                  {
+                    "description": "Valid case: Get ETH historical data with 1h interval",
+                    "input": {
+                      "symbol": "ETH",
+                      "interval": "1h",
+                      "days": 3
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved 3-day hourly historical analysis for ETH"
+                  },
+                  {
+                    "description": "Boundary case: Minimum days (1) with 5m interval",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "5m",
+                      "days": 1
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved 1-day 5-minute interval historical data"
+                  },
+                  {
+                    "description": "Error case: Invalid interval",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "invalid",
+                      "days": 7
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error: 'Interval must be one of: 5m, 15m, 30m, 1h, 4h, 1d'"
+                  },
+                  {
+                    "description": "Error case: Days exceeding maximum (30)",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "1d",
+                      "days": 50
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with validation error: 'Days must be an integer between 1 and 30'"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": {
+                "original_crypto_prices_count": 1,
+                "saved_crypto_prices_count": 3,
+                "original_market_analyses_count": 0,
+                "saved_market_analyses_count": 2,
+                "original_historical_data_count": 0,
+                "saved_historical_data_count": 2,
+                "state_evolution": "State correctly evolved with new data from tool executions. ETH and SOL prices were generated, market analyses for BTC and SOL were cached, and historical data for BTC (1d, 5m) and ETH (1h) were stored.",
+                "consistency": "All original scenario data preserved (BTC price, exchange data, supported symbols/exchanges, random_seed). New data appropriately added based on tool executions."
+              }
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 72.8799421787262
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_crypto_price",
+                "test_cases": [
+                  {
+                    "description": "Valid case - BTC without exchanges",
+                    "input": {
+                      "symbol": "BTC"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price_usd": 43500.0,
+                      "change_24h_percent": -1.8,
+                      "volume_24h": 28000000000.0,
+                      "market_cap": 850000000000.0,
+                      "market_rank": 1,
+                      "exchanges_prices": {}
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - ETH with specific exchanges",
+                    "input": {
+                      "symbol": "ETH",
+                      "exchanges": [
+                        "binance",
+                        "coinbase"
+                      ]
+                    },
+                    "passed": true,
+                    "output": {
+                      "price_usd": 2300.0,
+                      "change_24h_percent": 3.2,
+                      "volume_24h": 15000000000.0,
+                      "market_cap": 276000000000.0,
+                      "market_rank": 2,
+                      "exchanges_prices": {
+                        "binance": {
+                          "price": 2302.0,
+                          "volume": 5000000000.0
+                        },
+                        "coinbase": {
+                          "price": 2298.5,
+                          "volume": 3500000000.0
+                        }
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - SOL without exchanges",
+                    "input": {
+                      "symbol": "SOL"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price_usd": 98.5,
+                      "change_24h_percent": 5.7,
+                      "volume_24h": 2500000000.0,
+                      "market_cap": 42000000000.0,
+                      "market_rank": 5,
+                      "exchanges_prices": {}
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - empty symbol",
+                    "input": {
+                      "symbol": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Symbol must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_market_analysis",
+                "test_cases": [
+                  {
+                    "description": "Valid case - BTC market analysis",
+                    "input": {
+                      "symbol": "BTC"
+                    },
+                    "passed": true,
+                    "output": {
+                      "top_exchanges": [
+                        {
+                          "exchange": "binance",
+                          "volume": 9000000000.0,
+                          "price": 43520.0
+                        },
+                        {
+                          "exchange": "coinbase",
+                          "volume": 6000000000.0,
+                          "price": 43485.0
+                        },
+                        {
+                          "exchange": "kraken",
+                          "volume": 4500000000.0,
+                          "price": 43495.0
+                        }
+                      ],
+                      "price_variations": {
+                        "max_price": 43520.0,
+                        "min_price": 43485.0,
+                        "spread_percent": 0.08
+                      },
+                      "volume_distribution": {
+                        "total_volume": 19500000000.0,
+                        "binance_share": 46.15,
+                        "coinbase_share": 30.77
+                      },
+                      "vwap": 43503.46,
+                      "exchanges_prices": {}
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - ETH with specific exchange",
+                    "input": {
+                      "symbol": "ETH",
+                      "exchanges": [
+                        "binance"
+                      ]
+                    },
+                    "passed": true,
+                    "output": {
+                      "top_exchanges": [
+                        {
+                          "rank": 1,
+                          "exchange": "binance",
+                          "price": 2205.0529358302056,
+                          "volume": 193708086,
+                          "market_share": 13.144835273407967
+                        }
+                      ],
+                      "price_variations": {
+                        "spread": 0.30463044638303416,
+                        "arbitrage_opportunities": 1,
+                        "price_std_dev": 2.206059496200898
+                      },
+                      "volume_distribution": {
+                        "total_volume": 193708086,
+                        "exchange_count": 5,
+                        "concentration_ratio": 0.5811593574739906
+                      },
+                      "vwap": 2205.0529358302056,
+                      "exchanges_prices": {
+                        "binance": {
+                          "price": 2302.0,
+                          "volume": 5000000000.0
+                        }
+                      }
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_historical_analysis",
+                "test_cases": [
+                  {
+                    "description": "Valid case - BTC 7 days daily interval",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "1d",
+                      "days": 7
+                    },
+                    "passed": true,
+                    "output": {
+                      "price_trends": [
+                        43500.0,
+                        41552.78165500161,
+                        39837.427469683826,
+                        39467.902518484196,
+                        37919.5776299368,
+                        39440.90682969008,
+                        37619.343007200856
+                      ],
+                      "volatility_metrics": {
+                        "standard_deviation": 3.8892136281585237,
+                        "average_true_range": 2.912909180152671,
+                        "sharpe_ratio": -0.6712092059612806,
+                        "max_drawdown": 26.302165473234215
+                      },
+                      "high_price": 43500.0,
+                      "low_price": 37619.343007200856,
+                      "analysis_summary": "Historical analysis shows bearish trend over 7 days with 3.89% volatility. Price ranged from $37619.34 to $43500.00."
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - ETH 3 days 4h interval",
+                    "input": {
+                      "symbol": "ETH",
+                      "interval": "4h",
+                      "days": 3
+                    },
+                    "passed": true,
+                    "output": {
+                      "price_trends": [
+                        2300.0,
+                        2197.043627735717,
+                        2106.346739776386
+                      ],
+                      "volatility_metrics": {
+                        "standard_deviation": 4.305770470243866,
+                        "average_true_range": 2.3325879365167923,
+                        "sharpe_ratio": -1.5691990602462438,
+                        "max_drawdown": 27.529971948792365
+                      },
+                      "high_price": 2300.0,
+                      "low_price": 2106.346739776386,
+                      "analysis_summary": "Historical analysis shows bearish trend over 3 days with 4.31% volatility. Price ranged from $2106.35 to $2300.00."
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - days exceeds maximum",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "1d",
+                      "days": 50
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Days must be an integer between 1 and 30",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "notes": "State consistency verified. The saved scenario contains all original data plus accumulated state from tool executions (ETH market analysis and historical data for BTC and ETH). This is expected behavior as tools modify the internal state."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 68.56376934051514
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_crypto_price",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - BTC without exchanges",
+                    "input": {
+                      "symbol": "BTC"
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - SOL with specific exchange",
+                    "input": {
+                      "symbol": "SOL",
+                      "exchanges": [
+                        "binance"
+                      ]
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - ETH with multiple exchanges",
+                    "input": {
+                      "symbol": "ETH",
+                      "exchanges": [
+                        "binance",
+                        "coinbase"
+                      ]
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Invalid symbol",
+                    "input": {
+                      "symbol": "INVALID"
+                    },
+                    "result": "expected_error",
+                    "error": "Symbol 'INVALID' is not supported"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_market_analysis",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - BTC with multiple exchanges",
+                    "input": {
+                      "symbol": "BTC",
+                      "exchanges": [
+                        "binance",
+                        "coinbase",
+                        "kraken"
+                      ]
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - ETH without exchanges",
+                    "input": {
+                      "symbol": "ETH"
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - SOL with specific exchanges",
+                    "input": {
+                      "symbol": "SOL",
+                      "exchanges": [
+                        "binance",
+                        "coinbase"
+                      ]
+                    },
+                    "result": "success",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_historical_analysis",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - BTC with 1d interval, 7 days",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "1d",
+                      "days": 7
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - ETH with 1d interval, 7 days",
+                    "input": {
+                      "symbol": "ETH",
+                      "interval": "1d",
+                      "days": 7
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Boundary case - BTC with 4h interval, 30 days (max)",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "4h",
+                      "days": 30
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Boundary case - SOL with 1h interval, 1 day (min)",
+                    "input": {
+                      "symbol": "SOL",
+                      "interval": "1h",
+                      "days": 1
+                    },
+                    "result": "success",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Invalid interval",
+                    "input": {
+                      "symbol": "ADA",
+                      "interval": "invalid",
+                      "days": 7
+                    },
+                    "result": "expected_error",
+                    "error": "Interval must be one of: 5m, 15m, 30m, 1h, 4h, 1d"
+                  },
+                  {
+                    "description": "Error case - Days below minimum (0)",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "1d",
+                      "days": 0
+                    },
+                    "result": "expected_error",
+                    "error": "Days must be an integer between 1 and 30"
+                  },
+                  {
+                    "description": "Error case - Days above maximum (31)",
+                    "input": {
+                      "symbol": "BTC",
+                      "interval": "1d",
+                      "days": 31
+                    },
+                    "result": "expected_error",
+                    "error": "Days must be an integer between 1 and 30"
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "notes": "Saved scenario contains original data plus computed results from tool executions (SOL market analysis and historical data for BTC/ETH/SOL). This is expected behavior as tools cache their computed results.",
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 69.55518436431885
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_crypto_price",
+                "test_cases": [
+                  {
+                    "description": "Valid case - basic symbol query",
+                    "input": {
+                      "symbol": "MATIC"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - with exchange filter",
+                    "input": {
+                      "symbol": "MATIC",
+                      "exchanges": [
+                        "binance"
+                      ]
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - empty symbol",
+                    "input": {
+                      "symbol": ""
+                    },
+                    "passed": true,
+                    "error": "Symbol must be a non-empty string",
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_market_analysis",
+                "test_cases": [
+                  {
+                    "description": "Valid case - basic symbol query",
+                    "input": {
+                      "symbol": "MATIC"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - with exchange filter",
+                    "input": {
+                      "symbol": "MATIC",
+                      "exchanges": [
+                        "binance"
+                      ]
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - empty symbol",
+                    "input": {
+                      "symbol": ""
+                    },
+                    "passed": true,
+                    "error": "Symbol must be a non-empty string",
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_historical_analysis",
+                "test_cases": [
+                  {
+                    "description": "Valid case - default parameters",
+                    "input": {
+                      "symbol": "MATIC"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - custom interval and days",
+                    "input": {
+                      "symbol": "MATIC",
+                      "interval": "1h",
+                      "days": 3
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Boundary case - minimum interval and days",
+                    "input": {
+                      "symbol": "MATIC",
+                      "interval": "5m",
+                      "days": 1
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - invalid interval",
+                    "input": {
+                      "symbol": "MATIC",
+                      "interval": "invalid",
+                      "days": 7
+                    },
+                    "passed": true,
+                    "error": "Interval must be one of: 5m, 15m, 30m, 1h, 4h, 1d",
+                    "note": "Correctly rejected invalid input"
+                  },
+                  {
+                    "description": "Error case - days out of range",
+                    "input": {
+                      "symbol": "MATIC",
+                      "interval": "1d",
+                      "days": 50
+                    },
+                    "passed": true,
+                    "error": "Days must be an integer between 1 and 30",
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "notes": "State correctly preserved original data and accumulated results from tool executions (exchange_data populated, historical_data enriched with 1h and 5m intervals)"
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 74.43462252616882
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_003",
+        "scenario_001",
+        "scenario_004",
+        "scenario_002"
+      ],
+      "aggregated_errors": {
+        "common_errors": [
+          {
+            "tool_name": "get_historical_analysis tool",
+            "occurrence_count": 2,
+            "affected_scenarios": [
+              "scenario_003",
+              "scenario_004"
+            ],
+            "sample_error": {
+              "error_type": "Tool execution error - Pydantic validation failure",
+              "error_location": "get_historical_analysis tool",
+              "error_details": "1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal",
+              "expected_vs_actual": "Expected: Tool should successfully retrieve historical analysis data from the loaded scenario.\nActual: Tool fails with Pydantic validation error indicating market_rank=0, which violates the constraint that market_rank must be >= 1.",
+              "root_cause": "The get_historical_analysis tool implementation appears to be creating or returning a CryptoData object with market_rank=0 (default/uninitialized value). This suggests the tool is not properly retrieving or constructing the crypto data object when accessing historical data. The historical_data in the scenario doesn't include market_rank information, and the tool likely defaults to 0 when this field is missing, violating the Pydantic model constraint that requires market_rank >= 1.",
+              "expected_error": false
+            }
+          }
+        ],
+        "scenario_specific_errors": [
+          {
+            "scenario_id": "scenario_001",
+            "complexity_level": "simple",
+            "errors": [
+              {
+                "error_type": "Tool execution error",
+                "error_location": "get_market_analysis",
+                "error_details": "Sample larger than population or is negative",
+                "expected_vs_actual": "Expected: Successful market analysis for BTC. Actual: Error raised about sample size",
+                "root_cause": "The get_market_analysis function appears to be trying to sample from a population (likely exchanges) that is too small. With only 2 exchanges in the scenario data (binance, coinbase), the function may be trying to select more items than available, causing a random.sample() error.",
+                "expected_error": false
+              },
+              {
+                "error_type": "Tool execution error",
+                "error_location": "get_historical_analysis",
+                "error_details": "1 validation error for CryptoData: market_rank - Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]",
+                "expected_vs_actual": "Expected: Successful historical analysis for BTC. Actual: Pydantic validation error for market_rank field",
+                "root_cause": "The get_historical_analysis function is generating historical data points with market_rank=0, which violates the Pydantic schema constraint that market_rank must be >= 1. This suggests the historical data generation logic is not properly setting the market_rank field or is initializing it to 0.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_crypto_price",
+                  "passed": true,
+                  "error": null,
+                  "test_cases": [
+                    {
+                      "description": "Valid case - BTC without exchanges",
+                      "input": {
+                        "symbol": "BTC"
+                      },
+                      "success": true
+                    },
+                    {
+                      "description": "Valid case - BTC with exchanges",
+                      "input": {
+                        "symbol": "BTC",
+                        "exchanges": [
+                          "binance",
+                          "coinbase"
+                        ]
+                      },
+                      "success": true
+                    },
+                    {
+                      "description": "Valid case - ETH (generates random data)",
+                      "input": {
+                        "symbol": "ETH"
+                      },
+                      "success": true
+                    },
+                    {
+                      "description": "Error case - empty symbol",
+                      "input": {
+                        "symbol": ""
+                      },
+                      "success": true,
+                      "note": "Correctly rejected with validation error"
+                    }
+                  ]
+                },
+                {
+                  "tool_name": "get_market_analysis",
+                  "passed": false,
+                  "error": "Sample larger than population or is negative",
+                  "test_cases": [
+                    {
+                      "description": "Valid case - BTC without exchanges",
+                      "input": {
+                        "symbol": "BTC"
+                      },
+                      "success": false,
+                      "error": "Sample larger than population or is negative"
+                    },
+                    {
+                      "description": "Valid case - BTC with single exchange",
+                      "input": {
+                        "symbol": "BTC",
+                        "exchanges": [
+                          "binance"
+                        ]
+                      },
+                      "success": false,
+                      "error": "Sample larger than population or is negative"
+                    }
+                  ]
+                },
+                {
+                  "tool_name": "get_historical_analysis",
+                  "passed": false,
+                  "error": "Validation error for CryptoData - market_rank must be >= 1",
+                  "test_cases": [
+                    {
+                      "description": "Valid case - BTC with default parameters",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "1d",
+                        "days": 7
+                      },
+                      "success": false,
+                      "error": "1 validation error for CryptoData market_rank - Input should be greater than or equal to 1"
+                    },
+                    {
+                      "description": "Valid case - BTC with different interval",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "1h",
+                        "days": 3
+                      },
+                      "success": false,
+                      "error": "1 validation error for CryptoData market_rank - Input should be greater than or equal to 1"
+                    },
+                    {
+                      "description": "Error case - invalid interval",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "invalid",
+                        "days": 7
+                      },
+                      "success": true,
+                      "note": "Correctly rejected with validation error"
+                    }
+                  ]
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null,
+                "note": "State saved successfully. ETH data was added (generated), and historical_data for BTC was initialized as empty dict."
+              },
+              "summary": {}
+            }
+          },
+          {
+            "scenario_id": "scenario_002",
+            "complexity_level": "medium",
+            "errors": [
+              {
+                "error_type": "Tool execution error",
+                "error_location": "get_market_analysis tool - when exchanges parameter is provided",
+                "error_details": "1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]",
+                "expected_vs_actual": "Expected: Successful market analysis with filtered exchanges. Actual: Pydantic validation error indicating market_rank=0",
+                "root_cause": "The tool's internal logic is likely creating a temporary CryptoData object with market_rank=0 when filtering exchanges, which violates the Pydantic schema constraint that market_rank must be >= 1. The API method needs to properly initialize market_rank when creating intermediate data structures.",
+                "expected_error": false
+              },
+              {
+                "error_type": "Tool execution error",
+                "error_location": "get_historical_analysis tool - all valid executions",
+                "error_details": "1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]",
+                "expected_vs_actual": "Expected: Historical analysis with price trends and volatility metrics. Actual: Pydantic validation error indicating market_rank=0",
+                "root_cause": "The tool's internal logic is creating a CryptoData object with market_rank=0 during historical analysis generation. This suggests the API method is not properly setting market_rank when constructing return data, or is using a default value of 0 which violates the schema constraint (market_rank >= 1).",
+                "expected_error": false
+              },
+              {
+                "error_type": "State inconsistency",
+                "error_location": "save_scenario - historical_data field",
+                "error_details": "Original scenario had historical_data={}, but saved scenario has historical_data={\"BTC\": {}}",
+                "expected_vs_actual": "Expected: historical_data to remain empty or be properly populated. Actual: BTC key added with empty dict value",
+                "root_cause": "The get_historical_analysis tool attempts were made for BTC, and even though they failed, the API appears to have initialized an empty historical_data entry for BTC. This indicates state mutation is occurring even when tool execution fails.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_crypto_price",
+                  "test_cases": [
+                    {
+                      "test_name": "Valid case - BTC without exchanges",
+                      "input": {
+                        "symbol": "BTC"
+                      },
+                      "passed": true,
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - ETH with exchanges",
+                      "input": {
+                        "symbol": "ETH",
+                        "exchanges": [
+                          "binance",
+                          "coinbase"
+                        ]
+                      },
+                      "passed": true,
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - SOL without exchanges",
+                      "input": {
+                        "symbol": "SOL"
+                      },
+                      "passed": true,
+                      "error": null
+                    },
+                    {
+                      "test_name": "Error case - empty symbol",
+                      "input": {
+                        "symbol": ""
+                      },
+                      "passed": true,
+                      "error": "Symbol must be a non-empty string",
+                      "note": "Correctly rejected invalid input"
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_market_analysis",
+                  "test_cases": [
+                    {
+                      "test_name": "Valid case - BTC without exchanges",
+                      "input": {
+                        "symbol": "BTC"
+                      },
+                      "passed": true,
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - ETH with specific exchanges",
+                      "input": {
+                        "symbol": "ETH",
+                        "exchanges": [
+                          "binance"
+                        ]
+                      },
+                      "passed": false,
+                      "error": "Error executing tool get_market_analysis: 1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]"
+                    }
+                  ],
+                  "passed": false,
+                  "error": "Pydantic validation error when filtering exchanges"
+                },
+                {
+                  "tool_name": "get_historical_analysis",
+                  "test_cases": [
+                    {
+                      "test_name": "Valid case - BTC with default parameters",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "1d",
+                        "days": 7
+                      },
+                      "passed": false,
+                      "error": "Error executing tool get_historical_analysis: 1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]"
+                    },
+                    {
+                      "test_name": "Valid case - BTC with 1h interval",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "1h",
+                        "days": 3
+                      },
+                      "passed": false,
+                      "error": "Error executing tool get_historical_analysis: 1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]"
+                    },
+                    {
+                      "test_name": "Error case - invalid interval",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "invalid",
+                        "days": 7
+                      },
+                      "passed": true,
+                      "error": "Interval must be one of: 5m, 15m, 30m, 1h, 4h, 1d",
+                      "note": "Correctly rejected invalid input"
+                    },
+                    {
+                      "test_name": "Error case - days out of range",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "1d",
+                        "days": 50
+                      },
+                      "passed": true,
+                      "error": "Days must be an integer between 1 and 30",
+                      "note": "Correctly rejected invalid input"
+                    }
+                  ],
+                  "passed": false,
+                  "error": "Pydantic validation error on all valid executions"
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": false,
+                "error": "Minor inconsistency: historical_data was modified from {} to {\"BTC\": {}} during execution"
+              },
+              "summary": {}
+            }
+          },
+          {
+            "scenario_id": "scenario_003",
+            "complexity_level": "complex",
+            "errors": [
+              {
+                "error_type": "Tool execution error - Pydantic validation failure",
+                "error_location": "get_historical_analysis tool",
+                "error_details": "1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal",
+                "expected_vs_actual": "Expected: Tool should successfully retrieve historical analysis data from the loaded scenario.\nActual: Tool fails with Pydantic validation error indicating market_rank=0, which violates the constraint that market_rank must be >= 1.",
+                "root_cause": "The get_historical_analysis tool implementation appears to be creating or returning a CryptoData object with market_rank=0 (default/uninitialized value). This suggests the tool is not properly retrieving or constructing the crypto data object when accessing historical data. The historical_data in the scenario doesn't include market_rank information, and the tool likely defaults to 0 when this field is missing, violating the Pydantic model constraint that requires market_rank >= 1.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_crypto_price",
+                  "passed": true,
+                  "test_cases": [
+                    {
+                      "description": "Valid case - BTC without exchanges filter",
+                      "input": {
+                        "symbol": "BTC"
+                      },
+                      "success": true,
+                      "output": {
+                        "price_usd": 47250.0,
+                        "change_24h_percent": 4.2,
+                        "volume_24h": 32000000000.0,
+                        "market_cap": 925000000000.0,
+                        "market_rank": 1
+                      }
+                    },
+                    {
+                      "description": "Valid case - ETH with exchanges filter",
+                      "input": {
+                        "symbol": "ETH",
+                        "exchanges": [
+                          "binance",
+                          "coinbase"
+                        ]
+                      },
+                      "success": true,
+                      "output": {
+                        "price_usd": 2450.0,
+                        "exchanges_prices": {
+                          "binance": {
+                            "price": 2452.0,
+                            "volume": 6000000000.0
+                          },
+                          "coinbase": {
+                            "price": 2448.0,
+                            "volume": 4500000000.0
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "description": "Valid case - SOL with single exchange",
+                      "input": {
+                        "symbol": "SOL",
+                        "exchanges": [
+                          "binance"
+                        ]
+                      },
+                      "success": true,
+                      "output": {
+                        "price_usd": 105.0,
+                        "exchanges_prices": {
+                          "binance": {
+                            "price": 105.2,
+                            "volume": 1200000000.0
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "error": null
+                },
+                {
+                  "tool_name": "get_market_analysis",
+                  "passed": true,
+                  "test_cases": [
+                    {
+                      "description": "Valid case - BTC without exchanges filter",
+                      "input": {
+                        "symbol": "BTC"
+                      },
+                      "success": true,
+                      "output": {
+                        "top_exchanges": [
+                          {
+                            "exchange": "binance",
+                            "volume": 10500000000.0,
+                            "price": 47265.0
+                          },
+                          {
+                            "exchange": "coinbase",
+                            "volume": 7200000000.0,
+                            "price": 47240.0
+                          }
+                        ],
+                        "vwap": 47253.8
+                      }
+                    },
+                    {
+                      "description": "Valid case - ETH with exchanges filter",
+                      "input": {
+                        "symbol": "ETH",
+                        "exchanges": [
+                          "binance",
+                          "kraken"
+                        ]
+                      },
+                      "success": true,
+                      "output": {
+                        "top_exchanges": [
+                          {
+                            "exchange": "binance",
+                            "volume": 6000000000.0,
+                            "price": 2452.0
+                          },
+                          {
+                            "exchange": "coinbase",
+                            "volume": 4500000000.0,
+                            "price": 2448.0
+                          }
+                        ],
+                        "vwap": 2450.29
+                      }
+                    }
+                  ],
+                  "error": null
+                },
+                {
+                  "tool_name": "get_historical_analysis",
+                  "passed": false,
+                  "test_cases": [
+                    {
+                      "description": "Valid case - BTC 7 days",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "1d",
+                        "days": 7
+                      },
+                      "success": false,
+                      "error": "Error executing tool get_historical_analysis: 1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]"
+                    },
+                    {
+                      "description": "Valid case - ETH 7 days",
+                      "input": {
+                        "symbol": "ETH",
+                        "interval": "1d",
+                        "days": 7
+                      },
+                      "success": false,
+                      "error": "Error executing tool get_historical_analysis: 1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]"
+                    },
+                    {
+                      "description": "Boundary case - BTC 30 days with 4h interval",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "4h",
+                        "days": 30
+                      },
+                      "success": false,
+                      "error": "Error executing tool get_historical_analysis: 1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]"
+                    },
+                    {
+                      "description": "Boundary case - SOL 1 day with 1h interval",
+                      "input": {
+                        "symbol": "SOL",
+                        "interval": "1h",
+                        "days": 1
+                      },
+                      "success": false,
+                      "error": "Error executing tool get_historical_analysis: 1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]"
+                    }
+                  ],
+                  "error": "Tool consistently fails with Pydantic validation error for market_rank field"
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "differences": [
+                  {
+                    "field": "historical_data.SOL",
+                    "original": "not present",
+                    "saved": "empty dict {}",
+                    "note": "Minor difference - SOL historical data initialized as empty dict"
+                  }
+                ],
+                "error": null
+              },
+              "summary": {}
+            }
+          },
+          {
+            "scenario_id": "scenario_004",
+            "complexity_level": "boundary",
+            "errors": [
+              {
+                "error_type": "Missing Symbol Validation",
+                "error_location": "get_crypto_price tool",
+                "error_details": "When querying symbol 'INVALID' (not in supported_symbols list), the tool generated random data instead of raising an error",
+                "expected_vs_actual": "Expected: Error indicating symbol not supported. Actual: Generated random price data for unsupported symbol",
+                "root_cause": "The get_crypto_price method doesn't validate that the requested symbol exists in the supported_symbols list before processing",
+                "expected_error": false
+              },
+              {
+                "error_type": "State Pollution",
+                "error_location": "CryptoPriceAPI state management",
+                "error_details": "Querying an unsupported symbol caused it to be added to the internal state, polluting the scenario data",
+                "expected_vs_actual": "Expected: Original scenario with only MATIC. Actual: Saved scenario includes INVALID symbol with generated data",
+                "root_cause": "The API stores generated data for any queried symbol, even if it's not in the supported_symbols list",
+                "expected_error": false
+              },
+              {
+                "error_type": "Data Generation Validation Error",
+                "error_location": "get_historical_analysis tool",
+                "error_details": "When requesting historical data with intervals other than '1d', the tool fails with: 'market_rank Input should be greater than or equal to 1 [input_value=0]'",
+                "expected_vs_actual": "Expected: Historical analysis data for requested interval. Actual: Validation error due to market_rank=0 in generated data",
+                "root_cause": "The API's random data generation for historical analysis creates CryptoData objects with market_rank=0, which violates the schema constraint (market_rank >= 1). This only occurs when generating new data, not when using pre-loaded scenario data",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_crypto_price",
+                  "passed": true,
+                  "test_cases": [
+                    {
+                      "description": "Valid case - Query MATIC without exchanges",
+                      "passed": true,
+                      "error": null
+                    },
+                    {
+                      "description": "Valid case - Query MATIC with binance exchange",
+                      "passed": true,
+                      "error": null
+                    },
+                    {
+                      "description": "Error case - Empty symbol string",
+                      "passed": true,
+                      "error": null,
+                      "note": "Correctly rejected with validation error"
+                    },
+                    {
+                      "description": "Boundary case - Invalid symbol (INVALID)",
+                      "passed": false,
+                      "error": "Tool should reject unsupported symbols but instead generated random data"
+                    }
+                  ]
+                },
+                {
+                  "tool_name": "get_market_analysis",
+                  "passed": true,
+                  "test_cases": [
+                    {
+                      "description": "Valid case - Query MATIC without exchanges",
+                      "passed": true,
+                      "error": null
+                    },
+                    {
+                      "description": "Valid case - Query MATIC with binance exchange",
+                      "passed": true,
+                      "error": null
+                    },
+                    {
+                      "description": "Error case - Empty symbol string",
+                      "passed": true,
+                      "error": null,
+                      "note": "Correctly rejected with validation error"
+                    }
+                  ]
+                },
+                {
+                  "tool_name": "get_historical_analysis",
+                  "passed": false,
+                  "test_cases": [
+                    {
+                      "description": "Valid case - Query MATIC with 1d interval and 7 days",
+                      "passed": true,
+                      "error": null
+                    },
+                    {
+                      "description": "Boundary case - Query with 1h interval and 1 day",
+                      "passed": false,
+                      "error": "Validation error: market_rank must be >= 1, got 0"
+                    },
+                    {
+                      "description": "Boundary case - Query with 5m interval and 30 days",
+                      "passed": false,
+                      "error": "Validation error: market_rank must be >= 1, got 0"
+                    },
+                    {
+                      "description": "Error case - Empty symbol string",
+                      "passed": true,
+                      "error": null,
+                      "note": "Correctly rejected with validation error"
+                    },
+                    {
+                      "description": "Error case - Invalid interval",
+                      "passed": true,
+                      "error": null,
+                      "note": "Correctly rejected with validation error"
+                    },
+                    {
+                      "description": "Error case - Days out of range (0)",
+                      "passed": true,
+                      "error": null,
+                      "note": "Correctly rejected with validation error"
+                    }
+                  ]
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": false,
+                "error": "State inconsistency detected: saved scenario contains additional symbol 'INVALID' not present in original scenario"
+              },
+              "summary": {}
+            }
+          }
+        ],
+        "error_by_tool": {
+          "get_market_analysis": [
+            {
+              "scenario_id": "scenario_001",
+              "complexity_level": "simple",
+              "error": {
+                "error_type": "Tool execution error",
+                "error_location": "get_market_analysis",
+                "error_details": "Sample larger than population or is negative",
+                "expected_vs_actual": "Expected: Successful market analysis for BTC. Actual: Error raised about sample size",
+                "root_cause": "The get_market_analysis function appears to be trying to sample from a population (likely exchanges) that is too small. With only 2 exchanges in the scenario data (binance, coinbase), the function may be trying to select more items than available, causing a random.sample() error.",
+                "expected_error": false
+              }
+            }
+          ],
+          "get_historical_analysis": [
+            {
+              "scenario_id": "scenario_001",
+              "complexity_level": "simple",
+              "error": {
+                "error_type": "Tool execution error",
+                "error_location": "get_historical_analysis",
+                "error_details": "1 validation error for CryptoData: market_rank - Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]",
+                "expected_vs_actual": "Expected: Successful historical analysis for BTC. Actual: Pydantic validation error for market_rank field",
+                "root_cause": "The get_historical_analysis function is generating historical data points with market_rank=0, which violates the Pydantic schema constraint that market_rank must be >= 1. This suggests the historical data generation logic is not properly setting the market_rank field or is initializing it to 0.",
+                "expected_error": false
+              }
+            }
+          ],
+          "get_market_analysis tool - when exchanges parameter is provided": [
+            {
+              "scenario_id": "scenario_002",
+              "complexity_level": "medium",
+              "error": {
+                "error_type": "Tool execution error",
+                "error_location": "get_market_analysis tool - when exchanges parameter is provided",
+                "error_details": "1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]",
+                "expected_vs_actual": "Expected: Successful market analysis with filtered exchanges. Actual: Pydantic validation error indicating market_rank=0",
+                "root_cause": "The tool's internal logic is likely creating a temporary CryptoData object with market_rank=0 when filtering exchanges, which violates the Pydantic schema constraint that market_rank must be >= 1. The API method needs to properly initialize market_rank when creating intermediate data structures.",
+                "expected_error": false
+              }
+            }
+          ],
+          "get_historical_analysis tool - all valid executions": [
+            {
+              "scenario_id": "scenario_002",
+              "complexity_level": "medium",
+              "error": {
+                "error_type": "Tool execution error",
+                "error_location": "get_historical_analysis tool - all valid executions",
+                "error_details": "1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]",
+                "expected_vs_actual": "Expected: Historical analysis with price trends and volatility metrics. Actual: Pydantic validation error indicating market_rank=0",
+                "root_cause": "The tool's internal logic is creating a CryptoData object with market_rank=0 during historical analysis generation. This suggests the API method is not properly setting market_rank when constructing return data, or is using a default value of 0 which violates the schema constraint (market_rank >= 1).",
+                "expected_error": false
+              }
+            }
+          ],
+          "save_scenario - historical_data field": [
+            {
+              "scenario_id": "scenario_002",
+              "complexity_level": "medium",
+              "error": {
+                "error_type": "State inconsistency",
+                "error_location": "save_scenario - historical_data field",
+                "error_details": "Original scenario had historical_data={}, but saved scenario has historical_data={\"BTC\": {}}",
+                "expected_vs_actual": "Expected: historical_data to remain empty or be properly populated. Actual: BTC key added with empty dict value",
+                "root_cause": "The get_historical_analysis tool attempts were made for BTC, and even though they failed, the API appears to have initialized an empty historical_data entry for BTC. This indicates state mutation is occurring even when tool execution fails.",
+                "expected_error": false
+              }
+            }
+          ],
+          "get_historical_analysis tool": [
+            {
+              "scenario_id": "scenario_003",
+              "complexity_level": "complex",
+              "error": {
+                "error_type": "Tool execution error - Pydantic validation failure",
+                "error_location": "get_historical_analysis tool",
+                "error_details": "1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal",
+                "expected_vs_actual": "Expected: Tool should successfully retrieve historical analysis data from the loaded scenario.\nActual: Tool fails with Pydantic validation error indicating market_rank=0, which violates the constraint that market_rank must be >= 1.",
+                "root_cause": "The get_historical_analysis tool implementation appears to be creating or returning a CryptoData object with market_rank=0 (default/uninitialized value). This suggests the tool is not properly retrieving or constructing the crypto data object when accessing historical data. The historical_data in the scenario doesn't include market_rank information, and the tool likely defaults to 0 when this field is missing, violating the Pydantic model constraint that requires market_rank >= 1.",
+                "expected_error": false
+              }
+            },
+            {
+              "scenario_id": "scenario_004",
+              "complexity_level": "boundary",
+              "error": {
+                "error_type": "Data Generation Validation Error",
+                "error_location": "get_historical_analysis tool",
+                "error_details": "When requesting historical data with intervals other than '1d', the tool fails with: 'market_rank Input should be greater than or equal to 1 [input_value=0]'",
+                "expected_vs_actual": "Expected: Historical analysis data for requested interval. Actual: Validation error due to market_rank=0 in generated data",
+                "root_cause": "The API's random data generation for historical analysis creates CryptoData objects with market_rank=0, which violates the schema constraint (market_rank >= 1). This only occurs when generating new data, not when using pre-loaded scenario data",
+                "expected_error": false
+              }
+            }
+          ],
+          "get_crypto_price tool": [
+            {
+              "scenario_id": "scenario_004",
+              "complexity_level": "boundary",
+              "error": {
+                "error_type": "Missing Symbol Validation",
+                "error_location": "get_crypto_price tool",
+                "error_details": "When querying symbol 'INVALID' (not in supported_symbols list), the tool generated random data instead of raising an error",
+                "expected_vs_actual": "Expected: Error indicating symbol not supported. Actual: Generated random price data for unsupported symbol",
+                "root_cause": "The get_crypto_price method doesn't validate that the requested symbol exists in the supported_symbols list before processing",
+                "expected_error": false
+              }
+            }
+          ],
+          "CryptoPriceAPI state management": [
+            {
+              "scenario_id": "scenario_004",
+              "complexity_level": "boundary",
+              "error": {
+                "error_type": "State Pollution",
+                "error_location": "CryptoPriceAPI state management",
+                "error_details": "Querying an unsupported symbol caused it to be added to the internal state, polluting the scenario data",
+                "expected_vs_actual": "Expected: Original scenario with only MATIC. Actual: Saved scenario includes INVALID symbol with generated data",
+                "root_cause": "The API stores generated data for any queried symbol, even if it's not in the supported_symbols list",
+                "expected_error": false
+              }
+            }
+          ]
+        },
+        "error_categories": {
+          "critical_load_failures": [],
+          "critical_schema_mismatches": [
+            {
+              "error_type": "Tool execution error - Pydantic validation failure",
+              "error_location": "get_historical_analysis tool",
+              "error_details": "1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.12/v/greater_than_equal",
+              "expected_vs_actual": "Expected: Tool should successfully retrieve historical analysis data from the loaded scenario.\nActual: Tool fails with Pydantic validation error indicating market_rank=0, which violates the constraint that market_rank must be >= 1.",
+              "root_cause": "The get_historical_analysis tool implementation appears to be creating or returning a CryptoData object with market_rank=0 (default/uninitialized value). This suggests the tool is not properly retrieving or constructing the crypto data object when accessing historical data. The historical_data in the scenario doesn't include market_rank information, and the tool likely defaults to 0 when this field is missing, violating the Pydantic model constraint that requires market_rank >= 1.",
+              "expected_error": false,
+              "severity": "CRITICAL"
+            },
+            {
+              "error_type": "Missing Symbol Validation",
+              "error_location": "get_crypto_price tool",
+              "error_details": "When querying symbol 'INVALID' (not in supported_symbols list), the tool generated random data instead of raising an error",
+              "expected_vs_actual": "Expected: Error indicating symbol not supported. Actual: Generated random price data for unsupported symbol",
+              "root_cause": "The get_crypto_price method doesn't validate that the requested symbol exists in the supported_symbols list before processing",
+              "expected_error": false,
+              "severity": "CRITICAL"
+            },
+            {
+              "error_type": "Data Generation Validation Error",
+              "error_location": "get_historical_analysis tool",
+              "error_details": "When requesting historical data with intervals other than '1d', the tool fails with: 'market_rank Input should be greater than or equal to 1 [input_value=0]'",
+              "expected_vs_actual": "Expected: Historical analysis data for requested interval. Actual: Validation error due to market_rank=0 in generated data",
+              "root_cause": "The API's random data generation for historical analysis creates CryptoData objects with market_rank=0, which violates the schema constraint (market_rank >= 1). This only occurs when generating new data, not when using pre-loaded scenario data",
+              "expected_error": false,
+              "severity": "CRITICAL"
+            }
+          ],
+          "high_tool_logic_errors": [
+            {
+              "error_type": "Tool execution error",
+              "error_location": "get_market_analysis",
+              "error_details": "Sample larger than population or is negative",
+              "expected_vs_actual": "Expected: Successful market analysis for BTC. Actual: Error raised about sample size",
+              "root_cause": "The get_market_analysis function appears to be trying to sample from a population (likely exchanges) that is too small. With only 2 exchanges in the scenario data (binance, coinbase), the function may be trying to select more items than available, causing a random.sample() error.",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Tool execution error",
+              "error_location": "get_historical_analysis",
+              "error_details": "1 validation error for CryptoData: market_rank - Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]",
+              "expected_vs_actual": "Expected: Successful historical analysis for BTC. Actual: Pydantic validation error for market_rank field",
+              "root_cause": "The get_historical_analysis function is generating historical data points with market_rank=0, which violates the Pydantic schema constraint that market_rank must be >= 1. This suggests the historical data generation logic is not properly setting the market_rank field or is initializing it to 0.",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Tool execution error",
+              "error_location": "get_market_analysis tool - when exchanges parameter is provided",
+              "error_details": "1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]",
+              "expected_vs_actual": "Expected: Successful market analysis with filtered exchanges. Actual: Pydantic validation error indicating market_rank=0",
+              "root_cause": "The tool's internal logic is likely creating a temporary CryptoData object with market_rank=0 when filtering exchanges, which violates the Pydantic schema constraint that market_rank must be >= 1. The API method needs to properly initialize market_rank when creating intermediate data structures.",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Tool execution error",
+              "error_location": "get_historical_analysis tool - all valid executions",
+              "error_details": "1 validation error for CryptoData\nmarket_rank\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]",
+              "expected_vs_actual": "Expected: Historical analysis with price trends and volatility metrics. Actual: Pydantic validation error indicating market_rank=0",
+              "root_cause": "The tool's internal logic is creating a CryptoData object with market_rank=0 during historical analysis generation. This suggests the API method is not properly setting market_rank when constructing return data, or is using a default value of 0 which violates the schema constraint (market_rank >= 1).",
+              "expected_error": false,
+              "severity": "HIGH"
+            }
+          ],
+          "medium_state_errors": [
+            {
+              "error_type": "State inconsistency",
+              "error_location": "save_scenario - historical_data field",
+              "error_details": "Original scenario had historical_data={}, but saved scenario has historical_data={\"BTC\": {}}",
+              "expected_vs_actual": "Expected: historical_data to remain empty or be properly populated. Actual: BTC key added with empty dict value",
+              "root_cause": "The get_historical_analysis tool attempts were made for BTC, and even though they failed, the API appears to have initialized an empty historical_data entry for BTC. This indicates state mutation is occurring even when tool execution fails.",
+              "expected_error": false,
+              "severity": "MEDIUM"
+            },
+            {
+              "error_type": "State Pollution",
+              "error_location": "CryptoPriceAPI state management",
+              "error_details": "Querying an unsupported symbol caused it to be added to the internal state, polluting the scenario data",
+              "expected_vs_actual": "Expected: Original scenario with only MATIC. Actual: Saved scenario includes INVALID symbol with generated data",
+              "root_cause": "The API stores generated data for any queried symbol, even if it's not in the supported_symbols list",
+              "expected_error": false,
+              "severity": "MEDIUM"
+            }
+          ],
+          "low_edge_case_failures": []
+        },
+        "severity_summary": {
+          "critical": 3,
+          "high": 4,
+          "medium": 2,
+          "low": 0
+        },
+        "total_failed_scenarios": 4,
+        "expected_failures": 0,
+        "unexpected_failures": 4
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 4,
+        "failed_scenarios": 0,
+        "all_passed": true,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_crypto_price",
+                  "test_cases": [
+                    {
+                      "description": "Valid case: Get BTC price with specific exchanges",
+                      "input": {
+                        "symbol": "BTC",
+                        "exchanges": [
+                          "binance",
+                          "coinbase"
+                        ]
+                      },
+                      "passed": true,
+                      "output": "Successfully retrieved BTC price data with exchange-specific prices for binance and coinbase"
+                    },
+                    {
+                      "description": "Valid case: Get ETH price without exchange filter",
+                      "input": {
+                        "symbol": "ETH"
+                      },
+                      "passed": true,
+                      "output": "Successfully retrieved ETH price data with generated market data"
+                    },
+                    {
+                      "description": "Valid case: Get BTC price without exchange filter",
+                      "input": {
+                        "symbol": "BTC"
+                      },
+                      "passed": true,
+                      "output": "Successfully retrieved BTC price data from loaded scenario"
+                    },
+                    {
+                      "description": "Error case: Empty symbol string",
+                      "input": {
+                        "symbol": ""
+                      },
+                      "passed": true,
+                      "output": "Correctly rejected with validation error: 'Symbol must be a non-empty string'"
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_market_analysis",
+                  "test_cases": [
+                    {
+                      "description": "Valid case: Get BTC market analysis with specific exchanges",
+                      "input": {
+                        "symbol": "BTC",
+                        "exchanges": [
+                          "binance",
+                          "coinbase"
+                        ]
+                      },
+                      "passed": true,
+                      "output": "Successfully retrieved market analysis with top exchanges, price variations, volume distribution, and VWAP"
+                    },
+                    {
+                      "description": "Valid case: Get SOL market analysis without exchange filter",
+                      "input": {
+                        "symbol": "SOL"
+                      },
+                      "passed": true,
+                      "output": "Successfully retrieved SOL market analysis with generated exchange data"
+                    },
+                    {
+                      "description": "Error case: Empty symbol string",
+                      "input": {
+                        "symbol": ""
+                      },
+                      "passed": true,
+                      "output": "Correctly rejected with validation error: 'Symbol must be a non-empty string'"
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_historical_analysis",
+                  "test_cases": [
+                    {
+                      "description": "Valid case: Get BTC historical data with default parameters",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "1d",
+                        "days": 7
+                      },
+                      "passed": true,
+                      "output": "Successfully retrieved 7-day historical analysis with price trends, volatility metrics, and analysis summary"
+                    },
+                    {
+                      "description": "Valid case: Get ETH historical data with 1h interval",
+                      "input": {
+                        "symbol": "ETH",
+                        "interval": "1h",
+                        "days": 3
+                      },
+                      "passed": true,
+                      "output": "Successfully retrieved 3-day hourly historical analysis for ETH"
+                    },
+                    {
+                      "description": "Boundary case: Minimum days (1) with 5m interval",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "5m",
+                        "days": 1
+                      },
+                      "passed": true,
+                      "output": "Successfully retrieved 1-day 5-minute interval historical data"
+                    },
+                    {
+                      "description": "Error case: Invalid interval",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "invalid",
+                        "days": 7
+                      },
+                      "passed": true,
+                      "output": "Correctly rejected with validation error: 'Interval must be one of: 5m, 15m, 30m, 1h, 4h, 1d'"
+                    },
+                    {
+                      "description": "Error case: Days exceeding maximum (30)",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "1d",
+                        "days": 50
+                      },
+                      "passed": true,
+                      "output": "Correctly rejected with validation error: 'Days must be an integer between 1 and 30'"
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null,
+                "details": {
+                  "original_crypto_prices_count": 1,
+                  "saved_crypto_prices_count": 3,
+                  "original_market_analyses_count": 0,
+                  "saved_market_analyses_count": 2,
+                  "original_historical_data_count": 0,
+                  "saved_historical_data_count": 2,
+                  "state_evolution": "State correctly evolved with new data from tool executions. ETH and SOL prices were generated, market analyses for BTC and SOL were cached, and historical data for BTC (1d, 5m) and ETH (1h) were stored.",
+                  "consistency": "All original scenario data preserved (BTC price, exchange data, supported symbols/exchanges, random_seed). New data appropriately added based on tool executions."
+                }
+              },
+              "summary": {}
+            },
+            "complexity_level": "simple",
+            "execution_time": 72.8799421787262
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_crypto_price",
+                  "test_cases": [
+                    {
+                      "description": "Valid case - BTC without exchanges",
+                      "input": {
+                        "symbol": "BTC"
+                      },
+                      "passed": true,
+                      "output": {
+                        "price_usd": 43500.0,
+                        "change_24h_percent": -1.8,
+                        "volume_24h": 28000000000.0,
+                        "market_cap": 850000000000.0,
+                        "market_rank": 1,
+                        "exchanges_prices": {}
+                      },
+                      "error": null
+                    },
+                    {
+                      "description": "Valid case - ETH with specific exchanges",
+                      "input": {
+                        "symbol": "ETH",
+                        "exchanges": [
+                          "binance",
+                          "coinbase"
+                        ]
+                      },
+                      "passed": true,
+                      "output": {
+                        "price_usd": 2300.0,
+                        "change_24h_percent": 3.2,
+                        "volume_24h": 15000000000.0,
+                        "market_cap": 276000000000.0,
+                        "market_rank": 2,
+                        "exchanges_prices": {
+                          "binance": {
+                            "price": 2302.0,
+                            "volume": 5000000000.0
+                          },
+                          "coinbase": {
+                            "price": 2298.5,
+                            "volume": 3500000000.0
+                          }
+                        }
+                      },
+                      "error": null
+                    },
+                    {
+                      "description": "Valid case - SOL without exchanges",
+                      "input": {
+                        "symbol": "SOL"
+                      },
+                      "passed": true,
+                      "output": {
+                        "price_usd": 98.5,
+                        "change_24h_percent": 5.7,
+                        "volume_24h": 2500000000.0,
+                        "market_cap": 42000000000.0,
+                        "market_rank": 5,
+                        "exchanges_prices": {}
+                      },
+                      "error": null
+                    },
+                    {
+                      "description": "Error case - empty symbol",
+                      "input": {
+                        "symbol": ""
+                      },
+                      "passed": true,
+                      "output": null,
+                      "error": "Symbol must be a non-empty string",
+                      "expected_error": true
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_market_analysis",
+                  "test_cases": [
+                    {
+                      "description": "Valid case - BTC market analysis",
+                      "input": {
+                        "symbol": "BTC"
+                      },
+                      "passed": true,
+                      "output": {
+                        "top_exchanges": [
+                          {
+                            "exchange": "binance",
+                            "volume": 9000000000.0,
+                            "price": 43520.0
+                          },
+                          {
+                            "exchange": "coinbase",
+                            "volume": 6000000000.0,
+                            "price": 43485.0
+                          },
+                          {
+                            "exchange": "kraken",
+                            "volume": 4500000000.0,
+                            "price": 43495.0
+                          }
+                        ],
+                        "price_variations": {
+                          "max_price": 43520.0,
+                          "min_price": 43485.0,
+                          "spread_percent": 0.08
+                        },
+                        "volume_distribution": {
+                          "total_volume": 19500000000.0,
+                          "binance_share": 46.15,
+                          "coinbase_share": 30.77
+                        },
+                        "vwap": 43503.46,
+                        "exchanges_prices": {}
+                      },
+                      "error": null
+                    },
+                    {
+                      "description": "Valid case - ETH with specific exchange",
+                      "input": {
+                        "symbol": "ETH",
+                        "exchanges": [
+                          "binance"
+                        ]
+                      },
+                      "passed": true,
+                      "output": {
+                        "top_exchanges": [
+                          {
+                            "rank": 1,
+                            "exchange": "binance",
+                            "price": 2205.0529358302056,
+                            "volume": 193708086,
+                            "market_share": 13.144835273407967
+                          }
+                        ],
+                        "price_variations": {
+                          "spread": 0.30463044638303416,
+                          "arbitrage_opportunities": 1,
+                          "price_std_dev": 2.206059496200898
+                        },
+                        "volume_distribution": {
+                          "total_volume": 193708086,
+                          "exchange_count": 5,
+                          "concentration_ratio": 0.5811593574739906
+                        },
+                        "vwap": 2205.0529358302056,
+                        "exchanges_prices": {
+                          "binance": {
+                            "price": 2302.0,
+                            "volume": 5000000000.0
+                          }
+                        }
+                      },
+                      "error": null
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_historical_analysis",
+                  "test_cases": [
+                    {
+                      "description": "Valid case - BTC 7 days daily interval",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "1d",
+                        "days": 7
+                      },
+                      "passed": true,
+                      "output": {
+                        "price_trends": [
+                          43500.0,
+                          41552.78165500161,
+                          39837.427469683826,
+                          39467.902518484196,
+                          37919.5776299368,
+                          39440.90682969008,
+                          37619.343007200856
+                        ],
+                        "volatility_metrics": {
+                          "standard_deviation": 3.8892136281585237,
+                          "average_true_range": 2.912909180152671,
+                          "sharpe_ratio": -0.6712092059612806,
+                          "max_drawdown": 26.302165473234215
+                        },
+                        "high_price": 43500.0,
+                        "low_price": 37619.343007200856,
+                        "analysis_summary": "Historical analysis shows bearish trend over 7 days with 3.89% volatility. Price ranged from $37619.34 to $43500.00."
+                      },
+                      "error": null
+                    },
+                    {
+                      "description": "Valid case - ETH 3 days 4h interval",
+                      "input": {
+                        "symbol": "ETH",
+                        "interval": "4h",
+                        "days": 3
+                      },
+                      "passed": true,
+                      "output": {
+                        "price_trends": [
+                          2300.0,
+                          2197.043627735717,
+                          2106.346739776386
+                        ],
+                        "volatility_metrics": {
+                          "standard_deviation": 4.305770470243866,
+                          "average_true_range": 2.3325879365167923,
+                          "sharpe_ratio": -1.5691990602462438,
+                          "max_drawdown": 27.529971948792365
+                        },
+                        "high_price": 2300.0,
+                        "low_price": 2106.346739776386,
+                        "analysis_summary": "Historical analysis shows bearish trend over 3 days with 4.31% volatility. Price ranged from $2106.35 to $2300.00."
+                      },
+                      "error": null
+                    },
+                    {
+                      "description": "Error case - days exceeds maximum",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "1d",
+                        "days": 50
+                      },
+                      "passed": true,
+                      "output": null,
+                      "error": "Days must be an integer between 1 and 30",
+                      "expected_error": true
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null,
+                "notes": "State consistency verified. The saved scenario contains all original data plus accumulated state from tool executions (ETH market analysis and historical data for BTC and ETH). This is expected behavior as tools modify the internal state."
+              },
+              "summary": {}
+            },
+            "complexity_level": "medium",
+            "execution_time": 68.56376934051514
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_crypto_price",
+                  "passed": true,
+                  "test_cases": [
+                    {
+                      "description": "Valid case - BTC without exchanges",
+                      "input": {
+                        "symbol": "BTC"
+                      },
+                      "result": "success",
+                      "error": null
+                    },
+                    {
+                      "description": "Valid case - SOL with specific exchange",
+                      "input": {
+                        "symbol": "SOL",
+                        "exchanges": [
+                          "binance"
+                        ]
+                      },
+                      "result": "success",
+                      "error": null
+                    },
+                    {
+                      "description": "Valid case - ETH with multiple exchanges",
+                      "input": {
+                        "symbol": "ETH",
+                        "exchanges": [
+                          "binance",
+                          "coinbase"
+                        ]
+                      },
+                      "result": "success",
+                      "error": null
+                    },
+                    {
+                      "description": "Error case - Invalid symbol",
+                      "input": {
+                        "symbol": "INVALID"
+                      },
+                      "result": "expected_error",
+                      "error": "Symbol 'INVALID' is not supported"
+                    }
+                  ],
+                  "error": null
+                },
+                {
+                  "tool_name": "get_market_analysis",
+                  "passed": true,
+                  "test_cases": [
+                    {
+                      "description": "Valid case - BTC with multiple exchanges",
+                      "input": {
+                        "symbol": "BTC",
+                        "exchanges": [
+                          "binance",
+                          "coinbase",
+                          "kraken"
+                        ]
+                      },
+                      "result": "success",
+                      "error": null
+                    },
+                    {
+                      "description": "Valid case - ETH without exchanges",
+                      "input": {
+                        "symbol": "ETH"
+                      },
+                      "result": "success",
+                      "error": null
+                    },
+                    {
+                      "description": "Valid case - SOL with specific exchanges",
+                      "input": {
+                        "symbol": "SOL",
+                        "exchanges": [
+                          "binance",
+                          "coinbase"
+                        ]
+                      },
+                      "result": "success",
+                      "error": null
+                    }
+                  ],
+                  "error": null
+                },
+                {
+                  "tool_name": "get_historical_analysis",
+                  "passed": true,
+                  "test_cases": [
+                    {
+                      "description": "Valid case - BTC with 1d interval, 7 days",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "1d",
+                        "days": 7
+                      },
+                      "result": "success",
+                      "error": null
+                    },
+                    {
+                      "description": "Valid case - ETH with 1d interval, 7 days",
+                      "input": {
+                        "symbol": "ETH",
+                        "interval": "1d",
+                        "days": 7
+                      },
+                      "result": "success",
+                      "error": null
+                    },
+                    {
+                      "description": "Boundary case - BTC with 4h interval, 30 days (max)",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "4h",
+                        "days": 30
+                      },
+                      "result": "success",
+                      "error": null
+                    },
+                    {
+                      "description": "Boundary case - SOL with 1h interval, 1 day (min)",
+                      "input": {
+                        "symbol": "SOL",
+                        "interval": "1h",
+                        "days": 1
+                      },
+                      "result": "success",
+                      "error": null
+                    },
+                    {
+                      "description": "Error case - Invalid interval",
+                      "input": {
+                        "symbol": "ADA",
+                        "interval": "invalid",
+                        "days": 7
+                      },
+                      "result": "expected_error",
+                      "error": "Interval must be one of: 5m, 15m, 30m, 1h, 4h, 1d"
+                    },
+                    {
+                      "description": "Error case - Days below minimum (0)",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "1d",
+                        "days": 0
+                      },
+                      "result": "expected_error",
+                      "error": "Days must be an integer between 1 and 30"
+                    },
+                    {
+                      "description": "Error case - Days above maximum (31)",
+                      "input": {
+                        "symbol": "BTC",
+                        "interval": "1d",
+                        "days": 31
+                      },
+                      "result": "expected_error",
+                      "error": "Days must be an integer between 1 and 30"
+                    }
+                  ],
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "notes": "Saved scenario contains original data plus computed results from tool executions (SOL market analysis and historical data for BTC/ETH/SOL). This is expected behavior as tools cache their computed results.",
+                "error": null
+              },
+              "summary": {}
+            },
+            "complexity_level": "complex",
+            "execution_time": 69.55518436431885
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_crypto_price",
+                  "test_cases": [
+                    {
+                      "description": "Valid case - basic symbol query",
+                      "input": {
+                        "symbol": "MATIC"
+                      },
+                      "passed": true,
+                      "error": null
+                    },
+                    {
+                      "description": "Valid case - with exchange filter",
+                      "input": {
+                        "symbol": "MATIC",
+                        "exchanges": [
+                          "binance"
+                        ]
+                      },
+                      "passed": true,
+                      "error": null
+                    },
+                    {
+                      "description": "Error case - empty symbol",
+                      "input": {
+                        "symbol": ""
+                      },
+                      "passed": true,
+                      "error": "Symbol must be a non-empty string",
+                      "note": "Correctly rejected invalid input"
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_market_analysis",
+                  "test_cases": [
+                    {
+                      "description": "Valid case - basic symbol query",
+                      "input": {
+                        "symbol": "MATIC"
+                      },
+                      "passed": true,
+                      "error": null
+                    },
+                    {
+                      "description": "Valid case - with exchange filter",
+                      "input": {
+                        "symbol": "MATIC",
+                        "exchanges": [
+                          "binance"
+                        ]
+                      },
+                      "passed": true,
+                      "error": null
+                    },
+                    {
+                      "description": "Error case - empty symbol",
+                      "input": {
+                        "symbol": ""
+                      },
+                      "passed": true,
+                      "error": "Symbol must be a non-empty string",
+                      "note": "Correctly rejected invalid input"
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_historical_analysis",
+                  "test_cases": [
+                    {
+                      "description": "Valid case - default parameters",
+                      "input": {
+                        "symbol": "MATIC"
+                      },
+                      "passed": true,
+                      "error": null
+                    },
+                    {
+                      "description": "Valid case - custom interval and days",
+                      "input": {
+                        "symbol": "MATIC",
+                        "interval": "1h",
+                        "days": 3
+                      },
+                      "passed": true,
+                      "error": null
+                    },
+                    {
+                      "description": "Boundary case - minimum interval and days",
+                      "input": {
+                        "symbol": "MATIC",
+                        "interval": "5m",
+                        "days": 1
+                      },
+                      "passed": true,
+                      "error": null
+                    },
+                    {
+                      "description": "Error case - invalid interval",
+                      "input": {
+                        "symbol": "MATIC",
+                        "interval": "invalid",
+                        "days": 7
+                      },
+                      "passed": true,
+                      "error": "Interval must be one of: 5m, 15m, 30m, 1h, 4h, 1d",
+                      "note": "Correctly rejected invalid input"
+                    },
+                    {
+                      "description": "Error case - days out of range",
+                      "input": {
+                        "symbol": "MATIC",
+                        "interval": "1d",
+                        "days": 50
+                      },
+                      "passed": true,
+                      "error": "Days must be an integer between 1 and 30",
+                      "note": "Correctly rejected invalid input"
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null,
+                "notes": "State correctly preserved original data and accumulated results from tool executions (exchange_data populated, historical_data enriched with 1h and 5m intervals)"
+              },
+              "summary": {}
+            },
+            "complexity_level": "boundary",
+            "execution_time": 74.43462252616882
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 1,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/CryptoPrice.py"
+  }
+}

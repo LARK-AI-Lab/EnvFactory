@@ -1,0 +1,3771 @@
+{
+  "metadata": {
+    "class_name": "HKBus",
+    "metadata_path": "envs\\metadata\\HKBus_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-01T15:15:34.439572",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "HKBus",
+    "description": "Hong Kong public bus information service providing real-time arrival times, route planning, stop information, and route discovery across the Hong Kong bus network.",
+    "tools": [
+      {
+        "name": "get_next_bus",
+        "description": "Retrieve the next estimated arrival time for a specific bus route at a designated stop, including distance and timing information.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "route": {
+              "type": "string",
+              "description": "The bus route number identifier (e.g., '1A', '6', '960') for which to retrieve arrival information."
+            },
+            "stop_name": {
+              "type": "string",
+              "description": "The name of the bus stop where the arrival time should be checked."
+            },
+            "direction": {
+              "type": "string",
+              "description": "The route direction indicator (e.g., 'to Tsim Sha Tsui', 'to Central'). Required when the route operates in multiple directions to disambiguate the service."
+            }
+          },
+          "required": [
+            "route",
+            "stop_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "estimated_arrival_time": {
+              "type": "string",
+              "description": "The estimated time when the next bus will arrive at the specified stop, typically in ISO 8601 format or minutes remaining."
+            },
+            "distance_from_stop": {
+              "type": "number",
+              "description": "The current distance of the approaching bus from the stop, measured in kilometers or meters."
+            }
+          }
+        }
+      },
+      {
+        "name": "find_buses_to_destination",
+        "description": "Discover all bus routes that serve a specified destination, optionally filtered by an origin location for point-to-point route planning.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "destination": {
+              "type": "string",
+              "description": "The destination location name to search for (e.g., 'Central', 'Mong Kok', 'Airport')."
+            },
+            "origin": {
+              "type": "string",
+              "description": "The origin location name. When provided, filters results to show only routes traveling from the origin to the destination."
+            }
+          },
+          "required": [
+            "destination"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "routes": {
+              "type": "array",
+              "description": "Collection of bus routes that can reach the specified destination.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "route_number": {
+                    "type": "string",
+                    "description": "The bus route number identifier (e.g., '1A', '6', '960')."
+                  },
+                  "route_name": {
+                    "type": "string",
+                    "description": "The descriptive name of the bus route, typically indicating the origin and destination terminals."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_route_stops_info",
+        "description": "Retrieve comprehensive information about all stops along a specified bus route, including their sequence and names.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "route": {
+              "type": "string",
+              "description": "The bus route number identifier (e.g., '1A', '6', '960') for which to retrieve stop information."
+            },
+            "direction": {
+              "type": "string",
+              "description": "The route direction indicator. Required when the route operates in multiple directions to specify which service direction to query."
+            }
+          },
+          "required": [
+            "route"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "stops": {
+              "type": "array",
+              "description": "Ordered list of all bus stops along the specified route.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "stop_order": {
+                    "type": "integer",
+                    "description": "The sequential position of this stop along the route, starting from the origin terminal."
+                  },
+                  "stop_name": {
+                    "type": "string",
+                    "description": "The name of the bus stop."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "find_stop_by_name",
+        "description": "Search for bus stops by full or partial name matching, returning detailed information about each matching stop.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "stop_name": {
+              "type": "string",
+              "description": "Full or partial name of the bus stop to search for. Supports fuzzy matching to find stops with similar names."
+            }
+          },
+          "required": [
+            "stop_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "stops": {
+              "type": "array",
+              "description": "Collection of bus stops matching the search criteria.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "stop_id": {
+                    "type": "string",
+                    "description": "The unique identifier assigned to the bus stop in the Hong Kong bus system."
+                  },
+                  "stop_name": {
+                    "type": "string",
+                    "description": "The name of the bus stop."
+                  },
+                  "location": {
+                    "type": "object",
+                    "description": "Geographic location information for the bus stop.",
+                    "properties": {
+                      "latitude": {
+                        "type": "number",
+                        "description": "The latitude coordinate of the bus stop location."
+                      },
+                      "longitude": {
+                        "type": "number",
+                        "description": "The longitude coordinate of the bus stop location."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_all_routes_at_stop",
+        "description": "Retrieve all bus routes that service a specified bus stop, including route numbers, names, and directions.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "stop_name": {
+              "type": "string",
+              "description": "The name of the bus stop for which to retrieve all servicing routes."
+            }
+          },
+          "required": [
+            "stop_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "routes": {
+              "type": "array",
+              "description": "Collection of all bus routes that pass through the specified stop.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "route_number": {
+                    "type": "string",
+                    "description": "The bus route number identifier (e.g., '1A', '6', '960')."
+                  },
+                  "route_name": {
+                    "type": "string",
+                    "description": "The descriptive name of the bus route, typically indicating the origin and destination terminals."
+                  },
+                  "direction": {
+                    "type": "string",
+                    "description": "The route direction indicator for this service at the stop (e.g., 'to Tsim Sha Tsui', 'to Central')."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_bus_eta",
+        "description": "Retrieve multiple estimated arrival times for a specified bus route at a stop, showing the next several buses approaching.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "route": {
+              "type": "string",
+              "description": "The bus route number identifier (e.g., '1A', '6', '960') for which to retrieve arrival times."
+            },
+            "stop_name": {
+              "type": "string",
+              "description": "The name of the bus stop where arrival times should be checked."
+            },
+            "direction": {
+              "type": "string",
+              "description": "The route direction indicator. Required when the route operates in multiple directions to specify which service to query."
+            },
+            "count": {
+              "type": "integer",
+              "description": "The number of upcoming bus arrivals to retrieve. Defaults to 3 if not specified, allowing users to see multiple approaching buses."
+            }
+          },
+          "required": [
+            "route",
+            "stop_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "arrivals": {
+              "type": "array",
+              "description": "Ordered list of upcoming bus arrivals, from soonest to latest.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "estimated_arrival_time": {
+                    "type": "string",
+                    "description": "The estimated time when this bus will arrive at the specified stop, typically in ISO 8601 format or minutes remaining."
+                  },
+                  "distance_from_stop": {
+                    "type": "number",
+                    "description": "The current distance of this approaching bus from the stop, measured in kilometers or meters."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "search_route_by_stops",
+        "description": "Find available bus routes connecting two specific stops, including direct routes and transfer options for journey planning.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "from_stop_name": {
+              "type": "string",
+              "description": "The name of the origin bus stop where the journey begins."
+            },
+            "to_stop_name": {
+              "type": "string",
+              "description": "The name of the destination bus stop where the journey ends."
+            }
+          },
+          "required": [
+            "from_stop_name",
+            "to_stop_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "routes": {
+              "type": "array",
+              "description": "Collection of available bus routes connecting the origin to the destination.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "route_number": {
+                    "type": "string",
+                    "description": "The bus route number identifier (e.g., '1A', '6', '960')."
+                  },
+                  "transfer_information": {
+                    "type": "object",
+                    "description": "Details about any required transfers, including intermediate stops and connecting routes. Empty if the route is direct.",
+                    "properties": {
+                      "is_direct": {
+                        "type": "boolean",
+                        "description": "Indicates whether this is a direct route (true) or requires transfers (false)."
+                      },
+                      "transfer_stops": {
+                        "type": "array",
+                        "description": "List of stops where transfers are required.",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Location(BaseModel):\n    \"\"\"Geographic location coordinates.\"\"\"\n    latitude: float = Field(..., ge=-90, le=90, description=\"Latitude coordinate\")\n    longitude: float = Field(..., ge=-180, le=180, description=\"Longitude coordinate\")\n\nclass BusStop(BaseModel):\n    \"\"\"Represents a bus stop.\"\"\"\n    stop_id: str = Field(..., description=\"Unique stop identifier\")\n    stop_name: str = Field(..., description=\"Name of the bus stop\")\n    location: Location = Field(..., description=\"Geographic coordinates\")\n\nclass RouteInfo(BaseModel):\n    \"\"\"Bus route information.\"\"\"\n    route_number: str = Field(..., description=\"Route number identifier\")\n    route_name: str = Field(..., description=\"Descriptive route name\")\n    direction: Optional[str] = Field(default=None, description=\"Route direction\")\n\nclass StopOnRoute(BaseModel):\n    \"\"\"Stop information along a route.\"\"\"\n    stop_order: int = Field(..., ge=1, description=\"Sequential position on route\")\n    stop_name: str = Field(..., description=\"Name of the stop\")\n\nclass BusArrival(BaseModel):\n    \"\"\"Bus arrival information.\"\"\"\n    estimated_arrival_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"ISO 8601 timestamp\")\n    distance_from_stop: float = Field(..., ge=0, description=\"Distance in kilometers\")\n\nclass TransferInfo(BaseModel):\n    \"\"\"Transfer information for routes.\"\"\"\n    is_direct: bool = Field(..., description=\"Whether route is direct\")\n    transfer_stops: List[str] = Field(default_factory=list, description=\"Transfer stop names\")\n\nclass RouteWithTransfer(BaseModel):\n    \"\"\"Route with transfer information.\"\"\"\n    route_number: str = Field(..., description=\"Route number\")\n    transfer_information: TransferInfo = Field(..., description=\"Transfer details\")\n\nclass HKBusScenario(BaseModel):\n    \"\"\"Main scenario model for Hong Kong bus system.\"\"\"\n    stops: Dict[str, BusStop] = Field(default_factory=dict, description=\"All bus stops by stop_id\")\n    routes: Dict[str, RouteInfo] = Field(default_factory=dict, description=\"All routes by route_number\")\n    route_stops: Dict[str, List[StopOnRoute]] = Field(default_factory=dict, description=\"Stops for each route, keyed by 'route_number:direction'\")\n    stop_routes: Dict[str, List[RouteInfo]] = Field(default_factory=dict, description=\"Routes serving each stop, keyed by stop_name\")\n    bus_arrivals: Dict[str, List[BusArrival]] = Field(default_factory=dict, description=\"Arrival times keyed by 'route:stop_name:direction'\")\n    route_connections: Dict[str, List[RouteWithTransfer]] = Field(default_factory=dict, description=\"Route connections keyed by 'from_stop:to_stop'\")\n\nScenario_Schema = [Location, BusStop, RouteInfo, StopOnRoute, BusArrival, TransferInfo, RouteWithTransfer, HKBusScenario]\n\n# Section 2: Class\nclass HKBusAPI:\n    def __init__(self):\n        \"\"\"Initialize HK Bus API with empty state.\"\"\"\n        self.stops: Dict[str, BusStop] = {}\n        self.routes: Dict[str, RouteInfo] = {}\n        self.route_stops: Dict[str, List[StopOnRoute]] = {}\n        self.stop_routes: Dict[str, List[RouteInfo]] = {}\n        self.bus_arrivals: Dict[str, List[BusArrival]] = {}\n        self.route_connections: Dict[str, List[RouteWithTransfer]] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = HKBusScenario(**scenario)\n        self.stops = model.stops\n        self.routes = model.routes\n        self.route_stops = model.route_stops\n        self.stop_routes = model.stop_routes\n        self.bus_arrivals = model.bus_arrivals\n        self.route_connections = model.route_connections\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"stops\": {stop_id: stop.dict() for stop_id, stop in self.stops.items()},\n            \"routes\": {route_num: route.dict() for route_num, route in self.routes.items()},\n            \"route_stops\": {key: [stop.dict() for stop in stops] for key, stops in self.route_stops.items()},\n            \"stop_routes\": {stop_name: [route.dict() for route in routes] for stop_name, routes in self.stop_routes.items()},\n            \"bus_arrivals\": {key: [arrival.dict() for arrival in arrivals] for key, arrivals in self.bus_arrivals.items()},\n            \"route_connections\": {key: [route.dict() for route in routes] for key, routes in self.route_connections.items()}\n        }\n\n    def get_next_bus(self, route: str, stop_name: str, direction: Optional[str] = None) -> dict:\n        \"\"\"Retrieve the next estimated arrival time for a bus route at a stop.\"\"\"\n        key = f\"{route}:{stop_name}:{direction if direction else ''}\"\n        arrivals = self.bus_arrivals.get(key, [])\n        \n        if not arrivals:\n            return {}\n        \n        next_arrival = arrivals[0]\n        return {\n            \"estimated_arrival_time\": next_arrival.estimated_arrival_time,\n            \"distance_from_stop\": next_arrival.distance_from_stop\n        }\n\n    def find_buses_to_destination(self, destination: str, origin: Optional[str] = None) -> dict:\n        \"\"\"Discover all bus routes serving a destination.\"\"\"\n        matching_routes = []\n        \n        for route_num, route_info in self.routes.items():\n            route_name_lower = route_info.route_name.lower()\n            destination_lower = destination.lower()\n            \n            if destination_lower in route_name_lower:\n                if origin:\n                    origin_lower = origin.lower()\n                    if origin_lower in route_name_lower:\n                        matching_routes.append({\n                            \"route_number\": route_info.route_number,\n                            \"route_name\": route_info.route_name\n                        })\n                else:\n                    matching_routes.append({\n                        \"route_number\": route_info.route_number,\n                        \"route_name\": route_info.route_name\n                    })\n        \n        return {\"routes\": matching_routes}\n\n    def get_route_stops_info(self, route: str, direction: Optional[str] = None) -> dict:\n        \"\"\"Retrieve all stops along a bus route.\"\"\"\n        key = f\"{route}:{direction if direction else ''}\"\n        stops = self.route_stops.get(key, [])\n        \n        return {\n            \"stops\": [\n                {\n                    \"stop_order\": stop.stop_order,\n                    \"stop_name\": stop.stop_name\n                }\n                for stop in stops\n            ]\n        }\n\n    def find_stop_by_name(self, stop_name: str) -> dict:\n        \"\"\"Search for bus stops by name.\"\"\"\n        matching_stops = []\n        stop_name_lower = stop_name.lower()\n        \n        for stop_id, stop in self.stops.items():\n            if stop_name_lower in stop.stop_name.lower():\n                matching_stops.append({\n                    \"stop_id\": stop.stop_id,\n                    \"stop_name\": stop.stop_name,\n                    \"location\": {\n                        \"latitude\": stop.location.latitude,\n                        \"longitude\": stop.location.longitude\n                    }\n                })\n        \n        return {\"stops\": matching_stops}\n\n    def get_all_routes_at_stop(self, stop_name: str) -> dict:\n        \"\"\"Retrieve all bus routes servicing a stop.\"\"\"\n        routes = self.stop_routes.get(stop_name, [])\n        \n        return {\n            \"routes\": [\n                {\n                    \"route_number\": route.route_number,\n                    \"route_name\": route.route_name,\n                    \"direction\": route.direction if route.direction else \"\"\n                }\n                for route in routes\n            ]\n        }\n\n    def get_bus_eta(self, route: str, stop_name: str, direction: Optional[str] = None, count: int = 3) -> dict:\n        \"\"\"Retrieve multiple estimated arrival times for a bus route.\"\"\"\n        key = f\"{route}:{stop_name}:{direction if direction else ''}\"\n        arrivals = self.bus_arrivals.get(key, [])\n        \n        limited_arrivals = arrivals[:count]\n        \n        return {\n            \"arrivals\": [\n                {\n                    \"estimated_arrival_time\": arrival.estimated_arrival_time,\n                    \"distance_from_stop\": arrival.distance_from_stop\n                }\n                for arrival in limited_arrivals\n            ]\n        }\n\n    def search_route_by_stops(self, from_stop_name: str, to_stop_name: str) -> dict:\n        \"\"\"Find bus routes connecting two stops.\"\"\"\n        key = f\"{from_stop_name}:{to_stop_name}\"\n        routes = self.route_connections.get(key, [])\n        \n        return {\n            \"routes\": [\n                {\n                    \"route_number\": route.route_number,\n                    \"transfer_information\": {\n                        \"is_direct\": route.transfer_information.is_direct,\n                        \"transfer_stops\": route.transfer_information.transfer_stops\n                    }\n                }\n                for route in routes\n            ]\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"HKBus\")\napi = HKBusAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the HK Bus API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching HKBusScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current HK Bus state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_next_bus(route: str, stop_name: str, direction: Optional[str] = None) -> dict:\n    \"\"\"\n    Retrieve the next estimated arrival time for a specific bus route at a designated stop.\n    \n    Args:\n        route (str): The bus route number identifier (e.g., '1A', '6', '960').\n        stop_name (str): The name of the bus stop where the arrival time should be checked.\n        direction (str) [Optional]: The route direction indicator (e.g., 'to Tsim Sha Tsui').\n    \n    Returns:\n        estimated_arrival_time (str): The estimated time when the next bus will arrive.\n        distance_from_stop (float): The current distance of the approaching bus from the stop.\n    \"\"\"\n    try:\n        if not route or not isinstance(route, str):\n            raise ValueError(\"Route must be a non-empty string\")\n        if not stop_name or not isinstance(stop_name, str):\n            raise ValueError(\"Stop name must be a non-empty string\")\n        \n        result = api.get_next_bus(route, stop_name, direction)\n        if not result:\n            raise ValueError(f\"No arrival information found for route {route} at stop {stop_name}\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef find_buses_to_destination(destination: str, origin: Optional[str] = None) -> dict:\n    \"\"\"\n    Discover all bus routes that serve a specified destination.\n    \n    Args:\n        destination (str): The destination location name to search for (e.g., 'Central', 'Mong Kok').\n        origin (str) [Optional]: The origin location name for filtering routes.\n    \n    Returns:\n        routes (list): Collection of bus routes with route_number and route_name.\n    \"\"\"\n    try:\n        if not destination or not isinstance(destination, str):\n            raise ValueError(\"Destination must be a non-empty string\")\n        \n        return api.find_buses_to_destination(destination, origin)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_route_stops_info(route: str, direction: Optional[str] = None) -> dict:\n    \"\"\"\n    Retrieve comprehensive information about all stops along a specified bus route.\n    \n    Args:\n        route (str): The bus route number identifier (e.g., '1A', '6', '960').\n        direction (str) [Optional]: The route direction indicator.\n    \n    Returns:\n        stops (list): Ordered list of all bus stops with stop_order and stop_name.\n    \"\"\"\n    try:\n        if not route or not isinstance(route, str):\n            raise ValueError(\"Route must be a non-empty string\")\n        \n        return api.get_route_stops_info(route, direction)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef find_stop_by_name(stop_name: str) -> dict:\n    \"\"\"\n    Search for bus stops by full or partial name matching.\n    \n    Args:\n        stop_name (str): Full or partial name of the bus stop to search for.\n    \n    Returns:\n        stops (list): Collection of matching bus stops with stop_id, stop_name, and location.\n    \"\"\"\n    try:\n        if not stop_name or not isinstance(stop_name, str):\n            raise ValueError(\"Stop name must be a non-empty string\")\n        \n        return api.find_stop_by_name(stop_name)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_all_routes_at_stop(stop_name: str) -> dict:\n    \"\"\"\n    Retrieve all bus routes that service a specified bus stop.\n    \n    Args:\n        stop_name (str): The name of the bus stop for which to retrieve all servicing routes.\n    \n    Returns:\n        routes (list): Collection of all bus routes with route_number, route_name, and direction.\n    \"\"\"\n    try:\n        if not stop_name or not isinstance(stop_name, str):\n            raise ValueError(\"Stop name must be a non-empty string\")\n        \n        return api.get_all_routes_at_stop(stop_name)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_bus_eta(route: str, stop_name: str, direction: Optional[str] = None, count: int = 3) -> dict:\n    \"\"\"\n    Retrieve multiple estimated arrival times for a specified bus route at a stop.\n    \n    Args:\n        route (str): The bus route number identifier (e.g., '1A', '6', '960').\n        stop_name (str): The name of the bus stop where arrival times should be checked.\n        direction (str) [Optional]: The route direction indicator.\n        count (int) [Optional]: The number of upcoming bus arrivals to retrieve (defaults to 3).\n    \n    Returns:\n        arrivals (list): Ordered list of upcoming bus arrivals with estimated_arrival_time and distance_from_stop.\n    \"\"\"\n    try:\n        if not route or not isinstance(route, str):\n            raise ValueError(\"Route must be a non-empty string\")\n        if not stop_name or not isinstance(stop_name, str):\n            raise ValueError(\"Stop name must be a non-empty string\")\n        \n        return api.get_bus_eta(route, stop_name, direction, count)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_route_by_stops(from_stop_name: str, to_stop_name: str) -> dict:\n    \"\"\"\n    Find available bus routes connecting two specific stops.\n    \n    Args:\n        from_stop_name (str): The name of the origin bus stop where the journey begins.\n        to_stop_name (str): The name of the destination bus stop where the journey ends.\n    \n    Returns:\n        routes (list): Collection of available bus routes with route_number and transfer_information.\n    \"\"\"\n    try:\n        if not from_stop_name or not isinstance(from_stop_name, str):\n            raise ValueError(\"From stop name must be a non-empty string\")\n        if not to_stop_name or not isinstance(to_stop_name, str):\n            raise ValueError(\"To stop name must be a non-empty string\")\n        \n        return api.search_route_by_stops(from_stop_name, to_stop_name)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-01T15:15:34.439572",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with 2 stops and 1 route connecting them, testing fundamental route lookup and stop information",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "stops": {
+          "S001": {
+            "stop_id": "S001",
+            "stop_name": "Central Ferry Pier",
+            "location": {
+              "latitude": 22.287,
+              "longitude": 114.158
+            }
+          },
+          "S002": {
+            "stop_id": "S002",
+            "stop_name": "Admiralty Station",
+            "location": {
+              "latitude": 22.279,
+              "longitude": 114.165
+            }
+          }
+        },
+        "routes": {
+          "1": {
+            "route_number": "1",
+            "route_name": "Central - Admiralty",
+            "direction": "Outbound"
+          }
+        },
+        "route_stops": {
+          "1:Outbound": [
+            {
+              "stop_order": 1,
+              "stop_name": "Central Ferry Pier"
+            },
+            {
+              "stop_order": 2,
+              "stop_name": "Admiralty Station"
+            }
+          ]
+        },
+        "stop_routes": {
+          "Central Ferry Pier": [
+            {
+              "route_number": "1",
+              "route_name": "Central - Admiralty",
+              "direction": "Outbound"
+            }
+          ]
+        },
+        "bus_arrivals": {
+          "1:Central Ferry Pier:Outbound": [
+            {
+              "estimated_arrival_time": "2024-01-15T09:30:00",
+              "distance_from_stop": 0.5
+            }
+          ]
+        },
+        "route_connections": {}
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Moderate scenario with 4 stops, 2 bidirectional routes, multiple arrivals, and transfer connections",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "stops": {
+          "S101": {
+            "stop_id": "S101",
+            "stop_name": "Tsim Sha Tsui Star Ferry",
+            "location": {
+              "latitude": 22.294,
+              "longitude": 114.169
+            }
+          },
+          "S102": {
+            "stop_id": "S102",
+            "stop_name": "Jordan MTR",
+            "location": {
+              "latitude": 22.305,
+              "longitude": 114.172
+            }
+          },
+          "S103": {
+            "stop_id": "S103",
+            "stop_name": "Mong Kok Station",
+            "location": {
+              "latitude": 22.319,
+              "longitude": 114.169
+            }
+          },
+          "S104": {
+            "stop_id": "S104",
+            "stop_name": "Prince Edward",
+            "location": {
+              "latitude": 22.324,
+              "longitude": 114.168
+            }
+          }
+        },
+        "routes": {
+          "6": {
+            "route_number": "6",
+            "route_name": "Tsim Sha Tsui - Mong Kok",
+            "direction": "Northbound"
+          },
+          "9": {
+            "route_number": "9",
+            "route_name": "Jordan - Prince Edward",
+            "direction": "Northbound"
+          }
+        },
+        "route_stops": {
+          "6:Northbound": [
+            {
+              "stop_order": 1,
+              "stop_name": "Tsim Sha Tsui Star Ferry"
+            },
+            {
+              "stop_order": 2,
+              "stop_name": "Jordan MTR"
+            },
+            {
+              "stop_order": 3,
+              "stop_name": "Mong Kok Station"
+            }
+          ],
+          "9:Northbound": [
+            {
+              "stop_order": 1,
+              "stop_name": "Jordan MTR"
+            },
+            {
+              "stop_order": 2,
+              "stop_name": "Mong Kok Station"
+            },
+            {
+              "stop_order": 3,
+              "stop_name": "Prince Edward"
+            }
+          ]
+        },
+        "stop_routes": {
+          "Tsim Sha Tsui Star Ferry": [
+            {
+              "route_number": "6",
+              "route_name": "Tsim Sha Tsui - Mong Kok",
+              "direction": "Northbound"
+            }
+          ],
+          "Jordan MTR": [
+            {
+              "route_number": "6",
+              "route_name": "Tsim Sha Tsui - Mong Kok",
+              "direction": "Northbound"
+            },
+            {
+              "route_number": "9",
+              "route_name": "Jordan - Prince Edward",
+              "direction": "Northbound"
+            }
+          ],
+          "Mong Kok Station": [
+            {
+              "route_number": "6",
+              "route_name": "Tsim Sha Tsui - Mong Kok",
+              "direction": "Northbound"
+            },
+            {
+              "route_number": "9",
+              "route_name": "Jordan - Prince Edward",
+              "direction": "Northbound"
+            }
+          ]
+        },
+        "bus_arrivals": {
+          "6:Tsim Sha Tsui Star Ferry:Northbound": [
+            {
+              "estimated_arrival_time": "2024-01-15T10:15:00",
+              "distance_from_stop": 0.2
+            },
+            {
+              "estimated_arrival_time": "2024-01-15T10:30:00",
+              "distance_from_stop": 2.5
+            }
+          ],
+          "9:Jordan MTR:Northbound": [
+            {
+              "estimated_arrival_time": "2024-01-15T10:20:00",
+              "distance_from_stop": 0.0
+            }
+          ]
+        },
+        "route_connections": {
+          "Tsim Sha Tsui Star Ferry:Prince Edward": [
+            {
+              "route_number": "6",
+              "transfer_information": {
+                "is_direct": false,
+                "transfer_stops": [
+                  "Mong Kok Station"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Complex scenario with 6 stops, 3 routes with multiple directions, comprehensive arrival data, and multiple transfer options",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "stops": {
+          "S201": {
+            "stop_id": "S201",
+            "stop_name": "Causeway Bay Times Square",
+            "location": {
+              "latitude": 22.278,
+              "longitude": 114.182
+            }
+          },
+          "S202": {
+            "stop_id": "S202",
+            "stop_name": "Wan Chai MTR",
+            "location": {
+              "latitude": 22.277,
+              "longitude": 114.173
+            }
+          },
+          "S203": {
+            "stop_id": "S203",
+            "stop_name": "Central IFC",
+            "location": {
+              "latitude": 22.285,
+              "longitude": 114.158
+            }
+          },
+          "S204": {
+            "stop_id": "S204",
+            "stop_name": "Sheung Wan",
+            "location": {
+              "latitude": 22.287,
+              "longitude": 114.151
+            }
+          },
+          "S205": {
+            "stop_id": "S205",
+            "stop_name": "Kennedy Town",
+            "location": {
+              "latitude": 22.281,
+              "longitude": 114.128
+            }
+          },
+          "S206": {
+            "stop_id": "S206",
+            "stop_name": "North Point Ferry",
+            "location": {
+              "latitude": 22.292,
+              "longitude": 114.2
+            }
+          }
+        },
+        "routes": {
+          "5B": {
+            "route_number": "5B",
+            "route_name": "Causeway Bay - Kennedy Town",
+            "direction": "Westbound"
+          },
+          "5B_return": {
+            "route_number": "5B",
+            "route_name": "Kennedy Town - Causeway Bay",
+            "direction": "Eastbound"
+          },
+          "10": {
+            "route_number": "10",
+            "route_name": "North Point - Central",
+            "direction": "Westbound"
+          }
+        },
+        "route_stops": {
+          "5B:Westbound": [
+            {
+              "stop_order": 1,
+              "stop_name": "Causeway Bay Times Square"
+            },
+            {
+              "stop_order": 2,
+              "stop_name": "Wan Chai MTR"
+            },
+            {
+              "stop_order": 3,
+              "stop_name": "Central IFC"
+            },
+            {
+              "stop_order": 4,
+              "stop_name": "Sheung Wan"
+            },
+            {
+              "stop_order": 5,
+              "stop_name": "Kennedy Town"
+            }
+          ],
+          "5B:Eastbound": [
+            {
+              "stop_order": 1,
+              "stop_name": "Kennedy Town"
+            },
+            {
+              "stop_order": 2,
+              "stop_name": "Sheung Wan"
+            },
+            {
+              "stop_order": 3,
+              "stop_name": "Central IFC"
+            },
+            {
+              "stop_order": 4,
+              "stop_name": "Wan Chai MTR"
+            },
+            {
+              "stop_order": 5,
+              "stop_name": "Causeway Bay Times Square"
+            }
+          ],
+          "10:Westbound": [
+            {
+              "stop_order": 1,
+              "stop_name": "North Point Ferry"
+            },
+            {
+              "stop_order": 2,
+              "stop_name": "Causeway Bay Times Square"
+            },
+            {
+              "stop_order": 3,
+              "stop_name": "Wan Chai MTR"
+            },
+            {
+              "stop_order": 4,
+              "stop_name": "Central IFC"
+            }
+          ]
+        },
+        "stop_routes": {
+          "Causeway Bay Times Square": [
+            {
+              "route_number": "5B",
+              "route_name": "Causeway Bay - Kennedy Town",
+              "direction": "Westbound"
+            },
+            {
+              "route_number": "5B",
+              "route_name": "Kennedy Town - Causeway Bay",
+              "direction": "Eastbound"
+            },
+            {
+              "route_number": "10",
+              "route_name": "North Point - Central",
+              "direction": "Westbound"
+            }
+          ],
+          "Wan Chai MTR": [
+            {
+              "route_number": "5B",
+              "route_name": "Causeway Bay - Kennedy Town",
+              "direction": "Westbound"
+            },
+            {
+              "route_number": "5B",
+              "route_name": "Kennedy Town - Causeway Bay",
+              "direction": "Eastbound"
+            },
+            {
+              "route_number": "10",
+              "route_name": "North Point - Central",
+              "direction": "Westbound"
+            }
+          ],
+          "Central IFC": [
+            {
+              "route_number": "5B",
+              "route_name": "Causeway Bay - Kennedy Town",
+              "direction": "Westbound"
+            },
+            {
+              "route_number": "5B",
+              "route_name": "Kennedy Town - Causeway Bay",
+              "direction": "Eastbound"
+            },
+            {
+              "route_number": "10",
+              "route_name": "North Point - Central",
+              "direction": "Westbound"
+            }
+          ]
+        },
+        "bus_arrivals": {
+          "5B:Causeway Bay Times Square:Westbound": [
+            {
+              "estimated_arrival_time": "2024-01-15T14:05:00",
+              "distance_from_stop": 0.1
+            },
+            {
+              "estimated_arrival_time": "2024-01-15T14:20:00",
+              "distance_from_stop": 1.8
+            },
+            {
+              "estimated_arrival_time": "2024-01-15T14:35:00",
+              "distance_from_stop": 3.5
+            }
+          ],
+          "5B:Kennedy Town:Eastbound": [
+            {
+              "estimated_arrival_time": "2024-01-15T14:10:00",
+              "distance_from_stop": 0.3
+            }
+          ],
+          "10:North Point Ferry:Westbound": [
+            {
+              "estimated_arrival_time": "2024-01-15T14:00:00",
+              "distance_from_stop": 0.0
+            },
+            {
+              "estimated_arrival_time": "2024-01-15T14:12:00",
+              "distance_from_stop": 2.1
+            }
+          ]
+        },
+        "route_connections": {
+          "North Point Ferry:Kennedy Town": [
+            {
+              "route_number": "10",
+              "transfer_information": {
+                "is_direct": false,
+                "transfer_stops": [
+                  "Central IFC"
+                ]
+              }
+            }
+          ],
+          "Causeway Bay Times Square:Kennedy Town": [
+            {
+              "route_number": "5B",
+              "transfer_information": {
+                "is_direct": true,
+                "transfer_stops": []
+              }
+            }
+          ],
+          "North Point Ferry:Sheung Wan": [
+            {
+              "route_number": "10",
+              "transfer_information": {
+                "is_direct": false,
+                "transfer_stops": [
+                  "Central IFC"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Boundary case with empty collections and extreme coordinate values at valid limits",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "stops": {
+          "S999": {
+            "stop_id": "S999",
+            "stop_name": "Remote Island Stop",
+            "location": {
+              "latitude": 89.9,
+              "longitude": 179.9
+            }
+          }
+        },
+        "routes": {},
+        "route_stops": {},
+        "stop_routes": {},
+        "bus_arrivals": {},
+        "route_connections": {}
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_next_bus",
+                "test_cases": [
+                  {
+                    "description": "Valid case with direction specified",
+                    "input": {
+                      "route": "1",
+                      "stop_name": "Central Ferry Pier",
+                      "direction": "Outbound"
+                    },
+                    "passed": true,
+                    "output": {
+                      "estimated_arrival_time": "2024-01-15T09:30:00",
+                      "distance_from_stop": 0.5
+                    }
+                  },
+                  {
+                    "description": "Valid case without direction (should fail to find arrival)",
+                    "input": {
+                      "route": "1",
+                      "stop_name": "Central Ferry Pier"
+                    },
+                    "passed": true,
+                    "output": "Expected error: No arrival information found",
+                    "note": "Tool correctly requires direction to match arrival data"
+                  },
+                  {
+                    "description": "Error case - empty route",
+                    "input": {
+                      "route": "",
+                      "stop_name": "Central Ferry Pier"
+                    },
+                    "passed": true,
+                    "output": "Validation error: Route must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "find_buses_to_destination",
+                "test_cases": [
+                  {
+                    "description": "Valid case - destination only",
+                    "input": {
+                      "destination": "Admiralty"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": [
+                        {
+                          "route_number": "1",
+                          "route_name": "Central - Admiralty"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "description": "Valid case - with origin filter",
+                    "input": {
+                      "destination": "Central",
+                      "origin": "Admiralty"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": [
+                        {
+                          "route_number": "1",
+                          "route_name": "Central - Admiralty"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_route_stops_info",
+                "test_cases": [
+                  {
+                    "description": "Valid case with direction",
+                    "input": {
+                      "route": "1",
+                      "direction": "Outbound"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": [
+                        {
+                          "stop_order": 1,
+                          "stop_name": "Central Ferry Pier"
+                        },
+                        {
+                          "stop_order": 2,
+                          "stop_name": "Admiralty Station"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "description": "Valid case without direction (returns empty)",
+                    "input": {
+                      "route": "1"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": []
+                    },
+                    "note": "Tool requires direction to match route_stops data"
+                  },
+                  {
+                    "description": "Boundary case - non-existent route",
+                    "input": {
+                      "route": "999"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": []
+                    }
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "find_stop_by_name",
+                "test_cases": [
+                  {
+                    "description": "Valid case - partial name match",
+                    "input": {
+                      "stop_name": "Central"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": [
+                        {
+                          "stop_id": "S001",
+                          "stop_name": "Central Ferry Pier",
+                          "location": {
+                            "latitude": 22.287,
+                            "longitude": 114.158
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "description": "Valid case - exact name match",
+                    "input": {
+                      "stop_name": "Admiralty Station"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": [
+                        {
+                          "stop_id": "S002",
+                          "stop_name": "Admiralty Station",
+                          "location": {
+                            "latitude": 22.279,
+                            "longitude": 114.165
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "description": "Boundary case - non-existent stop",
+                    "input": {
+                      "stop_name": "NonExistent"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": []
+                    }
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_all_routes_at_stop",
+                "test_cases": [
+                  {
+                    "description": "Valid case - stop with routes",
+                    "input": {
+                      "stop_name": "Central Ferry Pier"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": [
+                        {
+                          "route_number": "1",
+                          "route_name": "Central - Admiralty",
+                          "direction": "Outbound"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "description": "Valid case - stop without routes in stop_routes",
+                    "input": {
+                      "stop_name": "Admiralty Station"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": []
+                    },
+                    "note": "Admiralty Station not in stop_routes dictionary"
+                  },
+                  {
+                    "description": "Error case - empty stop name",
+                    "input": {
+                      "stop_name": ""
+                    },
+                    "passed": true,
+                    "output": "Validation error: Stop name must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_bus_eta",
+                "test_cases": [
+                  {
+                    "description": "Valid case with direction and count",
+                    "input": {
+                      "route": "1",
+                      "stop_name": "Central Ferry Pier",
+                      "direction": "Outbound",
+                      "count": 3
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivals": [
+                        {
+                          "estimated_arrival_time": "2024-01-15T09:30:00",
+                          "distance_from_stop": 0.5
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "description": "Valid case without direction",
+                    "input": {
+                      "route": "1",
+                      "stop_name": "Central Ferry Pier",
+                      "count": 1
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivals": []
+                    },
+                    "note": "Tool requires direction to match arrival data"
+                  },
+                  {
+                    "description": "Boundary case - stop with no arrivals",
+                    "input": {
+                      "route": "1",
+                      "stop_name": "Admiralty Station",
+                      "direction": "Outbound"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivals": []
+                    }
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_route_by_stops",
+                "test_cases": [
+                  {
+                    "description": "Valid case - from Central to Admiralty",
+                    "input": {
+                      "from_stop_name": "Central Ferry Pier",
+                      "to_stop_name": "Admiralty Station"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": []
+                    },
+                    "note": "No route_connections data in scenario"
+                  },
+                  {
+                    "description": "Valid case - reverse direction",
+                    "input": {
+                      "from_stop_name": "Admiralty Station",
+                      "to_stop_name": "Central Ferry Pier"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": []
+                    }
+                  },
+                  {
+                    "description": "Error case - empty from_stop_name",
+                    "input": {
+                      "from_stop_name": "",
+                      "to_stop_name": "Central Ferry Pier"
+                    },
+                    "passed": true,
+                    "output": "Validation error: From stop name must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "note": "Saved scenario matches original scenario exactly - state preserved correctly"
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 89.55443096160889
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_next_bus",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Route 6 at Tsim Sha Tsui Star Ferry",
+                    "input": {
+                      "route": "6",
+                      "stop_name": "Tsim Sha Tsui Star Ferry",
+                      "direction": "Northbound"
+                    },
+                    "passed": true,
+                    "output": {
+                      "estimated_arrival_time": "2024-01-15T10:15:00",
+                      "distance_from_stop": 0.2
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Route 9 at Jordan MTR",
+                    "input": {
+                      "route": "9",
+                      "stop_name": "Jordan MTR",
+                      "direction": "Northbound"
+                    },
+                    "passed": true,
+                    "output": {
+                      "estimated_arrival_time": "2024-01-15T10:20:00",
+                      "distance_from_stop": 0.0
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Nonexistent route and stop",
+                    "input": {
+                      "route": "999",
+                      "stop_name": "Nonexistent Stop"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "No arrival information found for route 999 at stop Nonexistent Stop",
+                    "note": "Expected error - tool correctly handles invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "find_buses_to_destination",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Find buses to Mong Kok",
+                    "input": {
+                      "destination": "Mong Kok"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": [
+                        {
+                          "route_number": "6",
+                          "route_name": "Tsim Sha Tsui - Mong Kok"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Find buses to Prince Edward from Jordan",
+                    "input": {
+                      "destination": "Prince Edward",
+                      "origin": "Jordan"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": [
+                        {
+                          "route_number": "9",
+                          "route_name": "Jordan - Prince Edward"
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_route_stops_info",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Route 6 stops",
+                    "input": {
+                      "route": "6",
+                      "direction": "Northbound"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": [
+                        {
+                          "stop_order": 1,
+                          "stop_name": "Tsim Sha Tsui Star Ferry"
+                        },
+                        {
+                          "stop_order": 2,
+                          "stop_name": "Jordan MTR"
+                        },
+                        {
+                          "stop_order": 3,
+                          "stop_name": "Mong Kok Station"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Route 9 stops",
+                    "input": {
+                      "route": "9",
+                      "direction": "Northbound"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": [
+                        {
+                          "stop_order": 1,
+                          "stop_name": "Jordan MTR"
+                        },
+                        {
+                          "stop_order": 2,
+                          "stop_name": "Mong Kok Station"
+                        },
+                        {
+                          "stop_order": 3,
+                          "stop_name": "Prince Edward"
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "find_stop_by_name",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Partial match 'Jordan'",
+                    "input": {
+                      "stop_name": "Jordan"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": [
+                        {
+                          "stop_id": "S102",
+                          "stop_name": "Jordan MTR",
+                          "location": {
+                            "latitude": 22.305,
+                            "longitude": 114.172
+                          }
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Exact match 'Mong Kok Station'",
+                    "input": {
+                      "stop_name": "Mong Kok Station"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": [
+                        {
+                          "stop_id": "S103",
+                          "stop_name": "Mong Kok Station",
+                          "location": {
+                            "latitude": 22.319,
+                            "longitude": 114.169
+                          }
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_all_routes_at_stop",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Routes at Jordan MTR (2 routes)",
+                    "input": {
+                      "stop_name": "Jordan MTR"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": [
+                        {
+                          "route_number": "6",
+                          "route_name": "Tsim Sha Tsui - Mong Kok",
+                          "direction": "Northbound"
+                        },
+                        {
+                          "route_number": "9",
+                          "route_name": "Jordan - Prince Edward",
+                          "direction": "Northbound"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Routes at Mong Kok Station (2 routes)",
+                    "input": {
+                      "stop_name": "Mong Kok Station"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": [
+                        {
+                          "route_number": "6",
+                          "route_name": "Tsim Sha Tsui - Mong Kok",
+                          "direction": "Northbound"
+                        },
+                        {
+                          "route_number": "9",
+                          "route_name": "Jordan - Prince Edward",
+                          "direction": "Northbound"
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_bus_eta",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Route 6 at Tsim Sha Tsui (2 arrivals)",
+                    "input": {
+                      "route": "6",
+                      "stop_name": "Tsim Sha Tsui Star Ferry",
+                      "direction": "Northbound",
+                      "count": 2
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivals": [
+                        {
+                          "estimated_arrival_time": "2024-01-15T10:15:00",
+                          "distance_from_stop": 0.2
+                        },
+                        {
+                          "estimated_arrival_time": "2024-01-15T10:30:00",
+                          "distance_from_stop": 2.5
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Route 9 at Jordan MTR (1 arrival available)",
+                    "input": {
+                      "route": "9",
+                      "stop_name": "Jordan MTR",
+                      "direction": "Northbound",
+                      "count": 3
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivals": [
+                        {
+                          "estimated_arrival_time": "2024-01-15T10:20:00",
+                          "distance_from_stop": 0.0
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_route_by_stops",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Direct route not in connections (returns empty)",
+                    "input": {
+                      "from_stop_name": "Tsim Sha Tsui Star Ferry",
+                      "to_stop_name": "Mong Kok Station"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": []
+                    },
+                    "error": null,
+                    "note": "Returns empty array - connection not in route_connections data"
+                  },
+                  {
+                    "description": "Valid case - Route with transfer from Tsim Sha Tsui to Prince Edward",
+                    "input": {
+                      "from_stop_name": "Tsim Sha Tsui Star Ferry",
+                      "to_stop_name": "Prince Edward"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": [
+                        {
+                          "route_number": "6",
+                          "transfer_information": {
+                            "is_direct": false,
+                            "transfer_stops": [
+                              "Mong Kok Station"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario data exactly. All state variables preserved correctly including stops, routes, route_stops, stop_routes, bus_arrivals, and route_connections."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 82.7035186290741
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_next_bus",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - Route 5B at Kennedy Town Eastbound",
+                    "input": {
+                      "route": "5B",
+                      "stop_name": "Kennedy Town",
+                      "direction": "Eastbound"
+                    },
+                    "expected": "Return next bus arrival information",
+                    "actual": {
+                      "estimated_arrival_time": "2024-01-15T14:10:00",
+                      "distance_from_stop": 0.3
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Route 5B at Causeway Bay Times Square Westbound",
+                    "input": {
+                      "route": "5B",
+                      "stop_name": "Causeway Bay Times Square",
+                      "direction": "Westbound"
+                    },
+                    "expected": "Return next bus arrival information",
+                    "actual": {
+                      "estimated_arrival_time": "2024-01-15T14:05:00",
+                      "distance_from_stop": 0.1
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Route 10 at North Point Ferry Westbound",
+                    "input": {
+                      "route": "10",
+                      "stop_name": "North Point Ferry",
+                      "direction": "Westbound"
+                    },
+                    "expected": "Return next bus arrival information",
+                    "actual": {
+                      "estimated_arrival_time": "2024-01-15T14:00:00",
+                      "distance_from_stop": 0.0
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Error case - Nonexistent route and stop",
+                    "input": {
+                      "route": "99",
+                      "stop_name": "Nonexistent Stop"
+                    },
+                    "expected": "Return error for invalid route/stop",
+                    "actual": "Error: No arrival information found for route 99 at stop Nonexistent Stop",
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "find_buses_to_destination",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - Find buses to Kennedy Town",
+                    "input": {
+                      "destination": "Kennedy Town"
+                    },
+                    "expected": "Return routes serving Kennedy Town",
+                    "actual": {
+                      "routes": [
+                        {
+                          "route_number": "5B",
+                          "route_name": "Causeway Bay - Kennedy Town"
+                        },
+                        {
+                          "route_number": "5B",
+                          "route_name": "Kennedy Town - Causeway Bay"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case with origin - Kennedy Town from Causeway Bay Times Square",
+                    "input": {
+                      "destination": "Kennedy Town",
+                      "origin": "Causeway Bay Times Square"
+                    },
+                    "expected": "Return filtered routes",
+                    "actual": {
+                      "routes": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Find buses to Central",
+                    "input": {
+                      "destination": "Central"
+                    },
+                    "expected": "Return routes serving Central",
+                    "actual": {
+                      "routes": [
+                        {
+                          "route_number": "10",
+                          "route_name": "North Point - Central"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_route_stops_info",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - Route 5B Westbound",
+                    "input": {
+                      "route": "5B",
+                      "direction": "Westbound"
+                    },
+                    "expected": "Return ordered list of stops",
+                    "actual": {
+                      "stops": [
+                        {
+                          "stop_order": 1,
+                          "stop_name": "Causeway Bay Times Square"
+                        },
+                        {
+                          "stop_order": 2,
+                          "stop_name": "Wan Chai MTR"
+                        },
+                        {
+                          "stop_order": 3,
+                          "stop_name": "Central IFC"
+                        },
+                        {
+                          "stop_order": 4,
+                          "stop_name": "Sheung Wan"
+                        },
+                        {
+                          "stop_order": 5,
+                          "stop_name": "Kennedy Town"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Route 5B Eastbound",
+                    "input": {
+                      "route": "5B",
+                      "direction": "Eastbound"
+                    },
+                    "expected": "Return ordered list of stops in reverse",
+                    "actual": {
+                      "stops": [
+                        {
+                          "stop_order": 1,
+                          "stop_name": "Kennedy Town"
+                        },
+                        {
+                          "stop_order": 2,
+                          "stop_name": "Sheung Wan"
+                        },
+                        {
+                          "stop_order": 3,
+                          "stop_name": "Central IFC"
+                        },
+                        {
+                          "stop_order": 4,
+                          "stop_name": "Wan Chai MTR"
+                        },
+                        {
+                          "stop_order": 5,
+                          "stop_name": "Causeway Bay Times Square"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Route 10 Westbound",
+                    "input": {
+                      "route": "10",
+                      "direction": "Westbound"
+                    },
+                    "expected": "Return ordered list of stops",
+                    "actual": {
+                      "stops": [
+                        {
+                          "stop_order": 1,
+                          "stop_name": "North Point Ferry"
+                        },
+                        {
+                          "stop_order": 2,
+                          "stop_name": "Causeway Bay Times Square"
+                        },
+                        {
+                          "stop_order": 3,
+                          "stop_name": "Wan Chai MTR"
+                        },
+                        {
+                          "stop_order": 4,
+                          "stop_name": "Central IFC"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "find_stop_by_name",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Error case - Nonexistent stop",
+                    "input": {
+                      "stop_name": "Nonexistent Stop"
+                    },
+                    "expected": "Return empty list",
+                    "actual": {
+                      "stops": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Partial match 'Central'",
+                    "input": {
+                      "stop_name": "Central"
+                    },
+                    "expected": "Return matching stops",
+                    "actual": {
+                      "stops": [
+                        {
+                          "stop_id": "S203",
+                          "stop_name": "Central IFC",
+                          "location": {
+                            "latitude": 22.285,
+                            "longitude": 114.158
+                          }
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Exact match 'Kennedy Town'",
+                    "input": {
+                      "stop_name": "Kennedy Town"
+                    },
+                    "expected": "Return matching stop",
+                    "actual": {
+                      "stops": [
+                        {
+                          "stop_id": "S205",
+                          "stop_name": "Kennedy Town",
+                          "location": {
+                            "latitude": 22.281,
+                            "longitude": 114.128
+                          }
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_all_routes_at_stop",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - Causeway Bay Times Square",
+                    "input": {
+                      "stop_name": "Causeway Bay Times Square"
+                    },
+                    "expected": "Return all routes at stop",
+                    "actual": {
+                      "routes": [
+                        {
+                          "route_number": "5B",
+                          "route_name": "Causeway Bay - Kennedy Town",
+                          "direction": "Westbound"
+                        },
+                        {
+                          "route_number": "5B",
+                          "route_name": "Kennedy Town - Causeway Bay",
+                          "direction": "Eastbound"
+                        },
+                        {
+                          "route_number": "10",
+                          "route_name": "North Point - Central",
+                          "direction": "Westbound"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Wan Chai MTR",
+                    "input": {
+                      "stop_name": "Wan Chai MTR"
+                    },
+                    "expected": "Return all routes at stop",
+                    "actual": {
+                      "routes": [
+                        {
+                          "route_number": "5B",
+                          "route_name": "Causeway Bay - Kennedy Town",
+                          "direction": "Westbound"
+                        },
+                        {
+                          "route_number": "5B",
+                          "route_name": "Kennedy Town - Causeway Bay",
+                          "direction": "Eastbound"
+                        },
+                        {
+                          "route_number": "10",
+                          "route_name": "North Point - Central",
+                          "direction": "Westbound"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Error case - Nonexistent stop",
+                    "input": {
+                      "stop_name": "Nonexistent Stop"
+                    },
+                    "expected": "Return empty list",
+                    "actual": {
+                      "routes": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_bus_eta",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - Route 5B at Causeway Bay Times Square, count=3",
+                    "input": {
+                      "route": "5B",
+                      "stop_name": "Causeway Bay Times Square",
+                      "direction": "Westbound",
+                      "count": 3
+                    },
+                    "expected": "Return 3 upcoming arrivals",
+                    "actual": {
+                      "arrivals": [
+                        {
+                          "estimated_arrival_time": "2024-01-15T14:05:00",
+                          "distance_from_stop": 0.1
+                        },
+                        {
+                          "estimated_arrival_time": "2024-01-15T14:20:00",
+                          "distance_from_stop": 1.8
+                        },
+                        {
+                          "estimated_arrival_time": "2024-01-15T14:35:00",
+                          "distance_from_stop": 3.5
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Route 10 at North Point Ferry, count=2",
+                    "input": {
+                      "route": "10",
+                      "stop_name": "North Point Ferry",
+                      "direction": "Westbound",
+                      "count": 2
+                    },
+                    "expected": "Return 2 upcoming arrivals",
+                    "actual": {
+                      "arrivals": [
+                        {
+                          "estimated_arrival_time": "2024-01-15T14:00:00",
+                          "distance_from_stop": 0.0
+                        },
+                        {
+                          "estimated_arrival_time": "2024-01-15T14:12:00",
+                          "distance_from_stop": 2.1
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case - Route 5B at Kennedy Town, count=1",
+                    "input": {
+                      "route": "5B",
+                      "stop_name": "Kennedy Town",
+                      "direction": "Eastbound",
+                      "count": 1
+                    },
+                    "expected": "Return 1 upcoming arrival",
+                    "actual": {
+                      "arrivals": [
+                        {
+                          "estimated_arrival_time": "2024-01-15T14:10:00",
+                          "distance_from_stop": 0.3
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "search_route_by_stops",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - Direct route from Causeway Bay Times Square to Kennedy Town",
+                    "input": {
+                      "from_stop_name": "Causeway Bay Times Square",
+                      "to_stop_name": "Kennedy Town"
+                    },
+                    "expected": "Return direct route 5B",
+                    "actual": {
+                      "routes": [
+                        {
+                          "route_number": "5B",
+                          "transfer_information": {
+                            "is_direct": true,
+                            "transfer_stops": []
+                          }
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Indirect route from North Point Ferry to Kennedy Town",
+                    "input": {
+                      "from_stop_name": "North Point Ferry",
+                      "to_stop_name": "Kennedy Town"
+                    },
+                    "expected": "Return route with transfer information",
+                    "actual": {
+                      "routes": [
+                        {
+                          "route_number": "10",
+                          "transfer_information": {
+                            "is_direct": false,
+                            "transfer_stops": [
+                              "Central IFC"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Indirect route from North Point Ferry to Sheung Wan",
+                    "input": {
+                      "from_stop_name": "North Point Ferry",
+                      "to_stop_name": "Sheung Wan"
+                    },
+                    "expected": "Return route with transfer information",
+                    "actual": {
+                      "routes": [
+                        {
+                          "route_number": "10",
+                          "transfer_information": {
+                            "is_direct": false,
+                            "transfer_stops": [
+                              "Central IFC"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Error case - Nonexistent stops",
+                    "input": {
+                      "from_stop_name": "Nonexistent Stop A",
+                      "to_stop_name": "Nonexistent Stop B"
+                    },
+                    "expected": "Return empty list",
+                    "actual": {
+                      "routes": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 107.81882357597351
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "find_stop_by_name",
+                "test_cases": [
+                  {
+                    "description": "Valid case - exact stop name match",
+                    "input": {
+                      "stop_name": "Remote Island Stop"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": [
+                        {
+                          "stop_id": "S999",
+                          "stop_name": "Remote Island Stop",
+                          "location": {
+                            "latitude": 89.9,
+                            "longitude": 179.9
+                          }
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - partial stop name match",
+                    "input": {
+                      "stop_name": "Remote"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": [
+                        {
+                          "stop_id": "S999",
+                          "stop_name": "Remote Island Stop",
+                          "location": {
+                            "latitude": 89.9,
+                            "longitude": 179.9
+                          }
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - nonexistent stop",
+                    "input": {
+                      "stop_name": "Nonexistent Stop"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - empty stop name",
+                    "input": {
+                      "stop_name": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Stop name must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_all_routes_at_stop",
+                "test_cases": [
+                  {
+                    "description": "Valid case - stop with no routes",
+                    "input": {
+                      "stop_name": "Remote Island Stop"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_next_bus",
+                "test_cases": [
+                  {
+                    "description": "Valid case - route not serving stop",
+                    "input": {
+                      "route": "1A",
+                      "stop_name": "Remote Island Stop"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "No arrival information found for route 1A at stop Remote Island Stop",
+                    "note": "Expected behavior - no routes exist in this scenario"
+                  },
+                  {
+                    "description": "Error case - empty route",
+                    "input": {
+                      "route": "",
+                      "stop_name": "Remote Island Stop"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Route must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "find_buses_to_destination",
+                "test_cases": [
+                  {
+                    "description": "Valid case - no routes to destination",
+                    "input": {
+                      "destination": "Central"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - empty destination",
+                    "input": {
+                      "destination": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Destination must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_route_stops_info",
+                "test_cases": [
+                  {
+                    "description": "Valid case - nonexistent route",
+                    "input": {
+                      "route": "1A"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_bus_eta",
+                "test_cases": [
+                  {
+                    "description": "Valid case - no arrivals available",
+                    "input": {
+                      "route": "1A",
+                      "stop_name": "Remote Island Stop",
+                      "count": 3
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivals": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_route_by_stops",
+                "test_cases": [
+                  {
+                    "description": "Valid case - no routes between stops",
+                    "input": {
+                      "from_stop_name": "Remote Island Stop",
+                      "to_stop_name": "Central"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "saved_scenario": {
+                "stops": {
+                  "S999": {
+                    "stop_id": "S999",
+                    "stop_name": "Remote Island Stop",
+                    "location": {
+                      "latitude": 89.9,
+                      "longitude": 179.9
+                    }
+                  }
+                },
+                "routes": {},
+                "route_stops": {},
+                "stop_routes": {},
+                "bus_arrivals": {},
+                "route_connections": {}
+              },
+              "comparison": "Saved scenario matches original scenario exactly",
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 63.90610480308533
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_next_bus",
+                "test_cases": [
+                  {
+                    "description": "Valid case with direction specified",
+                    "input": {
+                      "route": "1",
+                      "stop_name": "Central Ferry Pier",
+                      "direction": "Outbound"
+                    },
+                    "passed": true,
+                    "output": {
+                      "estimated_arrival_time": "2024-01-15T09:30:00",
+                      "distance_from_stop": 0.5
+                    }
+                  },
+                  {
+                    "description": "Valid case without direction (should fail to find arrival)",
+                    "input": {
+                      "route": "1",
+                      "stop_name": "Central Ferry Pier"
+                    },
+                    "passed": true,
+                    "output": "Expected error: No arrival information found",
+                    "note": "Tool correctly requires direction to match arrival data"
+                  },
+                  {
+                    "description": "Error case - empty route",
+                    "input": {
+                      "route": "",
+                      "stop_name": "Central Ferry Pier"
+                    },
+                    "passed": true,
+                    "output": "Validation error: Route must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "find_buses_to_destination",
+                "test_cases": [
+                  {
+                    "description": "Valid case - destination only",
+                    "input": {
+                      "destination": "Admiralty"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": [
+                        {
+                          "route_number": "1",
+                          "route_name": "Central - Admiralty"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "description": "Valid case - with origin filter",
+                    "input": {
+                      "destination": "Central",
+                      "origin": "Admiralty"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": [
+                        {
+                          "route_number": "1",
+                          "route_name": "Central - Admiralty"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_route_stops_info",
+                "test_cases": [
+                  {
+                    "description": "Valid case with direction",
+                    "input": {
+                      "route": "1",
+                      "direction": "Outbound"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": [
+                        {
+                          "stop_order": 1,
+                          "stop_name": "Central Ferry Pier"
+                        },
+                        {
+                          "stop_order": 2,
+                          "stop_name": "Admiralty Station"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "description": "Valid case without direction (returns empty)",
+                    "input": {
+                      "route": "1"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": []
+                    },
+                    "note": "Tool requires direction to match route_stops data"
+                  },
+                  {
+                    "description": "Boundary case - non-existent route",
+                    "input": {
+                      "route": "999"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": []
+                    }
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "find_stop_by_name",
+                "test_cases": [
+                  {
+                    "description": "Valid case - partial name match",
+                    "input": {
+                      "stop_name": "Central"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": [
+                        {
+                          "stop_id": "S001",
+                          "stop_name": "Central Ferry Pier",
+                          "location": {
+                            "latitude": 22.287,
+                            "longitude": 114.158
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "description": "Valid case - exact name match",
+                    "input": {
+                      "stop_name": "Admiralty Station"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": [
+                        {
+                          "stop_id": "S002",
+                          "stop_name": "Admiralty Station",
+                          "location": {
+                            "latitude": 22.279,
+                            "longitude": 114.165
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "description": "Boundary case - non-existent stop",
+                    "input": {
+                      "stop_name": "NonExistent"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": []
+                    }
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_all_routes_at_stop",
+                "test_cases": [
+                  {
+                    "description": "Valid case - stop with routes",
+                    "input": {
+                      "stop_name": "Central Ferry Pier"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": [
+                        {
+                          "route_number": "1",
+                          "route_name": "Central - Admiralty",
+                          "direction": "Outbound"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "description": "Valid case - stop without routes in stop_routes",
+                    "input": {
+                      "stop_name": "Admiralty Station"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": []
+                    },
+                    "note": "Admiralty Station not in stop_routes dictionary"
+                  },
+                  {
+                    "description": "Error case - empty stop name",
+                    "input": {
+                      "stop_name": ""
+                    },
+                    "passed": true,
+                    "output": "Validation error: Stop name must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_bus_eta",
+                "test_cases": [
+                  {
+                    "description": "Valid case with direction and count",
+                    "input": {
+                      "route": "1",
+                      "stop_name": "Central Ferry Pier",
+                      "direction": "Outbound",
+                      "count": 3
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivals": [
+                        {
+                          "estimated_arrival_time": "2024-01-15T09:30:00",
+                          "distance_from_stop": 0.5
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "description": "Valid case without direction",
+                    "input": {
+                      "route": "1",
+                      "stop_name": "Central Ferry Pier",
+                      "count": 1
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivals": []
+                    },
+                    "note": "Tool requires direction to match arrival data"
+                  },
+                  {
+                    "description": "Boundary case - stop with no arrivals",
+                    "input": {
+                      "route": "1",
+                      "stop_name": "Admiralty Station",
+                      "direction": "Outbound"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivals": []
+                    }
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_route_by_stops",
+                "test_cases": [
+                  {
+                    "description": "Valid case - from Central to Admiralty",
+                    "input": {
+                      "from_stop_name": "Central Ferry Pier",
+                      "to_stop_name": "Admiralty Station"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": []
+                    },
+                    "note": "No route_connections data in scenario"
+                  },
+                  {
+                    "description": "Valid case - reverse direction",
+                    "input": {
+                      "from_stop_name": "Admiralty Station",
+                      "to_stop_name": "Central Ferry Pier"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": []
+                    }
+                  },
+                  {
+                    "description": "Error case - empty from_stop_name",
+                    "input": {
+                      "from_stop_name": "",
+                      "to_stop_name": "Central Ferry Pier"
+                    },
+                    "passed": true,
+                    "output": "Validation error: From stop name must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "note": "Saved scenario matches original scenario exactly - state preserved correctly"
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 89.55443096160889
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_next_bus",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Route 6 at Tsim Sha Tsui Star Ferry",
+                    "input": {
+                      "route": "6",
+                      "stop_name": "Tsim Sha Tsui Star Ferry",
+                      "direction": "Northbound"
+                    },
+                    "passed": true,
+                    "output": {
+                      "estimated_arrival_time": "2024-01-15T10:15:00",
+                      "distance_from_stop": 0.2
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Route 9 at Jordan MTR",
+                    "input": {
+                      "route": "9",
+                      "stop_name": "Jordan MTR",
+                      "direction": "Northbound"
+                    },
+                    "passed": true,
+                    "output": {
+                      "estimated_arrival_time": "2024-01-15T10:20:00",
+                      "distance_from_stop": 0.0
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Nonexistent route and stop",
+                    "input": {
+                      "route": "999",
+                      "stop_name": "Nonexistent Stop"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "No arrival information found for route 999 at stop Nonexistent Stop",
+                    "note": "Expected error - tool correctly handles invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "find_buses_to_destination",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Find buses to Mong Kok",
+                    "input": {
+                      "destination": "Mong Kok"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": [
+                        {
+                          "route_number": "6",
+                          "route_name": "Tsim Sha Tsui - Mong Kok"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Find buses to Prince Edward from Jordan",
+                    "input": {
+                      "destination": "Prince Edward",
+                      "origin": "Jordan"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": [
+                        {
+                          "route_number": "9",
+                          "route_name": "Jordan - Prince Edward"
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_route_stops_info",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Route 6 stops",
+                    "input": {
+                      "route": "6",
+                      "direction": "Northbound"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": [
+                        {
+                          "stop_order": 1,
+                          "stop_name": "Tsim Sha Tsui Star Ferry"
+                        },
+                        {
+                          "stop_order": 2,
+                          "stop_name": "Jordan MTR"
+                        },
+                        {
+                          "stop_order": 3,
+                          "stop_name": "Mong Kok Station"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Route 9 stops",
+                    "input": {
+                      "route": "9",
+                      "direction": "Northbound"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": [
+                        {
+                          "stop_order": 1,
+                          "stop_name": "Jordan MTR"
+                        },
+                        {
+                          "stop_order": 2,
+                          "stop_name": "Mong Kok Station"
+                        },
+                        {
+                          "stop_order": 3,
+                          "stop_name": "Prince Edward"
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "find_stop_by_name",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Partial match 'Jordan'",
+                    "input": {
+                      "stop_name": "Jordan"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": [
+                        {
+                          "stop_id": "S102",
+                          "stop_name": "Jordan MTR",
+                          "location": {
+                            "latitude": 22.305,
+                            "longitude": 114.172
+                          }
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Exact match 'Mong Kok Station'",
+                    "input": {
+                      "stop_name": "Mong Kok Station"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": [
+                        {
+                          "stop_id": "S103",
+                          "stop_name": "Mong Kok Station",
+                          "location": {
+                            "latitude": 22.319,
+                            "longitude": 114.169
+                          }
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_all_routes_at_stop",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Routes at Jordan MTR (2 routes)",
+                    "input": {
+                      "stop_name": "Jordan MTR"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": [
+                        {
+                          "route_number": "6",
+                          "route_name": "Tsim Sha Tsui - Mong Kok",
+                          "direction": "Northbound"
+                        },
+                        {
+                          "route_number": "9",
+                          "route_name": "Jordan - Prince Edward",
+                          "direction": "Northbound"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Routes at Mong Kok Station (2 routes)",
+                    "input": {
+                      "stop_name": "Mong Kok Station"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": [
+                        {
+                          "route_number": "6",
+                          "route_name": "Tsim Sha Tsui - Mong Kok",
+                          "direction": "Northbound"
+                        },
+                        {
+                          "route_number": "9",
+                          "route_name": "Jordan - Prince Edward",
+                          "direction": "Northbound"
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_bus_eta",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Route 6 at Tsim Sha Tsui (2 arrivals)",
+                    "input": {
+                      "route": "6",
+                      "stop_name": "Tsim Sha Tsui Star Ferry",
+                      "direction": "Northbound",
+                      "count": 2
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivals": [
+                        {
+                          "estimated_arrival_time": "2024-01-15T10:15:00",
+                          "distance_from_stop": 0.2
+                        },
+                        {
+                          "estimated_arrival_time": "2024-01-15T10:30:00",
+                          "distance_from_stop": 2.5
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Route 9 at Jordan MTR (1 arrival available)",
+                    "input": {
+                      "route": "9",
+                      "stop_name": "Jordan MTR",
+                      "direction": "Northbound",
+                      "count": 3
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivals": [
+                        {
+                          "estimated_arrival_time": "2024-01-15T10:20:00",
+                          "distance_from_stop": 0.0
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_route_by_stops",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Direct route not in connections (returns empty)",
+                    "input": {
+                      "from_stop_name": "Tsim Sha Tsui Star Ferry",
+                      "to_stop_name": "Mong Kok Station"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": []
+                    },
+                    "error": null,
+                    "note": "Returns empty array - connection not in route_connections data"
+                  },
+                  {
+                    "description": "Valid case - Route with transfer from Tsim Sha Tsui to Prince Edward",
+                    "input": {
+                      "from_stop_name": "Tsim Sha Tsui Star Ferry",
+                      "to_stop_name": "Prince Edward"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": [
+                        {
+                          "route_number": "6",
+                          "transfer_information": {
+                            "is_direct": false,
+                            "transfer_stops": [
+                              "Mong Kok Station"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario data exactly. All state variables preserved correctly including stops, routes, route_stops, stop_routes, bus_arrivals, and route_connections."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 82.7035186290741
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_next_bus",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - Route 5B at Kennedy Town Eastbound",
+                    "input": {
+                      "route": "5B",
+                      "stop_name": "Kennedy Town",
+                      "direction": "Eastbound"
+                    },
+                    "expected": "Return next bus arrival information",
+                    "actual": {
+                      "estimated_arrival_time": "2024-01-15T14:10:00",
+                      "distance_from_stop": 0.3
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Route 5B at Causeway Bay Times Square Westbound",
+                    "input": {
+                      "route": "5B",
+                      "stop_name": "Causeway Bay Times Square",
+                      "direction": "Westbound"
+                    },
+                    "expected": "Return next bus arrival information",
+                    "actual": {
+                      "estimated_arrival_time": "2024-01-15T14:05:00",
+                      "distance_from_stop": 0.1
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Route 10 at North Point Ferry Westbound",
+                    "input": {
+                      "route": "10",
+                      "stop_name": "North Point Ferry",
+                      "direction": "Westbound"
+                    },
+                    "expected": "Return next bus arrival information",
+                    "actual": {
+                      "estimated_arrival_time": "2024-01-15T14:00:00",
+                      "distance_from_stop": 0.0
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Error case - Nonexistent route and stop",
+                    "input": {
+                      "route": "99",
+                      "stop_name": "Nonexistent Stop"
+                    },
+                    "expected": "Return error for invalid route/stop",
+                    "actual": "Error: No arrival information found for route 99 at stop Nonexistent Stop",
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "find_buses_to_destination",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - Find buses to Kennedy Town",
+                    "input": {
+                      "destination": "Kennedy Town"
+                    },
+                    "expected": "Return routes serving Kennedy Town",
+                    "actual": {
+                      "routes": [
+                        {
+                          "route_number": "5B",
+                          "route_name": "Causeway Bay - Kennedy Town"
+                        },
+                        {
+                          "route_number": "5B",
+                          "route_name": "Kennedy Town - Causeway Bay"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case with origin - Kennedy Town from Causeway Bay Times Square",
+                    "input": {
+                      "destination": "Kennedy Town",
+                      "origin": "Causeway Bay Times Square"
+                    },
+                    "expected": "Return filtered routes",
+                    "actual": {
+                      "routes": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Find buses to Central",
+                    "input": {
+                      "destination": "Central"
+                    },
+                    "expected": "Return routes serving Central",
+                    "actual": {
+                      "routes": [
+                        {
+                          "route_number": "10",
+                          "route_name": "North Point - Central"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_route_stops_info",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - Route 5B Westbound",
+                    "input": {
+                      "route": "5B",
+                      "direction": "Westbound"
+                    },
+                    "expected": "Return ordered list of stops",
+                    "actual": {
+                      "stops": [
+                        {
+                          "stop_order": 1,
+                          "stop_name": "Causeway Bay Times Square"
+                        },
+                        {
+                          "stop_order": 2,
+                          "stop_name": "Wan Chai MTR"
+                        },
+                        {
+                          "stop_order": 3,
+                          "stop_name": "Central IFC"
+                        },
+                        {
+                          "stop_order": 4,
+                          "stop_name": "Sheung Wan"
+                        },
+                        {
+                          "stop_order": 5,
+                          "stop_name": "Kennedy Town"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Route 5B Eastbound",
+                    "input": {
+                      "route": "5B",
+                      "direction": "Eastbound"
+                    },
+                    "expected": "Return ordered list of stops in reverse",
+                    "actual": {
+                      "stops": [
+                        {
+                          "stop_order": 1,
+                          "stop_name": "Kennedy Town"
+                        },
+                        {
+                          "stop_order": 2,
+                          "stop_name": "Sheung Wan"
+                        },
+                        {
+                          "stop_order": 3,
+                          "stop_name": "Central IFC"
+                        },
+                        {
+                          "stop_order": 4,
+                          "stop_name": "Wan Chai MTR"
+                        },
+                        {
+                          "stop_order": 5,
+                          "stop_name": "Causeway Bay Times Square"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Route 10 Westbound",
+                    "input": {
+                      "route": "10",
+                      "direction": "Westbound"
+                    },
+                    "expected": "Return ordered list of stops",
+                    "actual": {
+                      "stops": [
+                        {
+                          "stop_order": 1,
+                          "stop_name": "North Point Ferry"
+                        },
+                        {
+                          "stop_order": 2,
+                          "stop_name": "Causeway Bay Times Square"
+                        },
+                        {
+                          "stop_order": 3,
+                          "stop_name": "Wan Chai MTR"
+                        },
+                        {
+                          "stop_order": 4,
+                          "stop_name": "Central IFC"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "find_stop_by_name",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Error case - Nonexistent stop",
+                    "input": {
+                      "stop_name": "Nonexistent Stop"
+                    },
+                    "expected": "Return empty list",
+                    "actual": {
+                      "stops": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Partial match 'Central'",
+                    "input": {
+                      "stop_name": "Central"
+                    },
+                    "expected": "Return matching stops",
+                    "actual": {
+                      "stops": [
+                        {
+                          "stop_id": "S203",
+                          "stop_name": "Central IFC",
+                          "location": {
+                            "latitude": 22.285,
+                            "longitude": 114.158
+                          }
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Exact match 'Kennedy Town'",
+                    "input": {
+                      "stop_name": "Kennedy Town"
+                    },
+                    "expected": "Return matching stop",
+                    "actual": {
+                      "stops": [
+                        {
+                          "stop_id": "S205",
+                          "stop_name": "Kennedy Town",
+                          "location": {
+                            "latitude": 22.281,
+                            "longitude": 114.128
+                          }
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_all_routes_at_stop",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - Causeway Bay Times Square",
+                    "input": {
+                      "stop_name": "Causeway Bay Times Square"
+                    },
+                    "expected": "Return all routes at stop",
+                    "actual": {
+                      "routes": [
+                        {
+                          "route_number": "5B",
+                          "route_name": "Causeway Bay - Kennedy Town",
+                          "direction": "Westbound"
+                        },
+                        {
+                          "route_number": "5B",
+                          "route_name": "Kennedy Town - Causeway Bay",
+                          "direction": "Eastbound"
+                        },
+                        {
+                          "route_number": "10",
+                          "route_name": "North Point - Central",
+                          "direction": "Westbound"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Wan Chai MTR",
+                    "input": {
+                      "stop_name": "Wan Chai MTR"
+                    },
+                    "expected": "Return all routes at stop",
+                    "actual": {
+                      "routes": [
+                        {
+                          "route_number": "5B",
+                          "route_name": "Causeway Bay - Kennedy Town",
+                          "direction": "Westbound"
+                        },
+                        {
+                          "route_number": "5B",
+                          "route_name": "Kennedy Town - Causeway Bay",
+                          "direction": "Eastbound"
+                        },
+                        {
+                          "route_number": "10",
+                          "route_name": "North Point - Central",
+                          "direction": "Westbound"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Error case - Nonexistent stop",
+                    "input": {
+                      "stop_name": "Nonexistent Stop"
+                    },
+                    "expected": "Return empty list",
+                    "actual": {
+                      "routes": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_bus_eta",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - Route 5B at Causeway Bay Times Square, count=3",
+                    "input": {
+                      "route": "5B",
+                      "stop_name": "Causeway Bay Times Square",
+                      "direction": "Westbound",
+                      "count": 3
+                    },
+                    "expected": "Return 3 upcoming arrivals",
+                    "actual": {
+                      "arrivals": [
+                        {
+                          "estimated_arrival_time": "2024-01-15T14:05:00",
+                          "distance_from_stop": 0.1
+                        },
+                        {
+                          "estimated_arrival_time": "2024-01-15T14:20:00",
+                          "distance_from_stop": 1.8
+                        },
+                        {
+                          "estimated_arrival_time": "2024-01-15T14:35:00",
+                          "distance_from_stop": 3.5
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Route 10 at North Point Ferry, count=2",
+                    "input": {
+                      "route": "10",
+                      "stop_name": "North Point Ferry",
+                      "direction": "Westbound",
+                      "count": 2
+                    },
+                    "expected": "Return 2 upcoming arrivals",
+                    "actual": {
+                      "arrivals": [
+                        {
+                          "estimated_arrival_time": "2024-01-15T14:00:00",
+                          "distance_from_stop": 0.0
+                        },
+                        {
+                          "estimated_arrival_time": "2024-01-15T14:12:00",
+                          "distance_from_stop": 2.1
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case - Route 5B at Kennedy Town, count=1",
+                    "input": {
+                      "route": "5B",
+                      "stop_name": "Kennedy Town",
+                      "direction": "Eastbound",
+                      "count": 1
+                    },
+                    "expected": "Return 1 upcoming arrival",
+                    "actual": {
+                      "arrivals": [
+                        {
+                          "estimated_arrival_time": "2024-01-15T14:10:00",
+                          "distance_from_stop": 0.3
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "search_route_by_stops",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case - Direct route from Causeway Bay Times Square to Kennedy Town",
+                    "input": {
+                      "from_stop_name": "Causeway Bay Times Square",
+                      "to_stop_name": "Kennedy Town"
+                    },
+                    "expected": "Return direct route 5B",
+                    "actual": {
+                      "routes": [
+                        {
+                          "route_number": "5B",
+                          "transfer_information": {
+                            "is_direct": true,
+                            "transfer_stops": []
+                          }
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Indirect route from North Point Ferry to Kennedy Town",
+                    "input": {
+                      "from_stop_name": "North Point Ferry",
+                      "to_stop_name": "Kennedy Town"
+                    },
+                    "expected": "Return route with transfer information",
+                    "actual": {
+                      "routes": [
+                        {
+                          "route_number": "10",
+                          "transfer_information": {
+                            "is_direct": false,
+                            "transfer_stops": [
+                              "Central IFC"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Indirect route from North Point Ferry to Sheung Wan",
+                    "input": {
+                      "from_stop_name": "North Point Ferry",
+                      "to_stop_name": "Sheung Wan"
+                    },
+                    "expected": "Return route with transfer information",
+                    "actual": {
+                      "routes": [
+                        {
+                          "route_number": "10",
+                          "transfer_information": {
+                            "is_direct": false,
+                            "transfer_stops": [
+                              "Central IFC"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Error case - Nonexistent stops",
+                    "input": {
+                      "from_stop_name": "Nonexistent Stop A",
+                      "to_stop_name": "Nonexistent Stop B"
+                    },
+                    "expected": "Return empty list",
+                    "actual": {
+                      "routes": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 107.81882357597351
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "find_stop_by_name",
+                "test_cases": [
+                  {
+                    "description": "Valid case - exact stop name match",
+                    "input": {
+                      "stop_name": "Remote Island Stop"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": [
+                        {
+                          "stop_id": "S999",
+                          "stop_name": "Remote Island Stop",
+                          "location": {
+                            "latitude": 89.9,
+                            "longitude": 179.9
+                          }
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - partial stop name match",
+                    "input": {
+                      "stop_name": "Remote"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": [
+                        {
+                          "stop_id": "S999",
+                          "stop_name": "Remote Island Stop",
+                          "location": {
+                            "latitude": 89.9,
+                            "longitude": 179.9
+                          }
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - nonexistent stop",
+                    "input": {
+                      "stop_name": "Nonexistent Stop"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - empty stop name",
+                    "input": {
+                      "stop_name": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Stop name must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_all_routes_at_stop",
+                "test_cases": [
+                  {
+                    "description": "Valid case - stop with no routes",
+                    "input": {
+                      "stop_name": "Remote Island Stop"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_next_bus",
+                "test_cases": [
+                  {
+                    "description": "Valid case - route not serving stop",
+                    "input": {
+                      "route": "1A",
+                      "stop_name": "Remote Island Stop"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "No arrival information found for route 1A at stop Remote Island Stop",
+                    "note": "Expected behavior - no routes exist in this scenario"
+                  },
+                  {
+                    "description": "Error case - empty route",
+                    "input": {
+                      "route": "",
+                      "stop_name": "Remote Island Stop"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Route must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "find_buses_to_destination",
+                "test_cases": [
+                  {
+                    "description": "Valid case - no routes to destination",
+                    "input": {
+                      "destination": "Central"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - empty destination",
+                    "input": {
+                      "destination": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Destination must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_route_stops_info",
+                "test_cases": [
+                  {
+                    "description": "Valid case - nonexistent route",
+                    "input": {
+                      "route": "1A"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stops": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_bus_eta",
+                "test_cases": [
+                  {
+                    "description": "Valid case - no arrivals available",
+                    "input": {
+                      "route": "1A",
+                      "stop_name": "Remote Island Stop",
+                      "count": 3
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivals": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_route_by_stops",
+                "test_cases": [
+                  {
+                    "description": "Valid case - no routes between stops",
+                    "input": {
+                      "from_stop_name": "Remote Island Stop",
+                      "to_stop_name": "Central"
+                    },
+                    "passed": true,
+                    "output": {
+                      "routes": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "saved_scenario": {
+                "stops": {
+                  "S999": {
+                    "stop_id": "S999",
+                    "stop_name": "Remote Island Stop",
+                    "location": {
+                      "latitude": 89.9,
+                      "longitude": 179.9
+                    }
+                  }
+                },
+                "routes": {},
+                "route_stops": {},
+                "stop_routes": {},
+                "bus_arrivals": {},
+                "route_connections": {}
+              },
+              "comparison": "Saved scenario matches original scenario exactly",
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 63.90610480308533
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/HKBus.py"
+  }
+}

@@ -1,0 +1,2271 @@
+{
+  "metadata": {
+    "class_name": "TickTick",
+    "metadata_path": "envs\\metadata\\TickTick_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-04T02:01:17.930977",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "TickTick",
+    "description": "Task and project management server for TickTick, enabling OAuth2 authentication, project CRUD operations, and task management including creation, updates, completion, and deletion.",
+    "tools": [
+      {
+        "name": "ticktick_oauth2_authorization_step1",
+        "description": "Generate a TickTick OAuth2 authorization URL to redirect the user for obtaining an authorization code.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "scope": {
+              "type": "string",
+              "description": "Space-separated permission scopes for the authorization request. Available scopes: 'tasks:read', 'tasks:write'."
+            },
+            "client_id": {
+              "type": "string",
+              "description": "The TickTick application's client ID obtained from the Developer Center."
+            },
+            "redirect_uri": {
+              "type": "string",
+              "description": "The exact redirect URI registered with the TickTick application for OAuth2 callback."
+            },
+            "state": {
+              "type": "string",
+              "description": "An opaque value used for CSRF protection and maintaining request state across the authorization flow."
+            }
+          },
+          "required": [
+            "scope",
+            "client_id",
+            "redirect_uri"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "authorization_url": {
+              "type": "string",
+              "description": "The fully constructed OAuth2 authorization URL to redirect the user for granting permissions."
+            }
+          }
+        }
+      },
+      {
+        "name": "ticktick_get_user_project",
+        "description": "Retrieve all projects belonging to the authenticated user.",
+        "input_schema": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "projects": {
+              "type": "array",
+              "description": "List of all projects owned by the authenticated user.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "project_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the project."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The display name of the project."
+                  },
+                  "color": {
+                    "type": "string",
+                    "description": "The hex color code assigned to the project for visual identification."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "The type of the project, indicating whether it contains tasks or notes."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "ticktick_get_project_with_data",
+        "description": "Retrieve a specific project along with its associated tasks and columns.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "project_id": {
+              "type": "string",
+              "description": "The unique identifier of the project to retrieve data for."
+            }
+          },
+          "required": [
+            "project_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "project_id": {
+              "type": "string",
+              "description": "The unique identifier of the project."
+            },
+            "name": {
+              "type": "string",
+              "description": "The display name of the project."
+            },
+            "tasks": {
+              "type": "array",
+              "description": "List of tasks contained within the project."
+            },
+            "columns": {
+              "type": "array",
+              "description": "List of columns or sections defined within the project for task organization."
+            }
+          }
+        }
+      },
+      {
+        "name": "ticktick_create_project",
+        "description": "Create a new project in TickTick with specified configuration options.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The display name for the new project."
+            },
+            "kind": {
+              "type": "string",
+              "description": "The type of the project, such as 'TASK' or 'NOTE'."
+            },
+            "color": {
+              "type": "string",
+              "description": "The hex color code for the project (e.g., '#F18181') for visual identification."
+            },
+            "viewMode": {
+              "type": "string",
+              "description": "The view mode configuration for displaying the project."
+            },
+            "sortOrder": {
+              "type": "integer",
+              "description": "The numeric sort order value determining the project's position in lists."
+            }
+          },
+          "required": [
+            "name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "project_id": {
+              "type": "string",
+              "description": "The unique identifier of the newly created project."
+            },
+            "name": {
+              "type": "string",
+              "description": "The display name of the project."
+            },
+            "color": {
+              "type": "string",
+              "description": "The hex color code assigned to the project for visual identification."
+            },
+            "kind": {
+              "type": "string",
+              "description": "The type of the project, indicating whether it contains tasks or notes."
+            }
+          }
+        }
+      },
+      {
+        "name": "ticktick_update_project",
+        "description": "Update an existing project's properties such as name, color, or view settings.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "project_id": {
+              "type": "string",
+              "description": "The unique identifier of the project to update."
+            },
+            "name": {
+              "type": "string",
+              "description": "The new display name for the project."
+            },
+            "kind": {
+              "type": "string",
+              "description": "The type of the project, either 'TASK' or 'NOTE'."
+            },
+            "color": {
+              "type": "string",
+              "description": "The hex color code for the project (e.g., '#F18181') for visual identification."
+            },
+            "viewMode": {
+              "type": "string",
+              "description": "The view mode configuration for displaying the project."
+            },
+            "sortOrder": {
+              "type": "integer",
+              "description": "The numeric sort order value determining the project's position in lists."
+            }
+          },
+          "required": [
+            "project_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "project_id": {
+              "type": "string",
+              "description": "The unique identifier of the updated project."
+            },
+            "name": {
+              "type": "string",
+              "description": "The display name of the project."
+            },
+            "color": {
+              "type": "string",
+              "description": "The hex color code assigned to the project for visual identification."
+            },
+            "kind": {
+              "type": "string",
+              "description": "The type of the project, indicating whether it contains tasks or notes."
+            }
+          }
+        }
+      },
+      {
+        "name": "ticktick_delete_project",
+        "description": "Permanently delete a specific project and all its associated data.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "project_id": {
+              "type": "string",
+              "description": "The unique identifier of the project to delete."
+            }
+          },
+          "required": [
+            "project_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "project_id": {
+              "type": "string",
+              "description": "The unique identifier of the deleted project."
+            },
+            "deleted": {
+              "type": "boolean",
+              "description": "Indicates whether the project was successfully deleted."
+            }
+          }
+        }
+      },
+      {
+        "name": "ticktick_create_task",
+        "description": "Create a new task in TickTick with specified title, project assignment, and optional details.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "The title or name of the task to create."
+            },
+            "project_id": {
+              "type": "string",
+              "description": "The unique identifier of the project to add the task to."
+            },
+            "notes": {
+              "type": "string",
+              "description": "The main content or notes associated with the task."
+            },
+            "description": {
+              "type": "string",
+              "description": "An extended description providing additional details about the task."
+            },
+            "due_date": {
+              "type": "string",
+              "description": "The due date and time for the task in ISO 8601 format (e.g., '2023-04-24T17:00:00+0000')."
+            },
+            "priority": {
+              "type": "integer",
+              "description": "The priority level of the task (0=None, 1=Low, 3=Medium, 5=High)."
+            }
+          },
+          "required": [
+            "title"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "taskId": {
+              "type": "string",
+              "description": "The unique identifier of the newly created task."
+            },
+            "title": {
+              "type": "string",
+              "description": "The title or name of the task."
+            },
+            "project_id": {
+              "type": "string",
+              "description": "The unique identifier of the project containing the task."
+            },
+            "dueDate": {
+              "type": "string",
+              "description": "The due date and time assigned to the task in ISO 8601 format."
+            },
+            "priority": {
+              "type": "integer",
+              "description": "The priority level of the task (0=None, 1=Low, 3=Medium, 5=High)."
+            }
+          }
+        }
+      },
+      {
+        "name": "ticktick_update_task",
+        "description": "Update an existing task's properties such as title, notes, due date, or priority.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "description": "The unique identifier of the task to update."
+            },
+            "project_id": {
+              "type": "string",
+              "description": "The unique identifier of the project containing the task."
+            },
+            "title": {
+              "type": "string",
+              "description": "The new title or name for the task."
+            },
+            "notes": {
+              "type": "string",
+              "description": "The main content or notes associated with the task."
+            },
+            "description": {
+              "type": "string",
+              "description": "An extended description providing additional details about the task."
+            },
+            "due_date": {
+              "type": "string",
+              "description": "The due date and time for the task in ISO 8601 format (e.g., '2023-04-24T17:00:00+0000')."
+            },
+            "priority": {
+              "type": "integer",
+              "description": "The priority level of the task (0=None, 1=Low, 3=Medium, 5=High)."
+            }
+          },
+          "required": [
+            "task_id",
+            "project_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "taskId": {
+              "type": "string",
+              "description": "The unique identifier of the updated task."
+            },
+            "title": {
+              "type": "string",
+              "description": "The title or name of the task."
+            },
+            "project_id": {
+              "type": "string",
+              "description": "The unique identifier of the project containing the task."
+            },
+            "dueDate": {
+              "type": "string",
+              "description": "The due date and time assigned to the task in ISO 8601 format."
+            },
+            "priority": {
+              "type": "integer",
+              "description": "The priority level of the task (0=None, 1=Low, 3=Medium, 5=High)."
+            }
+          }
+        }
+      },
+      {
+        "name": "ticktick_complete_task",
+        "description": "Mark a specific task as complete within its project.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "description": "The unique identifier of the task to mark as complete."
+            },
+            "project_id": {
+              "type": "string",
+              "description": "The unique identifier of the project containing the task."
+            }
+          },
+          "required": [
+            "task_id",
+            "project_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "description": "The unique identifier of the completed task."
+            },
+            "project_id": {
+              "type": "string",
+              "description": "The unique identifier of the project containing the task."
+            },
+            "status": {
+              "type": "string",
+              "description": "The current completion status of the task after the operation."
+            }
+          }
+        }
+      },
+      {
+        "name": "ticktick_delete_task",
+        "description": "Permanently delete a specific task from a project.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "description": "The unique identifier of the task to delete."
+            },
+            "project_id": {
+              "type": "string",
+              "description": "The unique identifier of the project containing the task to delete."
+            }
+          },
+          "required": [
+            "task_id",
+            "project_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "description": "The unique identifier of the deleted task."
+            },
+            "project_id": {
+              "type": "string",
+              "description": "The unique identifier of the project that contained the deleted task."
+            },
+            "deleted": {
+              "type": "boolean",
+              "description": "Indicates whether the task was successfully deleted."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Union, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Task(BaseModel):\n    \"\"\"Represents a task in TickTick.\"\"\"\n    taskId: str = Field(..., description=\"Unique identifier for the task\")\n    title: str = Field(..., description=\"Title of the task\")\n    project_id: str = Field(..., description=\"ID of the project containing the task\")\n    dueDate: Optional[str] = Field(default=None, description=\"Due date in ISO 8601 format\")\n    priority: int = Field(default=0, ge=0, le=5, description=\"Priority level (0=None, 1=Low, 3=Medium, 5=High)\")\n    notes: Optional[str] = Field(default=None, description=\"Notes content for the task\")\n    description: Optional[str] = Field(default=None, description=\"Extended description of the task\")\n    status: str = Field(default=\"pending\", description=\"Current status of the task\")\n\nclass Project(BaseModel):\n    \"\"\"Represents a project in TickTick.\"\"\"\n    project_id: str = Field(..., description=\"Unique identifier for the project\")\n    name: str = Field(..., description=\"Display name of the project\")\n    color: str = Field(default=\"#F18181\", description=\"Hex color code for visual identification\")\n    kind: str = Field(default=\"TASK\", description=\"Type of project (TASK or NOTE)\")\n    viewMode: Optional[str] = Field(default=None, description=\"View mode configuration\")\n    sortOrder: Optional[int] = Field(default=None, description=\"Sort order for project positioning\")\n\nclass Column(BaseModel):\n    \"\"\"Represents a column/section within a project.\"\"\"\n    column_id: str = Field(..., description=\"Unique identifier for the column\")\n    name: str = Field(..., description=\"Name of the column\")\n    project_id: str = Field(..., description=\"ID of the project containing the column\")\n\nclass TickTickScenario(BaseModel):\n    \"\"\"Main scenario model for TickTick task management.\"\"\"\n    projects: Dict[str, Project] = Field(default={}, description=\"All projects indexed by project_id\")\n    tasks: Dict[str, Task] = Field(default={}, description=\"All tasks indexed by task_id\")\n    columns: Dict[str, Column] = Field(default={}, description=\"All columns indexed by column_id\")\n    project_columns: Dict[str, List[str]] = Field(default={}, description=\"Mapping of project_id to list of column_ids\")\n    task_project_mapping: Dict[str, str] = Field(default={}, description=\"Mapping of task_id to project_id\")\n    oauth_state: Dict[str, str] = Field(default={}, description=\"OAuth2 state storage\")\n    colorPaletteMap: Dict[str, str] = Field(default={\n        \"#F18181\": \"Red\", \"#F9A825\": \"Orange\", \"#FDD835\": \"Yellow\", \"#7CB342\": \"Green\",\n        \"#29B6F6\": \"Blue\", \"#AB47BC\": \"Purple\", \"#EC407A\": \"Pink\", \"#8D6E63\": \"Brown\",\n        \"#78909C\": \"Gray\", \"#26C6DA\": \"Cyan\", \"#66BB6A\": \"Light Green\", \"#FFA726\": \"Light Orange\",\n        \"#5C6BC0\": \"Indigo\", \"#D4E157\": \"Lime\", \"#26A69A\": \"Teal\", \"#EF5350\": \"Light Red\",\n        \"#9CCC65\": \"Pale Green\", \"#FFEE58\": \"Pale Yellow\", \"#42A5F5\": \"Light Blue\", \"#BDBDBD\": \"Light Gray\"\n    }, description=\"Available color palette for projects\")\n    priorityLabelsMap: Dict[int, str] = Field(default={\n        0: \"None\", 1: \"Low\", 3: \"Medium\", 5: \"High\"\n    }, description=\"Priority level labels\")\n\nScenario_Schema = [Task, Project, Column, TickTickScenario]\n\n# Section 2: Class\nclass TickTickAPI:\n    def __init__(self):\n        \"\"\"Initialize TickTick API with empty state.\"\"\"\n        self.projects: Dict[str, Project] = {}\n        self.tasks: Dict[str, Task] = {}\n        self.columns: Dict[str, Column] = {}\n        self.project_columns: Dict[str, List[str]] = {}\n        self.task_project_mapping: Dict[str, str] = {}\n        self.oauth_state: Dict[str, str] = {}\n        self.colorPaletteMap: Dict[str, str] = {}\n        self.priorityLabelsMap: Dict[int, str] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = TickTickScenario(**scenario)\n        self.projects = model.projects\n        self.tasks = model.tasks\n        self.columns = model.columns\n        self.project_columns = model.project_columns\n        self.task_project_mapping = model.task_project_mapping\n        self.oauth_state = model.oauth_state\n        self.colorPaletteMap = model.colorPaletteMap\n        self.priorityLabelsMap = model.priorityLabelsMap\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"projects\": {pid: proj.dict() for pid, proj in self.projects.items()},\n            \"tasks\": {tid: task.dict() for tid, task in self.tasks.items()},\n            \"columns\": {cid: col.dict() for cid, col in self.columns.items()},\n            \"project_columns\": self.project_columns,\n            \"task_project_mapping\": self.task_project_mapping,\n            \"oauth_state\": self.oauth_state,\n            \"colorPaletteMap\": self.colorPaletteMap,\n            \"priorityLabelsMap\": self.priorityLabelsMap\n        }\n\n    def ticktick_oauth2_authorization_step1(self, scope: str, client_id: str, redirect_uri: str, state: Optional[str] = None) -> dict:\n        \"\"\"Generate OAuth2 authorization URL.\"\"\"\n        auth_url = f\"https://ticktick.com/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}\"\n        if state:\n            auth_url += f\"&state={state}\"\n            self.oauth_state[state] = \"pending\"\n        return {\"authorization_url\": auth_url}\n\n    def ticktick_get_user_project(self) -> dict:\n        \"\"\"Retrieve all projects for the authenticated user.\"\"\"\n        projects_list = [proj.dict() for proj in self.projects.values()]\n        return {\"projects\": projects_list}\n\n    def ticktick_get_project_with_data(self, project_id: str) -> dict:\n        \"\"\"Retrieve specific project with tasks and columns.\"\"\"\n        if project_id not in self.projects:\n            return {\"error\": \"Project not found\"}\n        \n        project = self.projects[project_id]\n        project_tasks = [task.dict() for task in self.tasks.values() if task.project_id == project_id]\n        project_cols = [col.dict() for col in self.columns.values() if col.project_id == project_id]\n        \n        return {\n            \"project_id\": project_id,\n            \"name\": project.name,\n            \"tasks\": project_tasks,\n            \"columns\": project_cols\n        }\n\n    def ticktick_create_project(self, name: str, kind: Optional[str] = \"TASK\", color: Optional[str] = \"#F18181\", viewMode: Optional[str] = None, sortOrder: Optional[int] = None) -> dict:\n        \"\"\"Create a new project.\"\"\"\n        import uuid\n        project_id = str(uuid.uuid4())\n        \n        project = Project(\n            project_id=project_id,\n            name=name,\n            kind=kind or \"TASK\",\n            color=color or \"#F18181\",\n            viewMode=viewMode,\n            sortOrder=sortOrder\n        )\n        \n        self.projects[project_id] = project\n        self.project_columns[project_id] = []\n        \n        return {\n            \"project_id\": project_id,\n            \"name\": project.name,\n            \"color\": project.color,\n            \"kind\": project.kind\n        }\n\n    def ticktick_update_project(self, project_id: str, name: Optional[str] = None, kind: Optional[str] = None, color: Optional[str] = None, viewMode: Optional[str] = None, sortOrder: Optional[int] = None) -> dict:\n        \"\"\"Update existing project properties.\"\"\"\n        if project_id not in self.projects:\n            return {\"error\": \"Project not found\"}\n        \n        project = self.projects[project_id]\n        \n        if name is not None:\n            project.name = name\n        if kind is not None:\n            project.kind = kind\n        if color is not None:\n            project.color = color\n        if viewMode is not None:\n            project.viewMode = viewMode\n        if sortOrder is not None:\n            project.sortOrder = sortOrder\n        \n        self.projects[project_id] = project\n        \n        return {\n            \"project_id\": project_id,\n            \"name\": project.name,\n            \"color\": project.color,\n            \"kind\": project.kind\n        }\n\n    def ticktick_delete_project(self, project_id: str) -> dict:\n        \"\"\"Delete a project and all associated data.\"\"\"\n        if project_id not in self.projects:\n            return {\"error\": \"Project not found\"}\n        \n        # Remove all tasks in the project\n        tasks_to_remove = [tid for tid, task in self.tasks.items() if task.project_id == project_id]\n        for task_id in tasks_to_remove:\n            del self.tasks[task_id]\n            if task_id in self.task_project_mapping:\n                del self.task_project_mapping[task_id]\n        \n        # Remove all columns in the project\n        columns_to_remove = [cid for cid, col in self.columns.items() if col.project_id == project_id]\n        for column_id in columns_to_remove:\n            del self.columns[column_id]\n        \n        # Remove project and its column mapping\n        del self.projects[project_id]\n        if project_id in self.project_columns:\n            del self.project_columns[project_id]\n        \n        return {\n            \"project_id\": project_id,\n            \"deleted\": True\n        }\n\n    def ticktick_create_task(self, title: str, project_id: Optional[str] = None, notes: Optional[str] = None, description: Optional[str] = None, due_date: Optional[str] = None, priority: Optional[int] = 0) -> dict:\n        \"\"\"Create a new task.\"\"\"\n        import uuid\n        task_id = str(uuid.uuid4())\n        \n        task = Task(\n            taskId=task_id,\n            title=title,\n            project_id=project_id or \"\",\n            notes=notes,\n            description=description,\n            dueDate=due_date,\n            priority=priority or 0\n        )\n        \n        self.tasks[task_id] = task\n        if project_id:\n            self.task_project_mapping[task_id] = project_id\n        \n        return {\n            \"taskId\": task_id,\n            \"title\": title,\n            \"project_id\": project_id or \"\",\n            \"dueDate\": due_date,\n            \"priority\": priority or 0\n        }\n\n    def ticktick_update_task(self, task_id: str, project_id: str, title: Optional[str] = None, notes: Optional[str] = None, description: Optional[str] = None, due_date: Optional[str] = None, priority: Optional[int] = None) -> dict:\n        \"\"\"Update existing task properties.\"\"\"\n        if task_id not in self.tasks:\n            return {\"error\": \"Task not found\"}\n        \n        task = self.tasks[task_id]\n        \n        if title is not None:\n            task.title = title\n        if notes is not None:\n            task.notes = notes\n        if description is not None:\n            task.description = description\n        if due_date is not None:\n            task.dueDate = due_date\n        if priority is not None:\n            task.priority = priority\n        \n        task.project_id = project_id\n        self.task_project_mapping[task_id] = project_id\n        self.tasks[task_id] = task\n        \n        return {\n            \"taskId\": task_id,\n            \"title\": task.title,\n            \"project_id\": project_id,\n            \"dueDate\": task.dueDate,\n            \"priority\": task.priority\n        }\n\n    def ticktick_complete_task(self, task_id: str, project_id: str) -> dict:\n        \"\"\"Mark a task as complete.\"\"\"\n        if task_id not in self.tasks:\n            return {\"error\": \"Task not found\"}\n        \n        task = self.tasks[task_id]\n        task.status = \"completed\"\n        self.tasks[task_id] = task\n        \n        return {\n            \"task_id\": task_id,\n            \"project_id\": project_id,\n            \"status\": \"completed\"\n        }\n\n    def ticktick_delete_task(self, task_id: str, project_id: str) -> dict:\n        \"\"\"Delete a specific task.\"\"\"\n        if task_id not in self.tasks:\n            return {\"error\": \"Task not found\"}\n        \n        del self.tasks[task_id]\n        if task_id in self.task_project_mapping:\n            del self.task_project_mapping[task_id]\n        \n        return {\n            \"task_id\": task_id,\n            \"project_id\": project_id,\n            \"deleted\": True\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"TickTick\")\napi = TickTickAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the TickTick API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching TickTickScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current TickTick state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef ticktick_oauth2_authorization_step1(scope: str, client_id: str, redirect_uri: str, state: Optional[str] = None) -> dict:\n    \"\"\"\n    Generate a TickTick OAuth2 authorization URL to redirect the user for obtaining an authorization code.\n    \n    Args:\n        scope (str): Space-separated permission scopes for the authorization request.\n        client_id (str): The TickTick application's client ID obtained from the Developer Center.\n        redirect_uri (str): The exact redirect URI registered with the TickTick application for OAuth2 callback.\n        state (str) [Optional]: An opaque value used for CSRF protection and maintaining request state.\n    \n    Returns:\n        authorization_url (str): The fully constructed OAuth2 authorization URL.\n    \"\"\"\n    try:\n        if not scope or not isinstance(scope, str):\n            raise ValueError(\"Scope must be a non-empty string\")\n        if not client_id or not isinstance(client_id, str):\n            raise ValueError(\"Client ID must be a non-empty string\")\n        if not redirect_uri or not isinstance(redirect_uri, str):\n            raise ValueError(\"Redirect URI must be a non-empty string\")\n        return api.ticktick_oauth2_authorization_step1(scope, client_id, redirect_uri, state)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef ticktick_get_user_project() -> dict:\n    \"\"\"\n    Retrieve all projects belonging to the authenticated user.\n    \n    Returns:\n        projects (list): List of all projects owned by the authenticated user.\n    \"\"\"\n    try:\n        return api.ticktick_get_user_project()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef ticktick_get_project_with_data(project_id: str) -> dict:\n    \"\"\"\n    Retrieve a specific project along with its associated tasks and columns.\n    \n    Args:\n        project_id (str): The unique identifier of the project to retrieve data for.\n    \n    Returns:\n        project_id (str): The unique identifier of the project.\n        name (str): The display name of the project.\n        tasks (list): List of tasks contained within the project.\n        columns (list): List of columns or sections defined within the project.\n    \"\"\"\n    try:\n        if not project_id or not isinstance(project_id, str):\n            raise ValueError(\"Project ID must be a non-empty string\")\n        result = api.ticktick_get_project_with_data(project_id)\n        if \"error\" in result:\n            raise ValueError(result[\"error\"])\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef ticktick_create_project(name: str, kind: Optional[str] = \"TASK\", color: Optional[str] = \"#F18181\", viewMode: Optional[str] = None, sortOrder: Optional[int] = None) -> dict:\n    \"\"\"\n    Create a new project in TickTick with specified configuration options.\n    \n    Args:\n        name (str): The display name for the new project.\n        kind (str) [Optional]: The type of the project (TASK or NOTE). Defaults to TASK.\n        color (str) [Optional]: The hex color code for the project. Defaults to #F18181.\n        viewMode (str) [Optional]: The view mode configuration for displaying the project.\n        sortOrder (int) [Optional]: The numeric sort order value determining project position.\n    \n    Returns:\n        project_id (str): The unique identifier of the newly created project.\n        name (str): The display name of the project.\n        color (str): The hex color code assigned to the project.\n        kind (str): The type of the project.\n    \"\"\"\n    try:\n        if not name or not isinstance(name, str):\n            raise ValueError(\"Name must be a non-empty string\")\n        return api.ticktick_create_project(name, kind, color, viewMode, sortOrder)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef ticktick_update_project(project_id: str, name: Optional[str] = None, kind: Optional[str] = None, color: Optional[str] = None, viewMode: Optional[str] = None, sortOrder: Optional[int] = None) -> dict:\n    \"\"\"\n    Update an existing project's properties such as name, color, or view settings.\n    \n    Args:\n        project_id (str): The unique identifier of the project to update.\n        name (str) [Optional]: The new display name for the project.\n        kind (str) [Optional]: The type of the project (TASK or NOTE).\n        color (str) [Optional]: The hex color code for the project.\n        viewMode (str) [Optional]: The view mode configuration for displaying the project.\n        sortOrder (int) [Optional]: The numeric sort order value determining project position.\n    \n    Returns:\n        project_id (str): The unique identifier of the updated project.\n        name (str): The display name of the project.\n        color (str): The hex color code assigned to the project.\n        kind (str): The type of the project.\n    \"\"\"\n    try:\n        if not project_id or not isinstance(project_id, str):\n            raise ValueError(\"Project ID must be a non-empty string\")\n        result = api.ticktick_update_project(project_id, name, kind, color, viewMode, sortOrder)\n        if \"error\" in result:\n            raise ValueError(result[\"error\"])\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef ticktick_delete_project(project_id: str) -> dict:\n    \"\"\"\n    Permanently delete a specific project and all its associated data.\n    \n    Args:\n        project_id (str): The unique identifier of the project to delete.\n    \n    Returns:\n        project_id (str): The unique identifier of the deleted project.\n        deleted (bool): Indicates whether the project was successfully deleted.\n    \"\"\"\n    try:\n        if not project_id or not isinstance(project_id, str):\n            raise ValueError(\"Project ID must be a non-empty string\")\n        result = api.ticktick_delete_project(project_id)\n        if \"error\" in result:\n            raise ValueError(result[\"error\"])\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef ticktick_create_task(title: str, project_id: Optional[str] = None, notes: Optional[str] = None, description: Optional[str] = None, due_date: Optional[str] = None, priority: Optional[int] = 0) -> dict:\n    \"\"\"\n    Create a new task in TickTick with specified title, project assignment, and optional details.\n    \n    Args:\n        title (str): The title or name of the task to create.\n        project_id (str) [Optional]: The unique identifier of the project to add the task to.\n        notes (str) [Optional]: The main content or notes associated with the task.\n        description (str) [Optional]: An extended description providing additional details.\n        due_date (str) [Optional]: The due date and time in ISO 8601 format.\n        priority (int) [Optional]: The priority level (0=None, 1=Low, 3=Medium, 5=High).\n    \n    Returns:\n        taskId (str): The unique identifier of the newly created task.\n        title (str): The title or name of the task.\n        project_id (str): The unique identifier of the project containing the task.\n        dueDate (str): The due date and time assigned to the task.\n        priority (int): The priority level of the task.\n    \"\"\"\n    try:\n        if not title or not isinstance(title, str):\n            raise ValueError(\"Title must be a non-empty string\")\n        return api.ticktick_create_task(title, project_id, notes, description, due_date, priority)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef ticktick_update_task(task_id: str, project_id: str, title: Optional[str] = None, notes: Optional[str] = None, description: Optional[str] = None, due_date: Optional[str] = None, priority: Optional[int] = None) -> dict:\n    \"\"\"\n    Update an existing task's properties such as title, notes, due date, or priority.\n    \n    Args:\n        task_id (str): The unique identifier of the task to update.\n        project_id (str): The unique identifier of the project containing the task.\n        title (str) [Optional]: The new title or name for the task.\n        notes (str) [Optional]: The main content or notes associated with the task.\n        description (str) [Optional]: An extended description providing additional details.\n        due_date (str) [Optional]: The due date and time in ISO 8601 format.\n        priority (int) [Optional]: The priority level (0=None, 1=Low, 3=Medium, 5=High).\n    \n    Returns:\n        taskId (str): The unique identifier of the updated task.\n        title (str): The title or name of the task.\n        project_id (str): The unique identifier of the project containing the task.\n        dueDate (str): The due date and time assigned to the task.\n        priority (int): The priority level of the task.\n    \"\"\"\n    try:\n        if not task_id or not isinstance(task_id, str):\n            raise ValueError(\"Task ID must be a non-empty string\")\n        if not project_id or not isinstance(project_id, str):\n            raise ValueError(\"Project ID must be a non-empty string\")\n        result = api.ticktick_update_task(task_id, project_id, title, notes, description, due_date, priority)\n        if \"error\" in result:\n            raise ValueError(result[\"error\"])\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef ticktick_complete_task(task_id: str, project_id: str) -> dict:\n    \"\"\"\n    Mark a specific task as complete within its project.\n    \n    Args:\n        task_id (str): The unique identifier of the task to mark as complete.\n        project_id (str): The unique identifier of the project containing the task.\n    \n    Returns:\n        task_id (str): The unique identifier of the completed task.\n        project_id (str): The unique identifier of the project containing the task.\n        status (str): The current completion status of the task.\n    \"\"\"\n    try:\n        if not task_id or not isinstance(task_id, str):\n            raise ValueError(\"Task ID must be a non-empty string\")\n        if not project_id or not isinstance(project_id, str):\n            raise ValueError(\"Project ID must be a non-empty string\")\n        result = api.ticktick_complete_task(task_id, project_id)\n        if \"error\" in result:\n            raise ValueError(result[\"error\"])\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef ticktick_delete_task(task_id: str, project_id: str) -> dict:\n    \"\"\"\n    Permanently delete a specific task from a project.\n    \n    Args:\n        task_id (str): The unique identifier of the task to delete.\n        project_id (str): The unique identifier of the project containing the task.\n    \n    Returns:\n        task_id (str): The unique identifier of the deleted task.\n        project_id (str): The unique identifier of the project that contained the task.\n        deleted (bool): Indicates whether the task was successfully deleted.\n    \"\"\"\n    try:\n        if not task_id or not isinstance(task_id, str):\n            raise ValueError(\"Task ID must be a non-empty string\")\n        if not project_id or not isinstance(project_id, str):\n            raise ValueError(\"Project ID must be a non-empty string\")\n        result = api.ticktick_delete_task(task_id, project_id)\n        if \"error\" in result:\n            raise ValueError(result[\"error\"])\n        return result\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-04T02:01:17.930977",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic setup with one project and two tasks - tests fundamental task creation and project organization",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "projects": {
+          "proj_001": {
+            "project_id": "proj_001",
+            "name": "Personal Tasks",
+            "color": "#29B6F6",
+            "kind": "TASK",
+            "viewMode": null,
+            "sortOrder": null
+          }
+        },
+        "tasks": {
+          "task_001": {
+            "taskId": "task_001",
+            "title": "Buy groceries",
+            "project_id": "proj_001",
+            "dueDate": "2024-01-15T18:00:00Z",
+            "priority": 3,
+            "notes": null,
+            "description": null,
+            "status": "pending"
+          },
+          "task_002": {
+            "taskId": "task_002",
+            "title": "Call dentist",
+            "project_id": "proj_001",
+            "dueDate": null,
+            "priority": 1,
+            "notes": "Schedule annual checkup",
+            "description": null,
+            "status": "pending"
+          }
+        },
+        "columns": {},
+        "project_columns": {},
+        "task_project_mapping": {
+          "task_001": "proj_001",
+          "task_002": "proj_001"
+        },
+        "oauth_state": {},
+        "colorPaletteMap": {
+          "#F18181": "Red",
+          "#F9A825": "Orange",
+          "#FDD835": "Yellow",
+          "#7CB342": "Green",
+          "#29B6F6": "Blue",
+          "#AB47BC": "Purple",
+          "#EC407A": "Pink",
+          "#8D6E63": "Brown",
+          "#78909C": "Gray",
+          "#26C6DA": "Cyan",
+          "#66BB6A": "Light Green",
+          "#FFA726": "Light Orange",
+          "#5C6BC0": "Indigo",
+          "#D4E157": "Lime",
+          "#26A69A": "Teal",
+          "#EF5350": "Light Red",
+          "#9CCC65": "Pale Green",
+          "#FFEE58": "Pale Yellow",
+          "#42A5F5": "Light Blue",
+          "#BDBDBD": "Light Gray"
+        },
+        "priorityLabelsMap": {
+          "0": "None",
+          "1": "Low",
+          "3": "Medium",
+          "5": "High"
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple projects with columns and varied task priorities - tests project organization with sections and priority handling",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "projects": {
+          "proj_work": {
+            "project_id": "proj_work",
+            "name": "Work Projects",
+            "color": "#5C6BC0",
+            "kind": "TASK",
+            "viewMode": "kanban",
+            "sortOrder": 1
+          },
+          "proj_home": {
+            "project_id": "proj_home",
+            "name": "Home Improvement",
+            "color": "#7CB342",
+            "kind": "TASK",
+            "viewMode": "list",
+            "sortOrder": 2
+          },
+          "proj_notes": {
+            "project_id": "proj_notes",
+            "name": "Meeting Notes",
+            "color": "#FDD835",
+            "kind": "NOTE",
+            "viewMode": null,
+            "sortOrder": 3
+          }
+        },
+        "tasks": {
+          "task_w1": {
+            "taskId": "task_w1",
+            "title": "Complete Q1 report",
+            "project_id": "proj_work",
+            "dueDate": "2024-03-31T23:59:59Z",
+            "priority": 5,
+            "notes": "Include sales figures and projections",
+            "description": "Quarterly financial report for stakeholders",
+            "status": "pending"
+          },
+          "task_w2": {
+            "taskId": "task_w2",
+            "title": "Review code PRs",
+            "project_id": "proj_work",
+            "dueDate": "2024-01-20T17:00:00Z",
+            "priority": 3,
+            "notes": null,
+            "description": null,
+            "status": "pending"
+          },
+          "task_h1": {
+            "taskId": "task_h1",
+            "title": "Paint living room",
+            "project_id": "proj_home",
+            "dueDate": null,
+            "priority": 0,
+            "notes": "Choose between beige or light gray",
+            "description": "Repaint walls and ceiling",
+            "status": "pending"
+          },
+          "task_h2": {
+            "taskId": "task_h2",
+            "title": "Fix leaky faucet",
+            "project_id": "proj_home",
+            "dueDate": "2024-01-18T12:00:00Z",
+            "priority": 5,
+            "notes": null,
+            "description": "Kitchen sink dripping constantly",
+            "status": "pending"
+          }
+        },
+        "columns": {
+          "col_todo": {
+            "column_id": "col_todo",
+            "name": "To Do",
+            "project_id": "proj_work"
+          },
+          "col_progress": {
+            "column_id": "col_progress",
+            "name": "In Progress",
+            "project_id": "proj_work"
+          },
+          "col_done": {
+            "column_id": "col_done",
+            "name": "Done",
+            "project_id": "proj_work"
+          }
+        },
+        "project_columns": {
+          "proj_work": [
+            "col_todo",
+            "col_progress",
+            "col_done"
+          ]
+        },
+        "task_project_mapping": {
+          "task_w1": "proj_work",
+          "task_w2": "proj_work",
+          "task_h1": "proj_home",
+          "task_h2": "proj_home"
+        },
+        "oauth_state": {
+          "access_token": "mock_token_abc123",
+          "refresh_token": "mock_refresh_xyz789"
+        },
+        "colorPaletteMap": {
+          "#F18181": "Red",
+          "#F9A825": "Orange",
+          "#FDD835": "Yellow",
+          "#7CB342": "Green",
+          "#29B6F6": "Blue",
+          "#AB47BC": "Purple",
+          "#EC407A": "Pink",
+          "#8D6E63": "Brown",
+          "#78909C": "Gray",
+          "#26C6DA": "Cyan",
+          "#66BB6A": "Light Green",
+          "#FFA726": "Light Orange",
+          "#5C6BC0": "Indigo",
+          "#D4E157": "Lime",
+          "#26A69A": "Teal",
+          "#EF5350": "Light Red",
+          "#9CCC65": "Pale Green",
+          "#FFEE58": "Pale Yellow",
+          "#42A5F5": "Light Blue",
+          "#BDBDBD": "Light Gray"
+        },
+        "priorityLabelsMap": {
+          "0": "None",
+          "1": "Low",
+          "3": "Medium",
+          "5": "High"
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich multi-project environment with diverse task types, all priority levels, and complex column structures - tests comprehensive task management workflows",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "projects": {
+          "proj_dev": {
+            "project_id": "proj_dev",
+            "name": "Software Development",
+            "color": "#42A5F5",
+            "kind": "TASK",
+            "viewMode": "kanban",
+            "sortOrder": 1
+          },
+          "proj_marketing": {
+            "project_id": "proj_marketing",
+            "name": "Marketing Campaign",
+            "color": "#EC407A",
+            "kind": "TASK",
+            "viewMode": "timeline",
+            "sortOrder": 2
+          },
+          "proj_personal": {
+            "project_id": "proj_personal",
+            "name": "Personal Goals 2024",
+            "color": "#AB47BC",
+            "kind": "TASK",
+            "viewMode": "list",
+            "sortOrder": 3
+          },
+          "proj_research": {
+            "project_id": "proj_research",
+            "name": "Research Notes",
+            "color": "#26A69A",
+            "kind": "NOTE",
+            "viewMode": null,
+            "sortOrder": 4
+          }
+        },
+        "tasks": {
+          "task_d1": {
+            "taskId": "task_d1",
+            "title": "Implement user authentication",
+            "project_id": "proj_dev",
+            "dueDate": "2024-02-01T09:00:00Z",
+            "priority": 5,
+            "notes": "Use OAuth2 with JWT tokens",
+            "description": "Secure login system with multi-factor authentication support",
+            "status": "pending"
+          },
+          "task_d2": {
+            "taskId": "task_d2",
+            "title": "Write unit tests",
+            "project_id": "proj_dev",
+            "dueDate": "2024-02-05T17:00:00Z",
+            "priority": 3,
+            "notes": "Aim for 80% coverage",
+            "description": "Comprehensive test suite for all modules",
+            "status": "pending"
+          },
+          "task_d3": {
+            "taskId": "task_d3",
+            "title": "Update documentation",
+            "project_id": "proj_dev",
+            "dueDate": null,
+            "priority": 1,
+            "notes": null,
+            "description": "API documentation and user guides",
+            "status": "pending"
+          },
+          "task_m1": {
+            "taskId": "task_m1",
+            "title": "Design social media graphics",
+            "project_id": "proj_marketing",
+            "dueDate": "2024-01-25T12:00:00Z",
+            "priority": 5,
+            "notes": "Instagram, Facebook, Twitter formats",
+            "description": "Create engaging visuals for product launch",
+            "status": "pending"
+          },
+          "task_m2": {
+            "taskId": "task_m2",
+            "title": "Schedule email campaign",
+            "project_id": "proj_marketing",
+            "dueDate": "2024-01-30T10:00:00Z",
+            "priority": 3,
+            "notes": "Target segment: premium users",
+            "description": "Promotional email for new features",
+            "status": "pending"
+          },
+          "task_p1": {
+            "taskId": "task_p1",
+            "title": "Learn Spanish - 30 min daily",
+            "project_id": "proj_personal",
+            "dueDate": "2024-12-31T23:59:59Z",
+            "priority": 3,
+            "notes": "Using Duolingo and conversation practice",
+            "description": "Achieve conversational fluency by year end",
+            "status": "pending"
+          },
+          "task_p2": {
+            "taskId": "task_p2",
+            "title": "Run 5K race",
+            "project_id": "proj_personal",
+            "dueDate": "2024-04-15T08:00:00Z",
+            "priority": 5,
+            "notes": "Training plan: 3x per week",
+            "description": "Complete first 5K race in under 30 minutes",
+            "status": "pending"
+          },
+          "task_p3": {
+            "taskId": "task_p3",
+            "title": "Read 24 books this year",
+            "project_id": "proj_personal",
+            "dueDate": null,
+            "priority": 0,
+            "notes": "2 books per month average",
+            "description": "Mix of fiction and non-fiction",
+            "status": "pending"
+          }
+        },
+        "columns": {
+          "col_dev_backlog": {
+            "column_id": "col_dev_backlog",
+            "name": "Backlog",
+            "project_id": "proj_dev"
+          },
+          "col_dev_todo": {
+            "column_id": "col_dev_todo",
+            "name": "To Do",
+            "project_id": "proj_dev"
+          },
+          "col_dev_progress": {
+            "column_id": "col_dev_progress",
+            "name": "In Progress",
+            "project_id": "proj_dev"
+          },
+          "col_dev_review": {
+            "column_id": "col_dev_review",
+            "name": "Code Review",
+            "project_id": "proj_dev"
+          },
+          "col_dev_done": {
+            "column_id": "col_dev_done",
+            "name": "Done",
+            "project_id": "proj_dev"
+          },
+          "col_mkt_plan": {
+            "column_id": "col_mkt_plan",
+            "name": "Planning",
+            "project_id": "proj_marketing"
+          },
+          "col_mkt_exec": {
+            "column_id": "col_mkt_exec",
+            "name": "Execution",
+            "project_id": "proj_marketing"
+          },
+          "col_mkt_complete": {
+            "column_id": "col_mkt_complete",
+            "name": "Completed",
+            "project_id": "proj_marketing"
+          }
+        },
+        "project_columns": {
+          "proj_dev": [
+            "col_dev_backlog",
+            "col_dev_todo",
+            "col_dev_progress",
+            "col_dev_review",
+            "col_dev_done"
+          ],
+          "proj_marketing": [
+            "col_mkt_plan",
+            "col_mkt_exec",
+            "col_mkt_complete"
+          ]
+        },
+        "task_project_mapping": {
+          "task_d1": "proj_dev",
+          "task_d2": "proj_dev",
+          "task_d3": "proj_dev",
+          "task_m1": "proj_marketing",
+          "task_m2": "proj_marketing",
+          "task_p1": "proj_personal",
+          "task_p2": "proj_personal",
+          "task_p3": "proj_personal"
+        },
+        "oauth_state": {
+          "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+          "refresh_token": "refresh_token_long_string_here",
+          "token_type": "Bearer",
+          "expires_in": "3600"
+        },
+        "colorPaletteMap": {
+          "#F18181": "Red",
+          "#F9A825": "Orange",
+          "#FDD835": "Yellow",
+          "#7CB342": "Green",
+          "#29B6F6": "Blue",
+          "#AB47BC": "Purple",
+          "#EC407A": "Pink",
+          "#8D6E63": "Brown",
+          "#78909C": "Gray",
+          "#26C6DA": "Cyan",
+          "#66BB6A": "Light Green",
+          "#FFA726": "Light Orange",
+          "#5C6BC0": "Indigo",
+          "#D4E157": "Lime",
+          "#26A69A": "Teal",
+          "#EF5350": "Light Red",
+          "#9CCC65": "Pale Green",
+          "#FFEE58": "Pale Yellow",
+          "#42A5F5": "Light Blue",
+          "#BDBDBD": "Light Gray"
+        },
+        "priorityLabelsMap": {
+          "0": "None",
+          "1": "Low",
+          "3": "Medium",
+          "5": "High"
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty state with no projects or tasks - tests handling of minimal/empty data structures",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "projects": {},
+        "tasks": {},
+        "columns": {},
+        "project_columns": {},
+        "task_project_mapping": {},
+        "oauth_state": {},
+        "colorPaletteMap": {
+          "#F18181": "Red",
+          "#F9A825": "Orange",
+          "#FDD835": "Yellow",
+          "#7CB342": "Green",
+          "#29B6F6": "Blue",
+          "#AB47BC": "Purple",
+          "#EC407A": "Pink",
+          "#8D6E63": "Brown",
+          "#78909C": "Gray",
+          "#26C6DA": "Cyan",
+          "#66BB6A": "Light Green",
+          "#FFA726": "Light Orange",
+          "#5C6BC0": "Indigo",
+          "#D4E157": "Lime",
+          "#26A69A": "Teal",
+          "#EF5350": "Light Red",
+          "#9CCC65": "Pale Green",
+          "#FFEE58": "Pale Yellow",
+          "#42A5F5": "Light Blue",
+          "#BDBDBD": "Light Gray"
+        },
+        "priorityLabelsMap": {
+          "0": "None",
+          "1": "Low",
+          "3": "Medium",
+          "5": "High"
+        }
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "ticktick_oauth2_authorization_step1",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Valid OAuth2 authorization request",
+                    "input": {
+                      "scope": "tasks:read tasks:write",
+                      "client_id": "test_client_123",
+                      "redirect_uri": "https://example.com/callback",
+                      "state": "random_state_123"
+                    },
+                    "result": "Generated valid authorization URL",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_get_user_project",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Retrieve all user projects",
+                    "input": {},
+                    "result": "Successfully retrieved 1 project (proj_001)",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_get_project_with_data",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Valid project retrieval",
+                    "input": {
+                      "project_id": "proj_001"
+                    },
+                    "result": "Successfully retrieved project with 2 tasks",
+                    "error": null
+                  },
+                  {
+                    "case": "Nonexistent project (error case)",
+                    "input": {
+                      "project_id": "nonexistent_project"
+                    },
+                    "result": "Correctly rejected with 'Project not found' error",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_create_project",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Create new project with all parameters",
+                    "input": {
+                      "name": "Work Projects",
+                      "kind": "TASK",
+                      "color": "#7CB342",
+                      "viewMode": "list",
+                      "sortOrder": 1
+                    },
+                    "result": "Successfully created project with generated ID",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_update_project",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Update existing project",
+                    "input": {
+                      "project_id": "proj_001",
+                      "name": "Personal Tasks Updated",
+                      "color": "#AB47BC"
+                    },
+                    "result": "Successfully updated project name and color",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_delete_project",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Delete existing project",
+                    "input": {
+                      "project_id": "636e3412-2092-41f5-9f10-6bdfdef5468f"
+                    },
+                    "result": "Successfully deleted project",
+                    "error": null
+                  },
+                  {
+                    "case": "Delete nonexistent project (error case)",
+                    "input": {
+                      "project_id": "nonexistent_project"
+                    },
+                    "result": "Correctly rejected with 'Project not found' error",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_create_task",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Create new task with all parameters",
+                    "input": {
+                      "title": "New Task Test",
+                      "project_id": "proj_001",
+                      "notes": "Test notes",
+                      "description": "Test description",
+                      "due_date": "2024-02-01T12:00:00Z",
+                      "priority": 5
+                    },
+                    "result": "Successfully created task with generated ID",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_update_task",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Update existing task",
+                    "input": {
+                      "task_id": "task_001",
+                      "project_id": "proj_001",
+                      "title": "Buy groceries - Updated",
+                      "priority": 5
+                    },
+                    "result": "Successfully updated task title and priority",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_complete_task",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Mark task as complete",
+                    "input": {
+                      "task_id": "task_002",
+                      "project_id": "proj_001"
+                    },
+                    "result": "Successfully marked task as completed",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_delete_task",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Delete existing task",
+                    "input": {
+                      "task_id": "379f6836-4a79-4fee-a58f-94f74552a27e",
+                      "project_id": "proj_001"
+                    },
+                    "result": "Successfully deleted task",
+                    "error": null
+                  },
+                  {
+                    "case": "Delete nonexistent task (error case)",
+                    "input": {
+                      "task_id": "nonexistent_task",
+                      "project_id": "proj_001"
+                    },
+                    "result": "Correctly rejected with 'Task not found' error",
+                    "error": null
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "state_changes": {
+                "projects": {
+                  "proj_001": {
+                    "original_name": "Personal Tasks",
+                    "updated_name": "Personal Tasks Updated",
+                    "original_color": "#29B6F6",
+                    "updated_color": "#AB47BC"
+                  }
+                },
+                "tasks": {
+                  "task_001": {
+                    "original_title": "Buy groceries",
+                    "updated_title": "Buy groceries - Updated",
+                    "original_priority": 3,
+                    "updated_priority": 5
+                  },
+                  "task_002": {
+                    "original_status": "pending",
+                    "updated_status": "completed"
+                  }
+                },
+                "oauth_state": {
+                  "added": "random_state_123 with status 'pending'"
+                }
+              },
+              "consistency_notes": "All state changes are consistent with the operations performed during testing. The scenario correctly persisted updates to projects and tasks, and tracked OAuth state."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 77.39688777923584
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "ticktick_oauth2_authorization_step1",
+                "test_cases": [
+                  {
+                    "description": "Valid OAuth request with all parameters",
+                    "input": {
+                      "scope": "tasks:read tasks:write",
+                      "client_id": "test_client_123",
+                      "redirect_uri": "https://example.com/callback",
+                      "state": "random_state_xyz"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid OAuth request without optional state parameter",
+                    "input": {
+                      "scope": "tasks:read",
+                      "client_id": "test_client",
+                      "redirect_uri": "https://example.com/callback"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_get_user_project",
+                "test_cases": [
+                  {
+                    "description": "Retrieve all user projects",
+                    "input": {},
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Successfully retrieved 3 projects"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_get_project_with_data",
+                "test_cases": [
+                  {
+                    "description": "Valid project retrieval - proj_work",
+                    "input": {
+                      "project_id": "proj_work"
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Retrieved project with 2 tasks and 3 columns"
+                  },
+                  {
+                    "description": "Valid project retrieval - proj_home",
+                    "input": {
+                      "project_id": "proj_home"
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Retrieved project with 2 tasks and 0 columns"
+                  },
+                  {
+                    "description": "Error case - nonexistent project",
+                    "input": {
+                      "project_id": "nonexistent_project"
+                    },
+                    "passed": true,
+                    "error": "Project not found",
+                    "result_summary": "Correctly rejected invalid project_id"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_create_project",
+                "test_cases": [
+                  {
+                    "description": "Create project with all parameters",
+                    "input": {
+                      "name": "New Test Project",
+                      "kind": "TASK",
+                      "color": "#29B6F6",
+                      "viewMode": "list",
+                      "sortOrder": 4
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Successfully created project with generated ID"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_update_project",
+                "test_cases": [
+                  {
+                    "description": "Update existing project",
+                    "input": {
+                      "project_id": "proj_work",
+                      "name": "Updated Work Projects",
+                      "color": "#AB47BC"
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Successfully updated project name and color"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_delete_project",
+                "test_cases": [
+                  {
+                    "description": "Delete existing project",
+                    "input": {
+                      "project_id": "proj_notes"
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Successfully deleted project"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_create_task",
+                "test_cases": [
+                  {
+                    "description": "Create task with all parameters",
+                    "input": {
+                      "title": "New Task Test",
+                      "project_id": "proj_work",
+                      "notes": "Test notes",
+                      "description": "Test description",
+                      "due_date": "2024-02-15T10:00:00Z",
+                      "priority": 3
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Successfully created task with generated ID"
+                  },
+                  {
+                    "description": "Create minimal task with only title",
+                    "input": {
+                      "title": "Minimal Task"
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Successfully created task with minimal parameters"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_update_task",
+                "test_cases": [
+                  {
+                    "description": "Update existing task",
+                    "input": {
+                      "task_id": "task_w1",
+                      "project_id": "proj_work",
+                      "title": "Updated Q1 Report",
+                      "priority": 3
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Successfully updated task title and priority"
+                  },
+                  {
+                    "description": "Error case - nonexistent task",
+                    "input": {
+                      "task_id": "nonexistent_task",
+                      "project_id": "proj_work"
+                    },
+                    "passed": true,
+                    "error": "Task not found",
+                    "result_summary": "Correctly rejected invalid task_id"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_complete_task",
+                "test_cases": [
+                  {
+                    "description": "Complete existing task",
+                    "input": {
+                      "task_id": "task_w2",
+                      "project_id": "proj_work"
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Successfully marked task as completed"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_delete_task",
+                "test_cases": [
+                  {
+                    "description": "Delete existing task",
+                    "input": {
+                      "task_id": "task_h1",
+                      "project_id": "proj_home"
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Successfully deleted task"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": {
+                "projects_count": 3,
+                "tasks_count": 5,
+                "columns_count": 3,
+                "changes_detected": [
+                  "Project proj_work updated (name and color changed)",
+                  "Project proj_notes deleted",
+                  "New project created (db516339-eb25-42d2-a2c8-a5b9ca36d62f)",
+                  "Task task_w1 updated (title and priority changed)",
+                  "Task task_w2 completed (status changed to completed)",
+                  "Task task_h1 deleted",
+                  "Two new tasks created",
+                  "OAuth state updated with new state value",
+                  "Task project mappings updated correctly"
+                ]
+              }
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 93.05546402931213
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "ticktick_oauth2_authorization_step1",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_get_user_project",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_get_project_with_data",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_create_project",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_update_project",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_delete_project",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_create_task",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_update_task",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_complete_task",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_delete_task",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 74.5712378025055
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "ticktick_oauth2_authorization_step1",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_get_user_project",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_create_project",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_get_project_with_data",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_update_project",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_delete_project",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_create_task",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_update_task",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_complete_task",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_delete_task",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 105.72584629058838
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "ticktick_oauth2_authorization_step1",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Valid OAuth2 authorization request",
+                    "input": {
+                      "scope": "tasks:read tasks:write",
+                      "client_id": "test_client_123",
+                      "redirect_uri": "https://example.com/callback",
+                      "state": "random_state_123"
+                    },
+                    "result": "Generated valid authorization URL",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_get_user_project",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Retrieve all user projects",
+                    "input": {},
+                    "result": "Successfully retrieved 1 project (proj_001)",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_get_project_with_data",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Valid project retrieval",
+                    "input": {
+                      "project_id": "proj_001"
+                    },
+                    "result": "Successfully retrieved project with 2 tasks",
+                    "error": null
+                  },
+                  {
+                    "case": "Nonexistent project (error case)",
+                    "input": {
+                      "project_id": "nonexistent_project"
+                    },
+                    "result": "Correctly rejected with 'Project not found' error",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_create_project",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Create new project with all parameters",
+                    "input": {
+                      "name": "Work Projects",
+                      "kind": "TASK",
+                      "color": "#7CB342",
+                      "viewMode": "list",
+                      "sortOrder": 1
+                    },
+                    "result": "Successfully created project with generated ID",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_update_project",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Update existing project",
+                    "input": {
+                      "project_id": "proj_001",
+                      "name": "Personal Tasks Updated",
+                      "color": "#AB47BC"
+                    },
+                    "result": "Successfully updated project name and color",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_delete_project",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Delete existing project",
+                    "input": {
+                      "project_id": "636e3412-2092-41f5-9f10-6bdfdef5468f"
+                    },
+                    "result": "Successfully deleted project",
+                    "error": null
+                  },
+                  {
+                    "case": "Delete nonexistent project (error case)",
+                    "input": {
+                      "project_id": "nonexistent_project"
+                    },
+                    "result": "Correctly rejected with 'Project not found' error",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_create_task",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Create new task with all parameters",
+                    "input": {
+                      "title": "New Task Test",
+                      "project_id": "proj_001",
+                      "notes": "Test notes",
+                      "description": "Test description",
+                      "due_date": "2024-02-01T12:00:00Z",
+                      "priority": 5
+                    },
+                    "result": "Successfully created task with generated ID",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_update_task",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Update existing task",
+                    "input": {
+                      "task_id": "task_001",
+                      "project_id": "proj_001",
+                      "title": "Buy groceries - Updated",
+                      "priority": 5
+                    },
+                    "result": "Successfully updated task title and priority",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_complete_task",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Mark task as complete",
+                    "input": {
+                      "task_id": "task_002",
+                      "project_id": "proj_001"
+                    },
+                    "result": "Successfully marked task as completed",
+                    "error": null
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_delete_task",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Delete existing task",
+                    "input": {
+                      "task_id": "379f6836-4a79-4fee-a58f-94f74552a27e",
+                      "project_id": "proj_001"
+                    },
+                    "result": "Successfully deleted task",
+                    "error": null
+                  },
+                  {
+                    "case": "Delete nonexistent task (error case)",
+                    "input": {
+                      "task_id": "nonexistent_task",
+                      "project_id": "proj_001"
+                    },
+                    "result": "Correctly rejected with 'Task not found' error",
+                    "error": null
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "state_changes": {
+                "projects": {
+                  "proj_001": {
+                    "original_name": "Personal Tasks",
+                    "updated_name": "Personal Tasks Updated",
+                    "original_color": "#29B6F6",
+                    "updated_color": "#AB47BC"
+                  }
+                },
+                "tasks": {
+                  "task_001": {
+                    "original_title": "Buy groceries",
+                    "updated_title": "Buy groceries - Updated",
+                    "original_priority": 3,
+                    "updated_priority": 5
+                  },
+                  "task_002": {
+                    "original_status": "pending",
+                    "updated_status": "completed"
+                  }
+                },
+                "oauth_state": {
+                  "added": "random_state_123 with status 'pending'"
+                }
+              },
+              "consistency_notes": "All state changes are consistent with the operations performed during testing. The scenario correctly persisted updates to projects and tasks, and tracked OAuth state."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 77.39688777923584
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "ticktick_oauth2_authorization_step1",
+                "test_cases": [
+                  {
+                    "description": "Valid OAuth request with all parameters",
+                    "input": {
+                      "scope": "tasks:read tasks:write",
+                      "client_id": "test_client_123",
+                      "redirect_uri": "https://example.com/callback",
+                      "state": "random_state_xyz"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid OAuth request without optional state parameter",
+                    "input": {
+                      "scope": "tasks:read",
+                      "client_id": "test_client",
+                      "redirect_uri": "https://example.com/callback"
+                    },
+                    "passed": true,
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_get_user_project",
+                "test_cases": [
+                  {
+                    "description": "Retrieve all user projects",
+                    "input": {},
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Successfully retrieved 3 projects"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_get_project_with_data",
+                "test_cases": [
+                  {
+                    "description": "Valid project retrieval - proj_work",
+                    "input": {
+                      "project_id": "proj_work"
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Retrieved project with 2 tasks and 3 columns"
+                  },
+                  {
+                    "description": "Valid project retrieval - proj_home",
+                    "input": {
+                      "project_id": "proj_home"
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Retrieved project with 2 tasks and 0 columns"
+                  },
+                  {
+                    "description": "Error case - nonexistent project",
+                    "input": {
+                      "project_id": "nonexistent_project"
+                    },
+                    "passed": true,
+                    "error": "Project not found",
+                    "result_summary": "Correctly rejected invalid project_id"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_create_project",
+                "test_cases": [
+                  {
+                    "description": "Create project with all parameters",
+                    "input": {
+                      "name": "New Test Project",
+                      "kind": "TASK",
+                      "color": "#29B6F6",
+                      "viewMode": "list",
+                      "sortOrder": 4
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Successfully created project with generated ID"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_update_project",
+                "test_cases": [
+                  {
+                    "description": "Update existing project",
+                    "input": {
+                      "project_id": "proj_work",
+                      "name": "Updated Work Projects",
+                      "color": "#AB47BC"
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Successfully updated project name and color"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_delete_project",
+                "test_cases": [
+                  {
+                    "description": "Delete existing project",
+                    "input": {
+                      "project_id": "proj_notes"
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Successfully deleted project"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_create_task",
+                "test_cases": [
+                  {
+                    "description": "Create task with all parameters",
+                    "input": {
+                      "title": "New Task Test",
+                      "project_id": "proj_work",
+                      "notes": "Test notes",
+                      "description": "Test description",
+                      "due_date": "2024-02-15T10:00:00Z",
+                      "priority": 3
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Successfully created task with generated ID"
+                  },
+                  {
+                    "description": "Create minimal task with only title",
+                    "input": {
+                      "title": "Minimal Task"
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Successfully created task with minimal parameters"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_update_task",
+                "test_cases": [
+                  {
+                    "description": "Update existing task",
+                    "input": {
+                      "task_id": "task_w1",
+                      "project_id": "proj_work",
+                      "title": "Updated Q1 Report",
+                      "priority": 3
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Successfully updated task title and priority"
+                  },
+                  {
+                    "description": "Error case - nonexistent task",
+                    "input": {
+                      "task_id": "nonexistent_task",
+                      "project_id": "proj_work"
+                    },
+                    "passed": true,
+                    "error": "Task not found",
+                    "result_summary": "Correctly rejected invalid task_id"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_complete_task",
+                "test_cases": [
+                  {
+                    "description": "Complete existing task",
+                    "input": {
+                      "task_id": "task_w2",
+                      "project_id": "proj_work"
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Successfully marked task as completed"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_delete_task",
+                "test_cases": [
+                  {
+                    "description": "Delete existing task",
+                    "input": {
+                      "task_id": "task_h1",
+                      "project_id": "proj_home"
+                    },
+                    "passed": true,
+                    "error": null,
+                    "result_summary": "Successfully deleted task"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": {
+                "projects_count": 3,
+                "tasks_count": 5,
+                "columns_count": 3,
+                "changes_detected": [
+                  "Project proj_work updated (name and color changed)",
+                  "Project proj_notes deleted",
+                  "New project created (db516339-eb25-42d2-a2c8-a5b9ca36d62f)",
+                  "Task task_w1 updated (title and priority changed)",
+                  "Task task_w2 completed (status changed to completed)",
+                  "Task task_h1 deleted",
+                  "Two new tasks created",
+                  "OAuth state updated with new state value",
+                  "Task project mappings updated correctly"
+                ]
+              }
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 93.05546402931213
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "ticktick_oauth2_authorization_step1",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_get_user_project",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_get_project_with_data",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_create_project",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_update_project",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_delete_project",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_create_task",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_update_task",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_complete_task",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_delete_task",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 74.5712378025055
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "ticktick_oauth2_authorization_step1",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_get_user_project",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_create_project",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_get_project_with_data",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_update_project",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_delete_project",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_create_task",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_update_task",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_complete_task",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "ticktick_delete_task",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 105.72584629058838
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/TickTick.py"
+  }
+}

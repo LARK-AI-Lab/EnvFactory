@@ -1,0 +1,517 @@
+{
+  "class_name": "Maps",
+  "description": "Provides geospatial services including geocoding, reverse geocoding, place details, distance matrices, elevation data, and turn-by-turn directions.",
+  "tools": [
+    {
+      "name": "maps_geocode",
+      "description": "Convert a city name into geographic coordinates (latitude and longitude) at city-level precision.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "description": "The city name to geocode (e.g., \"New York\", \"Beijing\", \"Tokyo\", \"London\"). Must be a valid city name only, no street addresses or detailed locations. Minimum 2 characters."
+          },
+          "country": {
+            "type": "string",
+            "description": "Optional ISO 3166-1 alpha-2 country code (e.g., \"US\", \"CN\", \"GB\", \"JP\") to disambiguate cities with the same name. If provided, results will be prioritized for the specified country."
+          }
+        },
+        "required": [
+          "city"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "description": "The latitude coordinate of the city center."
+              },
+              "longitude": {
+                "type": "number",
+                "description": "The longitude coordinate of the city center."
+              }
+            },
+            "description": "Geographic coordinates representing the center of the specified city."
+          },
+          "formatted_address": {
+            "type": "string",
+            "description": "Human-readable address string for the geocoded city."
+          },
+          "place_id": {
+            "type": "string",
+            "description": "The unique identifier of the geocoded place."
+          }
+        }
+      }
+    },
+    {
+      "name": "maps_reverse_geocode",
+      "description": "Convert geographic coordinates into a human-readable address.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "description": "The latitude of the location."
+          },
+          "longitude": {
+            "type": "number",
+            "description": "The longitude of the location."
+          }
+        },
+        "required": [
+          "latitude",
+          "longitude"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "formatted_address": {
+            "type": "string",
+            "description": "Human-readable address string for the provided coordinates."
+          },
+          "place_id": {
+            "type": "string",
+            "description": "The unique identifier of the reverse-geocoded place."
+          },
+          "coordinates": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "description": "The latitude coordinate of the location."
+              },
+              "longitude": {
+                "type": "number",
+                "description": "The longitude coordinate of the location."
+              }
+            },
+            "description": "Geographic coordinates corresponding to the reverse-geocoded address."
+          }
+        }
+      }
+    },
+    {
+      "name": "maps_place_details",
+      "description": "Retrieve comprehensive information about a specific place including contact details, ratings, reviews, and business hours.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "place_id": {
+            "type": "string",
+            "description": "The unique identifier of the place."
+          }
+        },
+        "required": [
+          "place_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the place."
+          },
+          "formatted_address": {
+            "type": "string",
+            "description": "Human-readable address string of the place."
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "description": "The latitude coordinate of the place."
+              },
+              "longitude": {
+                "type": "number",
+                "description": "The longitude coordinate of the place."
+              }
+            },
+            "description": "Geographic coordinates of the place."
+          },
+          "place_id": {
+            "type": "string",
+            "description": "The unique identifier of the place."
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Contact phone number of the place."
+          },
+          "website": {
+            "type": "string",
+            "description": "Official website URL of the place."
+          },
+          "rating": {
+            "type": "number",
+            "description": "Average rating score of the place."
+          }
+        }
+      }
+    },
+    {
+      "name": "maps_distance_matrix",
+      "description": "Calculate distance and travel time between multiple origin and destination points, returning a matrix of distances and durations for all origin-destination pairs.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "origins": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "description": "The latitude of the origin location."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "The longitude of the origin location."
+                }
+              },
+              "required": [
+                "latitude",
+                "longitude"
+              ],
+              "description": "Origin location dictionary containing latitude and longitude. Maximum 25 origins."
+            },
+            "description": "List of origin location dictionaries."
+          },
+          "destinations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "description": "The latitude of the destination location."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "The longitude of the destination location."
+                }
+              },
+              "required": [
+                "latitude",
+                "longitude"
+              ],
+              "description": "Destination location dictionary containing latitude and longitude. Maximum 25 destinations."
+            },
+            "description": "List of destination location dictionaries."
+          },
+          "mode": {
+            "type": "string",
+            "description": "Travel mode: \"driving\" (default), \"bicycling\", or \"transit\".",
+            "default": "driving"
+          }
+        },
+        "required": [
+          "origins",
+          "destinations"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "elements": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "distance": {
+                        "type": "object",
+                        "properties": {
+                          "value": {
+                            "type": "integer",
+                            "description": "Distance in meters between the origin and destination."
+                          }
+                        },
+                        "description": "Distance information for the origin-destination pair."
+                      }
+                    }
+                  },
+                  "description": "List of distance elements for each origin-destination pair."
+                }
+              }
+            },
+            "description": "List of rows representing origins, each containing distance elements to destinations."
+          }
+        }
+      }
+    },
+    {
+      "name": "maps_elevation",
+      "description": "Retrieve elevation data above sea level for specific geographic locations.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "locations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "description": "The latitude of the location."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "The longitude of the location."
+                }
+              },
+              "required": [
+                "latitude",
+                "longitude"
+              ],
+              "description": "Location dictionary containing latitude and longitude. Maximum 512 locations per request."
+            },
+            "description": "List of location dictionaries for which to retrieve elevation data."
+          }
+        },
+        "required": [
+          "locations"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "elevation_data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "location": {
+                  "type": "object",
+                  "properties": {
+                    "latitude": {
+                      "type": "number",
+                      "description": "The latitude coordinate of the location."
+                    },
+                    "longitude": {
+                      "type": "number",
+                      "description": "The longitude coordinate of the location."
+                    }
+                  },
+                  "description": "Geographic coordinates of the location."
+                },
+                "elevation": {
+                  "type": "number",
+                  "description": "Elevation above sea level in meters."
+                },
+                "resolution": {
+                  "type": "number",
+                  "description": "Accuracy of the elevation data in meters."
+                }
+              }
+            },
+            "description": "List of elevation results for each provided location."
+          }
+        }
+      }
+    },
+    {
+      "name": "maps_directions",
+      "description": "Get detailed turn-by-turn directions between two locations with step-by-step navigation instructions, distance, and duration.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "origin_location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "description": "The latitude of the origin location."
+              },
+              "longitude": {
+                "type": "number",
+                "description": "The longitude of the origin location."
+              }
+            },
+            "required": [
+              "latitude",
+              "longitude"
+            ],
+            "description": "Origin location dictionary containing latitude and longitude."
+          },
+          "destination_location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "description": "The latitude of the destination location."
+              },
+              "longitude": {
+                "type": "number",
+                "description": "The longitude of the destination location."
+              }
+            },
+            "required": [
+              "latitude",
+              "longitude"
+            ],
+            "description": "Destination location dictionary containing latitude and longitude."
+          },
+          "mode": {
+            "type": "string",
+            "description": "Travel mode: \"driving\" (default), \"bicycling\", or \"transit\".",
+            "default": "driving"
+          }
+        },
+        "required": [
+          "origin_location",
+          "destination_location"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "routes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "bounds": {
+                  "type": "object",
+                  "properties": {
+                    "northeast": {
+                      "type": "object",
+                      "properties": {
+                        "latitude": {
+                          "type": "number",
+                          "description": "The latitude of the northeast bound."
+                        },
+                        "longitude": {
+                          "type": "number",
+                          "description": "The longitude of the northeast bound."
+                        }
+                      },
+                      "description": "Northeast corner of the bounding box."
+                    },
+                    "southwest": {
+                      "type": "object",
+                      "properties": {
+                        "latitude": {
+                          "type": "number",
+                          "description": "The latitude of the southwest bound."
+                        },
+                        "longitude": {
+                          "type": "number",
+                          "description": "The longitude of the southwest bound."
+                        }
+                      },
+                      "description": "Southwest corner of the bounding box."
+                    }
+                  },
+                  "description": "Bounding box containing the route."
+                },
+                "legs": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "distance": {
+                        "type": "object",
+                        "properties": {
+                          "value": {
+                            "type": "integer",
+                            "description": "Distance of the leg in meters."
+                          }
+                        },
+                        "description": "Distance information for the leg."
+                      },
+                      "duration": {
+                        "type": "object",
+                        "properties": {
+                          "value": {
+                            "type": "integer",
+                            "description": "Duration of the leg in seconds."
+                          }
+                        },
+                        "description": "Duration information for the leg."
+                      },
+                      "steps": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "distance": {
+                              "type": "object",
+                              "properties": {
+                                "value": {
+                                  "type": "integer",
+                                  "description": "Distance of the step in meters."
+                                }
+                              },
+                              "description": "Distance information for the step."
+                            },
+                            "duration": {
+                              "type": "object",
+                              "properties": {
+                                "value": {
+                                  "type": "integer",
+                                  "description": "Duration of the step in seconds."
+                                }
+                              },
+                              "description": "Duration information for the step."
+                            },
+                            "start_location": {
+                              "type": "object",
+                              "properties": {
+                                "latitude": {
+                                  "type": "number",
+                                  "description": "The latitude of the start location of the step."
+                                },
+                                "longitude": {
+                                  "type": "number",
+                                  "description": "The longitude of the start location of the step."
+                                }
+                              },
+                              "description": "Starting geographic coordinates of the step."
+                            },
+                            "end_location": {
+                              "type": "object",
+                              "properties": {
+                                "latitude": {
+                                  "type": "number",
+                                  "description": "The latitude of the end location of the step."
+                                },
+                                "longitude": {
+                                  "type": "number",
+                                  "description": "The longitude of the end location of the step."
+                                }
+                              },
+                              "description": "Ending geographic coordinates of the step."
+                            },
+                            "travel_mode": {
+                              "type": "string",
+                              "description": "Mode of travel for the step (e.g., driving, bicycling, transit)."
+                            }
+                          }
+                        },
+                        "description": "List of turn-by-turn steps for the leg."
+                      }
+                    }
+                  },
+                  "description": "List of route legs between waypoints."
+                }
+              }
+            },
+            "description": "List of possible routes between origin and destination."
+          }
+        }
+      }
+    }
+  ]
+}

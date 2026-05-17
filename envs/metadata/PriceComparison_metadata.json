@@ -1,0 +1,292 @@
+{
+  "class_name": "PriceComparison",
+  "description": "A service for comparing product prices across retailers, tracking historical and predicted price trends, and retrieving discount information.",
+  "tools": [
+    {
+      "name": "get_pid_pos_details",
+      "description": "Retrieve the product identifier (PID) and position identifier (POS) for a product by searching its name.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The product name to search for in the catalog."
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "pid": {
+            "type": "string",
+            "description": "The unique product identifier used to reference this product across all price comparison operations."
+          },
+          "pos": {
+            "type": "integer",
+            "description": "The product position identifier used in conjunction with PID to uniquely locate the product variant."
+          },
+          "name": {
+            "type": "string",
+            "description": "The matched product name from the catalog."
+          }
+        }
+      }
+    },
+    {
+      "name": "compare_price",
+      "description": "Fetch and compare current prices for a product across multiple retailers.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "pid": {
+            "type": "string",
+            "description": "The unique product identifier used to reference this product across all price comparison operations."
+          },
+          "pos": {
+            "type": "integer",
+            "description": "The product position identifier used in conjunction with PID to uniquely locate the product variant."
+          },
+          "max_retailers": {
+            "type": "integer",
+            "description": "The maximum number of retailers to include in the price comparison results. Defaults to 10."
+          }
+        },
+        "required": [
+          "pid",
+          "pos"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "pid": {
+            "type": "string",
+            "description": "The unique product identifier used to reference this product across all price comparison operations."
+          },
+          "pos": {
+            "type": "integer",
+            "description": "The product position identifier used in conjunction with PID to uniquely locate the product variant."
+          },
+          "retailers": {
+            "type": "array",
+            "description": "List of retailer pricing information for the specified product.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "store_name": {
+                  "type": "string",
+                  "description": "The name of the retailer offering the product."
+                },
+                "price": {
+                  "type": "number",
+                  "description": "The current listed price of the product at this retailer."
+                },
+                "availability": {
+                  "type": "string",
+                  "description": "The stock availability status of the product at this retailer."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "price_trend",
+      "description": "Fetch predicted future price trend data for a product to anticipate upcoming price changes.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "pid": {
+            "type": "string",
+            "description": "The unique product identifier used to reference this product across all price comparison operations."
+          },
+          "pos": {
+            "type": "integer",
+            "description": "The product position identifier used in conjunction with PID to uniquely locate the product variant."
+          }
+        },
+        "required": [
+          "pid",
+          "pos"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "pid": {
+            "type": "string",
+            "description": "The unique product identifier used to reference this product across all price comparison operations."
+          },
+          "pos": {
+            "type": "integer",
+            "description": "The product position identifier used in conjunction with PID to uniquely locate the product variant."
+          },
+          "price_data": {
+            "type": "array",
+            "description": "List of predicted price data points for future dates.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "description": "The future date for the price prediction."
+                },
+                "predicted_price": {
+                  "type": "number",
+                  "description": "The predicted price of the product on the specified date."
+                },
+                "trend": {
+                  "type": "string",
+                  "description": "The trend direction indicator (e.g., 'up', 'down', 'stable')."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_price_history",
+      "description": "Retrieve historical price data for a product to analyze past price fluctuations across retailers.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "pid": {
+            "type": "string",
+            "description": "The unique product identifier used to reference this product across all price comparison operations."
+          },
+          "pos": {
+            "type": "integer",
+            "description": "The product position identifier used in conjunction with PID to uniquely locate the product variant."
+          },
+          "retailers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional list of retailer names to filter the price history results. If not provided, returns data for all retailers."
+          }
+        },
+        "required": [
+          "pid",
+          "pos"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "pid": {
+            "type": "string",
+            "description": "The unique product identifier used to reference this product across all price comparison operations."
+          },
+          "pos": {
+            "type": "integer",
+            "description": "The product position identifier used in conjunction with PID to uniquely locate the product variant."
+          },
+          "price_history": {
+            "type": "array",
+            "description": "List of historical price records for the product.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "description": "The date when the price was recorded."
+                },
+                "price": {
+                  "type": "number",
+                  "description": "The recorded price of the product on the specified date."
+                },
+                "retailer": {
+                  "type": "string",
+                  "description": "The name of the retailer where the price was recorded."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_discount_info",
+      "description": "Retrieve discount and promotional information for a product at a specific retailer within a defined time period.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "pid": {
+            "type": "string",
+            "description": "The unique product identifier used to reference this product across all price comparison operations."
+          },
+          "pos": {
+            "type": "integer",
+            "description": "The product position identifier used in conjunction with PID to uniquely locate the product variant."
+          },
+          "retailer": {
+            "type": "string",
+            "description": "The name of the retailer to query for discount information."
+          },
+          "time_period": {
+            "type": "string",
+            "description": "The time period to query for discounts. Must be one of: 'current' (active discounts), 'past' (expired discounts), or 'upcoming' (future discounts)."
+          }
+        },
+        "required": [
+          "pid",
+          "pos",
+          "retailer",
+          "time_period"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "pid": {
+            "type": "string",
+            "description": "The unique product identifier used to reference this product across all price comparison operations."
+          },
+          "pos": {
+            "type": "integer",
+            "description": "The product position identifier used in conjunction with PID to uniquely locate the product variant."
+          },
+          "retailer": {
+            "type": "string",
+            "description": "The name of the retailer for which discount information was retrieved."
+          },
+          "discounts": {
+            "type": "array",
+            "description": "List of discount records for the product at the specified retailer.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "discount_percentage": {
+                  "type": "number",
+                  "description": "The percentage discount applied to the product."
+                },
+                "start_date": {
+                  "type": "string",
+                  "description": "The start date of the discount period."
+                },
+                "end_date": {
+                  "type": "string",
+                  "description": "The end date of the discount period."
+                },
+                "original_price": {
+                  "type": "number",
+                  "description": "The original price of the product before the discount."
+                },
+                "discounted_price": {
+                  "type": "number",
+                  "description": "The final price of the product after applying the discount."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

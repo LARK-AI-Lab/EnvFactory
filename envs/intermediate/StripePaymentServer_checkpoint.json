@@ -1,0 +1,993 @@
+{
+  "metadata": {
+    "class_name": "StripePaymentServer",
+    "metadata_path": "envs\\metadata\\StripePaymentServer_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-03-05T20:25:02.124591",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "StripePaymentServer",
+    "description": "Payment processing server for creating payment intents, managing customers, processing refunds, and retrieving charge history through the Stripe API.",
+    "tools": [
+      {
+        "name": "create_payment_intent",
+        "description": "Create a PaymentIntent to collect payment from a customer.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "amount": {
+              "type": "integer",
+              "description": "Amount to charge in the smallest currency unit (e.g., cents for USD, yen for JPY)."
+            },
+            "currency": {
+              "type": "string",
+              "description": "Three-letter ISO 4217 currency code in lowercase (e.g., 'usd', 'eur', 'gbp')."
+            },
+            "customer_id": {
+              "type": "string",
+              "description": "The unique identifier of an existing Stripe customer to associate with this payment."
+            },
+            "payment_method_id": {
+              "type": "string",
+              "description": "The unique identifier of a saved payment method to use for this payment."
+            },
+            "metadata": {
+              "type": "object",
+              "description": "Custom key-value pairs to attach additional information to this payment intent."
+            }
+          },
+          "required": [
+            "amount",
+            "currency"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier of the created PaymentIntent."
+            },
+            "client_secret": {
+              "type": "string",
+              "description": "Secret key used by the client to confirm the payment on the frontend."
+            },
+            "status": {
+              "type": "string",
+              "description": "Current status of the payment intent (e.g., 'requires_payment_method', 'succeeded', 'canceled')."
+            },
+            "amount": {
+              "type": "integer",
+              "description": "Amount to charge in the smallest currency unit (e.g., cents for USD, yen for JPY)."
+            },
+            "currency": {
+              "type": "string",
+              "description": "Three-letter ISO 4217 currency code in lowercase (e.g., 'usd', 'eur', 'gbp')."
+            },
+            "created": {
+              "type": "integer",
+              "description": "Unix timestamp indicating when the PaymentIntent was created."
+            }
+          }
+        }
+      },
+      {
+        "name": "retrieve_payment_intent",
+        "description": "Retrieve the complete details of an existing PaymentIntent.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "payment_intent_id": {
+              "type": "string",
+              "description": "The unique identifier of the PaymentIntent to retrieve."
+            }
+          },
+          "required": [
+            "payment_intent_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier of the PaymentIntent."
+            },
+            "client_secret": {
+              "type": "string",
+              "description": "Secret key used by the client to confirm the payment on the frontend."
+            },
+            "status": {
+              "type": "string",
+              "description": "Current status of the payment intent (e.g., 'requires_payment_method', 'succeeded', 'canceled')."
+            },
+            "amount": {
+              "type": "integer",
+              "description": "Amount to charge in the smallest currency unit (e.g., cents for USD, yen for JPY)."
+            },
+            "currency": {
+              "type": "string",
+              "description": "Three-letter ISO 4217 currency code in lowercase (e.g., 'usd', 'eur', 'gbp')."
+            },
+            "customer": {
+              "type": "string",
+              "description": "The unique identifier of the Stripe customer associated with this payment."
+            },
+            "payment_method": {
+              "type": "string",
+              "description": "The unique identifier of the payment method used for this payment."
+            },
+            "metadata": {
+              "type": "object",
+              "description": "Custom key-value pairs attached to this payment intent."
+            },
+            "created": {
+              "type": "integer",
+              "description": "Unix timestamp indicating when the PaymentIntent was created."
+            }
+          }
+        }
+      },
+      {
+        "name": "create_customer",
+        "description": "Create a new customer record for storing payment methods and managing recurring billing.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string",
+              "description": "The email address of the customer."
+            },
+            "name": {
+              "type": "string",
+              "description": "The full name of the customer."
+            },
+            "phone": {
+              "type": "string",
+              "description": "The phone number of the customer."
+            },
+            "metadata": {
+              "type": "object",
+              "description": "Custom key-value pairs to attach additional information to this customer."
+            }
+          },
+          "required": [
+            "email"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier of the created Stripe customer."
+            },
+            "email": {
+              "type": "string",
+              "description": "The email address of the customer."
+            },
+            "name": {
+              "type": "string",
+              "description": "The full name of the customer."
+            },
+            "created": {
+              "type": "integer",
+              "description": "Unix timestamp indicating when the customer was created."
+            }
+          }
+        }
+      },
+      {
+        "name": "create_refund",
+        "description": "Create a refund for a previously completed payment.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "payment_intent_id": {
+              "type": "string",
+              "description": "The unique identifier of the PaymentIntent to refund."
+            },
+            "amount": {
+              "type": "integer",
+              "description": "Amount to refund in the smallest currency unit. If omitted, the full payment amount will be refunded."
+            },
+            "reason": {
+              "type": "string",
+              "description": "Reason for the refund. Must be one of: 'duplicate', 'fraudulent', or 'requested_by_customer'."
+            }
+          },
+          "required": [
+            "payment_intent_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier of the created refund."
+            },
+            "amount": {
+              "type": "integer",
+              "description": "Amount refunded in the smallest currency unit (e.g., cents for USD, yen for JPY)."
+            },
+            "status": {
+              "type": "string",
+              "description": "Current status of the refund (e.g., 'pending', 'succeeded', 'failed')."
+            },
+            "reason": {
+              "type": "string",
+              "description": "Reason for the refund ('duplicate', 'fraudulent', or 'requested_by_customer')."
+            }
+          }
+        }
+      },
+      {
+        "name": "list_charges",
+        "description": "Retrieve a list of payment charges with optional filtering by customer.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of charge records to return (1-100, defaults to 10)."
+            },
+            "customer_id": {
+              "type": "string",
+              "description": "The unique identifier of an existing Stripe customer to filter charges by."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "charges": {
+              "type": "array",
+              "description": "List of charge objects matching the specified filters.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The unique identifier of the charge."
+                  },
+                  "amount": {
+                    "type": "integer",
+                    "description": "Amount charged in the smallest currency unit (e.g., cents for USD, yen for JPY)."
+                  },
+                  "currency": {
+                    "type": "string",
+                    "description": "Three-letter ISO 4217 currency code in lowercase (e.g., 'usd', 'eur', 'gbp')."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "Current status of the charge (e.g., 'succeeded', 'pending', 'failed')."
+                  },
+                  "customer": {
+                    "type": "string",
+                    "description": "The unique identifier of the Stripe customer associated with this charge."
+                  },
+                  "created": {
+                    "type": "integer",
+                    "description": "Unix timestamp indicating when the charge was created."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass PaymentIntent(BaseModel):\n    \"\"\"Represents a Stripe PaymentIntent.\"\"\"\n    id: str = Field(..., description=\"Unique identifier of the PaymentIntent\")\n    client_secret: str = Field(..., description=\"Secret key for client confirmation\")\n    status: str = Field(..., description=\"Current status of the payment intent\")\n    amount: int = Field(..., ge=0, description=\"Amount in smallest currency unit\")\n    currency: str = Field(..., pattern=r\"^[a-z]{3}$\", description=\"Three-letter ISO currency code\")\n    customer: Optional[str] = Field(default=None, description=\"Customer ID\")\n    payment_method: Optional[str] = Field(default=None, description=\"Payment method ID\")\n    metadata: Dict[str, Any] = Field(default_factory=dict, description=\"Custom metadata\")\n    created: int = Field(..., ge=0, description=\"Unix timestamp of creation\")\n\nclass Customer(BaseModel):\n    \"\"\"Represents a Stripe Customer.\"\"\"\n    id: str = Field(..., description=\"Unique identifier of the customer\")\n    email: str = Field(..., description=\"Customer email address\")\n    name: Optional[str] = Field(default=None, description=\"Customer full name\")\n    phone: Optional[str] = Field(default=None, description=\"Customer phone number\")\n    metadata: Dict[str, Any] = Field(default_factory=dict, description=\"Custom metadata\")\n    created: int = Field(..., ge=0, description=\"Unix timestamp of creation\")\n\nclass Refund(BaseModel):\n    \"\"\"Represents a Stripe Refund.\"\"\"\n    id: str = Field(..., description=\"Unique identifier of the refund\")\n    amount: int = Field(..., ge=0, description=\"Amount refunded in smallest currency unit\")\n    status: str = Field(..., description=\"Current status of the refund\")\n    reason: Optional[str] = Field(default=None, description=\"Reason for refund\")\n    payment_intent_id: str = Field(..., description=\"Associated PaymentIntent ID\")\n\nclass Charge(BaseModel):\n    \"\"\"Represents a Stripe Charge.\"\"\"\n    id: str = Field(..., description=\"Unique identifier of the charge\")\n    amount: int = Field(..., ge=0, description=\"Amount charged in smallest currency unit\")\n    currency: str = Field(..., pattern=r\"^[a-z]{3}$\", description=\"Three-letter ISO currency code\")\n    status: str = Field(..., description=\"Current status of the charge\")\n    customer: Optional[str] = Field(default=None, description=\"Customer ID\")\n    created: int = Field(..., ge=0, description=\"Unix timestamp of creation\")\n\nclass StripeScenario(BaseModel):\n    \"\"\"Main scenario model for Stripe payment processing.\"\"\"\n    payment_intents: Dict[str, PaymentIntent] = Field(default_factory=dict, description=\"Payment intents storage\")\n    customers: Dict[str, Customer] = Field(default_factory=dict, description=\"Customers storage\")\n    refunds: Dict[str, Refund] = Field(default_factory=dict, description=\"Refunds storage\")\n    charges: List[Charge] = Field(default_factory=list, description=\"Charges history\")\n    current_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$\", description=\"Current timestamp in ISO 8601 format\")\n\nScenario_Schema = [PaymentIntent, Customer, Refund, Charge, StripeScenario]\n\n# Section 2: Class\nclass StripePaymentServer:\n    def __init__(self):\n        \"\"\"Initialize Stripe payment server with empty state.\"\"\"\n        self.payment_intents: Dict[str, PaymentIntent] = {}\n        self.customers: Dict[str, Customer] = {}\n        self.refunds: Dict[str, Refund] = {}\n        self.charges: List[Charge] = []\n        self.current_time: str = \"\"\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the server instance.\"\"\"\n        model = StripeScenario(**scenario)\n        self.payment_intents = model.payment_intents\n        self.customers = model.customers\n        self.refunds = model.refunds\n        self.charges = model.charges\n        self.current_time = model.current_time\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"payment_intents\": {pi_id: pi.model_dump() for pi_id, pi in self.payment_intents.items()},\n            \"customers\": {cust_id: cust.model_dump() for cust_id, cust in self.customers.items()},\n            \"refunds\": {ref_id: ref.model_dump() for ref_id, ref in self.refunds.items()},\n            \"charges\": [charge.model_dump() for charge in self.charges],\n            \"current_time\": self.current_time\n        }\n\n    def create_payment_intent(self, amount: int, currency: str, customer_id: Optional[str], payment_method_id: Optional[str], metadata: Optional[Dict[str, Any]]) -> dict:\n        \"\"\"Create a PaymentIntent to collect payment from a customer.\"\"\"\n        import time\n        pi_id = f\"pi_{len(self.payment_intents) + 1}\"\n        client_secret = f\"{pi_id}_secret_{len(self.payment_intents)}\"\n        created = int(time.mktime(time.strptime(self.current_time, \"%Y-%m-%dT%H:%M:%SZ\")))\n        \n        pi = PaymentIntent(\n            id=pi_id,\n            client_secret=client_secret,\n            status=\"requires_payment_method\",\n            amount=amount,\n            currency=currency,\n            customer=customer_id,\n            payment_method=payment_method_id,\n            metadata=metadata or {},\n            created=created\n        )\n        self.payment_intents[pi_id] = pi\n        \n        charge = Charge(\n            id=f\"ch_{len(self.charges) + 1}\",\n            amount=amount,\n            currency=currency,\n            status=\"succeeded\",\n            customer=customer_id,\n            created=created\n        )\n        self.charges.append(charge)\n        \n        return {\n            \"id\": pi.id,\n            \"client_secret\": pi.client_secret,\n            \"status\": pi.status,\n            \"amount\": pi.amount,\n            \"currency\": pi.currency,\n            \"created\": pi.created\n        }\n\n    def retrieve_payment_intent(self, payment_intent_id: str) -> dict:\n        \"\"\"Retrieve the complete details of an existing PaymentIntent.\"\"\"\n        pi = self.payment_intents[payment_intent_id]\n        return {\n            \"id\": pi.id,\n            \"client_secret\": pi.client_secret,\n            \"status\": pi.status,\n            \"amount\": pi.amount,\n            \"currency\": pi.currency,\n            \"customer\": pi.customer,\n            \"payment_method\": pi.payment_method,\n            \"metadata\": pi.metadata,\n            \"created\": pi.created\n        }\n\n    def create_customer(self, email: str, name: Optional[str], phone: Optional[str], metadata: Optional[Dict[str, Any]]) -> dict:\n        \"\"\"Create a new customer record.\"\"\"\n        import time\n        cust_id = f\"cus_{len(self.customers) + 1}\"\n        created = int(time.mktime(time.strptime(self.current_time, \"%Y-%m-%dT%H:%M:%SZ\")))\n        \n        customer = Customer(\n            id=cust_id,\n            email=email,\n            name=name,\n            phone=phone,\n            metadata=metadata or {},\n            created=created\n        )\n        self.customers[cust_id] = customer\n        \n        return {\n            \"id\": customer.id,\n            \"email\": customer.email,\n            \"name\": customer.name,\n            \"created\": customer.created\n        }\n\n    def create_refund(self, payment_intent_id: str, amount: Optional[int], reason: Optional[str]) -> dict:\n        \"\"\"Create a refund for a previously completed payment.\"\"\"\n        pi = self.payment_intents[payment_intent_id]\n        refund_amount = amount if amount is not None else pi.amount\n        refund_id = f\"re_{len(self.refunds) + 1}\"\n        \n        refund = Refund(\n            id=refund_id,\n            amount=refund_amount,\n            status=\"succeeded\",\n            reason=reason,\n            payment_intent_id=payment_intent_id\n        )\n        self.refunds[refund_id] = refund\n        \n        return {\n            \"id\": refund.id,\n            \"amount\": refund.amount,\n            \"status\": refund.status,\n            \"reason\": refund.reason\n        }\n\n    def list_charges(self, limit: Optional[int], customer_id: Optional[str]) -> dict:\n        \"\"\"Retrieve a list of payment charges with optional filtering.\"\"\"\n        filtered_charges = self.charges\n        if customer_id:\n            filtered_charges = [c for c in filtered_charges if c.customer == customer_id]\n        \n        limit_val = limit if limit is not None else 10\n        filtered_charges = filtered_charges[:limit_val]\n        \n        return {\n            \"charges\": [\n                {\n                    \"id\": c.id,\n                    \"amount\": c.amount,\n                    \"currency\": c.currency,\n                    \"status\": c.status,\n                    \"customer\": c.customer,\n                    \"created\": c.created\n                }\n                for c in filtered_charges\n            ]\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"StripePaymentServer\")\nserver = StripePaymentServer()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Stripe payment server.\n\n    Args:\n        scenario (dict): Scenario dictionary matching StripeScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        server.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Stripe payment state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return server.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef create_payment_intent(amount: int, currency: str, customer_id: str = None, payment_method_id: str = None, metadata: dict = None) -> dict:\n    \"\"\"\n    Create a PaymentIntent to collect payment from a customer.\n\n    Args:\n        amount (int): Amount to charge in the smallest currency unit.\n        currency (str): Three-letter ISO 4217 currency code in lowercase.\n        customer_id (str): [Optional] The unique identifier of an existing Stripe customer.\n        payment_method_id (str): [Optional] The unique identifier of a saved payment method.\n        metadata (dict): [Optional] Custom key-value pairs to attach additional information.\n\n    Returns:\n        id (str): The unique identifier of the created PaymentIntent.\n        client_secret (str): Secret key used by the client to confirm the payment.\n        status (str): Current status of the payment intent.\n        amount (int): Amount to charge in the smallest currency unit.\n        currency (str): Three-letter ISO 4217 currency code in lowercase.\n        created (int): Unix timestamp indicating when the PaymentIntent was created.\n    \"\"\"\n    try:\n        if not currency or not isinstance(currency, str):\n            raise ValueError(\"Currency must be a non-empty string\")\n        return server.create_payment_intent(amount, currency, customer_id, payment_method_id, metadata)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef retrieve_payment_intent(payment_intent_id: str) -> dict:\n    \"\"\"\n    Retrieve the complete details of an existing PaymentIntent.\n\n    Args:\n        payment_intent_id (str): The unique identifier of the PaymentIntent to retrieve.\n\n    Returns:\n        id (str): The unique identifier of the PaymentIntent.\n        client_secret (str): Secret key used by the client to confirm the payment.\n        status (str): Current status of the payment intent.\n        amount (int): Amount to charge in the smallest currency unit.\n        currency (str): Three-letter ISO 4217 currency code in lowercase.\n        customer (str): The unique identifier of the Stripe customer.\n        payment_method (str): The unique identifier of the payment method.\n        metadata (dict): Custom key-value pairs attached to this payment intent.\n        created (int): Unix timestamp indicating when the PaymentIntent was created.\n    \"\"\"\n    try:\n        if not payment_intent_id or not isinstance(payment_intent_id, str):\n            raise ValueError(\"Payment intent ID must be a non-empty string\")\n        if payment_intent_id not in server.payment_intents:\n            raise ValueError(f\"PaymentIntent {payment_intent_id} not found\")\n        return server.retrieve_payment_intent(payment_intent_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef create_customer(email: str, name: str = None, phone: str = None, metadata: dict = None) -> dict:\n    \"\"\"\n    Create a new customer record for storing payment methods and managing recurring billing.\n\n    Args:\n        email (str): The email address of the customer.\n        name (str): [Optional] The full name of the customer.\n        phone (str): [Optional] The phone number of the customer.\n        metadata (dict): [Optional] Custom key-value pairs to attach additional information.\n\n    Returns:\n        id (str): The unique identifier of the created Stripe customer.\n        email (str): The email address of the customer.\n        name (str): The full name of the customer.\n        created (int): Unix timestamp indicating when the customer was created.\n    \"\"\"\n    try:\n        if not email or not isinstance(email, str):\n            raise ValueError(\"Email must be a non-empty string\")\n        return server.create_customer(email, name, phone, metadata)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef create_refund(payment_intent_id: str, amount: int = None, reason: str = None) -> dict:\n    \"\"\"\n    Create a refund for a previously completed payment.\n\n    Args:\n        payment_intent_id (str): The unique identifier of the PaymentIntent to refund.\n        amount (int): [Optional] Amount to refund in the smallest currency unit.\n        reason (str): [Optional] Reason for the refund ('duplicate', 'fraudulent', or 'requested_by_customer').\n\n    Returns:\n        id (str): The unique identifier of the created refund.\n        amount (int): Amount refunded in the smallest currency unit.\n        status (str): Current status of the refund.\n        reason (str): Reason for the refund.\n    \"\"\"\n    try:\n        if not payment_intent_id or not isinstance(payment_intent_id, str):\n            raise ValueError(\"Payment intent ID must be a non-empty string\")\n        if payment_intent_id not in server.payment_intents:\n            raise ValueError(f\"PaymentIntent {payment_intent_id} not found\")\n        return server.create_refund(payment_intent_id, amount, reason)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef list_charges(limit: int = None, customer_id: str = None) -> dict:\n    \"\"\"\n    Retrieve a list of payment charges with optional filtering by customer.\n\n    Args:\n        limit (int): [Optional] Maximum number of charge records to return (1-100, defaults to 10).\n        customer_id (str): [Optional] The unique identifier of an existing Stripe customer to filter charges by.\n\n    Returns:\n        charges (list): List of charge objects matching the specified filters.\n    \"\"\"\n    try:\n        return server.list_charges(limit, customer_id)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-03-05T20:25:02.124591",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Single successful payment with one customer",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "payment_intents": {
+          "pi_001": {
+            "id": "pi_001",
+            "client_secret": "pi_001_secret_abc123",
+            "status": "succeeded",
+            "amount": 5000,
+            "currency": "usd",
+            "customer": "cus_001",
+            "payment_method": "pm_card_visa",
+            "metadata": {
+              "order_id": "order_123"
+            },
+            "created": 1709640000
+          }
+        },
+        "customers": {
+          "cus_001": {
+            "id": "cus_001",
+            "email": "john@example.com",
+            "name": "John Doe",
+            "phone": "+1234567890",
+            "metadata": {},
+            "created": 1709630000
+          }
+        },
+        "refunds": {},
+        "charges": [
+          {
+            "id": "ch_001",
+            "amount": 5000,
+            "currency": "usd",
+            "status": "succeeded",
+            "customer": "cus_001",
+            "created": 1709640000
+          }
+        ],
+        "current_time": "2026-03-05T12:00:00Z"
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple payments with partial refund scenario",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "payment_intents": {
+          "pi_101": {
+            "id": "pi_101",
+            "client_secret": "pi_101_secret_xyz789",
+            "status": "succeeded",
+            "amount": 10000,
+            "currency": "eur",
+            "customer": "cus_101",
+            "payment_method": "pm_card_mastercard",
+            "metadata": {
+              "order_id": "order_456"
+            },
+            "created": 1709640000
+          },
+          "pi_102": {
+            "id": "pi_102",
+            "client_secret": "pi_102_secret_def456",
+            "status": "requires_payment_method",
+            "amount": 2500,
+            "currency": "gbp",
+            "customer": null,
+            "payment_method": null,
+            "metadata": {},
+            "created": 1709650000
+          },
+          "pi_103": {
+            "id": "pi_103",
+            "client_secret": "pi_103_secret_ghi789",
+            "status": "canceled",
+            "amount": 7500,
+            "currency": "usd",
+            "customer": "cus_102",
+            "payment_method": "pm_card_amex",
+            "metadata": {
+              "reason": "customer_request"
+            },
+            "created": 1709660000
+          }
+        },
+        "customers": {
+          "cus_101": {
+            "id": "cus_101",
+            "email": "alice@example.com",
+            "name": "Alice Smith",
+            "phone": null,
+            "metadata": {
+              "vip": "true"
+            },
+            "created": 1709630000
+          },
+          "cus_102": {
+            "id": "cus_102",
+            "email": "bob@example.com",
+            "name": null,
+            "phone": "+9876543210",
+            "metadata": {},
+            "created": 1709635000
+          }
+        },
+        "refunds": {
+          "re_001": {
+            "id": "re_001",
+            "amount": 3000,
+            "status": "succeeded",
+            "reason": "requested_by_customer",
+            "payment_intent_id": "pi_101"
+          }
+        },
+        "charges": [
+          {
+            "id": "ch_101",
+            "amount": 10000,
+            "currency": "eur",
+            "status": "succeeded",
+            "customer": "cus_101",
+            "created": 1709640000
+          },
+          {
+            "id": "ch_102",
+            "amount": 7500,
+            "currency": "usd",
+            "status": "failed",
+            "customer": "cus_102",
+            "created": 1709660000
+          }
+        ],
+        "current_time": "2026-03-05T14:30:00Z"
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "High-volume payment processing with multiple currencies and refunds",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "payment_intents": {
+          "pi_201": {
+            "id": "pi_201",
+            "client_secret": "pi_201_secret_aaa111",
+            "status": "succeeded",
+            "amount": 15000,
+            "currency": "usd",
+            "customer": "cus_201",
+            "payment_method": "pm_card_visa",
+            "metadata": {
+              "order_id": "order_789",
+              "campaign": "spring_sale"
+            },
+            "created": 1709640000
+          },
+          "pi_202": {
+            "id": "pi_202",
+            "client_secret": "pi_202_secret_bbb222",
+            "status": "succeeded",
+            "amount": 8500,
+            "currency": "eur",
+            "customer": "cus_202",
+            "payment_method": "pm_card_mastercard",
+            "metadata": {
+              "order_id": "order_790"
+            },
+            "created": 1709641000
+          },
+          "pi_203": {
+            "id": "pi_203",
+            "client_secret": "pi_203_secret_ccc333",
+            "status": "processing",
+            "amount": 12000,
+            "currency": "gbp",
+            "customer": "cus_203",
+            "payment_method": "pm_bank_transfer",
+            "metadata": {
+              "order_id": "order_791",
+              "priority": "high"
+            },
+            "created": 1709642000
+          },
+          "pi_204": {
+            "id": "pi_204",
+            "client_secret": "pi_204_secret_ddd444",
+            "status": "succeeded",
+            "amount": 25000,
+            "currency": "jpy",
+            "customer": "cus_201",
+            "payment_method": "pm_card_jcb",
+            "metadata": {
+              "order_id": "order_792"
+            },
+            "created": 1709643000
+          },
+          "pi_205": {
+            "id": "pi_205",
+            "client_secret": "pi_205_secret_eee555",
+            "status": "requires_action",
+            "amount": 5500,
+            "currency": "cad",
+            "customer": "cus_204",
+            "payment_method": "pm_card_visa",
+            "metadata": {
+              "order_id": "order_793",
+              "3ds_required": "true"
+            },
+            "created": 1709644000
+          }
+        },
+        "customers": {
+          "cus_201": {
+            "id": "cus_201",
+            "email": "premium@example.com",
+            "name": "Premium Customer",
+            "phone": "+11234567890",
+            "metadata": {
+              "tier": "platinum",
+              "lifetime_value": "50000"
+            },
+            "created": 1709600000
+          },
+          "cus_202": {
+            "id": "cus_202",
+            "email": "europe@example.com",
+            "name": "European Buyer",
+            "phone": "+33123456789",
+            "metadata": {
+              "region": "EU",
+              "language": "fr"
+            },
+            "created": 1709610000
+          },
+          "cus_203": {
+            "id": "cus_203",
+            "email": "uk@example.com",
+            "name": "UK Business",
+            "phone": "+44987654321",
+            "metadata": {
+              "business": "true",
+              "vat_id": "GB123456789"
+            },
+            "created": 1709620000
+          },
+          "cus_204": {
+            "id": "cus_204",
+            "email": "canada@example.com",
+            "name": null,
+            "phone": null,
+            "metadata": {},
+            "created": 1709625000
+          }
+        },
+        "refunds": {
+          "re_101": {
+            "id": "re_101",
+            "amount": 5000,
+            "status": "succeeded",
+            "reason": "duplicate",
+            "payment_intent_id": "pi_201"
+          },
+          "re_102": {
+            "id": "re_102",
+            "amount": 8500,
+            "status": "pending",
+            "reason": "fraudulent",
+            "payment_intent_id": "pi_202"
+          }
+        },
+        "charges": [
+          {
+            "id": "ch_201",
+            "amount": 15000,
+            "currency": "usd",
+            "status": "succeeded",
+            "customer": "cus_201",
+            "created": 1709640000
+          },
+          {
+            "id": "ch_202",
+            "amount": 8500,
+            "currency": "eur",
+            "status": "succeeded",
+            "customer": "cus_202",
+            "created": 1709641000
+          },
+          {
+            "id": "ch_203",
+            "amount": 12000,
+            "currency": "gbp",
+            "status": "pending",
+            "customer": "cus_203",
+            "created": 1709642000
+          },
+          {
+            "id": "ch_204",
+            "amount": 25000,
+            "currency": "jpy",
+            "status": "succeeded",
+            "customer": "cus_201",
+            "created": 1709643000
+          },
+          {
+            "id": "ch_205",
+            "amount": 5500,
+            "currency": "cad",
+            "status": "pending",
+            "customer": "cus_204",
+            "created": 1709644000
+          }
+        ],
+        "current_time": "2026-03-05T16:45:00Z"
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Edge cases: empty collections, zero amounts, and invalid currency format",
+      "expected_behavior": "validation_error",
+      "scenario_data": {
+        "payment_intents": {
+          "pi_999": {
+            "id": "pi_999",
+            "client_secret": "pi_999_secret_invalid",
+            "status": "succeeded",
+            "amount": 0,
+            "currency": "INVALID",
+            "customer": null,
+            "payment_method": null,
+            "metadata": {},
+            "created": 1709640000
+          }
+        },
+        "customers": {},
+        "refunds": {},
+        "charges": [],
+        "current_time": "2026-03-05T00:00:00Z"
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_execution": [
+              {
+                "tool_name": "create_payment_intent",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "retrieve_payment_intent",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "create_customer",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "create_refund",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "list_charges",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "create_payment_intent",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "retrieve_payment_intent",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_customer",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_refund",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_charges",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "retrieve_payment_intent",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_payment_intent",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_customer",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_refund",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_charges",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "load_scenario",
+              "details": "Currency field validation failed - expected lowercase 3-letter ISO code, got 'INVALID'",
+              "expected_vs_actual": "Expected validation error for invalid currency format, got validation error as expected",
+              "root_cause": "Invalid currency format in scenario data - 'INVALID' doesn't match required pattern '^[a-z]{3}$'",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "1 validation error for StripeScenario\npayment_intents.pi_999.currency\n  String should match pattern '^[a-z]{3}$' [type=string_pattern_mismatch, input_value='INVALID', input_type=str]"
+            },
+            "tool_execution": [],
+            "save_scenario": {
+              "success": false,
+              "consistency_check": false,
+              "error": "Skipped due to load_scenario failure"
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_execution": [
+              {
+                "tool_name": "create_payment_intent",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "retrieve_payment_intent",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "create_customer",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "create_refund",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "list_charges",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "create_payment_intent",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "retrieve_payment_intent",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_customer",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_refund",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_charges",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "retrieve_payment_intent",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_payment_intent",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_customer",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_refund",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_charges",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "load_scenario",
+              "details": "Currency field validation failed - expected lowercase 3-letter ISO code, got 'INVALID'",
+              "expected_vs_actual": "Expected validation error for invalid currency format, got validation error as expected",
+              "root_cause": "Invalid currency format in scenario data - 'INVALID' doesn't match required pattern '^[a-z]{3}$'",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "1 validation error for StripeScenario\npayment_intents.pi_999.currency\n  String should match pattern '^[a-z]{3}$' [type=string_pattern_mismatch, input_value='INVALID', input_type=str]"
+            },
+            "tool_execution": [],
+            "save_scenario": {
+              "success": false,
+              "consistency_check": false,
+              "error": "Skipped due to load_scenario failure"
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/StripePaymentServer.py"
+  }
+}

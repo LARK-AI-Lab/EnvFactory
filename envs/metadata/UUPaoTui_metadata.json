@@ -1,0 +1,206 @@
+{
+  "class_name": "UUPaoTui",
+  "description": "UU跑腿同城即时配送与预约配送服务平台，提供价格预估、下单、订单查询与取消等全流程接口。",
+  "tools": [
+    {
+      "name": "estimate_price",
+      "description": "根据起止地址计算配送价格并获取下单所需的 priceToken。",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "fromAddress": {
+            "type": "string",
+            "description": "起点地址，用于计算配送距离与费用。"
+          },
+          "toAddress": {
+            "type": "string",
+            "description": "终点地址，用于计算配送距离与费用。"
+          },
+          "adCode": {
+            "type": "string",
+            "description": "6 位行政区划代码（GB/T 2260），如“110100”代表北京市，用于定位配送区域。"
+          },
+          "sendType": {
+            "type": "string",
+            "enum": [
+              "instant",
+              "scheduled"
+            ],
+            "description": "配送类型：instant（即时配送）或 scheduled（预约配送）。"
+          }
+        },
+        "required": [
+          "fromAddress",
+          "toAddress",
+          "adCode",
+          "sendType"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "priceToken": {
+            "type": "string",
+            "description": "下单所需的临时价格凭证，有效期短，仅用于 create_order 接口。"
+          },
+          "needPayMoney": {
+            "type": "number",
+            "description": "预估需支付的配送费用，单位：元。"
+          }
+        }
+      }
+    },
+    {
+      "name": "create_order",
+      "description": "使用价格预估返回的 priceToken 创建正式配送订单。",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "priceToken": {
+            "type": "string",
+            "description": "来自 estimate_price 接口的临时价格凭证，用于确认费用并生成订单。"
+          },
+          "receiverPhone": {
+            "type": "string",
+            "description": "收件人手机号码，用于配送联系。"
+          },
+          "senderPhone": {
+            "type": "string",
+            "description": "寄件人手机号码，用于配送联系。"
+          }
+        },
+        "required": [
+          "priceToken",
+          "receiverPhone",
+          "senderPhone"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "orderCode": {
+            "type": "string",
+            "description": "UU 平台唯一订单编号，后续查询、取消等操作均依赖此字段。"
+          }
+        }
+      }
+    },
+    {
+      "name": "list_orders",
+      "description": "获取当前账户下全部订单列表，用于快速查看订单编号与状态。",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "order_list": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "orderCode": {
+                  "type": "string",
+                  "description": "UU 平台唯一订单编号。"
+                },
+                "fromAddress": {
+                  "type": "string",
+                  "description": "订单起点地址。"
+                },
+                "toAddress": {
+                  "type": "string",
+                  "description": "订单终点地址。"
+                },
+                "state": {
+                  "type": "string",
+                  "description": "订单当前状态，如“待接单”“配送中”“已完成”等。"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "description": "订单创建时间，ISO 8601 格式。"
+                }
+              }
+            },
+            "description": "当前账户下的订单摘要列表。"
+          }
+        }
+      }
+    },
+    {
+      "name": "query_order",
+      "description": "根据订单编号查询订单详情与实时状态。",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "orderCode": {
+            "type": "string",
+            "description": "UU 平台唯一订单编号，用于定位具体订单。"
+          }
+        },
+        "required": [
+          "orderCode"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "orderCode": {
+            "type": "string",
+            "description": "UU 平台唯一订单编号。"
+          },
+          "fromAddress": {
+            "type": "string",
+            "description": "订单起点地址。"
+          },
+          "toAddress": {
+            "type": "string",
+            "description": "订单终点地址。"
+          },
+          "distance": {
+            "type": "number",
+            "description": "起点到终点的直线/导航距离，单位：公里。"
+          },
+          "state": {
+            "type": "string",
+            "description": "订单当前状态，如“待接单”“配送中”“已完成”等。"
+          }
+        }
+      }
+    },
+    {
+      "name": "cancel_order",
+      "description": "取消指定订单并返回可能产生的扣费金额。",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "orderCode": {
+            "type": "string",
+            "description": "UU 平台唯一订单编号，用于定位需取消的订单。"
+          },
+          "reason": {
+            "type": "string",
+            "description": "用户填写的取消原因，用于平台记录与客服查看。"
+          }
+        },
+        "required": [
+          "orderCode",
+          "reason"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "orderCode": {
+            "type": "string",
+            "description": "被取消的订单编号，与请求一致。"
+          },
+          "deductFee": {
+            "type": "integer",
+            "description": "因取消订单而扣除的费用，单位：分；0 表示无扣费。"
+          }
+        }
+      }
+    }
+  ]
+}

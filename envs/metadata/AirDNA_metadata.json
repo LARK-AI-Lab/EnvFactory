@@ -1,0 +1,242 @@
+{
+  "class_name": "AirDNA",
+  "description": "Short-term rental analytics and market intelligence platform providing revenue estimates, market performance data, and dynamic pricing recommendations for Airbnb and vacation rental properties.",
+  "tools": [
+    {
+      "name": "get_rental_estimate",
+      "description": "Calculates projected short-term rental revenue estimates for a specific property based on its physical characteristics and location.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string",
+            "description": "The full street address of the property (e.g., '123 Main St, Austin, TX 78701')."
+          },
+          "bedrooms": {
+            "type": "integer",
+            "description": "The number of bedrooms in the property."
+          },
+          "bathrooms": {
+            "type": "integer",
+            "description": "The number of bathrooms in the property."
+          }
+        },
+        "required": [
+          "address",
+          "bedrooms",
+          "bathrooms"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "estimated_revenue": {
+            "type": "number",
+            "description": "The projected annual rental revenue in USD based on market comparables."
+          },
+          "average_daily_rate": {
+            "type": "number",
+            "description": "Average Daily Rate - the projected average rental price per booked night in USD."
+          },
+          "occupancy_rate": {
+            "type": "number",
+            "description": "The projected percentage of available nights that will be booked (0-100)."
+          },
+          "confidence_score": {
+            "type": "number",
+            "description": "A statistical confidence metric (0-1) indicating the reliability of the revenue estimate based on available comparable data."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_market_data",
+      "description": "Retrieves aggregate short-term rental market analytics and performance metrics for a specified geographic area.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "description": "The city name to analyze (e.g., 'Austin')."
+          },
+          "state": {
+            "type": "string",
+            "description": "The two-letter US state abbreviation (e.g., 'CA', 'NY')."
+          }
+        },
+        "required": [
+          "city",
+          "state"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "market_score": {
+            "type": "integer",
+            "description": "AirDNA's proprietary market attractiveness score indicating investment potential."
+          },
+          "average_adr": {
+            "type": "number",
+            "description": "Average Daily Rate - the market-wide average rental price per booked night in USD."
+          },
+          "average_occupancy": {
+            "type": "number",
+            "description": "The market-wide average percentage of available nights that were booked (0-100)."
+          },
+          "active_listings": {
+            "type": "integer",
+            "description": "The total count of active short-term rental listings in the specified market."
+          },
+          "revpar": {
+            "type": "number",
+            "description": "Revenue Per Available Room - the average revenue generated per available night across all listings in USD."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_listing_data",
+      "description": "Fetches historical performance metrics for a specific Airbnb property listing.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "airbnb_property_id": {
+            "type": "string",
+            "description": "The unique identifier of the Airbnb property listing."
+          }
+        },
+        "required": [
+          "airbnb_property_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "description": "The unique identifier of the Airbnb property listing."
+          },
+          "revenue_ltm": {
+            "type": "number",
+            "description": "Total rental revenue generated over the last 12 months in USD."
+          },
+          "occupancy_ltm": {
+            "type": "number",
+            "description": "The percentage of available nights that were booked over the last 12 months (0-100)."
+          },
+          "adr_ltm": {
+            "type": "number",
+            "description": "Average Daily Rate - the average rental price per booked night over the last 12 months in USD."
+          },
+          "number_of_reviews": {
+            "type": "integer",
+            "description": "The total count of guest reviews for the property."
+          },
+          "rating": {
+            "type": "number",
+            "description": "The average guest review rating (typically 0-5 scale)."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_smart_rates",
+      "description": "Generates dynamic pricing recommendations and demand forecasts for optimizing nightly rates over a specified date range.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "airbnb_property_id": {
+            "type": "string",
+            "description": "The unique identifier of the Airbnb property listing."
+          },
+          "start_date": {
+            "type": "string",
+            "description": "The start date for pricing recommendations in ISO 8601 format (YYYY-MM-DD)."
+          },
+          "end_date": {
+            "type": "string",
+            "description": "The end date for pricing recommendations in ISO 8601 format (YYYY-MM-DD)."
+          }
+        },
+        "required": [
+          "airbnb_property_id",
+          "start_date",
+          "end_date"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "recommendations": {
+            "type": "array",
+            "description": "A chronological list of daily pricing recommendations for the specified date range.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "description": "The date for which the recommendation applies in ISO 8601 format (YYYY-MM-DD)."
+                },
+                "recommended_rate": {
+                  "type": "number",
+                  "description": "The suggested optimal nightly rate in USD for this date."
+                },
+                "demand_level": {
+                  "type": "string",
+                  "description": "Categorical indicator of expected demand (e.g., 'low', 'medium', 'high', 'peak')."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "search_markets",
+      "description": "Searches the AirDNA database for available markets and geographic regions.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search query string for finding markets (e.g., city name, neighborhood, or region)."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "markets": {
+            "type": "array",
+            "description": "List of markets matching the search query.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "market_id": {
+                  "type": "string",
+                  "description": "The unique identifier of the market in the AirDNA database."
+                },
+                "market_name": {
+                  "type": "string",
+                  "description": "The display name of the market (e.g., 'Downtown Austin')."
+                },
+                "market_type": {
+                  "type": "string",
+                  "description": "The classification of the market (e.g., 'city', 'neighborhood', 'metro')."
+                },
+                "state": {
+                  "type": "string",
+                  "description": "The two-letter US state abbreviation where the market is located."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,2992 @@
+{
+  "metadata": {
+    "class_name": "Didi",
+    "metadata_path": "envs\\metadata\\Didi_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-04T01:19:29.194754",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "Didi",
+    "description": "A ride-hailing and map services server providing location-based services including route planning, POI search, geocoding, and taxi booking functionality.",
+    "tools": [
+      {
+        "name": "get_current_location",
+        "description": "Retrieve the current device location coordinates for use in map and ride-hailing operations.",
+        "input_schema": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "description": "The latitude coordinate of the location."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "The longitude coordinate of the location."
+                }
+              },
+              "description": "Geographic coordinates of the location."
+            }
+          }
+        }
+      },
+      {
+        "name": "maps_direction",
+        "description": "Plan a route between origin and destination coordinates based on the specified travel mode.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "description": "Travel mode for route planning. Must be one of: 'bicycling', 'driving', 'transit', 'walking'."
+            },
+            "origin_location": {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "description": "The latitude coordinate of the location."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "The longitude coordinate of the location."
+                }
+              },
+              "description": "Geographic coordinates of the origin location. Must be obtained from map-related tools."
+            },
+            "destination_location": {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "description": "The latitude coordinate of the location."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "The longitude coordinate of the location."
+                }
+              },
+              "description": "Geographic coordinates of the destination location. Must be obtained from map-related tools."
+            },
+            "city": {
+              "type": "string",
+              "description": "City name for the route query. Required when mode is 'transit'."
+            }
+          },
+          "required": [
+            "mode",
+            "origin_location",
+            "destination_location"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "distance": {
+              "type": "integer",
+              "description": "Total route distance in meters."
+            },
+            "duration": {
+              "type": "integer",
+              "description": "Estimated travel duration in seconds."
+            },
+            "transfers": {
+              "type": "integer",
+              "description": "Number of transit transfers required. Only present when mode is 'transit'."
+            },
+            "route": {
+              "type": "array",
+              "description": "List of coordinate points forming the route path, or transit segments for public transportation."
+            }
+          }
+        }
+      },
+      {
+        "name": "maps_place_around",
+        "description": "Search for POI (Point of Interest) places around a specified location based on keywords.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "keywords": {
+              "type": "string",
+              "description": "Search keywords to filter POI results (e.g., 'restaurant', 'hotel', 'gas station')."
+            },
+            "location": {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "description": "The latitude coordinate of the location."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "The longitude coordinate of the location."
+                }
+              },
+              "description": "Geographic coordinates of the center location for the search."
+            },
+            "max_distance": {
+              "type": "string",
+              "description": "Maximum search radius from the center location in meters."
+            }
+          },
+          "required": [
+            "keywords",
+            "location"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "places": {
+              "type": "array",
+              "description": "List of POI places matching the search criteria.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the POI place."
+                  },
+                  "address": {
+                    "type": "string",
+                    "description": "Full address of the POI place."
+                  },
+                  "location": {
+                    "type": "object",
+                    "properties": {
+                      "latitude": {
+                        "type": "number",
+                        "description": "The latitude coordinate of the location."
+                      },
+                      "longitude": {
+                        "type": "number",
+                        "description": "The longitude coordinate of the location."
+                      }
+                    },
+                    "description": "Geographic coordinates of the POI location."
+                  },
+                  "distance": {
+                    "type": "integer",
+                    "description": "Distance from the search center location in meters."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "maps_regeocode",
+        "description": "Convert longitude and latitude coordinates to human-readable address information (reverse geocoding).",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "description": "The latitude coordinate of the location."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "The longitude coordinate of the location."
+                }
+              },
+              "description": "Geographic coordinates to convert to address information."
+            }
+          },
+          "required": [
+            "location"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "Full formatted address corresponding to the coordinates."
+            },
+            "province": {
+              "type": "string",
+              "description": "Province or state name."
+            },
+            "city": {
+              "type": "string",
+              "description": "City name."
+            },
+            "district": {
+              "type": "string",
+              "description": "District or county name."
+            },
+            "street": {
+              "type": "string",
+              "description": "Street name and number."
+            }
+          }
+        }
+      },
+      {
+        "name": "taxi_estimate",
+        "description": "Get available ride-hailing vehicle types and fare estimates for a trip between origin and destination.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "origin_location": {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "description": "The latitude coordinate of the location."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "The longitude coordinate of the location."
+                }
+              },
+              "description": "Geographic coordinates of the origin location. Must be obtained from map-related tools, cannot be assumed."
+            },
+            "destination_location": {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "description": "The latitude coordinate of the location."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "The longitude coordinate of the location."
+                }
+              },
+              "description": "Geographic coordinates of the destination location. Must be obtained from map-related tools, cannot be assumed."
+            }
+          },
+          "required": [
+            "origin_location",
+            "destination_location"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "estimate_trace_id": {
+              "type": "string",
+              "description": "Unique trace identifier for this estimate session. Required for creating an order."
+            },
+            "products": {
+              "type": "array",
+              "description": "List of available vehicle types with pricing information.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "product_category": {
+                    "type": "string",
+                    "description": "Vehicle category identifier used for order creation."
+                  },
+                  "price": {
+                    "type": "number",
+                    "description": "Estimated fare for this vehicle type."
+                  },
+                  "estimated_duration": {
+                    "type": "integer",
+                    "description": "Estimated trip duration in seconds."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "taxi_create_order",
+        "description": "Create a ride-hailing order directly via API without opening any application interface.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "estimate_trace_id": {
+              "type": "string",
+              "description": "Unique trace identifier obtained from the taxi_estimate results. Links the order to the fare estimate."
+            },
+            "product_category": {
+              "type": "string",
+              "description": "Vehicle category identifier from estimate results. Use comma-separated values for multiple categories without spaces."
+            },
+            "caller_car_phone": {
+              "type": "string",
+              "description": "Caller's phone number for driver contact. Pass if available."
+            }
+          },
+          "required": [
+            "estimate_trace_id",
+            "product_category"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "description": "Unique identifier for the created ride-hailing order."
+            },
+            "status": {
+              "type": "string",
+              "description": "Current status of the order (e.g., 'pending', 'accepted', 'arriving')."
+            },
+            "estimated_arrival": {
+              "type": "integer",
+              "description": "Estimated time for driver arrival in seconds."
+            },
+            "created_at": {
+              "type": "string",
+              "description": "Timestamp when the order was created in ISO 8601 format."
+            }
+          }
+        }
+      },
+      {
+        "name": "taxi_query_order",
+        "description": "Query ride-hailing order status and information including driver contact, license plate, and estimated arrival time.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "description": "Unique identifier for the ride-hailing order. If not provided, queries unfinished orders for the current account."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "description": "Unique identifier for the ride-hailing order."
+            },
+            "status": {
+              "type": "string",
+              "description": "Current status of the order (e.g., 'pending', 'accepted', 'arriving', 'in_progress', 'completed')."
+            },
+            "driver_name": {
+              "type": "string",
+              "description": "Name of the assigned driver."
+            },
+            "driver_phone": {
+              "type": "string",
+              "description": "Contact phone number of the assigned driver."
+            },
+            "license_plate": {
+              "type": "string",
+              "description": "License plate number of the driver's vehicle."
+            },
+            "estimated_arrival": {
+              "type": "integer",
+              "description": "Estimated time for driver arrival in seconds."
+            }
+          }
+        }
+      },
+      {
+        "name": "taxi_cancel_order",
+        "description": "Cancel an existing ride-hailing order.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "description": "Unique identifier for the ride-hailing order to cancel. Obtained from order creation or query results."
+            },
+            "reason": {
+              "type": "string",
+              "description": "Reason for cancellation (e.g., '不需要了', '等待时间太长', '临时有事')."
+            }
+          },
+          "required": [
+            "order_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "description": "Unique identifier for the cancelled ride-hailing order."
+            },
+            "cancelled_at": {
+              "type": "string",
+              "description": "Timestamp when the order was cancelled in ISO 8601 format."
+            },
+            "refund_status": {
+              "type": "string",
+              "description": "Status of any refund processing for the cancelled order."
+            }
+          }
+        }
+      },
+      {
+        "name": "taxi_get_driver_location",
+        "description": "Get real-time driver location coordinates for an active ride-hailing order.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "description": "Unique identifier for the ride-hailing order to track driver location."
+            }
+          },
+          "required": [
+            "order_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "description": "Unique identifier for the ride-hailing order."
+            },
+            "driver_lat": {
+              "type": "string",
+              "description": "Current latitude coordinate of the driver's location."
+            },
+            "driver_lng": {
+              "type": "string",
+              "description": "Current longitude coordinate of the driver's location."
+            },
+            "updated_at": {
+              "type": "string",
+              "description": "Timestamp of the last location update in ISO 8601 format."
+            }
+          }
+        }
+      },
+      {
+        "name": "taxi_generate_ride_app_link",
+        "description": "Generate a deep link to open the mobile app or mini-program with pre-filled origin, destination, and vehicle type.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "origin_location": {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "description": "The latitude coordinate of the location."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "The longitude coordinate of the location."
+                }
+              },
+              "description": "Geographic coordinates of the origin location. Must be obtained from map-related tools."
+            },
+            "destination_location": {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "description": "The latitude coordinate of the location."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "The longitude coordinate of the location."
+                }
+              },
+              "description": "Geographic coordinates of the destination location. Must be obtained from map-related tools."
+            },
+            "product_category": {
+              "type": "string",
+              "description": "Vehicle category identifier list from estimate results. Supports multiple categories as comma-separated values. Only pass when user explicitly specifies certain categories."
+            }
+          },
+          "required": [
+            "origin_location",
+            "destination_location"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "deep_link": {
+              "type": "string",
+              "description": "Generated deep link URL to open the ride-hailing app or mini-program."
+            },
+            "from_location": {
+              "type": "string",
+              "description": "Origin location coordinates embedded in the link in format: latitude,longitude."
+            },
+            "to_location": {
+              "type": "string",
+              "description": "Destination location coordinates embedded in the link in format: latitude,longitude."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Union, Any\nfrom mcp.server.fastmcp import FastMCP\nimport random\nimport time\nfrom datetime import datetime\n\n# Section 1: Schema\nclass Location(BaseModel):\n    \"\"\"Represents a geographic location with latitude and longitude.\"\"\"\n    latitude: float = Field(..., ge=-90, le=90, description=\"Latitude coordinate\")\n    longitude: float = Field(..., ge=-180, le=180, description=\"Longitude coordinate\")\n\nclass Place(BaseModel):\n    \"\"\"Represents a Point of Interest (POI) place.\"\"\"\n    name: str = Field(..., description=\"Name of the POI place\")\n    address: str = Field(..., description=\"Full address of the POI place\")\n    location: Location = Field(..., description=\"Geographic coordinates of the POI location\")\n    distance: int = Field(..., ge=0, description=\"Distance from search center in meters\")\n\nclass RouteInfo(BaseModel):\n    \"\"\"Represents route information between two locations.\"\"\"\n    distance: int = Field(..., ge=0, description=\"Total route distance in meters\")\n    duration: int = Field(..., ge=0, description=\"Estimated travel duration in seconds\")\n    transfers: Optional[int] = Field(None, ge=0, description=\"Number of transit transfers required\")\n    route: List[Dict[str, Any]] = Field(default=[], description=\"List of coordinate points forming the route path\")\n\nclass AddressInfo(BaseModel):\n    \"\"\"Represents reverse geocoding address information.\"\"\"\n    address: str = Field(..., description=\"Full formatted address\")\n    province: str = Field(..., description=\"Province or state name\")\n    city: str = Field(..., description=\"City name\")\n    district: str = Field(..., description=\"District or county name\")\n    street: str = Field(..., description=\"Street name and number\")\n\nclass TaxiProduct(BaseModel):\n    \"\"\"Represents a taxi/ride-hailing product with pricing.\"\"\"\n    product_category: str = Field(..., description=\"Vehicle category identifier\")\n    price: float = Field(..., ge=0, description=\"Estimated fare for this vehicle type\")\n    estimated_duration: int = Field(..., ge=0, description=\"Estimated trip duration in seconds\")\n\nclass TaxiEstimate(BaseModel):\n    \"\"\"Represents taxi fare estimate response.\"\"\"\n    estimate_trace_id: str = Field(..., description=\"Unique trace identifier for estimate session\")\n    products: List[TaxiProduct] = Field(..., description=\"List of available vehicle types with pricing\")\n\nclass OrderInfo(BaseModel):\n    \"\"\"Represents taxi order information.\"\"\"\n    order_id: str = Field(..., description=\"Unique identifier for the ride-hailing order\")\n    status: str = Field(..., description=\"Current status of the order\")\n    driver_name: Optional[str] = Field(None, description=\"Name of the assigned driver\")\n    driver_phone: Optional[str] = Field(None, description=\"Contact phone number of the assigned driver\")\n    license_plate: Optional[str] = Field(None, description=\"License plate number of the driver's vehicle\")\n    estimated_arrival: Optional[int] = Field(None, ge=0, description=\"Estimated time for driver arrival in seconds\")\n\nclass DriverLocation(BaseModel):\n    \"\"\"Represents driver location tracking information.\"\"\"\n    order_id: str = Field(..., description=\"Unique identifier for the ride-hailing order\")\n    driver_lat: str = Field(..., description=\"Current latitude coordinate of the driver's location\")\n    driver_lng: str = Field(..., description=\"Current longitude coordinate of the driver's location\")\n    updated_at: str = Field(..., description=\"Timestamp of the last location update in ISO 8601 format\")\n\nclass CancelInfo(BaseModel):\n    \"\"\"Represents order cancellation information.\"\"\"\n    order_id: str = Field(..., description=\"Unique identifier for the cancelled ride-hailing order\")\n    cancelled_at: str = Field(..., description=\"Timestamp when the order was cancelled in ISO 8601 format\")\n    refund_status: str = Field(..., description=\"Status of any refund processing for the cancelled order\")\n\nclass DeepLink(BaseModel):\n    \"\"\"Represents generated deep link information.\"\"\"\n    deep_link: str = Field(..., description=\"Generated deep link URL to open the ride-hailing app\")\n    from_location: str = Field(..., description=\"Origin location coordinates embedded in the link\")\n    to_location: str = Field(..., description=\"Destination location coordinates embedded in the link\")\n\nclass DidiScenario(BaseModel):\n    \"\"\"Main scenario model for Didi ride-hailing and map services.\"\"\"\n    current_location: Location = Field(default=Location(latitude=39.9042, longitude=116.4074), description=\"Current device location\")\n    orders: Dict[str, OrderInfo] = Field(default={}, description=\"Active taxi orders\")\n    estimates: Dict[str, TaxiEstimate] = Field(default={}, description=\"Stored taxi estimates\")\n    places_database: Dict[str, List[Place]] = Field(default={\n        \"restaurant\": [\n            Place(name=\"Golden Dragon Restaurant\", address=\"123 Main St, Beijing\", location=Location(latitude=39.9042, longitude=116.4074), distance=500),\n            Place(name=\"Sichuan Cuisine House\", address=\"456 Park Ave, Beijing\", location=Location(latitude=39.9142, longitude=116.4174), distance=1200),\n            Place(name=\"Italian Bistro\", address=\"789 Center St, Beijing\", location=Location(latitude=39.8942, longitude=116.3974), distance=800),\n            Place(name=\"Japanese Sushi Bar\", address=\"321 East Rd, Beijing\", location=Location(latitude=39.9242, longitude=116.4274), distance=1500),\n            Place(name=\"French Cafe\", address=\"654 West Ave, Beijing\", location=Location(latitude=39.8842, longitude=116.3874), distance=2000)\n        ],\n        \"hotel\": [\n            Place(name=\"Grand Hotel Beijing\", address=\"1 Palace Rd, Beijing\", location=Location(latitude=39.9142, longitude=116.3974), distance=1000),\n            Place(name=\"Business Inn\", address=\"2 Commerce St, Beijing\", location=Location(latitude=39.8942, longitude=116.4174), distance=800),\n            Place(name=\"Airport Hotel\", address=\"3 Airport Blvd, Beijing\", location=Location(latitude=39.9542, longitude=116.4574), distance=3000),\n            Place(name=\"City Center Hotel\", address=\"4 Central Ave, Beijing\", location=Location(latitude=39.9042, longitude=116.4074), distance=200),\n            Place(name=\"Budget Lodge\", address=\"5 Budget St, Beijing\", location=Location(latitude=39.8842, longitude=116.4274), distance=2500)\n        ],\n        \"gas station\": [\n            Place(name=\"Shell Gas Station\", address=\"100 Fuel Rd, Beijing\", location=Location(latitude=39.9242, longitude=116.3874), distance=1800),\n            Place(name=\"PetroChina Station\", address=\"200 Oil Ave, Beijing\", location=Location(latitude=39.8742, longitude=116.4374), distance=2200),\n            Place(name=\"Sinopec Gas\", address=\"300 Petroleum St, Beijing\", location=Location(latitude=39.9442, longitude=116.3674), distance=2800),\n            Place(name=\"BP Service Station\", address=\"400 Gas Blvd, Beijing\", location=Location(latitude=39.8642, longitude=116.4474), distance=3200),\n            Place(name=\"ExxonMobil\", address=\"500 Energy Rd, Beijing\", location=Location(latitude=39.9542, longitude=116.3574), distance=3500)\n        ]\n    }, description=\"Database of POI places by category\")\n    address_database: Dict[str, AddressInfo] = Field(default={\n        \"39.9042,116.4074\": AddressInfo(address=\"Tiananmen Square, Beijing\", province=\"Beijing\", city=\"Beijing\", district=\"Dongcheng\", street=\"Tiananmen Square\"),\n        \"39.9142,116.3974\": AddressInfo(address=\"Forbidden City, Beijing\", province=\"Beijing\", city=\"Beijing\", district=\"Dongcheng\", street=\"4 Jingshan Front St\"),\n        \"39.8942,116.4174\": AddressInfo(address=\"Temple of Heaven, Beijing\", province=\"Beijing\", city=\"Beijing\", district=\"Dongcheng\", street=\"1 Tiantan Rd\"),\n        \"39.9242,116.3874\": AddressInfo(address=\"Beihai Park, Beijing\", province=\"Beijing\", city=\"Beijing\", district=\"Xicheng\", street=\"1 Wenjin St\"),\n        \"39.8842,116.4274\": AddressInfo(address=\"Beijing South Station\", province=\"Beijing\", city=\"Beijing\", district=\"Fengtai\", street=\"12 South Station Rd\")\n    }, description=\"Database of addresses by coordinate key\")\n    route_database: Dict[str, RouteInfo] = Field(default={\n        \"driving_39.9042,116.4074_39.9142,116.3974\": RouteInfo(distance=2000, duration=480, route=[{\"lat\": 39.9042, \"lng\": 116.4074}, {\"lat\": 39.9092, \"lng\": 116.4024}, {\"lat\": 39.9142, \"lng\": 116.3974}]),\n        \"transit_39.9042,116.4074_39.9142,116.3974\": RouteInfo(distance=2200, duration=900, transfers=1, route=[{\"type\": \"subway\", \"line\": \"Line 1\", \"stops\": 3}, {\"type\": \"walk\", \"distance\": 200}]),\n        \"walking_39.9042,116.4074_39.9142,116.3974\": RouteInfo(distance=1800, duration=1200, route=[{\"lat\": 39.9042, \"lng\": 116.4074}, {\"lat\": 39.9092, \"lng\": 116.4024}, {\"lat\": 39.9142, \"lng\": 116.3974}]),\n        \"bicycling_39.9042,116.4074_39.9142,116.3974\": RouteInfo(distance=1900, duration=600, route=[{\"lat\": 39.9042, \"lng\": 116.4074}, {\"lat\": 39.9092, \"lng\": 116.4024}, {\"lat\": 39.9142, \"lng\": 116.3974}])\n    }, description=\"Database of pre-calculated routes\")\n    random_seed: Optional[int] = Field(default=None, description=\"Random seed for reproducible results\")\n\nScenario_Schema = [Location, Place, RouteInfo, AddressInfo, TaxiProduct, TaxiEstimate, OrderInfo, DriverLocation, CancelInfo, DeepLink, DidiScenario]\n\n# Section 2: Class\nclass DidiAPI:\n    def __init__(self):\n        \"\"\"Initialize Didi API with empty state.\"\"\"\n        self.current_location: Location = Location(latitude=0, longitude=0)\n        self.orders: Dict[str, OrderInfo] = {}\n        self.estimates: Dict[str, TaxiEstimate] = {}\n        self.places_database: Dict[str, List[Place]] = {}\n        self.address_database: Dict[str, AddressInfo] = {}\n        self.route_database: Dict[str, RouteInfo] = {}\n        self.random_seed: Optional[int] = None\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = DidiScenario(**scenario)\n        self.current_location = model.current_location\n        self.orders = model.orders\n        self.estimates = model.estimates\n        self.places_database = model.places_database\n        self.address_database = model.address_database\n        self.route_database = model.route_database\n        self.random_seed = model.random_seed\n        if self.random_seed is not None:\n            random.seed(self.random_seed)\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"current_location\": self.current_location.dict(),\n            \"orders\": {k: v.dict() for k, v in self.orders.items()},\n            \"estimates\": {k: v.dict() for k, v in self.estimates.items()},\n            \"places_database\": {k: [place.dict() for place in places] for k, places in self.places_database.items()},\n            \"address_database\": {k: v.dict() for k, v in self.address_database.items()},\n            \"route_database\": {k: v.dict() for k, v in self.route_database.items()},\n            \"random_seed\": self.random_seed\n        }\n\n    def get_current_location(self) -> dict:\n        \"\"\"Retrieve the current device location coordinates.\"\"\"\n        return {\"location\": self.current_location.dict()}\n\n    def maps_direction(self, mode: str, origin_location: dict, destination_location: dict, city: Optional[str] = None) -> dict:\n        \"\"\"Plan a route between origin and destination coordinates.\"\"\"\n        origin = Location(**origin_location)\n        dest = Location(**destination_location)\n        \n        # Create route key\n        route_key = f\"{mode}_{origin.latitude},{origin.longitude}_{dest.latitude},{dest.longitude}\"\n        \n        # Check if route exists in database\n        if route_key in self.route_database:\n            return self.route_database[route_key].dict()\n        \n        # Generate new route if not found\n        distance = int(((dest.latitude - origin.latitude)**2 + (dest.longitude - origin.longitude)**2)**0.5 * 111000)\n        \n        # Mode-specific duration calculation\n        if mode == \"driving\":\n            duration = int(distance / 8.33)  # ~30 km/h average\n        elif mode == \"transit\":\n            duration = int(distance / 5.56)  # ~20 km/h average\n            if city:\n                return {\"distance\": distance, \"duration\": duration, \"transfers\": 1, \"route\": [{\"type\": \"subway\", \"line\": \"Line 1\", \"stops\": 3}, {\"type\": \"bus\", \"line\": \"Bus 101\", \"stops\": 2}]}\n            return {\"distance\": distance, \"duration\": duration, \"transfers\": 1, \"route\": [{\"type\": \"subway\", \"line\": \"Line 1\", \"stops\": 3}]}\n        elif mode == \"walking\":\n            duration = int(distance / 1.39)  # ~5 km/h average\n        elif mode == \"bicycling\":\n            duration = int(distance / 4.17)  # ~15 km/h average\n        else:\n            duration = int(distance / 5.56)\n        \n        # Simple route with intermediate points\n        route = [\n            {\"lat\": origin.latitude, \"lng\": origin.longitude},\n            {\"lat\": (origin.latitude + dest.latitude) / 2, \"lng\": (origin.longitude + dest.longitude) / 2},\n            {\"lat\": dest.latitude, \"lng\": dest.longitude}\n        ]\n        \n        return {\"distance\": distance, \"duration\": duration, \"route\": route}\n\n    def maps_place_around(self, keywords: str, location: dict, max_distance: Optional[str] = None) -> dict:\n        \"\"\"Search for POI places around a specified location.\"\"\"\n        center = Location(**location)\n        max_dist = int(max_distance) if max_distance else 5000\n        \n        # Find matching places\n        matching_places = []\n        for category, places in self.places_database.items():\n            if keywords.lower() in category.lower() or any(keyword in place.name.lower() for place in places for keyword in keywords.lower().split()):\n                for place in places:\n                    if place.distance <= max_dist:\n                        matching_places.append(place)\n        \n        # If no exact matches, return some default places\n        if not matching_places and keywords.lower() in [\"restaurant\", \"food\", \"dining\"]:\n            matching_places = self.places_database.get(\"restaurant\", [])[:3]\n        elif not matching_places and keywords.lower() in [\"hotel\", \"lodging\"]:\n            matching_places = self.places_database.get(\"hotel\", [])[:3]\n        elif not matching_places and keywords.lower() in [\"gas\", \"fuel\", \"station\"]:\n            matching_places = self.places_database.get(\"gas station\", [])[:3]\n        \n        return {\"places\": [place.dict() for place in matching_places]}\n\n    def maps_regeocode(self, location: dict) -> dict:\n        \"\"\"Convert coordinates to human-readable address information.\"\"\"\n        loc = Location(**location)\n        coord_key = f\"{loc.latitude},{loc.longitude}\"\n        \n        # Check if address exists in database\n        if coord_key in self.address_database:\n            return self.address_database[coord_key].dict()\n        \n        # Generate generic address if not found\n        return {\n            \"address\": f\"{loc.latitude}, {loc.longitude}\",\n            \"province\": \"Beijing\",\n            \"city\": \"Beijing\",\n            \"district\": \"Unknown District\",\n            \"street\": f\"Street near {loc.latitude}, {loc.longitude}\"\n        }\n\n    def taxi_estimate(self, origin_location: dict, destination_location: dict) -> dict:\n        \"\"\"Get available ride-hailing vehicle types and fare estimates.\"\"\"\n        origin = Location(**origin_location)\n        dest = Location(**destination_location)\n        \n        # Calculate distance\n        distance = int(((dest.latitude - origin.latitude)**2 + (dest.longitude - origin.longitude)**2)**0.5 * 111000)\n        \n        # Generate estimate trace ID\n        estimate_trace_id = f\"EST_{int(time.time())}_{random.randint(1000, 9999)}\"\n        \n        # Create products with different pricing\n        products = [\n            TaxiProduct(product_category=\"economy\", price=distance * 0.002 + 8, estimated_duration=int(distance / 8.33)),\n            TaxiProduct(product_category=\"comfort\", price=distance * 0.003 + 12, estimated_duration=int(distance / 8.33)),\n            TaxiProduct(product_category=\"business\", price=distance * 0.005 + 20, estimated_duration=int(distance / 8.33)),\n            TaxiProduct(product_category=\"luxury\", price=distance * 0.008 + 35, estimated_duration=int(distance / 8.33))\n        ]\n        \n        estimate = TaxiEstimate(estimate_trace_id=estimate_trace_id, products=products)\n        self.estimates[estimate_trace_id] = estimate\n        \n        return estimate.dict()\n\n    def taxi_create_order(self, estimate_trace_id: str, product_category: str, caller_car_phone: Optional[str] = None) -> dict:\n        \"\"\"Create a ride-hailing order directly via API.\"\"\"\n        if estimate_trace_id not in self.estimates:\n            raise ValueError(f\"Estimate trace ID {estimate_trace_id} not found\")\n        \n        # Generate order ID\n        order_id = f\"ORDER_{int(time.time())}_{random.randint(1000, 9999)}\"\n        \n        # Find selected product\n        estimate = self.estimates[estimate_trace_id]\n        selected_product = None\n        for product in estimate.products:\n            if product.product_category == product_category:\n                selected_product = product\n                break\n        \n        if not selected_product:\n            raise ValueError(f\"Product category {product_category} not found in estimate\")\n        \n        # Create order\n        order = OrderInfo(\n            order_id=order_id,\n            status=\"pending\",\n            estimated_arrival=random.randint(300, 900)\n        )\n        \n        self.orders[order_id] = order\n        \n        return {\n            \"order_id\": order_id,\n            \"status\": \"pending\",\n            \"estimated_arrival\": order.estimated_arrival,\n            \"created_at\": datetime.now().isoformat()\n        }\n\n    def taxi_query_order(self, order_id: Optional[str] = None) -> dict:\n        \"\"\"Query ride-hailing order status and information.\"\"\"\n        if order_id:\n            if order_id not in self.orders:\n                raise ValueError(f\"Order {order_id} not found\")\n            order = self.orders[order_id]\n        else:\n            # Return first unfinished order\n            unfinished_orders = [o for o in self.orders.values() if o.status not in [\"completed\", \"cancelled\"]]\n            if not unfinished_orders:\n                raise ValueError(\"No unfinished orders found\")\n            order = unfinished_orders[0]\n        \n        # Simulate driver assignment if pending\n        if order.status == \"pending\" and random.random() < 0.7:\n            order.status = \"accepted\"\n            order.driver_name = f\"Driver {random.randint(100, 999)}\"\n            order.driver_phone = f\"138{random.randint(10000000, 99999999)}\"\n            order.license_plate = f\"京A{random.randint(10000, 99999)}\"\n        \n        return order.dict()\n\n    def taxi_cancel_order(self, order_id: str, reason: Optional[str] = None) -> dict:\n        \"\"\"Cancel an existing ride-hailing order.\"\"\"\n        if order_id not in self.orders:\n            raise ValueError(f\"Order {order_id} not found\")\n        \n        order = self.orders[order_id]\n        if order.status in [\"completed\", \"cancelled\"]:\n            raise ValueError(f\"Order {order_id} is already {order.status}\")\n        \n        order.status = \"cancelled\"\n        \n        return {\n            \"order_id\": order_id,\n            \"cancelled_at\": datetime.now().isoformat(),\n            \"refund_status\": \"processing\" if reason != \"不需要了\" else \"refunded\"\n        }\n\n    def taxi_get_driver_location(self, order_id: str) -> dict:\n        \"\"\"Get real-time driver location coordinates for an active order.\"\"\"\n        if order_id not in self.orders:\n            raise ValueError(f\"Order {order_id} not found\")\n        \n        order = self.orders[order_id]\n        if order.status not in [\"accepted\", \"arriving\", \"in_progress\"]:\n            raise ValueError(f\"Driver location not available for order status: {order.status}\")\n        \n        # Simulate driver movement\n        base_lat = 39.9042\n        base_lng = 116.4074\n        driver_lat = base_lat + random.uniform(-0.01, 0.01)\n        driver_lng = base_lng + random.uniform(-0.01, 0.01)\n        \n        return {\n            \"order_id\": order_id,\n            \"driver_lat\": str(driver_lat),\n            \"driver_lng\": str(driver_lng),\n            \"updated_at\": datetime.now().isoformat()\n        }\n\n    def taxi_generate_ride_app_link(self, origin_location: dict, destination_location: dict, product_category: Optional[str] = None) -> dict:\n        \"\"\"Generate a deep link to open the mobile app with pre-filled locations.\"\"\"\n        origin = Location(**origin_location)\n        dest = Location(**destination_location)\n        \n        from_loc = f\"{origin.latitude},{origin.longitude}\"\n        to_loc = f\"{dest.latitude},{dest.longitude}\"\n        \n        # Generate deep link\n        deep_link = f\"didirider://ride?from={from_loc}&to={to_loc}\"\n        if product_category:\n            deep_link += f\"&product={product_category}\"\n        \n        return {\n            \"deep_link\": deep_link,\n            \"from_location\": from_loc,\n            \"to_location\": to_loc\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"Didi\")\napi = DidiAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"Load scenario data into the Didi API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching DidiScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"Save current Didi state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_current_location() -> dict:\n    \"\"\"Retrieve the current device location coordinates for use in map and ride-hailing operations.\n    \n    Returns:\n        location (dict): Geographic coordinates of the location.\n    \"\"\"\n    try:\n        return api.get_current_location()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef maps_direction(mode: str, origin_location: dict, destination_location: dict, city: Optional[str] = None) -> dict:\n    \"\"\"Plan a route between origin and destination coordinates based on the specified travel mode.\n    \n    Args:\n        mode (str): Travel mode for route planning. Must be one of: 'bicycling', 'driving', 'transit', 'walking'.\n        origin_location (dict): Geographic coordinates of the origin location.\n        destination_location (dict): Geographic coordinates of the destination location.\n        city (str): [Optional] City name for the route query. Required when mode is 'transit'.\n    \n    Returns:\n        distance (int): Total route distance in meters.\n        duration (int): Estimated travel duration in seconds.\n        transfers (int): [Optional] Number of transit transfers required. Only present when mode is 'transit'.\n        route (list): List of coordinate points forming the route path.\n    \"\"\"\n    try:\n        if not mode or not isinstance(mode, str):\n            raise ValueError(\"Mode must be a non-empty string\")\n        if mode not in [\"bicycling\", \"driving\", \"transit\", \"walking\"]:\n            raise ValueError(\"Mode must be one of: 'bicycling', 'driving', 'transit', 'walking'\")\n        if not origin_location or not isinstance(origin_location, dict):\n            raise ValueError(\"Origin location must be a non-empty dictionary\")\n        if not destination_location or not isinstance(destination_location, dict):\n            raise ValueError(\"Destination location must be a non-empty dictionary\")\n        return api.maps_direction(mode, origin_location, destination_location, city)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef maps_place_around(keywords: str, location: dict, max_distance: Optional[str] = None) -> dict:\n    \"\"\"Search for POI (Point of Interest) places around a specified location based on keywords.\n    \n    Args:\n        keywords (str): Search keywords to filter POI results.\n        location (dict): Geographic coordinates of the center location for the search.\n        max_distance (str): [Optional] Maximum search radius from the center location in meters.\n    \n    Returns:\n        places (list): List of POI places matching the search criteria.\n    \"\"\"\n    try:\n        if not keywords or not isinstance(keywords, str):\n            raise ValueError(\"Keywords must be a non-empty string\")\n        if not location or not isinstance(location, dict):\n            raise ValueError(\"Location must be a non-empty dictionary\")\n        return api.maps_place_around(keywords, location, max_distance)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef maps_regeocode(location: dict) -> dict:\n    \"\"\"Convert longitude and latitude coordinates to human-readable address information (reverse geocoding).\n    \n    Args:\n        location (dict): Geographic coordinates to convert to address information.\n    \n    Returns:\n        address (str): Full formatted address corresponding to the coordinates.\n        province (str): Province or state name.\n        city (str): City name.\n        district (str): District or county name.\n        street (str): Street name and number.\n    \"\"\"\n    try:\n        if not location or not isinstance(location, dict):\n            raise ValueError(\"Location must be a non-empty dictionary\")\n        return api.maps_regeocode(location)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef taxi_estimate(origin_location: dict, destination_location: dict) -> dict:\n    \"\"\"Get available ride-hailing vehicle types and fare estimates for a trip between origin and destination.\n    \n    Args:\n        origin_location (dict): Geographic coordinates of the origin location.\n        destination_location (dict): Geographic coordinates of the destination location.\n    \n    Returns:\n        estimate_trace_id (str): Unique trace identifier for this estimate session.\n        products (list): List of available vehicle types with pricing information.\n    \"\"\"\n    try:\n        if not origin_location or not isinstance(origin_location, dict):\n            raise ValueError(\"Origin location must be a non-empty dictionary\")\n        if not destination_location or not isinstance(destination_location, dict):\n            raise ValueError(\"Destination location must be a non-empty dictionary\")\n        return api.taxi_estimate(origin_location, destination_location)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef taxi_create_order(estimate_trace_id: str, product_category: str, caller_car_phone: Optional[str] = None) -> dict:\n    \"\"\"Create a ride-hailing order directly via API without opening any application interface.\n    \n    Args:\n        estimate_trace_id (str): Unique trace identifier obtained from the taxi_estimate results.\n        product_category (str): Vehicle category identifier from estimate results.\n        caller_car_phone (str): [Optional] Caller's phone number for driver contact.\n    \n    Returns:\n        order_id (str): Unique identifier for the created ride-hailing order.\n        status (str): Current status of the order.\n        estimated_arrival (int): Estimated time for driver arrival in seconds.\n        created_at (str): Timestamp when the order was created in ISO 8601 format.\n    \"\"\"\n    try:\n        if not estimate_trace_id or not isinstance(estimate_trace_id, str):\n            raise ValueError(\"Estimate trace ID must be a non-empty string\")\n        if not product_category or not isinstance(product_category, str):\n            raise ValueError(\"Product category must be a non-empty string\")\n        return api.taxi_create_order(estimate_trace_id, product_category, caller_car_phone)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef taxi_query_order(order_id: Optional[str] = None) -> dict:\n    \"\"\"Query ride-hailing order status and information including driver contact, license plate, and estimated arrival time.\n    \n    Args:\n        order_id (str): [Optional] Unique identifier for the ride-hailing order. If not provided, queries unfinished orders for the current account.\n    \n    Returns:\n        order_id (str): Unique identifier for the ride-hailing order.\n        status (str): Current status of the order.\n        driver_name (str): [Optional] Name of the assigned driver.\n        driver_phone (str): [Optional] Contact phone number of the assigned driver.\n        license_plate (str): [Optional] License plate number of the driver's vehicle.\n        estimated_arrival (int): [Optional] Estimated time for driver arrival in seconds.\n    \"\"\"\n    try:\n        return api.taxi_query_order(order_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef taxi_cancel_order(order_id: str, reason: Optional[str] = None) -> dict:\n    \"\"\"Cancel an existing ride-hailing order.\n    \n    Args:\n        order_id (str): Unique identifier for the ride-hailing order to cancel.\n        reason (str): [Optional] Reason for cancellation.\n    \n    Returns:\n        order_id (str): Unique identifier for the cancelled ride-hailing order.\n        cancelled_at (str): Timestamp when the order was cancelled in ISO 8601 format.\n        refund_status (str): Status of any refund processing for the cancelled order.\n    \"\"\"\n    try:\n        if not order_id or not isinstance(order_id, str):\n            raise ValueError(\"Order ID must be a non-empty string\")\n        return api.taxi_cancel_order(order_id, reason)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef taxi_get_driver_location(order_id: str) -> dict:\n    \"\"\"Get real-time driver location coordinates for an active ride-hailing order.\n    \n    Args:\n        order_id (str): Unique identifier for the ride-hailing order to track driver location.\n    \n    Returns:\n        order_id (str): Unique identifier for the ride-hailing order.\n        driver_lat (str): Current latitude coordinate of the driver's location.\n        driver_lng (str): Current longitude coordinate of the driver's location.\n        updated_at (str): Timestamp of the last location update in ISO 8601 format.\n    \"\"\"\n    try:\n        if not order_id or not isinstance(order_id, str):\n            raise ValueError(\"Order ID must be a non-empty string\")\n        return api.taxi_get_driver_location(order_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef taxi_generate_ride_app_link(origin_location: dict, destination_location: dict, product_category: Optional[str] = None) -> dict:\n    \"\"\"Generate a deep link to open the mobile app or mini-program with pre-filled origin, destination, and vehicle type.\n    \n    Args:\n        origin_location (dict): Geographic coordinates of the origin location.\n        destination_location (dict): Geographic coordinates of the destination location.\n        product_category (str): [Optional] Vehicle category identifier list from estimate results.\n    \n    Returns:\n        deep_link (str): Generated deep link URL to open the ride-hailing app or mini-program.\n        from_location (str): Origin location coordinates embedded in the link in format: latitude,longitude.\n        to_location (str): Destination location coordinates embedded in the link in format: latitude,longitude.\n    \"\"\"\n    try:\n        if not origin_location or not isinstance(origin_location, dict):\n            raise ValueError(\"Origin location must be a non-empty dictionary\")\n        if not destination_location or not isinstance(destination_location, dict):\n            raise ValueError(\"Destination location must be a non-empty dictionary\")\n        return api.taxi_generate_ride_app_link(origin_location, destination_location, product_category)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-04T01:19:29.194754",
+      "revision_number": null
+    },
+    {
+      "version": 1,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Union, Any\nfrom mcp.server.fastmcp import FastMCP\nimport random\nimport time\nfrom datetime import datetime\n\n# Section 1: Schema\nclass Location(BaseModel):\n    \"\"\"Represents a geographic location with latitude and longitude.\"\"\"\n    latitude: float = Field(..., ge=-90, le=90, description=\"Latitude coordinate\")\n    longitude: float = Field(..., ge=-180, le=180, description=\"Longitude coordinate\")\n\nclass Place(BaseModel):\n    \"\"\"Represents a Point of Interest (POI) place.\"\"\"\n    name: str = Field(..., description=\"Name of the POI place\")\n    address: str = Field(..., description=\"Full address of the POI place\")\n    location: Location = Field(..., description=\"Geographic coordinates of the POI location\")\n    distance: int = Field(..., ge=0, description=\"Distance from search center in meters\")\n\nclass RouteInfo(BaseModel):\n    \"\"\"Represents route information between two locations.\"\"\"\n    distance: int = Field(..., ge=0, description=\"Total route distance in meters\")\n    duration: int = Field(..., ge=0, description=\"Estimated travel duration in seconds\")\n    transfers: Optional[int] = Field(None, ge=0, description=\"Number of transit transfers required\")\n    route: List[Dict[str, Any]] = Field(default=[], description=\"List of coordinate points forming the route path\")\n\nclass AddressInfo(BaseModel):\n    \"\"\"Represents reverse geocoding address information.\"\"\"\n    address: str = Field(..., description=\"Full formatted address\")\n    province: str = Field(..., description=\"Province or state name\")\n    city: str = Field(..., description=\"City name\")\n    district: str = Field(..., description=\"District or county name\")\n    street: str = Field(..., description=\"Street name and number\")\n\nclass TaxiProduct(BaseModel):\n    \"\"\"Represents a taxi/ride-hailing product with pricing.\"\"\"\n    product_category: str = Field(..., description=\"Vehicle category identifier\")\n    price: float = Field(..., ge=0, description=\"Estimated fare for this vehicle type\")\n    estimated_duration: int = Field(..., ge=0, description=\"Estimated trip duration in seconds\")\n\nclass TaxiEstimate(BaseModel):\n    \"\"\"Represents taxi fare estimate response.\"\"\"\n    estimate_trace_id: str = Field(..., description=\"Unique trace identifier for estimate session\")\n    products: List[TaxiProduct] = Field(..., description=\"List of available vehicle types with pricing\")\n\nclass OrderInfo(BaseModel):\n    \"\"\"Represents taxi order information.\"\"\"\n    order_id: str = Field(..., description=\"Unique identifier for the ride-hailing order\")\n    status: str = Field(..., description=\"Current status of the order\")\n    driver_name: Optional[str] = Field(None, description=\"Name of the assigned driver\")\n    driver_phone: Optional[str] = Field(None, description=\"Contact phone number of the assigned driver\")\n    license_plate: Optional[str] = Field(None, description=\"License plate number of the driver's vehicle\")\n    estimated_arrival: Optional[int] = Field(None, ge=0, description=\"Estimated time for driver arrival in seconds\")\n\nclass DriverLocation(BaseModel):\n    \"\"\"Represents driver location tracking information.\"\"\"\n    order_id: str = Field(..., description=\"Unique identifier for the ride-hailing order\")\n    driver_lat: str = Field(..., description=\"Current latitude coordinate of the driver's location\")\n    driver_lng: str = Field(..., description=\"Current longitude coordinate of the driver's location\")\n    updated_at: str = Field(..., description=\"Timestamp of the last location update in ISO 8601 format\")\n\nclass CancelInfo(BaseModel):\n    \"\"\"Represents order cancellation information.\"\"\"\n    order_id: str = Field(..., description=\"Unique identifier for the cancelled ride-hailing order\")\n    cancelled_at: str = Field(..., description=\"Timestamp when the order was cancelled in ISO 8601 format\")\n    refund_status: str = Field(..., description=\"Status of any refund processing for the cancelled order\")\n\nclass DeepLink(BaseModel):\n    \"\"\"Represents generated deep link information.\"\"\"\n    deep_link: str = Field(..., description=\"Generated deep link URL to open the ride-hailing app\")\n    from_location: str = Field(..., description=\"Origin location coordinates embedded in the link\")\n    to_location: str = Field(..., description=\"Destination location coordinates embedded in the link\")\n\nclass DidiScenario(BaseModel):\n    \"\"\"Main scenario model for Didi ride-hailing and map services.\"\"\"\n    current_location: Location = Field(default=Location(latitude=39.9042, longitude=116.4074), description=\"Current device location\")\n    orders: Dict[str, OrderInfo] = Field(default={}, description=\"Active taxi orders\")\n    estimates: Dict[str, TaxiEstimate] = Field(default={}, description=\"Stored taxi estimates\")\n    places_database: Dict[str, List[Place]] = Field(default={\n        \"restaurant\": [\n            Place(name=\"Golden Dragon Restaurant\", address=\"123 Main St, Beijing\", location=Location(latitude=39.9042, longitude=116.4074), distance=500),\n            Place(name=\"Sichuan Cuisine House\", address=\"456 Park Ave, Beijing\", location=Location(latitude=39.9142, longitude=116.4174), distance=1200),\n            Place(name=\"Italian Bistro\", address=\"789 Center St, Beijing\", location=Location(latitude=39.8942, longitude=116.3974), distance=800),\n            Place(name=\"Japanese Sushi Bar\", address=\"321 East Rd, Beijing\", location=Location(latitude=39.9242, longitude=116.4274), distance=1500),\n            Place(name=\"French Cafe\", address=\"654 West Ave, Beijing\", location=Location(latitude=39.8842, longitude=116.3874), distance=2000)\n        ],\n        \"hotel\": [\n            Place(name=\"Grand Hotel Beijing\", address=\"1 Palace Rd, Beijing\", location=Location(latitude=39.9142, longitude=116.3974), distance=1000),\n            Place(name=\"Business Inn\", address=\"2 Commerce St, Beijing\", location=Location(latitude=39.8942, longitude=116.4174), distance=800),\n            Place(name=\"Airport Hotel\", address=\"3 Airport Blvd, Beijing\", location=Location(latitude=39.9542, longitude=116.4574), distance=3000),\n            Place(name=\"City Center Hotel\", address=\"4 Central Ave, Beijing\", location=Location(latitude=39.9042, longitude=116.4074), distance=200),\n            Place(name=\"Budget Lodge\", address=\"5 Budget St, Beijing\", location=Location(latitude=39.8842, longitude=116.4274), distance=2500)\n        ],\n        \"gas station\": [\n            Place(name=\"Shell Gas Station\", address=\"100 Fuel Rd, Beijing\", location=Location(latitude=39.9242, longitude=116.3874), distance=1800),\n            Place(name=\"PetroChina Station\", address=\"200 Oil Ave, Beijing\", location=Location(latitude=39.8742, longitude=116.4374), distance=2200),\n            Place(name=\"Sinopec Gas\", address=\"300 Petroleum St, Beijing\", location=Location(latitude=39.9442, longitude=116.3674), distance=2800),\n            Place(name=\"BP Service Station\", address=\"400 Gas Blvd, Beijing\", location=Location(latitude=39.8642, longitude=116.4474), distance=3200),\n            Place(name=\"ExxonMobil\", address=\"500 Energy Rd, Beijing\", location=Location(latitude=39.9542, longitude=116.3574), distance=3500)\n        ]\n    }, description=\"Database of POI places by category\")\n    address_database: Dict[str, AddressInfo] = Field(default={\n        \"39.9042,116.4074\": AddressInfo(address=\"Tiananmen Square, Beijing\", province=\"Beijing\", city=\"Beijing\", district=\"Dongcheng\", street=\"Tiananmen Square\"),\n        \"39.9142,116.3974\": AddressInfo(address=\"Forbidden City, Beijing\", province=\"Beijing\", city=\"Beijing\", district=\"Dongcheng\", street=\"4 Jingshan Front St\"),\n        \"39.8942,116.4174\": AddressInfo(address=\"Temple of Heaven, Beijing\", province=\"Beijing\", city=\"Beijing\", district=\"Dongcheng\", street=\"1 Tiantan Rd\"),\n        \"39.9242,116.3874\": AddressInfo(address=\"Beihai Park, Beijing\", province=\"Beijing\", city=\"Beijing\", district=\"Xicheng\", street=\"1 Wenjin St\"),\n        \"39.8842,116.4274\": AddressInfo(address=\"Beijing South Station\", province=\"Beijing\", city=\"Beijing\", district=\"Fengtai\", street=\"12 South Station Rd\")\n    }, description=\"Database of addresses by coordinate key\")\n    route_database: Dict[str, RouteInfo] = Field(default={\n        \"driving_39.9042,116.4074_39.9142,116.3974\": RouteInfo(distance=2000, duration=480, route=[{\"lat\": 39.9042, \"lng\": 116.4074}, {\"lat\": 39.9092, \"lng\": 116.4024}, {\"lat\": 39.9142, \"lng\": 116.3974}]),\n        \"transit_39.9042,116.4074_39.9142,116.3974\": RouteInfo(distance=2200, duration=900, transfers=1, route=[{\"type\": \"subway\", \"line\": \"Line 1\", \"stops\": 3}, {\"type\": \"walk\", \"distance\": 200}]),\n        \"walking_39.9042,116.4074_39.9142,116.3974\": RouteInfo(distance=1800, duration=1200, route=[{\"lat\": 39.9042, \"lng\": 116.4074}, {\"lat\": 39.9092, \"lng\": 116.4024}, {\"lat\": 39.9142, \"lng\": 116.3974}]),\n        \"bicycling_39.9042,116.4074_39.9142,116.3974\": RouteInfo(distance=1900, duration=600, route=[{\"lat\": 39.9042, \"lng\": 116.4074}, {\"lat\": 39.9092, \"lng\": 116.4024}, {\"lat\": 39.9142, \"lng\": 116.3974}])\n    }, description=\"Database of pre-calculated routes\")\n    random_seed: Optional[int] = Field(default=None, description=\"Random seed for reproducible results\")\n\nScenario_Schema = [Location, Place, RouteInfo, AddressInfo, TaxiProduct, TaxiEstimate, OrderInfo, DriverLocation, CancelInfo, DeepLink, DidiScenario]\n\n# Section 2: Class\nclass DidiAPI:\n    def __init__(self):\n        \"\"\"Initialize Didi API with empty state.\"\"\"\n        self.current_location: Location = Location(latitude=0, longitude=0)\n        self.orders: Dict[str, OrderInfo] = {}\n        self.estimates: Dict[str, TaxiEstimate] = {}\n        self.places_database: Dict[str, List[Place]] = {}\n        self.address_database: Dict[str, AddressInfo] = {}\n        self.route_database: Dict[str, RouteInfo] = {}\n        self.random_seed: Optional[int] = None\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = DidiScenario(**scenario)\n        self.current_location = model.current_location\n        self.orders = model.orders\n        self.estimates = model.estimates\n        self.places_database = model.places_database\n        self.address_database = model.address_database\n        self.route_database = model.route_database\n        self.random_seed = model.random_seed\n        if self.random_seed is not None:\n            random.seed(self.random_seed)\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"current_location\": self.current_location.dict(),\n            \"orders\": {k: v.dict() for k, v in self.orders.items()},\n            \"estimates\": {k: v.dict() for k, v in self.estimates.items()},\n            \"places_database\": {k: [place.dict() for place in places] for k, places in self.places_database.items()},\n            \"address_database\": {k: v.dict() for k, v in self.address_database.items()},\n            \"route_database\": {k: v.dict() for k, v in self.route_database.items()},\n            \"random_seed\": self.random_seed\n        }\n\n    def get_current_location(self) -> dict:\n        \"\"\"Retrieve the current device location coordinates.\"\"\"\n        return {\"location\": self.current_location.dict()}\n\n    def maps_direction(self, mode: str, origin_location: dict, destination_location: dict, city: Optional[str] = None) -> dict:\n        \"\"\"Plan a route between origin and destination coordinates.\"\"\"\n        origin = Location(**origin_location)\n        dest = Location(**destination_location)\n        \n        # Create route key\n        route_key = f\"{mode}_{origin.latitude},{origin.longitude}_{dest.latitude},{dest.longitude}\"\n        \n        # Check if route exists in database\n        if route_key in self.route_database:\n            return self.route_database[route_key].dict()\n        \n        # Generate new route if not found\n        distance = int(((dest.latitude - origin.latitude)**2 + (dest.longitude - origin.longitude)**2)**0.5 * 111000)\n        \n        # Mode-specific duration calculation\n        if mode == \"driving\":\n            duration = int(distance / 8.33)  # ~30 km/h average\n        elif mode == \"transit\":\n            duration = int(distance / 5.56)  # ~20 km/h average\n            if city:\n                return {\"distance\": distance, \"duration\": duration, \"transfers\": 1, \"route\": [{\"type\": \"subway\", \"line\": \"Line 1\", \"stops\": 3}, {\"type\": \"bus\", \"line\": \"Bus 101\", \"stops\": 2}]}\n            return {\"distance\": distance, \"duration\": duration, \"transfers\": 1, \"route\": [{\"type\": \"subway\", \"line\": \"Line 1\", \"stops\": 3}]}\n        elif mode == \"walking\":\n            duration = int(distance / 1.39)  # ~5 km/h average\n        elif mode == \"bicycling\":\n            duration = int(distance / 4.17)  # ~15 km/h average\n        else:\n            duration = int(distance / 5.56)\n        \n        # Simple route with intermediate points\n        route = [\n            {\"lat\": origin.latitude, \"lng\": origin.longitude},\n            {\"lat\": (origin.latitude + dest.latitude) / 2, \"lng\": (origin.longitude + dest.longitude) / 2},\n            {\"lat\": dest.latitude, \"lng\": dest.longitude}\n        ]\n        \n        return {\"distance\": distance, \"duration\": duration, \"route\": route}\n\n    def maps_place_around(self, keywords: str, location: dict, max_distance: Optional[str] = None) -> dict:\n        \"\"\"Search for POI places around a specified location.\"\"\"\n        center = Location(**location)\n        max_dist = int(max_distance) if max_distance else 5000\n        \n        # Find matching places\n        matching_places = []\n        for category, places in self.places_database.items():\n            if keywords.lower() in category.lower() or any(keyword in place.name.lower() for place in places for keyword in keywords.lower().split()):\n                for place in places:\n                    if place.distance <= max_dist:\n                        matching_places.append(place)\n        \n        # If no exact matches, return some default places\n        if not matching_places and keywords.lower() in [\"restaurant\", \"food\", \"dining\"]:\n            matching_places = self.places_database.get(\"restaurant\", [])[:3]\n        elif not matching_places and keywords.lower() in [\"hotel\", \"lodging\"]:\n            matching_places = self.places_database.get(\"hotel\", [])[:3]\n        elif not matching_places and keywords.lower() in [\"gas\", \"fuel\", \"station\"]:\n            matching_places = self.places_database.get(\"gas station\", [])[:3]\n        \n        return {\"places\": [place.dict() for place in matching_places]}\n\n    def maps_regeocode(self, location: dict) -> dict:\n        \"\"\"Convert coordinates to human-readable address information.\"\"\"\n        loc = Location(**location)\n        coord_key = f\"{loc.latitude},{loc.longitude}\"\n        \n        # Check if address exists in database\n        if coord_key in self.address_database:\n            return self.address_database[coord_key].dict()\n        \n        # Generate generic address if not found\n        return {\n            \"address\": f\"{loc.latitude}, {loc.longitude}\",\n            \"province\": \"Beijing\",\n            \"city\": \"Beijing\",\n            \"district\": \"Unknown District\",\n            \"street\": f\"Street near {loc.latitude}, {loc.longitude}\"\n        }\n\n    def taxi_estimate(self, origin_location: dict, destination_location: dict) -> dict:\n        \"\"\"Get available ride-hailing vehicle types and fare estimates for a trip between origin and destination.\"\"\"\n        origin = Location(**origin_location)\n        dest = Location(**destination_location)\n        \n        # Calculate distance\n        distance = int(((dest.latitude - origin.latitude)**2 + (dest.longitude - origin.longitude)**2)**0.5 * 111000)\n        \n        # Generate estimate trace ID\n        estimate_trace_id = f\"EST_{int(time.time())}_{random.randint(1000, 9999)}\"\n        \n        # Create products with different pricing\n        products = [\n            TaxiProduct(product_category=\"economy\", price=distance * 0.002 + 8, estimated_duration=int(distance / 8.33)),\n            TaxiProduct(product_category=\"comfort\", price=distance * 0.003 + 12, estimated_duration=int(distance / 8.33)),\n            TaxiProduct(product_category=\"business\", price=distance * 0.005 + 20, estimated_duration=int(distance / 8.33)),\n            TaxiProduct(product_category=\"luxury\", price=distance * 0.008 + 35, estimated_duration=int(distance / 8.33))\n        ]\n        \n        estimate = TaxiEstimate(estimate_trace_id=estimate_trace_id, products=products)\n        self.estimates[estimate_trace_id] = estimate\n        \n        return estimate.dict()\n\n    def taxi_create_order(self, estimate_trace_id: str, product_category: str, caller_car_phone: Optional[str] = None) -> dict:\n        \"\"\"Create a ride-hailing order directly via API.\"\"\"\n        if estimate_trace_id not in self.estimates:\n            raise ValueError(f\"Estimate trace ID {estimate_trace_id} not found\")\n        \n        # Generate order ID\n        order_id = f\"ORDER_{int(time.time())}_{random.randint(1000, 9999)}\"\n        \n        # Find selected product\n        estimate = self.estimates[estimate_trace_id]\n        selected_product = None\n        for product in estimate.products:\n            if product.product_category == product_category:\n                selected_product = product\n                break\n        \n        if not selected_product:\n            raise ValueError(f\"Product category {product_category} not found in estimate\")\n        \n        # Create order\n        order = OrderInfo(\n            order_id=order_id,\n            status=\"pending\",\n            estimated_arrival=random.randint(300, 900)\n        )\n        \n        self.orders[order_id] = order\n        \n        return {\n            \"order_id\": order_id,\n            \"status\": \"pending\",\n            \"estimated_arrival\": order.estimated_arrival,\n            \"created_at\": datetime.now().isoformat()\n        }\n\n    def taxi_query_order(self, order_id: Optional[str] = None) -> dict:\n        \"\"\"Query ride-hailing order status and information.\"\"\"\n        if order_id:\n            if order_id not in self.orders:\n                raise ValueError(f\"Order {order_id} not found\")\n            order = self.orders[order_id]\n        else:\n            # Return first unfinished order\n            unfinished_orders = [o for o in self.orders.values() if o.status not in [\"completed\", \"cancelled\"]]\n            if not unfinished_orders:\n                raise ValueError(\"No unfinished orders found\")\n            order = unfinished_orders[0]\n        \n        # Simulate driver assignment if pending\n        if order.status == \"pending\" and random.random() < 0.7:\n            order.status = \"accepted\"\n            order.driver_name = f\"Driver {random.randint(100, 999)}\"\n            order.driver_phone = f\"138{random.randint(10000000, 99999999)}\"\n            order.license_plate = f\"京A{random.randint(10000, 99999)}\"\n        \n        return order.dict()\n\n    def taxi_cancel_order(self, order_id: str, reason: Optional[str] = None) -> dict:\n        \"\"\"Cancel an existing ride-hailing order.\"\"\"\n        if order_id not in self.orders:\n            raise ValueError(f\"Order {order_id} not found\")\n        \n        order = self.orders[order_id]\n        if order.status in [\"completed\", \"cancelled\"]:\n            raise ValueError(f\"Order {order_id} is already {order.status}\")\n        \n        order.status = \"cancelled\"\n        \n        return {\n            \"order_id\": order_id,\n            \"cancelled_at\": datetime.now().isoformat(),\n            \"refund_status\": \"processing\" if reason != \"不需要了\" else \"refunded\"\n        }\n\n    def taxi_get_driver_location(self, order_id: str) -> dict:\n        \"\"\"Get real-time driver location coordinates for an active order.\"\"\"\n        if order_id not in self.orders:\n            raise ValueError(f\"Order {order_id} not found\")\n        \n        order = self.orders[order_id]\n        # Allow driver location tracking for all statuses except pending and cancelled\n        if order.status in [\"pending\", \"cancelled\"]:\n            raise ValueError(f\"Driver location not available for order status: {order.status}\")\n        \n        # Simulate driver movement\n        base_lat = 39.9042\n        base_lng = 116.4074\n        driver_lat = base_lat + random.uniform(-0.01, 0.01)\n        driver_lng = base_lng + random.uniform(-0.01, 0.01)\n        \n        return {\n            \"order_id\": order_id,\n            \"driver_lat\": str(driver_lat),\n            \"driver_lng\": str(driver_lng),\n            \"updated_at\": datetime.now().isoformat()\n        }\n\n    def taxi_generate_ride_app_link(self, origin_location: dict, destination_location: dict, product_category: Optional[str] = None) -> dict:\n        \"\"\"Generate a deep link to open the mobile app with pre-filled locations.\"\"\"\n        origin = Location(**origin_location)\n        dest = Location(**destination_location)\n        \n        from_loc = f\"{origin.latitude},{origin.longitude}\"\n        to_loc = f\"{dest.latitude},{dest.longitude}\"\n        \n        # Generate deep link\n        deep_link = f\"didirider://ride?from={from_loc}&to={to_loc}\"\n        if product_category:\n            deep_link += f\"&product={product_category}\"\n        \n        return {\n            \"deep_link\": deep_link,\n            \"from_location\": from_loc,\n            \"to_location\": to_loc\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"Didi\")\napi = DidiAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"Load scenario data into the Didi API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching DidiScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"Save current Didi state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_current_location() -> dict:\n    \"\"\"Retrieve the current device location coordinates for use in map and ride-hailing operations.\n    \n    Returns:\n        location (dict): Geographic coordinates of the location.\n    \"\"\"\n    try:\n        return api.get_current_location()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef maps_direction(mode: str, origin_location: dict, destination_location: dict, city: Optional[str] = None) -> dict:\n    \"\"\"Plan a route between origin and destination coordinates based on the specified travel mode.\n    \n    Args:\n        mode (str): Travel mode for route planning. Must be one of: 'bicycling', 'driving', 'transit', 'walking'.\n        origin_location (dict): Geographic coordinates of the origin location.\n        destination_location (dict): Geographic coordinates of the destination location.\n        city (str): [Optional] City name for the route query. Required when mode is 'transit'.\n    \n    Returns:\n        distance (int): Total route distance in meters.\n        duration (int): Estimated travel duration in seconds.\n        transfers (int): [Optional] Number of transit transfers required. Only present when mode is 'transit'.\n        route (list): List of coordinate points forming the route path.\n    \"\"\"\n    try:\n        if not mode or not isinstance(mode, str):\n            raise ValueError(\"Mode must be a non-empty string\")\n        if mode not in [\"bicycling\", \"driving\", \"transit\", \"walking\"]:\n            raise ValueError(\"Mode must be one of: 'bicycling', 'driving', 'transit', 'walking'\")\n        if not origin_location or not isinstance(origin_location, dict):\n            raise ValueError(\"Origin location must be a non-empty dictionary\")\n        if not destination_location or not isinstance(destination_location, dict):\n            raise ValueError(\"Destination location must be a non-empty dictionary\")\n        return api.maps_direction(mode, origin_location, destination_location, city)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef maps_place_around(keywords: str, location: dict, max_distance: Optional[str] = None) -> dict:\n    \"\"\"Search for POI (Point of Interest) places around a specified location based on keywords.\n    \n    Args:\n        keywords (str): Search keywords to filter POI results.\n        location (dict): Geographic coordinates of the center location for the search.\n        max_distance (str): [Optional] Maximum search radius from the center location in meters.\n    \n    Returns:\n        places (list): List of POI places matching the search criteria.\n    \"\"\"\n    try:\n        if not keywords or not isinstance(keywords, str):\n            raise ValueError(\"Keywords must be a non-empty string\")\n        if not location or not isinstance(location, dict):\n            raise ValueError(\"Location must be a non-empty dictionary\")\n        return api.maps_place_around(keywords, location, max_distance)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef maps_regeocode(location: dict) -> dict:\n    \"\"\"Convert longitude and latitude coordinates to human-readable address information (reverse geocoding).\n    \n    Args:\n        location (dict): Geographic coordinates to convert to address information.\n    \n    Returns:\n        address (str): Full formatted address corresponding to the coordinates.\n        province (str): Province or state name.\n        city (str): City name.\n        district (str): District or county name.\n        street (str): Street name and number.\n    \"\"\"\n    try:\n        if not location or not isinstance(location, dict):\n            raise ValueError(\"Location must be a non-empty dictionary\")\n        return api.maps_regeocode(location)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef taxi_estimate(origin_location: dict, destination_location: dict) -> dict:\n    \"\"\"Get available ride-hailing vehicle types and fare estimates for a trip between origin and destination.\n    \n    Args:\n        origin_location (dict): Geographic coordinates of the origin location.\n        destination_location (dict): Geographic coordinates of the destination location.\n    \n    Returns:\n        estimate_trace_id (str): Unique trace identifier for this estimate session.\n        products (list): List of available vehicle types with pricing information.\n    \"\"\"\n    try:\n        if not origin_location or not isinstance(origin_location, dict):\n            raise ValueError(\"Origin location must be a non-empty dictionary\")\n        if not destination_location or not isinstance(destination_location, dict):\n            raise ValueError(\"Destination location must be a non-empty dictionary\")\n        return api.taxi_estimate(origin_location, destination_location)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef taxi_create_order(estimate_trace_id: str, product_category: str, caller_car_phone: Optional[str] = None) -> dict:\n    \"\"\"Create a ride-hailing order directly via API without opening any application interface.\n    \n    Args:\n        estimate_trace_id (str): Unique trace identifier obtained from the taxi_estimate results.\n        product_category (str): Vehicle category identifier from estimate results.\n        caller_car_phone (str): [Optional] Caller's phone number for driver contact.\n    \n    Returns:\n        order_id (str): Unique identifier for the created ride-hailing order.\n        status (str): Current status of the order.\n        estimated_arrival (int): Estimated time for driver arrival in seconds.\n        created_at (str): Timestamp when the order was created in ISO 8601 format.\n    \"\"\"\n    try:\n        if not estimate_trace_id or not isinstance(estimate_trace_id, str):\n            raise ValueError(\"Estimate trace ID must be a non-empty string\")\n        if not product_category or not isinstance(product_category, str):\n            raise ValueError(\"Product category must be a non-empty string\")\n        return api.taxi_create_order(estimate_trace_id, product_category, caller_car_phone)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef taxi_query_order(order_id: Optional[str] = None) -> dict:\n    \"\"\"Query ride-hailing order status and information including driver contact, license plate, and estimated arrival time.\n    \n    Args:\n        order_id (str): [Optional] Unique identifier for the ride-hailing order. If not provided, queries unfinished orders for the current account.\n    \n    Returns:\n        order_id (str): Unique identifier for the ride-hailing order.\n        status (str): Current status of the order.\n        driver_name (str): [Optional] Name of the assigned driver.\n        driver_phone (str): [Optional] Contact phone number of the assigned driver.\n        license_plate (str): [Optional] License plate number of the driver's vehicle.\n        estimated_arrival (int): [Optional] Estimated time for driver arrival in seconds.\n    \"\"\"\n    try:\n        return api.taxi_query_order(order_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef taxi_cancel_order(order_id: str, reason: Optional[str] = None) -> dict:\n    \"\"\"Cancel an existing ride-hailing order.\n    \n    Args:\n        order_id (str): Unique identifier for the ride-hailing order to cancel.\n        reason (str): [Optional] Reason for cancellation.\n    \n    Returns:\n        order_id (str): Unique identifier for the cancelled ride-hailing order.\n        cancelled_at (str): Timestamp when the order was cancelled in ISO 8601 format.\n        refund_status (str): Status of any refund processing for the cancelled order.\n    \"\"\"\n    try:\n        if not order_id or not isinstance(order_id, str):\n            raise ValueError(\"Order ID must be a non-empty string\")\n        return api.taxi_cancel_order(order_id, reason)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef taxi_get_driver_location(order_id: str) -> dict:\n    \"\"\"Get real-time driver location coordinates for an active ride-hailing order.\n    \n    Args:\n        order_id (str): Unique identifier for the ride-hailing order to track driver location.\n    \n    Returns:\n        order_id (str): Unique identifier for the ride-hailing order.\n        driver_lat (str): Current latitude coordinate of the driver's location.\n        driver_lng (str): Current longitude coordinate of the driver's location.\n        updated_at (str): Timestamp of the last location update in ISO 8601 format.\n    \"\"\"\n    try:\n        if not order_id or not isinstance(order_id, str):\n            raise ValueError(\"Order ID must be a non-empty string\")\n        return api.taxi_get_driver_location(order_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef taxi_generate_ride_app_link(origin_location: dict, destination_location: dict, product_category: Optional[str] = None) -> dict:\n    \"\"\"Generate a deep link to open the mobile app or mini-program with pre-filled origin, destination, and vehicle type.\n    \n    Args:\n        origin_location (dict): Geographic coordinates of the origin location.\n        destination_location (dict): Geographic coordinates of the destination location.\n        product_category (str): [Optional] Vehicle category identifier list from estimate results.\n    \n    Returns:\n        deep_link (str): Generated deep link URL to open the ride-hailing app or mini-program.\n        from_location (str): Origin location coordinates embedded in the link in format: latitude,longitude.\n        to_location (str): Destination location coordinates embedded in the link in format: latitude,longitude.\n    \"\"\"\n    try:\n        if not origin_location or not isinstance(origin_location, dict):\n            raise ValueError(\"Origin location must be a non-empty dictionary\")\n        if not destination_location or not isinstance(destination_location, dict):\n            raise ValueError(\"Destination location must be a non-empty dictionary\")\n        return api.taxi_generate_ride_app_link(origin_location, destination_location, product_category)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-04T01:19:29.194754",
+      "revision_number": 1
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with minimal data - single location, no active orders or estimates, minimal POI database",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "current_location": {
+          "latitude": 39.9042,
+          "longitude": 116.4074
+        },
+        "orders": {},
+        "estimates": {},
+        "places_database": {
+          "restaurant": [
+            {
+              "name": "Quick Noodle Shop",
+              "address": "10 Food St, Beijing",
+              "location": {
+                "latitude": 39.9052,
+                "longitude": 116.4084
+              },
+              "distance": 150
+            }
+          ],
+          "hotel": [
+            {
+              "name": "Budget Inn",
+              "address": "20 Sleep Ave, Beijing",
+              "location": {
+                "latitude": 39.9032,
+                "longitude": 116.4064
+              },
+              "distance": 200
+            }
+          ]
+        },
+        "address_database": {
+          "39.9042,116.4074": {
+            "address": "Tiananmen Square, Beijing",
+            "province": "Beijing",
+            "city": "Beijing",
+            "district": "Dongcheng",
+            "street": "Tiananmen Square"
+          }
+        },
+        "route_database": {
+          "driving_39.9042,116.4074_39.9052,116.4084": {
+            "distance": 150,
+            "duration": 60,
+            "transfers": null,
+            "route": [
+              {
+                "lat": 39.9042,
+                "lng": 116.4074
+              },
+              {
+                "lat": 39.9052,
+                "lng": 116.4084
+              }
+            ]
+          }
+        },
+        "random_seed": 42
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Moderate scenario with active order, stored estimate, and varied POI categories",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "current_location": {
+          "latitude": 31.2304,
+          "longitude": 121.4737
+        },
+        "orders": {
+          "ORD001": {
+            "order_id": "ORD001",
+            "status": "driver_assigned",
+            "driver_name": "Zhang Wei",
+            "driver_phone": "+86-138-0000-1234",
+            "license_plate": "京A12345",
+            "estimated_arrival": 300
+          }
+        },
+        "estimates": {
+          "EST001": {
+            "estimate_trace_id": "EST001",
+            "products": [
+              {
+                "product_category": "express",
+                "price": 25.5,
+                "estimated_duration": 900
+              },
+              {
+                "product_category": "comfort",
+                "price": 35.0,
+                "estimated_duration": 900
+              },
+              {
+                "product_category": "luxury",
+                "price": 55.0,
+                "estimated_duration": 900
+              }
+            ]
+          }
+        },
+        "places_database": {
+          "restaurant": [
+            {
+              "name": "Shanghai Dumpling House",
+              "address": "88 Nanjing Rd, Shanghai",
+              "location": {
+                "latitude": 31.2354,
+                "longitude": 121.4787
+              },
+              "distance": 650
+            },
+            {
+              "name": "Cantonese Dim Sum",
+              "address": "99 Huaihai Rd, Shanghai",
+              "location": {
+                "latitude": 31.2254,
+                "longitude": 121.4687
+              },
+              "distance": 800
+            }
+          ],
+          "hotel": [
+            {
+              "name": "Shanghai Luxury Hotel",
+              "address": "1 Bund Ave, Shanghai",
+              "location": {
+                "latitude": 31.2404,
+                "longitude": 121.4837
+              },
+              "distance": 1200
+            }
+          ],
+          "gas station": [
+            {
+              "name": "Sinopec Station",
+              "address": "50 Yan'an Rd, Shanghai",
+              "location": {
+                "latitude": 31.2204,
+                "longitude": 121.4637
+              },
+              "distance": 1500
+            }
+          ],
+          "atm": []
+        },
+        "address_database": {
+          "31.2304,121.4737": {
+            "address": "People's Square, Shanghai",
+            "province": "Shanghai",
+            "city": "Shanghai",
+            "district": "Huangpu",
+            "street": "People's Square"
+          },
+          "31.2354,121.4787": {
+            "address": "Nanjing Road Pedestrian Street",
+            "province": "Shanghai",
+            "city": "Shanghai",
+            "district": "Huangpu",
+            "street": "88 Nanjing Rd"
+          }
+        },
+        "route_database": {
+          "driving_31.2304,121.4737_31.2354,121.4787": {
+            "distance": 800,
+            "duration": 420,
+            "transfers": null,
+            "route": [
+              {
+                "lat": 31.2304,
+                "lng": 121.4737
+              },
+              {
+                "lat": 31.2329,
+                "lng": 121.4762
+              },
+              {
+                "lat": 31.2354,
+                "lng": 121.4787
+              }
+            ]
+          },
+          "transit_31.2304,121.4737_31.2354,121.4787": {
+            "distance": 900,
+            "duration": 600,
+            "transfers": 0,
+            "route": [
+              {
+                "type": "subway",
+                "line": "Line 2",
+                "stops": 2
+              }
+            ]
+          }
+        },
+        "random_seed": 123
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich scenario with multiple orders in different states, multiple estimates, comprehensive POI database, and diverse route types",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "current_location": {
+          "latitude": 22.5431,
+          "longitude": 114.0579
+        },
+        "orders": {
+          "ORD101": {
+            "order_id": "ORD101",
+            "status": "completed",
+            "driver_name": "Li Ming",
+            "driver_phone": "+86-139-1111-2222",
+            "license_plate": "粤B88888",
+            "estimated_arrival": null
+          },
+          "ORD102": {
+            "order_id": "ORD102",
+            "status": "in_progress",
+            "driver_name": "Wang Fang",
+            "driver_phone": "+86-139-3333-4444",
+            "license_plate": "粤B66666",
+            "estimated_arrival": 180
+          },
+          "ORD103": {
+            "order_id": "ORD103",
+            "status": "searching",
+            "driver_name": null,
+            "driver_phone": null,
+            "license_plate": null,
+            "estimated_arrival": null
+          }
+        },
+        "estimates": {
+          "EST201": {
+            "estimate_trace_id": "EST201",
+            "products": [
+              {
+                "product_category": "express",
+                "price": 18.0,
+                "estimated_duration": 600
+              },
+              {
+                "product_category": "comfort",
+                "price": 28.0,
+                "estimated_duration": 600
+              }
+            ]
+          },
+          "EST202": {
+            "estimate_trace_id": "EST202",
+            "products": [
+              {
+                "product_category": "express",
+                "price": 45.5,
+                "estimated_duration": 1800
+              },
+              {
+                "product_category": "comfort",
+                "price": 62.0,
+                "estimated_duration": 1800
+              },
+              {
+                "product_category": "luxury",
+                "price": 95.0,
+                "estimated_duration": 1800
+              },
+              {
+                "product_category": "van",
+                "price": 85.0,
+                "estimated_duration": 1800
+              }
+            ]
+          }
+        },
+        "places_database": {
+          "restaurant": [
+            {
+              "name": "Dim Sum Palace",
+              "address": "123 Nathan Rd, Shenzhen",
+              "location": {
+                "latitude": 22.5481,
+                "longitude": 114.0629
+              },
+              "distance": 700
+            },
+            {
+              "name": "Hotpot Heaven",
+              "address": "456 Shennan Rd, Shenzhen",
+              "location": {
+                "latitude": 22.5381,
+                "longitude": 114.0529
+              },
+              "distance": 850
+            },
+            {
+              "name": "Seafood Market Restaurant",
+              "address": "789 Coastal Ave, Shenzhen",
+              "location": {
+                "latitude": 22.5531,
+                "longitude": 114.0679
+              },
+              "distance": 1300
+            }
+          ],
+          "hotel": [
+            {
+              "name": "Five Star Hotel",
+              "address": "1 Luxury Blvd, Shenzhen",
+              "location": {
+                "latitude": 22.5331,
+                "longitude": 114.0479
+              },
+              "distance": 1500
+            },
+            {
+              "name": "Business Hotel",
+              "address": "2 Commerce St, Shenzhen",
+              "location": {
+                "latitude": 22.5431,
+                "longitude": 114.0679
+              },
+              "distance": 1100
+            }
+          ],
+          "gas station": [
+            {
+              "name": "Shell Station",
+              "address": "100 Highway Rd, Shenzhen",
+              "location": {
+                "latitude": 22.5231,
+                "longitude": 114.0379
+              },
+              "distance": 2500
+            },
+            {
+              "name": "PetroChina",
+              "address": "200 Express Way, Shenzhen",
+              "location": {
+                "latitude": 22.5631,
+                "longitude": 114.0779
+              },
+              "distance": 2800
+            }
+          ],
+          "shopping mall": [
+            {
+              "name": "Central Mall",
+              "address": "50 Shopping St, Shenzhen",
+              "location": {
+                "latitude": 22.5451,
+                "longitude": 114.0599
+              },
+              "distance": 300
+            }
+          ],
+          "hospital": [
+            {
+              "name": "City Hospital",
+              "address": "10 Health Ave, Shenzhen",
+              "location": {
+                "latitude": 22.5401,
+                "longitude": 114.0549
+              },
+              "distance": 500
+            }
+          ]
+        },
+        "address_database": {
+          "22.5431,114.0579": {
+            "address": "Futian District Center, Shenzhen",
+            "province": "Guangdong",
+            "city": "Shenzhen",
+            "district": "Futian",
+            "street": "Shennan Ave"
+          },
+          "22.5481,114.0629": {
+            "address": "Civic Center, Shenzhen",
+            "province": "Guangdong",
+            "city": "Shenzhen",
+            "district": "Futian",
+            "street": "123 Nathan Rd"
+          },
+          "22.5331,114.0479": {
+            "address": "Convention Center Area",
+            "province": "Guangdong",
+            "city": "Shenzhen",
+            "district": "Futian",
+            "street": "1 Luxury Blvd"
+          }
+        },
+        "route_database": {
+          "driving_22.5431,114.0579_22.5481,114.0629": {
+            "distance": 900,
+            "duration": 480,
+            "transfers": null,
+            "route": [
+              {
+                "lat": 22.5431,
+                "lng": 114.0579
+              },
+              {
+                "lat": 22.5456,
+                "lng": 114.0604
+              },
+              {
+                "lat": 22.5481,
+                "lng": 114.0629
+              }
+            ]
+          },
+          "transit_22.5431,114.0579_22.5481,114.0629": {
+            "distance": 1000,
+            "duration": 720,
+            "transfers": 1,
+            "route": [
+              {
+                "type": "subway",
+                "line": "Line 1",
+                "stops": 2
+              },
+              {
+                "type": "bus",
+                "line": "Bus 101",
+                "stops": 3
+              },
+              {
+                "type": "walk",
+                "distance": 150
+              }
+            ]
+          },
+          "walking_22.5431,114.0579_22.5481,114.0629": {
+            "distance": 850,
+            "duration": 720,
+            "transfers": null,
+            "route": [
+              {
+                "lat": 22.5431,
+                "lng": 114.0579
+              },
+              {
+                "lat": 22.5456,
+                "lng": 114.0604
+              },
+              {
+                "lat": 22.5481,
+                "lng": 114.0629
+              }
+            ]
+          },
+          "bicycling_22.5431,114.0579_22.5481,114.0629": {
+            "distance": 870,
+            "duration": 360,
+            "transfers": null,
+            "route": [
+              {
+                "lat": 22.5431,
+                "lng": 114.0579
+              },
+              {
+                "lat": 22.5456,
+                "lng": 114.0604
+              },
+              {
+                "lat": 22.5481,
+                "lng": 114.0629
+              }
+            ]
+          },
+          "driving_22.5431,114.0579_22.5331,114.0479": {
+            "distance": 1800,
+            "duration": 900,
+            "transfers": null,
+            "route": [
+              {
+                "lat": 22.5431,
+                "lng": 114.0579
+              },
+              {
+                "lat": 22.5381,
+                "lng": 114.0529
+              },
+              {
+                "lat": 22.5331,
+                "lng": 114.0479
+              }
+            ]
+          }
+        },
+        "random_seed": 999
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Edge case scenario with extreme coordinates (boundary values), empty collections, and minimal route data",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "current_location": {
+          "latitude": -89.9999,
+          "longitude": 179.9999
+        },
+        "orders": {},
+        "estimates": {},
+        "places_database": {
+          "restaurant": [],
+          "hotel": [],
+          "gas station": []
+        },
+        "address_database": {},
+        "route_database": {
+          "driving_-89.9999,179.9999_-89.9989,179.9989": {
+            "distance": 0,
+            "duration": 0,
+            "transfers": null,
+            "route": []
+          }
+        },
+        "random_seed": 1
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 3,
+      "failed_scenarios": 1,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_current_location",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Get current location",
+                    "input": {},
+                    "expected": "Returns current location coordinates",
+                    "actual": {
+                      "location": {
+                        "latitude": 39.9042,
+                        "longitude": 116.4074
+                      }
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "maps_regeocode",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid location - existing in database",
+                    "input": {
+                      "location": {
+                        "latitude": 39.9042,
+                        "longitude": 116.4074
+                      }
+                    },
+                    "expected": "Returns address information from database",
+                    "actual": {
+                      "address": "Tiananmen Square, Beijing",
+                      "province": "Beijing",
+                      "city": "Beijing",
+                      "district": "Dongcheng",
+                      "street": "Tiananmen Square"
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid location - not in database",
+                    "input": {
+                      "location": {
+                        "latitude": 40.0,
+                        "longitude": 117.0
+                      }
+                    },
+                    "expected": "Returns generated address information",
+                    "actual": {
+                      "address": "40.0, 117.0",
+                      "province": "Beijing",
+                      "city": "Beijing",
+                      "district": "Unknown District",
+                      "street": "Street near 40.0, 117.0"
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "maps_place_around",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Search for restaurant",
+                    "input": {
+                      "keywords": "restaurant",
+                      "location": {
+                        "latitude": 39.9042,
+                        "longitude": 116.4074
+                      }
+                    },
+                    "expected": "Returns restaurant places",
+                    "actual": {
+                      "places": [
+                        {
+                          "name": "Quick Noodle Shop",
+                          "address": "10 Food St, Beijing",
+                          "location": {
+                            "latitude": 39.9052,
+                            "longitude": 116.4084
+                          },
+                          "distance": 150
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Search for hotel with max_distance",
+                    "input": {
+                      "keywords": "hotel",
+                      "location": {
+                        "latitude": 39.9042,
+                        "longitude": 116.4074
+                      },
+                      "max_distance": "500"
+                    },
+                    "expected": "Returns hotel places within distance",
+                    "actual": {
+                      "places": [
+                        {
+                          "name": "Budget Inn",
+                          "address": "20 Sleep Ave, Beijing",
+                          "location": {
+                            "latitude": 39.9032,
+                            "longitude": 116.4064
+                          },
+                          "distance": 200
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Search for nonexistent place",
+                    "input": {
+                      "keywords": "nonexistent",
+                      "location": {
+                        "latitude": 39.9042,
+                        "longitude": 116.4074
+                      }
+                    },
+                    "expected": "Returns empty places list",
+                    "actual": {
+                      "places": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "maps_direction",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Driving mode - route in database",
+                    "input": {
+                      "mode": "driving",
+                      "origin_location": {
+                        "latitude": 39.9042,
+                        "longitude": 116.4074
+                      },
+                      "destination_location": {
+                        "latitude": 39.9052,
+                        "longitude": 116.4084
+                      }
+                    },
+                    "expected": "Returns driving route from database",
+                    "actual": {
+                      "distance": 150,
+                      "duration": 60,
+                      "transfers": null,
+                      "route": [
+                        {
+                          "lat": 39.9042,
+                          "lng": 116.4074
+                        },
+                        {
+                          "lat": 39.9052,
+                          "lng": 116.4084
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Walking mode - generated route",
+                    "input": {
+                      "mode": "walking",
+                      "origin_location": {
+                        "latitude": 39.9042,
+                        "longitude": 116.4074
+                      },
+                      "destination_location": {
+                        "latitude": 39.9032,
+                        "longitude": 116.4064
+                      }
+                    },
+                    "expected": "Returns generated walking route",
+                    "actual": {
+                      "distance": 156,
+                      "duration": 112,
+                      "route": [
+                        {
+                          "lat": 39.9042,
+                          "lng": 116.4074
+                        },
+                        {
+                          "lat": 39.9037,
+                          "lng": 116.40690000000001
+                        },
+                        {
+                          "lat": 39.9032,
+                          "lng": 116.4064
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Transit mode with city parameter",
+                    "input": {
+                      "mode": "transit",
+                      "origin_location": {
+                        "latitude": 39.9042,
+                        "longitude": 116.4074
+                      },
+                      "destination_location": {
+                        "latitude": 39.9052,
+                        "longitude": 116.4084
+                      },
+                      "city": "Beijing"
+                    },
+                    "expected": "Returns transit route with transfers",
+                    "actual": {
+                      "distance": 156,
+                      "duration": 28,
+                      "transfers": 1,
+                      "route": [
+                        {
+                          "type": "subway",
+                          "line": "Line 1",
+                          "stops": 3
+                        },
+                        {
+                          "type": "bus",
+                          "line": "Bus 101",
+                          "stops": 2
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Bicycling mode - generated route",
+                    "input": {
+                      "mode": "bicycling",
+                      "origin_location": {
+                        "latitude": 39.9042,
+                        "longitude": 116.4074
+                      },
+                      "destination_location": {
+                        "latitude": 39.9052,
+                        "longitude": 116.4084
+                      }
+                    },
+                    "expected": "Returns generated bicycling route",
+                    "actual": {
+                      "distance": 156,
+                      "duration": 37,
+                      "route": [
+                        {
+                          "lat": 39.9042,
+                          "lng": 116.4074
+                        },
+                        {
+                          "lat": 39.904700000000005,
+                          "lng": 116.4079
+                        },
+                        {
+                          "lat": 39.9052,
+                          "lng": 116.4084
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Invalid mode - validation error",
+                    "input": {
+                      "mode": "invalid_mode",
+                      "origin_location": {
+                        "latitude": 39.9042,
+                        "longitude": 116.4074
+                      },
+                      "destination_location": {
+                        "latitude": 39.9052,
+                        "longitude": 116.4084
+                      }
+                    },
+                    "expected": "Raises validation error",
+                    "actual": "Error: Mode must be one of: 'bicycling', 'driving', 'transit', 'walking'",
+                    "passed": true,
+                    "expected_error": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "taxi_estimate",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Get taxi estimate",
+                    "input": {
+                      "origin_location": {
+                        "latitude": 39.9042,
+                        "longitude": 116.4074
+                      },
+                      "destination_location": {
+                        "latitude": 39.9052,
+                        "longitude": 116.4084
+                      }
+                    },
+                    "expected": "Returns estimate with trace_id and products",
+                    "actual": {
+                      "estimate_trace_id": "EST_1767460460_2307",
+                      "products": [
+                        {
+                          "product_category": "economy",
+                          "price": 8.312,
+                          "estimated_duration": 18
+                        },
+                        {
+                          "product_category": "comfort",
+                          "price": 12.468,
+                          "estimated_duration": 18
+                        },
+                        {
+                          "product_category": "business",
+                          "price": 20.78,
+                          "estimated_duration": 18
+                        },
+                        {
+                          "product_category": "luxury",
+                          "price": 36.248,
+                          "estimated_duration": 18
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "taxi_create_order",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Create order with valid estimate_trace_id",
+                    "input": {
+                      "estimate_trace_id": "EST_1767460460_2307",
+                      "product_category": "economy"
+                    },
+                    "expected": "Returns order_id and order details",
+                    "actual": {
+                      "order_id": "ORDER_1767460464_6820",
+                      "status": "pending",
+                      "estimated_arrival": 514,
+                      "created_at": "2026-01-04T01:14:24.038587"
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "taxi_query_order",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Query specific order by order_id",
+                    "input": {
+                      "order_id": "ORDER_1767460464_6820"
+                    },
+                    "expected": "Returns order details with driver information",
+                    "actual": {
+                      "order_id": "ORDER_1767460464_6820",
+                      "status": "accepted",
+                      "driver_name": "Driver 750",
+                      "driver_phone": "13832969840",
+                      "license_plate": "京A80010",
+                      "estimated_arrival": 514
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Query unfinished orders without order_id",
+                    "input": {},
+                    "expected": "Returns error when no unfinished orders exist",
+                    "actual": "Error: No unfinished orders found",
+                    "passed": true,
+                    "expected_error": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "taxi_get_driver_location",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Get driver location for active order",
+                    "input": {
+                      "order_id": "ORDER_1767460464_6820"
+                    },
+                    "expected": "Returns driver location coordinates",
+                    "actual": {
+                      "order_id": "ORDER_1767460464_6820",
+                      "driver_lat": "39.90068565468831",
+                      "driver_lng": "116.41276627155185",
+                      "updated_at": "2026-01-04T01:14:30.656783"
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "taxi_generate_ride_app_link",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Generate link without product_category",
+                    "input": {
+                      "origin_location": {
+                        "latitude": 39.9042,
+                        "longitude": 116.4074
+                      },
+                      "destination_location": {
+                        "latitude": 39.9052,
+                        "longitude": 116.4084
+                      }
+                    },
+                    "expected": "Returns deep link without product parameter",
+                    "actual": {
+                      "deep_link": "didirider://ride?from=39.9042,116.4074&to=39.9052,116.4084",
+                      "from_location": "39.9042,116.4074",
+                      "to_location": "39.9052,116.4084"
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Generate link with product_category",
+                    "input": {
+                      "origin_location": {
+                        "latitude": 39.9042,
+                        "longitude": 116.4074
+                      },
+                      "destination_location": {
+                        "latitude": 39.9032,
+                        "longitude": 116.4064
+                      },
+                      "product_category": "comfort"
+                    },
+                    "expected": "Returns deep link with product parameter",
+                    "actual": {
+                      "deep_link": "didirider://ride?from=39.9042,116.4074&to=39.9032,116.4064&product=comfort",
+                      "from_location": "39.9042,116.4074",
+                      "to_location": "39.9032,116.4064"
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "taxi_cancel_order",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Cancel order with reason",
+                    "input": {
+                      "order_id": "ORDER_1767460464_6820",
+                      "reason": "Changed plans"
+                    },
+                    "expected": "Returns cancellation confirmation",
+                    "actual": {
+                      "order_id": "ORDER_1767460464_6820",
+                      "cancelled_at": "2026-01-04T01:14:41.630436",
+                      "refund_status": "processing"
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario correctly reflects state changes: orders and estimates were added during testing, all original data preserved"
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 106.42360997200012
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Tool execution error",
+              "error_location": "taxi_get_driver_location",
+              "error_details": "Error executing tool taxi_get_driver_location: Driver location not available for order status: driver_assigned",
+              "expected_vs_actual": "Expected: Driver location data for order ORD001 with status 'driver_assigned'. Actual: Error indicating driver location is not available for this order status.",
+              "root_cause": "The taxi_get_driver_location tool has a business logic constraint that prevents retrieving driver location for orders with status 'driver_assigned'. This appears to be an intentional restriction in the API implementation, possibly requiring the order to be in a different status (e.g., 'driver_en_route' or 'in_progress') before driver location tracking becomes available. The scenario data includes an order with status 'driver_assigned', but the tool implementation does not support location tracking for this status.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_current_location",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_regeocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_place_around",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_direction",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "taxi_estimate",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "taxi_query_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "taxi_create_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "taxi_get_driver_location",
+                "passed": false,
+                "error": "Error executing tool taxi_get_driver_location: Driver location not available for order status: driver_assigned"
+              },
+              {
+                "tool_name": "taxi_generate_ride_app_link",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "taxi_cancel_order",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 77.09426355361938
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_current_location",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_regeocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_place_around",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_place_around_with_max_distance",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_direction_driving",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_direction_transit",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_direction_walking",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_direction_bicycling",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "taxi_estimate",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "taxi_create_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "taxi_query_order_with_id",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "taxi_query_order_without_id",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "taxi_get_driver_location",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "taxi_cancel_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "taxi_generate_ride_app_link",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 98.77589797973633
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_current_location",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_direction",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_place_around",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "maps_regeocode",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "taxi_estimate",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "taxi_create_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "taxi_query_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "taxi_get_driver_location",
+                "passed": true,
+                "error": "Driver location not available for order status: pending (Expected behavior - driver not yet assigned)"
+              },
+              {
+                "tool_name": "taxi_cancel_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "taxi_generate_ride_app_link",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 77.45945262908936
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 1,
+      "passed_scenarios": 1,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_current_location",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Get current location",
+                    "input": {},
+                    "expected": "Returns current location coordinates",
+                    "actual": {
+                      "location": {
+                        "latitude": 31.2304,
+                        "longitude": 121.4737
+                      }
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "maps_regeocode",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid location - current location",
+                    "input": {
+                      "location": {
+                        "latitude": 31.2304,
+                        "longitude": 121.4737
+                      }
+                    },
+                    "expected": "Returns address information",
+                    "actual": {
+                      "address": "People's Square, Shanghai",
+                      "province": "Shanghai",
+                      "city": "Shanghai",
+                      "district": "Huangpu",
+                      "street": "People's Square"
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid location - destination",
+                    "input": {
+                      "location": {
+                        "latitude": 31.2354,
+                        "longitude": 121.4787
+                      }
+                    },
+                    "expected": "Returns address information",
+                    "actual": {
+                      "address": "Nanjing Road Pedestrian Street",
+                      "province": "Shanghai",
+                      "city": "Shanghai",
+                      "district": "Huangpu",
+                      "street": "88 Nanjing Rd"
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "maps_direction",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid driving route",
+                    "input": {
+                      "mode": "driving",
+                      "origin_location": {
+                        "latitude": 31.2304,
+                        "longitude": 121.4737
+                      },
+                      "destination_location": {
+                        "latitude": 31.2354,
+                        "longitude": 121.4787
+                      }
+                    },
+                    "expected": "Returns route with distance, duration, and route points",
+                    "actual": {
+                      "distance": 800,
+                      "duration": 420,
+                      "transfers": null,
+                      "route": [
+                        {
+                          "lat": 31.2304,
+                          "lng": 121.4737
+                        },
+                        {
+                          "lat": 31.2329,
+                          "lng": 121.4762
+                        },
+                        {
+                          "lat": 31.2354,
+                          "lng": 121.4787
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid transit route with city",
+                    "input": {
+                      "mode": "transit",
+                      "origin_location": {
+                        "latitude": 31.2304,
+                        "longitude": 121.4737
+                      },
+                      "destination_location": {
+                        "latitude": 31.2354,
+                        "longitude": 121.4787
+                      },
+                      "city": "Shanghai"
+                    },
+                    "expected": "Returns route with transfers information",
+                    "actual": {
+                      "distance": 900,
+                      "duration": 600,
+                      "transfers": 0,
+                      "route": [
+                        {
+                          "type": "subway",
+                          "line": "Line 2",
+                          "stops": 2
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid walking route",
+                    "input": {
+                      "mode": "walking",
+                      "origin_location": {
+                        "latitude": 31.2304,
+                        "longitude": 121.4737
+                      },
+                      "destination_location": {
+                        "latitude": 31.2354,
+                        "longitude": 121.4787
+                      }
+                    },
+                    "expected": "Returns walking route",
+                    "actual": {
+                      "distance": 784,
+                      "duration": 564,
+                      "route": [
+                        {
+                          "lat": 31.2304,
+                          "lng": 121.4737
+                        },
+                        {
+                          "lat": 31.2329,
+                          "lng": 121.4762
+                        },
+                        {
+                          "lat": 31.2354,
+                          "lng": 121.4787
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Invalid mode - error case",
+                    "input": {
+                      "mode": "invalid_mode",
+                      "origin_location": {
+                        "latitude": 31.2304,
+                        "longitude": 121.4737
+                      },
+                      "destination_location": {
+                        "latitude": 31.2354,
+                        "longitude": 121.4787
+                      }
+                    },
+                    "expected": "Returns validation error",
+                    "actual": "Error: Mode must be one of: 'bicycling', 'driving', 'transit', 'walking'",
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "maps_place_around",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Search restaurants without max_distance",
+                    "input": {
+                      "keywords": "restaurant",
+                      "location": {
+                        "latitude": 31.2304,
+                        "longitude": 121.4737
+                      }
+                    },
+                    "expected": "Returns list of restaurants",
+                    "actual": {
+                      "places": [
+                        {
+                          "name": "Shanghai Dumpling House",
+                          "address": "88 Nanjing Rd, Shanghai",
+                          "location": {
+                            "latitude": 31.2354,
+                            "longitude": 121.4787
+                          },
+                          "distance": 650
+                        },
+                        {
+                          "name": "Cantonese Dim Sum",
+                          "address": "99 Huaihai Rd, Shanghai",
+                          "location": {
+                            "latitude": 31.2254,
+                            "longitude": 121.4687
+                          },
+                          "distance": 800
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Search hotels with max_distance",
+                    "input": {
+                      "keywords": "hotel",
+                      "location": {
+                        "latitude": 31.2304,
+                        "longitude": 121.4737
+                      },
+                      "max_distance": "2000"
+                    },
+                    "expected": "Returns list of hotels within distance",
+                    "actual": {
+                      "places": [
+                        {
+                          "name": "Shanghai Luxury Hotel",
+                          "address": "1 Bund Ave, Shanghai",
+                          "location": {
+                            "latitude": 31.2404,
+                            "longitude": 121.4837
+                          },
+                          "distance": 1200
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Search ATMs - empty result",
+                    "input": {
+                      "keywords": "atm",
+                      "location": {
+                        "latitude": 31.2304,
+                        "longitude": 121.4737
+                      }
+                    },
+                    "expected": "Returns empty list",
+                    "actual": {
+                      "places": []
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Empty keywords - error case",
+                    "input": {
+                      "keywords": "",
+                      "location": {
+                        "latitude": 31.2304,
+                        "longitude": 121.4737
+                      }
+                    },
+                    "expected": "Returns validation error",
+                    "actual": "Error: Keywords must be a non-empty string",
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "taxi_estimate",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid estimate request",
+                    "input": {
+                      "origin_location": {
+                        "latitude": 31.2304,
+                        "longitude": 121.4737
+                      },
+                      "destination_location": {
+                        "latitude": 31.2354,
+                        "longitude": 121.4787
+                      }
+                    },
+                    "expected": "Returns estimate with trace_id and products",
+                    "actual": {
+                      "estimate_trace_id": "EST_1767460692_8964",
+                      "products": [
+                        {
+                          "product_category": "economy",
+                          "price": 9.568,
+                          "estimated_duration": 94
+                        },
+                        {
+                          "product_category": "comfort",
+                          "price": 14.352,
+                          "estimated_duration": 94
+                        },
+                        {
+                          "product_category": "business",
+                          "price": 23.92,
+                          "estimated_duration": 94
+                        },
+                        {
+                          "product_category": "luxury",
+                          "price": 41.272,
+                          "estimated_duration": 94
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "taxi_create_order",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid order creation with phone",
+                    "input": {
+                      "estimate_trace_id": "EST001",
+                      "product_category": "express",
+                      "caller_car_phone": "+86-138-9999-8888"
+                    },
+                    "expected": "Returns order_id and status",
+                    "actual": {
+                      "order_id": "ORDER_1767460702_6955",
+                      "status": "pending",
+                      "estimated_arrival": 313,
+                      "created_at": "2026-01-04T01:18:22.955392"
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Empty estimate_trace_id - error case",
+                    "input": {
+                      "estimate_trace_id": "",
+                      "product_category": "express"
+                    },
+                    "expected": "Returns validation error",
+                    "actual": "Error: Estimate trace ID must be a non-empty string",
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "taxi_query_order",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Query specific order",
+                    "input": {
+                      "order_id": "ORD001"
+                    },
+                    "expected": "Returns order details",
+                    "actual": {
+                      "order_id": "ORD001",
+                      "status": "driver_assigned",
+                      "driver_name": "Zhang Wei",
+                      "driver_phone": "+86-138-0000-1234",
+                      "license_plate": "京A12345",
+                      "estimated_arrival": 300
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Query without order_id - returns unfinished order",
+                    "input": {},
+                    "expected": "Returns most recent unfinished order",
+                    "actual": {
+                      "order_id": "ORDER_1767460702_6955",
+                      "status": "accepted",
+                      "driver_name": "Driver 544",
+                      "driver_phone": "13895130067",
+                      "license_plate": "京A65097",
+                      "estimated_arrival": 313
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "taxi_cancel_order",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Cancel order with reason",
+                    "input": {
+                      "order_id": "ORD001",
+                      "reason": "Change of plans"
+                    },
+                    "expected": "Returns cancellation confirmation",
+                    "actual": {
+                      "order_id": "ORD001",
+                      "cancelled_at": "2026-01-04T01:18:30.204945",
+                      "refund_status": "processing"
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "taxi_get_driver_location",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Get driver location for active order",
+                    "input": {
+                      "order_id": "ORD001"
+                    },
+                    "expected": "Returns driver coordinates and timestamp",
+                    "actual": {
+                      "order_id": "ORD001",
+                      "driver_lat": "39.908662266483425",
+                      "driver_lng": "116.40515311255055",
+                      "updated_at": "2026-01-04T01:18:19.665974"
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "taxi_generate_ride_app_link",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Generate link with product category",
+                    "input": {
+                      "origin_location": {
+                        "latitude": 31.2304,
+                        "longitude": 121.4737
+                      },
+                      "destination_location": {
+                        "latitude": 31.2354,
+                        "longitude": 121.4787
+                      },
+                      "product_category": "comfort"
+                    },
+                    "expected": "Returns deep link with locations",
+                    "actual": {
+                      "deep_link": "didirider://ride?from=31.2304,121.4737&to=31.2354,121.4787&product=comfort",
+                      "from_location": "31.2304,121.4737",
+                      "to_location": "31.2354,121.4787"
+                    },
+                    "passed": true
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "differences": {
+                "expected_changes": [
+                  "ORD001 status changed from 'driver_assigned' to 'cancelled' (due to taxi_cancel_order)",
+                  "New order ORDER_1767460702_6955 added (due to taxi_create_order)",
+                  "New estimate EST_1767460692_8964 added (due to taxi_estimate)"
+                ],
+                "all_changes_expected": true
+              },
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 99.652761220932
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_002"
+      ],
+      "aggregated_errors": {
+        "common_errors": [],
+        "scenario_specific_errors": [
+          {
+            "scenario_id": "scenario_002",
+            "complexity_level": "medium",
+            "errors": [
+              {
+                "error_type": "Tool execution error",
+                "error_location": "taxi_get_driver_location",
+                "error_details": "Error executing tool taxi_get_driver_location: Driver location not available for order status: driver_assigned",
+                "expected_vs_actual": "Expected: Driver location data for order ORD001 with status 'driver_assigned'. Actual: Error indicating driver location is not available for this order status.",
+                "root_cause": "The taxi_get_driver_location tool has a business logic constraint that prevents retrieving driver location for orders with status 'driver_assigned'. This appears to be an intentional restriction in the API implementation, possibly requiring the order to be in a different status (e.g., 'driver_en_route' or 'in_progress') before driver location tracking becomes available. The scenario data includes an order with status 'driver_assigned', but the tool implementation does not support location tracking for this status.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_current_location",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "maps_regeocode",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "maps_place_around",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "maps_direction",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "taxi_estimate",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "taxi_query_order",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "taxi_create_order",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "taxi_get_driver_location",
+                  "passed": false,
+                  "error": "Error executing tool taxi_get_driver_location: Driver location not available for order status: driver_assigned"
+                },
+                {
+                  "tool_name": "taxi_generate_ride_app_link",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "taxi_cancel_order",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              },
+              "summary": {}
+            }
+          }
+        ],
+        "error_by_tool": {
+          "taxi_get_driver_location": [
+            {
+              "scenario_id": "scenario_002",
+              "complexity_level": "medium",
+              "error": {
+                "error_type": "Tool execution error",
+                "error_location": "taxi_get_driver_location",
+                "error_details": "Error executing tool taxi_get_driver_location: Driver location not available for order status: driver_assigned",
+                "expected_vs_actual": "Expected: Driver location data for order ORD001 with status 'driver_assigned'. Actual: Error indicating driver location is not available for this order status.",
+                "root_cause": "The taxi_get_driver_location tool has a business logic constraint that prevents retrieving driver location for orders with status 'driver_assigned'. This appears to be an intentional restriction in the API implementation, possibly requiring the order to be in a different status (e.g., 'driver_en_route' or 'in_progress') before driver location tracking becomes available. The scenario data includes an order with status 'driver_assigned', but the tool implementation does not support location tracking for this status.",
+                "expected_error": false
+              }
+            }
+          ]
+        },
+        "error_categories": {
+          "critical_load_failures": [],
+          "critical_schema_mismatches": [],
+          "high_tool_logic_errors": [
+            {
+              "error_type": "Tool execution error",
+              "error_location": "taxi_get_driver_location",
+              "error_details": "Error executing tool taxi_get_driver_location: Driver location not available for order status: driver_assigned",
+              "expected_vs_actual": "Expected: Driver location data for order ORD001 with status 'driver_assigned'. Actual: Error indicating driver location is not available for this order status.",
+              "root_cause": "The taxi_get_driver_location tool has a business logic constraint that prevents retrieving driver location for orders with status 'driver_assigned'. This appears to be an intentional restriction in the API implementation, possibly requiring the order to be in a different status (e.g., 'driver_en_route' or 'in_progress') before driver location tracking becomes available. The scenario data includes an order with status 'driver_assigned', but the tool implementation does not support location tracking for this status.",
+              "expected_error": false,
+              "severity": "HIGH"
+            }
+          ],
+          "medium_state_errors": [],
+          "low_edge_case_failures": []
+        },
+        "severity_summary": {
+          "critical": 0,
+          "high": 1,
+          "medium": 0,
+          "low": 0
+        },
+        "total_failed_scenarios": 1,
+        "expected_failures": 0,
+        "unexpected_failures": 1
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 1,
+        "passed_scenarios": 1,
+        "failed_scenarios": 0,
+        "all_passed": true,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_002",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_current_location",
+                  "passed": true,
+                  "test_cases": [
+                    {
+                      "description": "Get current location",
+                      "input": {},
+                      "expected": "Returns current location coordinates",
+                      "actual": {
+                        "location": {
+                          "latitude": 31.2304,
+                          "longitude": 121.4737
+                        }
+                      },
+                      "passed": true
+                    }
+                  ],
+                  "error": null
+                },
+                {
+                  "tool_name": "maps_regeocode",
+                  "passed": true,
+                  "test_cases": [
+                    {
+                      "description": "Valid location - current location",
+                      "input": {
+                        "location": {
+                          "latitude": 31.2304,
+                          "longitude": 121.4737
+                        }
+                      },
+                      "expected": "Returns address information",
+                      "actual": {
+                        "address": "People's Square, Shanghai",
+                        "province": "Shanghai",
+                        "city": "Shanghai",
+                        "district": "Huangpu",
+                        "street": "People's Square"
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Valid location - destination",
+                      "input": {
+                        "location": {
+                          "latitude": 31.2354,
+                          "longitude": 121.4787
+                        }
+                      },
+                      "expected": "Returns address information",
+                      "actual": {
+                        "address": "Nanjing Road Pedestrian Street",
+                        "province": "Shanghai",
+                        "city": "Shanghai",
+                        "district": "Huangpu",
+                        "street": "88 Nanjing Rd"
+                      },
+                      "passed": true
+                    }
+                  ],
+                  "error": null
+                },
+                {
+                  "tool_name": "maps_direction",
+                  "passed": true,
+                  "test_cases": [
+                    {
+                      "description": "Valid driving route",
+                      "input": {
+                        "mode": "driving",
+                        "origin_location": {
+                          "latitude": 31.2304,
+                          "longitude": 121.4737
+                        },
+                        "destination_location": {
+                          "latitude": 31.2354,
+                          "longitude": 121.4787
+                        }
+                      },
+                      "expected": "Returns route with distance, duration, and route points",
+                      "actual": {
+                        "distance": 800,
+                        "duration": 420,
+                        "transfers": null,
+                        "route": [
+                          {
+                            "lat": 31.2304,
+                            "lng": 121.4737
+                          },
+                          {
+                            "lat": 31.2329,
+                            "lng": 121.4762
+                          },
+                          {
+                            "lat": 31.2354,
+                            "lng": 121.4787
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Valid transit route with city",
+                      "input": {
+                        "mode": "transit",
+                        "origin_location": {
+                          "latitude": 31.2304,
+                          "longitude": 121.4737
+                        },
+                        "destination_location": {
+                          "latitude": 31.2354,
+                          "longitude": 121.4787
+                        },
+                        "city": "Shanghai"
+                      },
+                      "expected": "Returns route with transfers information",
+                      "actual": {
+                        "distance": 900,
+                        "duration": 600,
+                        "transfers": 0,
+                        "route": [
+                          {
+                            "type": "subway",
+                            "line": "Line 2",
+                            "stops": 2
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Valid walking route",
+                      "input": {
+                        "mode": "walking",
+                        "origin_location": {
+                          "latitude": 31.2304,
+                          "longitude": 121.4737
+                        },
+                        "destination_location": {
+                          "latitude": 31.2354,
+                          "longitude": 121.4787
+                        }
+                      },
+                      "expected": "Returns walking route",
+                      "actual": {
+                        "distance": 784,
+                        "duration": 564,
+                        "route": [
+                          {
+                            "lat": 31.2304,
+                            "lng": 121.4737
+                          },
+                          {
+                            "lat": 31.2329,
+                            "lng": 121.4762
+                          },
+                          {
+                            "lat": 31.2354,
+                            "lng": 121.4787
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Invalid mode - error case",
+                      "input": {
+                        "mode": "invalid_mode",
+                        "origin_location": {
+                          "latitude": 31.2304,
+                          "longitude": 121.4737
+                        },
+                        "destination_location": {
+                          "latitude": 31.2354,
+                          "longitude": 121.4787
+                        }
+                      },
+                      "expected": "Returns validation error",
+                      "actual": "Error: Mode must be one of: 'bicycling', 'driving', 'transit', 'walking'",
+                      "passed": true
+                    }
+                  ],
+                  "error": null
+                },
+                {
+                  "tool_name": "maps_place_around",
+                  "passed": true,
+                  "test_cases": [
+                    {
+                      "description": "Search restaurants without max_distance",
+                      "input": {
+                        "keywords": "restaurant",
+                        "location": {
+                          "latitude": 31.2304,
+                          "longitude": 121.4737
+                        }
+                      },
+                      "expected": "Returns list of restaurants",
+                      "actual": {
+                        "places": [
+                          {
+                            "name": "Shanghai Dumpling House",
+                            "address": "88 Nanjing Rd, Shanghai",
+                            "location": {
+                              "latitude": 31.2354,
+                              "longitude": 121.4787
+                            },
+                            "distance": 650
+                          },
+                          {
+                            "name": "Cantonese Dim Sum",
+                            "address": "99 Huaihai Rd, Shanghai",
+                            "location": {
+                              "latitude": 31.2254,
+                              "longitude": 121.4687
+                            },
+                            "distance": 800
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Search hotels with max_distance",
+                      "input": {
+                        "keywords": "hotel",
+                        "location": {
+                          "latitude": 31.2304,
+                          "longitude": 121.4737
+                        },
+                        "max_distance": "2000"
+                      },
+                      "expected": "Returns list of hotels within distance",
+                      "actual": {
+                        "places": [
+                          {
+                            "name": "Shanghai Luxury Hotel",
+                            "address": "1 Bund Ave, Shanghai",
+                            "location": {
+                              "latitude": 31.2404,
+                              "longitude": 121.4837
+                            },
+                            "distance": 1200
+                          }
+                        ]
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Search ATMs - empty result",
+                      "input": {
+                        "keywords": "atm",
+                        "location": {
+                          "latitude": 31.2304,
+                          "longitude": 121.4737
+                        }
+                      },
+                      "expected": "Returns empty list",
+                      "actual": {
+                        "places": []
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Empty keywords - error case",
+                      "input": {
+                        "keywords": "",
+                        "location": {
+                          "latitude": 31.2304,
+                          "longitude": 121.4737
+                        }
+                      },
+                      "expected": "Returns validation error",
+                      "actual": "Error: Keywords must be a non-empty string",
+                      "passed": true
+                    }
+                  ],
+                  "error": null
+                },
+                {
+                  "tool_name": "taxi_estimate",
+                  "passed": true,
+                  "test_cases": [
+                    {
+                      "description": "Valid estimate request",
+                      "input": {
+                        "origin_location": {
+                          "latitude": 31.2304,
+                          "longitude": 121.4737
+                        },
+                        "destination_location": {
+                          "latitude": 31.2354,
+                          "longitude": 121.4787
+                        }
+                      },
+                      "expected": "Returns estimate with trace_id and products",
+                      "actual": {
+                        "estimate_trace_id": "EST_1767460692_8964",
+                        "products": [
+                          {
+                            "product_category": "economy",
+                            "price": 9.568,
+                            "estimated_duration": 94
+                          },
+                          {
+                            "product_category": "comfort",
+                            "price": 14.352,
+                            "estimated_duration": 94
+                          },
+                          {
+                            "product_category": "business",
+                            "price": 23.92,
+                            "estimated_duration": 94
+                          },
+                          {
+                            "product_category": "luxury",
+                            "price": 41.272,
+                            "estimated_duration": 94
+                          }
+                        ]
+                      },
+                      "passed": true
+                    }
+                  ],
+                  "error": null
+                },
+                {
+                  "tool_name": "taxi_create_order",
+                  "passed": true,
+                  "test_cases": [
+                    {
+                      "description": "Valid order creation with phone",
+                      "input": {
+                        "estimate_trace_id": "EST001",
+                        "product_category": "express",
+                        "caller_car_phone": "+86-138-9999-8888"
+                      },
+                      "expected": "Returns order_id and status",
+                      "actual": {
+                        "order_id": "ORDER_1767460702_6955",
+                        "status": "pending",
+                        "estimated_arrival": 313,
+                        "created_at": "2026-01-04T01:18:22.955392"
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Empty estimate_trace_id - error case",
+                      "input": {
+                        "estimate_trace_id": "",
+                        "product_category": "express"
+                      },
+                      "expected": "Returns validation error",
+                      "actual": "Error: Estimate trace ID must be a non-empty string",
+                      "passed": true
+                    }
+                  ],
+                  "error": null
+                },
+                {
+                  "tool_name": "taxi_query_order",
+                  "passed": true,
+                  "test_cases": [
+                    {
+                      "description": "Query specific order",
+                      "input": {
+                        "order_id": "ORD001"
+                      },
+                      "expected": "Returns order details",
+                      "actual": {
+                        "order_id": "ORD001",
+                        "status": "driver_assigned",
+                        "driver_name": "Zhang Wei",
+                        "driver_phone": "+86-138-0000-1234",
+                        "license_plate": "京A12345",
+                        "estimated_arrival": 300
+                      },
+                      "passed": true
+                    },
+                    {
+                      "description": "Query without order_id - returns unfinished order",
+                      "input": {},
+                      "expected": "Returns most recent unfinished order",
+                      "actual": {
+                        "order_id": "ORDER_1767460702_6955",
+                        "status": "accepted",
+                        "driver_name": "Driver 544",
+                        "driver_phone": "13895130067",
+                        "license_plate": "京A65097",
+                        "estimated_arrival": 313
+                      },
+                      "passed": true
+                    }
+                  ],
+                  "error": null
+                },
+                {
+                  "tool_name": "taxi_cancel_order",
+                  "passed": true,
+                  "test_cases": [
+                    {
+                      "description": "Cancel order with reason",
+                      "input": {
+                        "order_id": "ORD001",
+                        "reason": "Change of plans"
+                      },
+                      "expected": "Returns cancellation confirmation",
+                      "actual": {
+                        "order_id": "ORD001",
+                        "cancelled_at": "2026-01-04T01:18:30.204945",
+                        "refund_status": "processing"
+                      },
+                      "passed": true
+                    }
+                  ],
+                  "error": null
+                },
+                {
+                  "tool_name": "taxi_get_driver_location",
+                  "passed": true,
+                  "test_cases": [
+                    {
+                      "description": "Get driver location for active order",
+                      "input": {
+                        "order_id": "ORD001"
+                      },
+                      "expected": "Returns driver coordinates and timestamp",
+                      "actual": {
+                        "order_id": "ORD001",
+                        "driver_lat": "39.908662266483425",
+                        "driver_lng": "116.40515311255055",
+                        "updated_at": "2026-01-04T01:18:19.665974"
+                      },
+                      "passed": true
+                    }
+                  ],
+                  "error": null
+                },
+                {
+                  "tool_name": "taxi_generate_ride_app_link",
+                  "passed": true,
+                  "test_cases": [
+                    {
+                      "description": "Generate link with product category",
+                      "input": {
+                        "origin_location": {
+                          "latitude": 31.2304,
+                          "longitude": 121.4737
+                        },
+                        "destination_location": {
+                          "latitude": 31.2354,
+                          "longitude": 121.4787
+                        },
+                        "product_category": "comfort"
+                      },
+                      "expected": "Returns deep link with locations",
+                      "actual": {
+                        "deep_link": "didirider://ride?from=31.2304,121.4737&to=31.2354,121.4787&product=comfort",
+                        "from_location": "31.2304,121.4737",
+                        "to_location": "31.2354,121.4787"
+                      },
+                      "passed": true
+                    }
+                  ],
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "differences": {
+                  "expected_changes": [
+                    "ORD001 status changed from 'driver_assigned' to 'cancelled' (due to taxi_cancel_order)",
+                    "New order ORDER_1767460702_6955 added (due to taxi_create_order)",
+                    "New estimate EST_1767460692_8964 added (due to taxi_estimate)"
+                  ],
+                  "all_changes_expected": true
+                },
+                "error": null
+              },
+              "summary": {}
+            },
+            "complexity_level": "medium",
+            "execution_time": 99.652761220932
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 1,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/Didi.py"
+  }
+}

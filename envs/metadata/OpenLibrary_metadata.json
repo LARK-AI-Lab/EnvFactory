@@ -1,0 +1,301 @@
+{
+  "class_name": "OpenLibrary",
+  "description": "Provides programmatic access to the Open Library catalog for searching books, authors, and retrieving cover images.",
+  "tools": [
+    {
+      "name": "get_book_by_title",
+      "description": "Search the Open Library catalog for books matching the provided title and return the best matches.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The book title to search for in the Open Library catalog."
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The original search title used for the query."
+          },
+          "matches": {
+            "type": "array",
+            "description": "List of catalog entries that match the search title.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "Open Library unique key for this book edition."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The title of the matched book."
+                },
+                "author_name": {
+                  "type": "array",
+                  "description": "List of author names associated with this book.",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "first_publish_year": {
+                  "type": "integer",
+                  "description": "Year of the first known publication of this work."
+                },
+                "isbn": {
+                  "type": "array",
+                  "description": "List of ISBNs linked to this edition.",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "cover_i": {
+                  "type": "integer",
+                  "description": "Internal cover image identifier used by Open Library."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_book_by_id",
+      "description": "Retrieve detailed metadata for a specific book using an ISBN, LCCN, OCLC, or Open Library ID.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "description": "The book identifier value (ISBN, LCCN, OCLC, or OLID)."
+          },
+          "identifier_type": {
+            "type": "string",
+            "description": "Type of identifier provided: 'isbn', 'lccn', 'oclc', or 'olid'. Defaults to 'isbn'.",
+            "default": "isbn"
+          }
+        },
+        "required": [
+          "identifier"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The full title of the book."
+          },
+          "authors": {
+            "type": "array",
+            "description": "List of authors credited for this work.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Author's display name."
+                },
+                "key": {
+                  "type": "string",
+                  "description": "Open Library author key."
+                }
+              }
+            }
+          },
+          "publishers": {
+            "type": "array",
+            "description": "Names of publishers that released this edition.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "publish_date": {
+            "type": "string",
+            "description": "Publication date as a human-readable string."
+          },
+          "covers": {
+            "type": "array",
+            "description": "List of internal cover image identifiers.",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "identifiers": {
+            "type": "object",
+            "description": "Dictionary mapping identifier types to their values."
+          },
+          "key": {
+            "type": "string",
+            "description": "Open Library unique key for this book edition."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_authors_by_name",
+      "description": "Search Open Library for authors whose names contain the provided query string.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Author name or partial name to search for."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of author records to return. Defaults to 10.",
+            "default": 10
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "authors": {
+            "type": "array",
+            "description": "List of authors matching the search query.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "Open Library unique author key."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Author's primary name."
+                },
+                "birth_date": {
+                  "type": "string",
+                  "description": "Birth date in human-readable format."
+                },
+                "top_work": {
+                  "type": "string",
+                  "description": "Most widely held work by this author."
+                },
+                "work_count": {
+                  "type": "integer",
+                  "description": "Total number of works cataloged for this author."
+                }
+              }
+            }
+          },
+          "count": {
+            "type": "integer",
+            "description": "Total number of authors returned in this response."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_author_info",
+      "description": "Fetch comprehensive biographical and bibliographical data for a specific author.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "author_key": {
+            "type": "string",
+            "description": "Open Library author key (e.g., 'OL23919A' or '/authors/OL23919A')."
+          }
+        },
+        "required": [
+          "author_key"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Open Library unique author key."
+          },
+          "name": {
+            "type": "string",
+            "description": "Author's full name."
+          },
+          "bio": {
+            "type": "string",
+            "description": "Biographical summary for the author."
+          },
+          "birth_date": {
+            "type": "string",
+            "description": "Birth date in human-readable format."
+          },
+          "death_date": {
+            "type": "string",
+            "description": "Death date in human-readable format, if applicable."
+          },
+          "photos": {
+            "type": "array",
+            "description": "List of internal photo identifiers for author images.",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "wikipedia": {
+            "type": "string",
+            "description": "URL to the author's Wikipedia page, if available."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_book_cover",
+      "description": "Generate a direct URL to a book's cover image hosted by Open Library.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "description": "ISBN, OCLC, LCCN, OLID, or cover ID whose cover image is requested."
+          },
+          "identifier_type": {
+            "type": "string",
+            "description": "Type of identifier supplied: 'isbn', 'oclc', 'lccn', 'olid', or 'id'. Defaults to 'isbn'.",
+            "default": "isbn"
+          },
+          "size": {
+            "type": "string",
+            "description": "Requested cover size: 'S' (small), 'M' (medium), or 'L' (large). Defaults to 'M'.",
+            "default": "M"
+          }
+        },
+        "required": [
+          "identifier"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Direct URL to the cover image on Open Library's servers."
+          },
+          "identifier": {
+            "type": "string",
+            "description": "The identifier value used to locate the cover."
+          },
+          "identifier_type": {
+            "type": "string",
+            "description": "The identifier type that was used in the request."
+          },
+          "size": {
+            "type": "string",
+            "description": "Size parameter used to generate the cover image URL."
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,2097 @@
+{
+  "metadata": {
+    "class_name": "HackerNews",
+    "metadata_path": "envs\\metadata\\HackerNews_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-03T22:16:13.762107",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "HackerNews",
+    "description": "A server for interacting with Hacker News data, providing capabilities to search content, retrieve categorized stories, fetch story details with comments, and access user profiles and submissions.",
+    "tools": [
+      {
+        "name": "search",
+        "description": "Search for stories and comments on Hacker News using Algolia's search API. Use this tool when you need to search by keywords or specific terms.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "The search query containing keywords to search for in Hacker News stories and comments."
+            },
+            "content_type": {
+              "type": "string",
+              "description": "Filter results by content type. Valid values are 'story' or 'comment'."
+            },
+            "page": {
+              "type": "integer",
+              "description": "Page number for pagination when retrieving search results."
+            },
+            "hits_per_page": {
+              "type": "integer",
+              "description": "Number of results to return per page (maximum 100)."
+            }
+          },
+          "required": [
+            "query"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "hits": {
+              "type": "array",
+              "description": "List of search results matching the query.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "story_id": {
+                    "type": "integer",
+                    "description": "The unique identifier of the Hacker News story."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The title of the story."
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "The URL link to the story's external content."
+                  },
+                  "author": {
+                    "type": "string",
+                    "description": "The username of the user who submitted the story."
+                  },
+                  "points": {
+                    "type": "integer",
+                    "description": "The score of the story based on upvotes."
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "description": "The timestamp when the story was submitted."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "getStories",
+        "description": "Get multiple stories by category type without searching. Use this tool to fetch pre-categorized story lists such as top, new, best, ask, show, or job stories.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "story_type": {
+              "type": "string",
+              "description": "The category of stories to fetch. Valid values are 'top', 'new', 'best', 'ask', 'show', or 'job'."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Number of stories to fetch (maximum 100)."
+            }
+          },
+          "required": [
+            "story_type"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "stories": {
+              "type": "array",
+              "description": "List of stories in the requested category.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "story_id": {
+                    "type": "integer",
+                    "description": "The unique identifier of the Hacker News story."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The title of the story."
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "The URL link to the story's external content."
+                  },
+                  "author": {
+                    "type": "string",
+                    "description": "The username of the user who submitted the story."
+                  },
+                  "points": {
+                    "type": "integer",
+                    "description": "The score of the story based on upvotes."
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "description": "The timestamp when the story was submitted."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "getStoryWithComments",
+        "description": "Get a story along with its comment thread. Retrieves full story details and associated comments with configurable depth and count limits.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "story_id": {
+              "type": "integer",
+              "description": "The unique identifier of the Hacker News story."
+            },
+            "max_depth": {
+              "type": "integer",
+              "description": "Maximum depth of the comment tree to retrieve for nested replies."
+            },
+            "max_comments": {
+              "type": "integer",
+              "description": "Maximum number of comments to return."
+            }
+          },
+          "required": [
+            "story_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "story_id": {
+              "type": "integer",
+              "description": "The unique identifier of the Hacker News story."
+            },
+            "title": {
+              "type": "string",
+              "description": "The title of the story."
+            },
+            "url": {
+              "type": "string",
+              "description": "The URL link to the story's external content."
+            },
+            "author": {
+              "type": "string",
+              "description": "The username of the user who submitted the story."
+            },
+            "points": {
+              "type": "integer",
+              "description": "The score of the story based on upvotes."
+            },
+            "created_at": {
+              "type": "string",
+              "description": "The timestamp when the story was submitted."
+            },
+            "comments": {
+              "type": "array",
+              "description": "List of comments associated with the story.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "comment_id": {
+                    "type": "integer",
+                    "description": "The unique identifier of the comment."
+                  },
+                  "author": {
+                    "type": "string",
+                    "description": "The username of the user who wrote the comment."
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "The text content of the comment."
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "description": "The timestamp when the comment was posted."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "getUser",
+        "description": "Get a user's profile information including karma, account creation date, and bio.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "user_id": {
+              "type": "string",
+              "description": "The username (user ID) of the Hacker News user."
+            }
+          },
+          "required": [
+            "user_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "user_id": {
+              "type": "string",
+              "description": "The username (user ID) of the Hacker News user."
+            },
+            "karma": {
+              "type": "integer",
+              "description": "The user's karma points, a reputation score based on upvotes received on submissions and comments."
+            },
+            "created": {
+              "type": "string",
+              "description": "The timestamp when the user account was created."
+            },
+            "about": {
+              "type": "string",
+              "description": "The user's self-written bio or about section."
+            }
+          }
+        }
+      },
+      {
+        "name": "getUserSubmissions",
+        "description": "Get a user's submissions including both stories and comments they have posted.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "user_id": {
+              "type": "string",
+              "description": "The username (user ID) of the Hacker News user."
+            }
+          },
+          "required": [
+            "user_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "submissions": {
+              "type": "array",
+              "description": "List of submissions (stories and comments) by the user.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "story_id": {
+                    "type": "integer",
+                    "description": "The unique identifier of the submission (story_id for stories, comment_id for comments)."
+                  },
+                  "submission_type": {
+                    "type": "string",
+                    "description": "The type of submission, either 'story' or 'comment'."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The title of the submission (applicable for stories)."
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "The URL link to the submission's external content."
+                  },
+                  "points": {
+                    "type": "integer",
+                    "description": "The score of the submission based on upvotes."
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "description": "The timestamp when the submission was posted."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Story(BaseModel):\n    \"\"\"Represents a Hacker News story.\"\"\"\n    story_id: int = Field(..., ge=0, description=\"The unique identifier of the Hacker News story\")\n    title: str = Field(..., description=\"The title of the story\")\n    url: Optional[str] = Field(None, description=\"The URL link to the story's external content\")\n    author: str = Field(..., description=\"The username of the user who submitted the story\")\n    points: int = Field(..., ge=0, description=\"The score of the story based on upvotes\")\n    created_at: str = Field(..., description=\"The timestamp when the story was submitted\")\n\nclass Comment(BaseModel):\n    \"\"\"Represents a Hacker News comment.\"\"\"\n    comment_id: int = Field(..., ge=0, description=\"The unique identifier of the comment\")\n    author: str = Field(..., description=\"The username of the user who wrote the comment\")\n    text: str = Field(..., description=\"The text content of the comment\")\n    created_at: str = Field(..., description=\"The timestamp when the comment was posted\")\n\nclass User(BaseModel):\n    \"\"\"Represents a Hacker News user.\"\"\"\n    user_id: str = Field(..., description=\"The username (user ID) of the Hacker News user\")\n    karma: int = Field(..., ge=0, description=\"The user's karma points\")\n    created: str = Field(..., description=\"The timestamp when the user account was created\")\n    about: Optional[str] = Field(None, description=\"The user's self-written bio or about section\")\n\nclass Submission(BaseModel):\n    \"\"\"Represents a user submission (story or comment).\"\"\"\n    story_id: int = Field(..., ge=0, description=\"The unique identifier of the submission\")\n    submission_type: str = Field(..., pattern=r\"^(story|comment)$\", description=\"The type of submission\")\n    title: Optional[str] = Field(None, description=\"The title of the submission (applicable for stories)\")\n    url: Optional[str] = Field(None, description=\"The URL link to the submission's external content\")\n    points: int = Field(..., ge=0, description=\"The score of the submission based on upvotes\")\n    created_at: str = Field(..., description=\"The timestamp when the submission was posted\")\n\nclass HackerNewsScenario(BaseModel):\n    \"\"\"Main scenario model for Hacker News data.\"\"\"\n    stories: Dict[int, Story] = Field(default={}, description=\"Stories stored by ID\")\n    comments: Dict[int, Comment] = Field(default={}, description=\"Comments stored by ID\")\n    users: Dict[str, User] = Field(default={}, description=\"Users stored by username\")\n    submissions: Dict[str, List[Submission]] = Field(default={}, description=\"User submissions by username\")\n    searchResults: Dict[str, List[Story]] = Field(default={}, description=\"Search results by query\")\n    categorizedStories: Dict[str, List[Story]] = Field(default={}, description=\"Stories by category type\")\n\nScenario_Schema = [Story, Comment, User, Submission, HackerNewsScenario]\n\n# Section 2: Class\nclass HackerNewsAPI:\n    def __init__(self):\n        \"\"\"Initialize Hacker News API with empty state.\"\"\"\n        self.stories: Dict[int, Story] = {}\n        self.comments: Dict[int, Comment] = {}\n        self.users: Dict[str, User] = {}\n        self.submissions: Dict[str, List[Submission]] = {}\n        self.searchResults: Dict[str, List[Story]] = {}\n        self.categorizedStories: Dict[str, List[Story]] = {}\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = HackerNewsScenario(**scenario)\n        self.stories = model.stories\n        self.comments = model.comments\n        self.users = model.users\n        self.submissions = model.submissions\n        self.searchResults = model.searchResults\n        self.categorizedStories = model.categorizedStories\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"stories\": {story_id: story.dict() for story_id, story in self.stories.items()},\n            \"comments\": {comment_id: comment.dict() for comment_id, comment in self.comments.items()},\n            \"users\": {user_id: user.dict() for user_id, user in self.users.items()},\n            \"submissions\": {user_id: [sub.dict() for sub in subs] for user_id, subs in self.submissions.items()},\n            \"searchResults\": {query: [story.dict() for story in stories] for query, stories in self.searchResults.items()},\n            \"categorizedStories\": {category: [story.dict() for story in stories] for category, stories in self.categorizedStories.items()}\n        }\n\n    def search(self, query: str, content_type: Optional[str] = None, page: Optional[int] = None, hits_per_page: Optional[int] = None) -> dict:\n        \"\"\"Search for stories and comments.\"\"\"\n        if query in self.searchResults:\n            return {\"hits\": self.searchResults[query]}\n        return {\"hits\": []}\n\n    def getStories(self, story_type: str, limit: Optional[int] = None) -> dict:\n        \"\"\"Get multiple stories by category type.\"\"\"\n        if story_type in self.categorizedStories:\n            stories = self.categorizedStories[story_type]\n            if limit and limit > 0:\n                stories = stories[:limit]\n            return {\"stories\": stories}\n        return {\"stories\": []}\n\n    def getStoryWithComments(self, story_id: int, max_depth: Optional[int] = None, max_comments: Optional[int] = None) -> dict:\n        \"\"\"Get a story along with its comment thread.\"\"\"\n        if story_id in self.stories:\n            story = self.stories[story_id]\n            comments = []\n            if max_comments and max_comments > 0:\n                # Filter comments for this story (simplified - in real implementation would filter by story_id)\n                all_comments = list(self.comments.values())\n                comments = all_comments[:max_comments]\n            else:\n                comments = list(self.comments.values())\n            \n            return {\n                \"story_id\": story.story_id,\n                \"title\": story.title,\n                \"url\": story.url,\n                \"author\": story.author,\n                \"points\": story.points,\n                \"created_at\": story.created_at,\n                \"comments\": comments\n            }\n        return {}\n\n    def getUser(self, user_id: str) -> dict:\n        \"\"\"Get a user's profile information.\"\"\"\n        if user_id in self.users:\n            user = self.users[user_id]\n            return {\n                \"user_id\": user.user_id,\n                \"karma\": user.karma,\n                \"created\": user.created,\n                \"about\": user.about\n            }\n        return {}\n\n    def getUserSubmissions(self, user_id: str) -> dict:\n        \"\"\"Get a user's submissions including both stories and comments.\"\"\"\n        if user_id in self.submissions:\n            return {\"submissions\": self.submissions[user_id]}\n        return {\"submissions\": []}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"HackerNews\")\napi = HackerNewsAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"Load scenario data into the Hacker News API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching HackerNewsScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"Save current Hacker News state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search(query: str, content_type: Optional[str] = None, page: Optional[int] = None, hits_per_page: Optional[int] = None) -> dict:\n    \"\"\"Search for stories and comments on Hacker News using Algolia's search API.\n    \n    Args:\n        query (str): The search query containing keywords to search for in Hacker News stories and comments.\n        content_type (str) [Optional]: Filter results by content type. Valid values are 'story' or 'comment'.\n        page (int) [Optional]: Page number for pagination when retrieving search results.\n        hits_per_page (int) [Optional]: Number of results to return per page (maximum 100).\n    \n    Returns:\n        hits (list): List of search results matching the query.\n    \"\"\"\n    try:\n        if not query or not isinstance(query, str):\n            raise ValueError(\"Query must be a non-empty string\")\n        return api.search(query, content_type, page, hits_per_page)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef getStories(story_type: str, limit: Optional[int] = None) -> dict:\n    \"\"\"Get multiple stories by category type without searching.\n    \n    Args:\n        story_type (str): The category of stories to fetch. Valid values are 'top', 'new', 'best', 'ask', 'show', or 'job'.\n        limit (int) [Optional]: Number of stories to fetch (maximum 100).\n    \n    Returns:\n        stories (list): List of stories in the requested category.\n    \"\"\"\n    try:\n        if not story_type or not isinstance(story_type, str):\n            raise ValueError(\"Story type must be a non-empty string\")\n        if story_type not in ['top', 'new', 'best', 'ask', 'show', 'job']:\n            raise ValueError(\"Invalid story type. Must be one of: top, new, best, ask, show, job\")\n        return api.getStories(story_type, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef getStoryWithComments(story_id: int, max_depth: Optional[int] = None, max_comments: Optional[int] = None) -> dict:\n    \"\"\"Get a story along with its comment thread.\n    \n    Args:\n        story_id (int): The unique identifier of the Hacker News story.\n        max_depth (int) [Optional]: Maximum depth of the comment tree to retrieve for nested replies.\n        max_comments (int) [Optional]: Maximum number of comments to return.\n    \n    Returns:\n        story_id (int): The unique identifier of the Hacker News story.\n        title (str): The title of the story.\n        url (str): The URL link to the story's external content.\n        author (str): The username of the user who submitted the story.\n        points (int): The score of the story based on upvotes.\n        created_at (str): The timestamp when the story was submitted.\n        comments (list): List of comments associated with the story.\n    \"\"\"\n    try:\n        if story_id not in api.stories:\n            raise ValueError(f\"Story {story_id} not found\")\n        return api.getStoryWithComments(story_id, max_depth, max_comments)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef getUser(user_id: str) -> dict:\n    \"\"\"Get a user's profile information including karma, account creation date, and bio.\n    \n    Args:\n        user_id (str): The username (user ID) of the Hacker News user.\n    \n    Returns:\n        user_id (str): The username (user ID) of the Hacker News user.\n        karma (int): The user's karma points, a reputation score based on upvotes received on submissions and comments.\n        created (str): The timestamp when the user account was created.\n        about (str): The user's self-written bio or about section.\n    \"\"\"\n    try:\n        if not user_id or not isinstance(user_id, str):\n            raise ValueError(\"User ID must be a non-empty string\")\n        if user_id not in api.users:\n            raise ValueError(f\"User {user_id} not found\")\n        return api.getUser(user_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef getUserSubmissions(user_id: str) -> dict:\n    \"\"\"Get a user's submissions including both stories and comments they have posted.\n    \n    Args:\n        user_id (str): The username (user ID) of the Hacker News user.\n    \n    Returns:\n        submissions (list): List of submissions (stories and comments) by the user.\n    \"\"\"\n    try:\n        if not user_id or not isinstance(user_id, str):\n            raise ValueError(\"User ID must be a non-empty string\")\n        if user_id not in api.submissions:\n            raise ValueError(f\"User {user_id} has no submissions\")\n        return api.getUserSubmissions(user_id)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-03T22:16:13.762107",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with one story, one comment, and one user",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "stories": {
+          "1": {
+            "story_id": 1,
+            "title": "Show HN: My First Project",
+            "url": "https://example.com/project",
+            "author": "johndoe",
+            "points": 42,
+            "created_at": "2024-01-15T10:30:00Z"
+          }
+        },
+        "comments": {
+          "101": {
+            "comment_id": 101,
+            "author": "janedoe",
+            "text": "Great work! This looks really promising.",
+            "created_at": "2024-01-15T11:00:00Z"
+          }
+        },
+        "users": {
+          "johndoe": {
+            "user_id": "johndoe",
+            "karma": 150,
+            "created": "2023-06-01T08:00:00Z",
+            "about": "Software developer interested in web technologies"
+          }
+        },
+        "submissions": {},
+        "searchResults": {},
+        "categorizedStories": {}
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Moderate scenario with multiple stories, comments, users, and search results",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "stories": {
+          "1001": {
+            "story_id": 1001,
+            "title": "The Future of AI in Healthcare",
+            "url": "https://techblog.com/ai-healthcare",
+            "author": "airesearcher",
+            "points": 234,
+            "created_at": "2024-01-20T09:15:00Z"
+          },
+          "1002": {
+            "story_id": 1002,
+            "title": "Ask HN: Best practices for remote work?",
+            "url": null,
+            "author": "remoteworker",
+            "points": 87,
+            "created_at": "2024-01-20T14:30:00Z"
+          },
+          "1003": {
+            "story_id": 1003,
+            "title": "New JavaScript Framework Released",
+            "url": "https://jsframework.io",
+            "author": "webdev123",
+            "points": 156,
+            "created_at": "2024-01-21T08:00:00Z"
+          }
+        },
+        "comments": {
+          "2001": {
+            "comment_id": 2001,
+            "author": "medtech",
+            "text": "This is a game changer for diagnostics. We've been testing similar systems.",
+            "created_at": "2024-01-20T10:00:00Z"
+          },
+          "2002": {
+            "comment_id": 2002,
+            "author": "remoteworker",
+            "text": "I've found that setting clear boundaries helps a lot.",
+            "created_at": "2024-01-20T15:00:00Z"
+          },
+          "2003": {
+            "comment_id": 2003,
+            "author": "skeptic99",
+            "text": "Another framework? Do we really need this?",
+            "created_at": "2024-01-21T09:30:00Z"
+          }
+        },
+        "users": {
+          "airesearcher": {
+            "user_id": "airesearcher",
+            "karma": 1250,
+            "created": "2020-03-15T12:00:00Z",
+            "about": "PhD in Machine Learning. Working on healthcare applications."
+          },
+          "remoteworker": {
+            "user_id": "remoteworker",
+            "karma": 450,
+            "created": "2021-08-22T10:30:00Z",
+            "about": null
+          },
+          "webdev123": {
+            "user_id": "webdev123",
+            "karma": 890,
+            "created": "2019-11-05T14:20:00Z",
+            "about": "Full-stack developer. Love building tools."
+          }
+        },
+        "submissions": {
+          "airesearcher": [
+            {
+              "story_id": 1001,
+              "submission_type": "story",
+              "title": "The Future of AI in Healthcare",
+              "url": "https://techblog.com/ai-healthcare",
+              "points": 234,
+              "created_at": "2024-01-20T09:15:00Z"
+            }
+          ]
+        },
+        "searchResults": {
+          "AI": [
+            {
+              "story_id": 1001,
+              "title": "The Future of AI in Healthcare",
+              "url": "https://techblog.com/ai-healthcare",
+              "author": "airesearcher",
+              "points": 234,
+              "created_at": "2024-01-20T09:15:00Z"
+            }
+          ]
+        },
+        "categorizedStories": {
+          "ask_hn": [
+            {
+              "story_id": 1002,
+              "title": "Ask HN: Best practices for remote work?",
+              "url": null,
+              "author": "remoteworker",
+              "points": 87,
+              "created_at": "2024-01-20T14:30:00Z"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich scenario with diverse stories, multiple user submissions, categorized content, and comprehensive search results",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "stories": {
+          "5001": {
+            "story_id": 5001,
+            "title": "Show HN: Open Source Database Migration Tool",
+            "url": "https://github.com/user/db-migrate",
+            "author": "dbexpert",
+            "points": 512,
+            "created_at": "2024-01-18T07:00:00Z"
+          },
+          "5002": {
+            "story_id": 5002,
+            "title": "Ask HN: How do you handle technical debt?",
+            "url": null,
+            "author": "techleader",
+            "points": 298,
+            "created_at": "2024-01-19T11:45:00Z"
+          },
+          "5003": {
+            "story_id": 5003,
+            "title": "Quantum Computing Breakthrough Announced",
+            "url": "https://sciencenews.com/quantum-breakthrough",
+            "author": "physicist",
+            "points": 1024,
+            "created_at": "2024-01-19T16:20:00Z"
+          },
+          "5004": {
+            "story_id": 5004,
+            "title": "Tell HN: I quit my job to build a startup",
+            "url": null,
+            "author": "entrepreneur",
+            "points": 145,
+            "created_at": "2024-01-20T08:30:00Z"
+          },
+          "5005": {
+            "story_id": 5005,
+            "title": "Understanding Rust's Ownership Model",
+            "url": "https://rustblog.dev/ownership",
+            "author": "rustdev",
+            "points": 678,
+            "created_at": "2024-01-20T13:15:00Z"
+          }
+        },
+        "comments": {
+          "3001": {
+            "comment_id": 3001,
+            "author": "devops_guru",
+            "text": "We've been using this for 6 months. Saved us countless hours!",
+            "created_at": "2024-01-18T08:30:00Z"
+          },
+          "3002": {
+            "comment_id": 3002,
+            "author": "techleader",
+            "text": "We allocate 20% of sprint time to addressing tech debt. Works well for us.",
+            "created_at": "2024-01-19T12:00:00Z"
+          },
+          "3003": {
+            "comment_id": 3003,
+            "author": "skeptical_dev",
+            "text": "Interesting approach, but I'm concerned about the performance implications.",
+            "created_at": "2024-01-18T09:15:00Z"
+          },
+          "3004": {
+            "comment_id": 3004,
+            "author": "quantum_fan",
+            "text": "This could revolutionize cryptography as we know it.",
+            "created_at": "2024-01-19T17:00:00Z"
+          },
+          "3005": {
+            "comment_id": 3005,
+            "author": "startup_veteran",
+            "text": "Best of luck! Make sure you have at least 12 months runway.",
+            "created_at": "2024-01-20T09:00:00Z"
+          }
+        },
+        "users": {
+          "dbexpert": {
+            "user_id": "dbexpert",
+            "karma": 2340,
+            "created": "2018-05-10T09:00:00Z",
+            "about": "Database architect with 15 years experience. Love solving data problems."
+          },
+          "techleader": {
+            "user_id": "techleader",
+            "karma": 1890,
+            "created": "2019-02-14T11:30:00Z",
+            "about": "Engineering manager at a Series B startup"
+          },
+          "physicist": {
+            "user_id": "physicist",
+            "karma": 3450,
+            "created": "2017-09-20T14:00:00Z",
+            "about": "Quantum physicist and science communicator"
+          },
+          "entrepreneur": {
+            "user_id": "entrepreneur",
+            "karma": 567,
+            "created": "2022-01-08T10:00:00Z",
+            "about": null
+          },
+          "rustdev": {
+            "user_id": "rustdev",
+            "karma": 1234,
+            "created": "2020-07-15T16:45:00Z",
+            "about": "Systems programmer. Rust enthusiast. Previously worked on compilers."
+          }
+        },
+        "submissions": {
+          "dbexpert": [
+            {
+              "story_id": 5001,
+              "submission_type": "story",
+              "title": "Show HN: Open Source Database Migration Tool",
+              "url": "https://github.com/user/db-migrate",
+              "points": 512,
+              "created_at": "2024-01-18T07:00:00Z"
+            },
+            {
+              "story_id": 3001,
+              "submission_type": "comment",
+              "title": null,
+              "url": null,
+              "points": 0,
+              "created_at": "2024-01-17T14:30:00Z"
+            }
+          ],
+          "physicist": [
+            {
+              "story_id": 5003,
+              "submission_type": "story",
+              "title": "Quantum Computing Breakthrough Announced",
+              "url": "https://sciencenews.com/quantum-breakthrough",
+              "points": 1024,
+              "created_at": "2024-01-19T16:20:00Z"
+            }
+          ]
+        },
+        "searchResults": {
+          "quantum": [
+            {
+              "story_id": 5003,
+              "title": "Quantum Computing Breakthrough Announced",
+              "url": "https://sciencenews.com/quantum-breakthrough",
+              "author": "physicist",
+              "points": 1024,
+              "created_at": "2024-01-19T16:20:00Z"
+            }
+          ],
+          "rust": [
+            {
+              "story_id": 5005,
+              "title": "Understanding Rust's Ownership Model",
+              "url": "https://rustblog.dev/ownership",
+              "author": "rustdev",
+              "points": 678,
+              "created_at": "2024-01-20T13:15:00Z"
+            }
+          ]
+        },
+        "categorizedStories": {
+          "show_hn": [
+            {
+              "story_id": 5001,
+              "title": "Show HN: Open Source Database Migration Tool",
+              "url": "https://github.com/user/db-migrate",
+              "author": "dbexpert",
+              "points": 512,
+              "created_at": "2024-01-18T07:00:00Z"
+            }
+          ],
+          "ask_hn": [
+            {
+              "story_id": 5002,
+              "title": "Ask HN: How do you handle technical debt?",
+              "url": null,
+              "author": "techleader",
+              "points": 298,
+              "created_at": "2024-01-19T11:45:00Z"
+            }
+          ],
+          "tell_hn": [
+            {
+              "story_id": 5004,
+              "title": "Tell HN: I quit my job to build a startup",
+              "url": null,
+              "author": "entrepreneur",
+              "points": 145,
+              "created_at": "2024-01-20T08:30:00Z"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Edge case scenario with empty collections and minimal valid data",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "stories": {},
+        "comments": {},
+        "users": {},
+        "submissions": {},
+        "searchResults": {},
+        "categorizedStories": {}
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "getStoryWithComments",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Get story with ID 1",
+                    "input": {
+                      "story_id": 1
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Non-existent story",
+                    "input": {
+                      "story_id": 999
+                    },
+                    "passed": true,
+                    "error": "Story 999 not found",
+                    "note": "Expected error - tool correctly validates story existence"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getUser",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Get user johndoe",
+                    "input": {
+                      "user_id": "johndoe"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Non-existent user",
+                    "input": {
+                      "user_id": "nonexistent"
+                    },
+                    "passed": true,
+                    "error": "User nonexistent not found",
+                    "note": "Expected error - tool correctly validates user existence"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getUserSubmissions",
+                "test_cases": [
+                  {
+                    "description": "Error case - User with no submissions",
+                    "input": {
+                      "user_id": "johndoe"
+                    },
+                    "passed": true,
+                    "error": "User johndoe has no submissions",
+                    "note": "Expected error - tool correctly handles empty submissions"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getStories",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Get top stories",
+                    "input": {
+                      "story_type": "top"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Invalid story type",
+                    "input": {
+                      "story_type": "invalid"
+                    },
+                    "passed": true,
+                    "error": "Invalid story type. Must be one of: top, new, best, ask, show, job",
+                    "note": "Expected error - tool correctly validates story type"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Simple search query",
+                    "input": {
+                      "query": "project"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Search with filters",
+                    "input": {
+                      "query": "project",
+                      "content_type": "story",
+                      "page": 0,
+                      "hits_per_page": 10
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Empty query string",
+                    "input": {
+                      "query": ""
+                    },
+                    "passed": true,
+                    "error": "Query must be a non-empty string",
+                    "note": "Expected error - tool correctly validates query parameter"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "note": "Saved scenario matches original scenario exactly - state consistency verified"
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 59.84095525741577
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search",
+                "test_cases": [
+                  {
+                    "description": "Valid search - query 'AI'",
+                    "input": {
+                      "query": "AI"
+                    },
+                    "passed": true,
+                    "output": "Found 1 result for AI search",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid search with content_type filter",
+                    "input": {
+                      "query": "remote work",
+                      "content_type": "story"
+                    },
+                    "passed": true,
+                    "output": "Search executed successfully, returned 0 results",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid search with pagination",
+                    "input": {
+                      "query": "JavaScript",
+                      "page": 0,
+                      "hits_per_page": 10
+                    },
+                    "passed": true,
+                    "output": "Search executed successfully with pagination",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getStories",
+                "test_cases": [
+                  {
+                    "description": "Get ask stories",
+                    "input": {
+                      "story_type": "ask"
+                    },
+                    "passed": true,
+                    "output": "Returned empty list (no categorized stories in this category)",
+                    "error": null
+                  },
+                  {
+                    "description": "Get top stories with limit",
+                    "input": {
+                      "story_type": "top",
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Returned empty list (no categorized stories in this category)",
+                    "error": null
+                  },
+                  {
+                    "description": "Get best stories",
+                    "input": {
+                      "story_type": "best"
+                    },
+                    "passed": true,
+                    "output": "Returned empty list (no categorized stories in this category)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getStoryWithComments",
+                "test_cases": [
+                  {
+                    "description": "Get story 1001 with comments",
+                    "input": {
+                      "story_id": 1001
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved story with 3 comments",
+                    "error": null
+                  },
+                  {
+                    "description": "Get story 1002 with max_depth and max_comments",
+                    "input": {
+                      "story_id": 1002,
+                      "max_depth": 2,
+                      "max_comments": 5
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved story with 3 comments",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - non-existent story",
+                    "input": {
+                      "story_id": 9999
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with error",
+                    "error": "Story 9999 not found"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getUser",
+                "test_cases": [
+                  {
+                    "description": "Get user airesearcher",
+                    "input": {
+                      "user_id": "airesearcher"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved user with karma 1250",
+                    "error": null
+                  },
+                  {
+                    "description": "Get user remoteworker with null about",
+                    "input": {
+                      "user_id": "remoteworker"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved user with null about field",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - non-existent user",
+                    "input": {
+                      "user_id": "nonexistentuser"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with error",
+                    "error": "User nonexistentuser not found"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getUserSubmissions",
+                "test_cases": [
+                  {
+                    "description": "Get submissions for airesearcher",
+                    "input": {
+                      "user_id": "airesearcher"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved 1 submission",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - user with no submissions",
+                    "input": {
+                      "user_id": "webdev123"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with error",
+                    "error": "User webdev123 has no submissions"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All data preserved correctly including stories, comments, users, submissions, searchResults, and categorizedStories."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 76.0759129524231
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search",
+                "test_cases": [
+                  {
+                    "test_name": "Valid search - quantum",
+                    "input": {
+                      "query": "quantum"
+                    },
+                    "passed": true,
+                    "output": "Found 1 result for 'quantum' query",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid search with content_type filter",
+                    "input": {
+                      "query": "rust",
+                      "content_type": "story"
+                    },
+                    "passed": true,
+                    "output": "Found 1 result for 'rust' query with story filter",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid search - no results",
+                    "input": {
+                      "query": "nonexistent_term"
+                    },
+                    "passed": true,
+                    "output": "Returned empty results array as expected",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Invalid search - empty query",
+                    "input": {
+                      "query": ""
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected empty query with validation error",
+                    "error": "Query must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getStories",
+                "test_cases": [
+                  {
+                    "test_name": "Valid getStories - show type",
+                    "input": {
+                      "story_type": "show"
+                    },
+                    "passed": true,
+                    "output": "Returned empty stories array (no stories match this category in scenario)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid getStories - top type with limit",
+                    "input": {
+                      "story_type": "top",
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Returned empty stories array (no stories match this category in scenario)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Invalid getStories - invalid story type",
+                    "input": {
+                      "story_type": "invalid_type"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected invalid story type with validation error",
+                    "error": "Invalid story type. Must be one of: top, new, best, ask, show, job",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getStoryWithComments",
+                "test_cases": [
+                  {
+                    "test_name": "Valid getStoryWithComments - story 5001",
+                    "input": {
+                      "story_id": 5001
+                    },
+                    "passed": true,
+                    "output": "Retrieved story with 5 comments successfully",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid getStoryWithComments - with max_comments limit",
+                    "input": {
+                      "story_id": 5003,
+                      "max_comments": 2
+                    },
+                    "passed": true,
+                    "output": "Retrieved story with limited comments (2) successfully",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Invalid getStoryWithComments - nonexistent story",
+                    "input": {
+                      "story_id": 9999
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected nonexistent story ID with validation error",
+                    "error": "Story 9999 not found",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getUser",
+                "test_cases": [
+                  {
+                    "test_name": "Valid getUser - dbexpert",
+                    "input": {
+                      "user_id": "dbexpert"
+                    },
+                    "passed": true,
+                    "output": "Retrieved user profile with karma 2340 successfully",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid getUser - physicist",
+                    "input": {
+                      "user_id": "physicist"
+                    },
+                    "passed": true,
+                    "output": "Retrieved user profile with karma 3450 successfully",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Invalid getUser - nonexistent user",
+                    "input": {
+                      "user_id": "nonexistent_user"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected nonexistent user ID with validation error",
+                    "error": "User nonexistent_user not found",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getUserSubmissions",
+                "test_cases": [
+                  {
+                    "test_name": "Valid getUserSubmissions - dbexpert",
+                    "input": {
+                      "user_id": "dbexpert"
+                    },
+                    "passed": true,
+                    "output": "Retrieved 2 submissions (1 story, 1 comment) successfully",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid getUserSubmissions - physicist",
+                    "input": {
+                      "user_id": "physicist"
+                    },
+                    "passed": true,
+                    "output": "Retrieved 1 submission successfully",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Invalid getUserSubmissions - user with no submissions",
+                    "input": {
+                      "user_id": "techleader"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected user with no submissions with validation error",
+                    "error": "User techleader has no submissions",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All data structures (stories, comments, users, submissions, searchResults, categorizedStories) are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 92.59175634384155
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search",
+                "test_cases": [
+                  {
+                    "description": "Valid search with basic query",
+                    "input": {
+                      "query": "python"
+                    },
+                    "passed": true,
+                    "output": {
+                      "hits": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid search with all parameters",
+                    "input": {
+                      "query": "test",
+                      "content_type": "story",
+                      "page": 1,
+                      "hits_per_page": 10
+                    },
+                    "passed": true,
+                    "output": {
+                      "hits": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getStories",
+                "test_cases": [
+                  {
+                    "description": "Valid story type with limit",
+                    "input": {
+                      "story_type": "new",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": {
+                      "stories": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Invalid story type (error case)",
+                    "input": {
+                      "story_type": "invalid"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Invalid story type. Must be one of: top, new, best, ask, show, job",
+                    "note": "Correctly rejected invalid input"
+                  },
+                  {
+                    "description": "Valid story type without limit",
+                    "input": {
+                      "story_type": "top"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stories": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getStoryWithComments",
+                "test_cases": [
+                  {
+                    "description": "Non-existent story ID (boundary case)",
+                    "input": {
+                      "story_id": 12345
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Story 12345 not found",
+                    "note": "Correctly rejected non-existent story in empty dataset"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getUser",
+                "test_cases": [
+                  {
+                    "description": "Non-existent user (boundary case)",
+                    "input": {
+                      "user_id": "testuser"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "User testuser not found",
+                    "note": "Correctly rejected non-existent user in empty dataset"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getUserSubmissions",
+                "test_cases": [
+                  {
+                    "description": "Non-existent user submissions (boundary case)",
+                    "input": {
+                      "user_id": "testuser"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "User testuser has no submissions",
+                    "note": "Correctly rejected non-existent user submissions in empty dataset"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "saved_scenario": {
+                "stories": {},
+                "comments": {},
+                "users": {},
+                "submissions": {},
+                "searchResults": {},
+                "categorizedStories": {}
+              },
+              "comparison": "Saved scenario matches original scenario exactly",
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 43.61714553833008
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "getStoryWithComments",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Get story with ID 1",
+                    "input": {
+                      "story_id": 1
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Non-existent story",
+                    "input": {
+                      "story_id": 999
+                    },
+                    "passed": true,
+                    "error": "Story 999 not found",
+                    "note": "Expected error - tool correctly validates story existence"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getUser",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Get user johndoe",
+                    "input": {
+                      "user_id": "johndoe"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Non-existent user",
+                    "input": {
+                      "user_id": "nonexistent"
+                    },
+                    "passed": true,
+                    "error": "User nonexistent not found",
+                    "note": "Expected error - tool correctly validates user existence"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getUserSubmissions",
+                "test_cases": [
+                  {
+                    "description": "Error case - User with no submissions",
+                    "input": {
+                      "user_id": "johndoe"
+                    },
+                    "passed": true,
+                    "error": "User johndoe has no submissions",
+                    "note": "Expected error - tool correctly handles empty submissions"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getStories",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Get top stories",
+                    "input": {
+                      "story_type": "top"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Invalid story type",
+                    "input": {
+                      "story_type": "invalid"
+                    },
+                    "passed": true,
+                    "error": "Invalid story type. Must be one of: top, new, best, ask, show, job",
+                    "note": "Expected error - tool correctly validates story type"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Simple search query",
+                    "input": {
+                      "query": "project"
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Search with filters",
+                    "input": {
+                      "query": "project",
+                      "content_type": "story",
+                      "page": 0,
+                      "hits_per_page": 10
+                    },
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Empty query string",
+                    "input": {
+                      "query": ""
+                    },
+                    "passed": true,
+                    "error": "Query must be a non-empty string",
+                    "note": "Expected error - tool correctly validates query parameter"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "note": "Saved scenario matches original scenario exactly - state consistency verified"
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 59.84095525741577
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search",
+                "test_cases": [
+                  {
+                    "description": "Valid search - query 'AI'",
+                    "input": {
+                      "query": "AI"
+                    },
+                    "passed": true,
+                    "output": "Found 1 result for AI search",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid search with content_type filter",
+                    "input": {
+                      "query": "remote work",
+                      "content_type": "story"
+                    },
+                    "passed": true,
+                    "output": "Search executed successfully, returned 0 results",
+                    "error": null
+                  },
+                  {
+                    "description": "Valid search with pagination",
+                    "input": {
+                      "query": "JavaScript",
+                      "page": 0,
+                      "hits_per_page": 10
+                    },
+                    "passed": true,
+                    "output": "Search executed successfully with pagination",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getStories",
+                "test_cases": [
+                  {
+                    "description": "Get ask stories",
+                    "input": {
+                      "story_type": "ask"
+                    },
+                    "passed": true,
+                    "output": "Returned empty list (no categorized stories in this category)",
+                    "error": null
+                  },
+                  {
+                    "description": "Get top stories with limit",
+                    "input": {
+                      "story_type": "top",
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Returned empty list (no categorized stories in this category)",
+                    "error": null
+                  },
+                  {
+                    "description": "Get best stories",
+                    "input": {
+                      "story_type": "best"
+                    },
+                    "passed": true,
+                    "output": "Returned empty list (no categorized stories in this category)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getStoryWithComments",
+                "test_cases": [
+                  {
+                    "description": "Get story 1001 with comments",
+                    "input": {
+                      "story_id": 1001
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved story with 3 comments",
+                    "error": null
+                  },
+                  {
+                    "description": "Get story 1002 with max_depth and max_comments",
+                    "input": {
+                      "story_id": 1002,
+                      "max_depth": 2,
+                      "max_comments": 5
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved story with 3 comments",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - non-existent story",
+                    "input": {
+                      "story_id": 9999
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with error",
+                    "error": "Story 9999 not found"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getUser",
+                "test_cases": [
+                  {
+                    "description": "Get user airesearcher",
+                    "input": {
+                      "user_id": "airesearcher"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved user with karma 1250",
+                    "error": null
+                  },
+                  {
+                    "description": "Get user remoteworker with null about",
+                    "input": {
+                      "user_id": "remoteworker"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved user with null about field",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - non-existent user",
+                    "input": {
+                      "user_id": "nonexistentuser"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with error",
+                    "error": "User nonexistentuser not found"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getUserSubmissions",
+                "test_cases": [
+                  {
+                    "description": "Get submissions for airesearcher",
+                    "input": {
+                      "user_id": "airesearcher"
+                    },
+                    "passed": true,
+                    "output": "Successfully retrieved 1 submission",
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - user with no submissions",
+                    "input": {
+                      "user_id": "webdev123"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected with error",
+                    "error": "User webdev123 has no submissions"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All data preserved correctly including stories, comments, users, submissions, searchResults, and categorizedStories."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 76.0759129524231
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search",
+                "test_cases": [
+                  {
+                    "test_name": "Valid search - quantum",
+                    "input": {
+                      "query": "quantum"
+                    },
+                    "passed": true,
+                    "output": "Found 1 result for 'quantum' query",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid search with content_type filter",
+                    "input": {
+                      "query": "rust",
+                      "content_type": "story"
+                    },
+                    "passed": true,
+                    "output": "Found 1 result for 'rust' query with story filter",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid search - no results",
+                    "input": {
+                      "query": "nonexistent_term"
+                    },
+                    "passed": true,
+                    "output": "Returned empty results array as expected",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Invalid search - empty query",
+                    "input": {
+                      "query": ""
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected empty query with validation error",
+                    "error": "Query must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getStories",
+                "test_cases": [
+                  {
+                    "test_name": "Valid getStories - show type",
+                    "input": {
+                      "story_type": "show"
+                    },
+                    "passed": true,
+                    "output": "Returned empty stories array (no stories match this category in scenario)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid getStories - top type with limit",
+                    "input": {
+                      "story_type": "top",
+                      "limit": 10
+                    },
+                    "passed": true,
+                    "output": "Returned empty stories array (no stories match this category in scenario)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Invalid getStories - invalid story type",
+                    "input": {
+                      "story_type": "invalid_type"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected invalid story type with validation error",
+                    "error": "Invalid story type. Must be one of: top, new, best, ask, show, job",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getStoryWithComments",
+                "test_cases": [
+                  {
+                    "test_name": "Valid getStoryWithComments - story 5001",
+                    "input": {
+                      "story_id": 5001
+                    },
+                    "passed": true,
+                    "output": "Retrieved story with 5 comments successfully",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid getStoryWithComments - with max_comments limit",
+                    "input": {
+                      "story_id": 5003,
+                      "max_comments": 2
+                    },
+                    "passed": true,
+                    "output": "Retrieved story with limited comments (2) successfully",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Invalid getStoryWithComments - nonexistent story",
+                    "input": {
+                      "story_id": 9999
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected nonexistent story ID with validation error",
+                    "error": "Story 9999 not found",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getUser",
+                "test_cases": [
+                  {
+                    "test_name": "Valid getUser - dbexpert",
+                    "input": {
+                      "user_id": "dbexpert"
+                    },
+                    "passed": true,
+                    "output": "Retrieved user profile with karma 2340 successfully",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid getUser - physicist",
+                    "input": {
+                      "user_id": "physicist"
+                    },
+                    "passed": true,
+                    "output": "Retrieved user profile with karma 3450 successfully",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Invalid getUser - nonexistent user",
+                    "input": {
+                      "user_id": "nonexistent_user"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected nonexistent user ID with validation error",
+                    "error": "User nonexistent_user not found",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getUserSubmissions",
+                "test_cases": [
+                  {
+                    "test_name": "Valid getUserSubmissions - dbexpert",
+                    "input": {
+                      "user_id": "dbexpert"
+                    },
+                    "passed": true,
+                    "output": "Retrieved 2 submissions (1 story, 1 comment) successfully",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid getUserSubmissions - physicist",
+                    "input": {
+                      "user_id": "physicist"
+                    },
+                    "passed": true,
+                    "output": "Retrieved 1 submission successfully",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Invalid getUserSubmissions - user with no submissions",
+                    "input": {
+                      "user_id": "techleader"
+                    },
+                    "passed": true,
+                    "output": "Correctly rejected user with no submissions with validation error",
+                    "error": "User techleader has no submissions",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All data structures (stories, comments, users, submissions, searchResults, categorizedStories) are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 92.59175634384155
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "search",
+                "test_cases": [
+                  {
+                    "description": "Valid search with basic query",
+                    "input": {
+                      "query": "python"
+                    },
+                    "passed": true,
+                    "output": {
+                      "hits": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid search with all parameters",
+                    "input": {
+                      "query": "test",
+                      "content_type": "story",
+                      "page": 1,
+                      "hits_per_page": 10
+                    },
+                    "passed": true,
+                    "output": {
+                      "hits": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getStories",
+                "test_cases": [
+                  {
+                    "description": "Valid story type with limit",
+                    "input": {
+                      "story_type": "new",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": {
+                      "stories": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Invalid story type (error case)",
+                    "input": {
+                      "story_type": "invalid"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Invalid story type. Must be one of: top, new, best, ask, show, job",
+                    "note": "Correctly rejected invalid input"
+                  },
+                  {
+                    "description": "Valid story type without limit",
+                    "input": {
+                      "story_type": "top"
+                    },
+                    "passed": true,
+                    "output": {
+                      "stories": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getStoryWithComments",
+                "test_cases": [
+                  {
+                    "description": "Non-existent story ID (boundary case)",
+                    "input": {
+                      "story_id": 12345
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Story 12345 not found",
+                    "note": "Correctly rejected non-existent story in empty dataset"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getUser",
+                "test_cases": [
+                  {
+                    "description": "Non-existent user (boundary case)",
+                    "input": {
+                      "user_id": "testuser"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "User testuser not found",
+                    "note": "Correctly rejected non-existent user in empty dataset"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "getUserSubmissions",
+                "test_cases": [
+                  {
+                    "description": "Non-existent user submissions (boundary case)",
+                    "input": {
+                      "user_id": "testuser"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "User testuser has no submissions",
+                    "note": "Correctly rejected non-existent user submissions in empty dataset"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "saved_scenario": {
+                "stories": {},
+                "comments": {},
+                "users": {},
+                "submissions": {},
+                "searchResults": {},
+                "categorizedStories": {}
+              },
+              "comparison": "Saved scenario matches original scenario exactly",
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 43.61714553833008
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/HackerNews.py"
+  }
+}

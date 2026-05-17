@@ -1,0 +1,3122 @@
+{
+  "metadata": {
+    "class_name": "TradingBot",
+    "metadata_path": "envs\\metadata\\TradingBot_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-01T18:11:09.007030",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "TradingBot",
+    "description": "A comprehensive trading platform server that manages user authentication, account operations, market data retrieval, stock trading, order management, and watchlist functionality for equity markets.",
+    "tools": [
+      {
+        "name": "login",
+        "description": "Authenticate a user with credentials and establish a trading session, returning a session token for subsequent authenticated operations.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "description": "The username credential for authenticating the user account."
+            },
+            "password": {
+              "type": "string",
+              "description": "The password credential for authenticating the user account."
+            }
+          },
+          "required": [
+            "username",
+            "password"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Authentication result status indicating whether login was successful or failed."
+            },
+            "session_token": {
+              "type": "string",
+              "description": "Session token issued upon successful authentication, used for subsequent authenticated requests. Only present if login succeeds."
+            }
+          }
+        }
+      },
+      {
+        "name": "logout",
+        "description": "Terminate the current user session and invalidate the authentication token, ending all trading operations for the session.",
+        "input_schema": {
+          "type": "object",
+          "properties": {}
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Logout operation result status indicating whether session termination was successful or failed."
+            }
+          }
+        }
+      },
+      {
+        "name": "check_login_status",
+        "description": "Verify whether a user session is currently active and authenticated, checking session validity.",
+        "input_schema": {
+          "type": "object",
+          "properties": {}
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "is_authenticated": {
+              "type": "boolean",
+              "description": "Boolean flag indicating whether the current session is authenticated and valid for trading operations."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_market_status",
+        "description": "Retrieve the current trading market status to determine if the market is open for trading operations or closed.",
+        "input_schema": {
+          "type": "object",
+          "properties": {}
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Current market operational status. Enum values: 'Open' (market is accepting trades), 'Closed' (market is not accepting trades).",
+              "enum": [
+                "Open",
+                "Closed"
+              ]
+            },
+            "current_time": {
+              "type": "string",
+              "description": "Current market time in HH:MM AM/PM format used to determine market hours."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_account_info",
+        "description": "Retrieve comprehensive account information including balance, account identifier, and linked payment details for the authenticated user.",
+        "input_schema": {
+          "type": "object",
+          "properties": {}
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "account_id": {
+              "type": "integer",
+              "description": "Unique identifier for the trading account."
+            },
+            "balance": {
+              "type": "number",
+              "description": "Current available account balance in the account's currency, representing funds available for trading."
+            },
+            "binding_card": {
+              "type": "integer",
+              "description": "Card number associated with the account for deposits and withdrawals. Only present if a card is linked."
+            },
+            "currency": {
+              "type": "string",
+              "description": "Currency denomination for the account balance, typically 'USD'."
+            }
+          }
+        }
+      },
+      {
+        "name": "make_transaction",
+        "description": "Execute a deposit or withdrawal transaction on the authenticated user's account, updating the account balance. Withdrawals require the market to be open.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "transaction_type": {
+              "type": "string",
+              "description": "Type of financial transaction to execute. Enum values: 'deposit' (add funds to account), 'withdrawal' (remove funds from account).",
+              "enum": [
+                "deposit",
+                "withdrawal"
+              ]
+            },
+            "amount": {
+              "type": "number",
+              "description": "The monetary amount to deposit or withdraw. Must be a positive value."
+            }
+          },
+          "required": [
+            "transaction_type",
+            "amount"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Transaction execution result status indicating whether the operation was successful or failed."
+            },
+            "new_balance": {
+              "type": "number",
+              "description": "Updated account balance after the transaction has been processed."
+            },
+            "timestamp": {
+              "type": "string",
+              "description": "Transaction execution timestamp in YYYY-MM-DD HH:MM:SS format, recording when the transaction was completed."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_transaction_history",
+        "description": "Retrieve the authenticated user's transaction history with optional date range filtering to view past deposits and withdrawals.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "start_date": {
+              "type": "string",
+              "description": "Optional start date for filtering transactions in YYYY-MM-DD format. If not provided, retrieves all historical transactions from the beginning."
+            },
+            "end_date": {
+              "type": "string",
+              "description": "Optional end date for filtering transactions in YYYY-MM-DD format. If not provided, retrieves all transactions up to the present."
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "transactions": {
+              "type": "array",
+              "description": "List of transaction records matching the specified date range criteria.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "transaction_id": {
+                    "type": "string",
+                    "description": "Unique identifier for the transaction record."
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "Type of financial transaction. Enum values: 'deposit', 'withdrawal'.",
+                    "enum": [
+                      "deposit",
+                      "withdrawal"
+                    ]
+                  },
+                  "amount": {
+                    "type": "number",
+                    "description": "The monetary amount of the transaction."
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "description": "Transaction execution timestamp in YYYY-MM-DD HH:MM:SS format."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_stock_symbol",
+        "description": "Look up the stock ticker symbol for a given company name from the supported list of tradable companies.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "company_name": {
+              "type": "string",
+              "description": "The name of the company to look up. Enum values: 'Apple', 'Google', 'Tesla', 'Microsoft', 'Nvidia', 'Amazon', 'Zeta Corp', 'Alpha Tech', 'Omega Industries', 'Quasar Ltd.', 'Neptune Systems', 'Synex Solutions'.",
+              "enum": [
+                "Apple",
+                "Google",
+                "Tesla",
+                "Microsoft",
+                "Nvidia",
+                "Amazon",
+                "Zeta Corp",
+                "Alpha Tech",
+                "Omega Industries",
+                "Quasar Ltd.",
+                "Neptune Systems",
+                "Synex Solutions"
+              ]
+            }
+          },
+          "required": [
+            "company_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "The stock ticker symbol for the specified company, used to identify the stock in trading operations and market data queries."
+            },
+            "company_name": {
+              "type": "string",
+              "description": "The company name that was queried, echoed back for confirmation."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_stock_info",
+        "description": "Retrieve comprehensive real-time information about a specific stock including current price, trading volume, percentage change, and technical indicators (moving averages).",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "The stock ticker symbol to retrieve information for (e.g., 'AAPL', 'GOOG', 'TSLA'). Can be obtained from get_stock_symbol or get_available_stocks."
+            }
+          },
+          "required": [
+            "symbol"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "The stock ticker symbol for which information is provided."
+            },
+            "price": {
+              "type": "number",
+              "description": "Current market price per share of the stock."
+            },
+            "percent_change": {
+              "type": "number",
+              "description": "Percentage change in stock price, indicating price movement direction and magnitude."
+            },
+            "volume": {
+              "type": "number",
+              "description": "Trading volume representing the number of shares traded."
+            },
+            "ma_5": {
+              "type": "number",
+              "description": "5-day moving average price, a short-term technical indicator for trend analysis."
+            },
+            "ma_20": {
+              "type": "number",
+              "description": "20-day moving average price, a medium-term technical indicator for trend analysis."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_available_stocks",
+        "description": "Retrieve a list of stock ticker symbols available for trading within a specific market sector.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "sector": {
+              "type": "string",
+              "description": "The market sector to retrieve tradable stocks from. Enum values: 'Technology', 'Automobile', 'Finance', 'Healthcare', 'Energy'.",
+              "enum": [
+                "Technology",
+                "Automobile",
+                "Finance",
+                "Healthcare",
+                "Energy"
+              ]
+            }
+          },
+          "required": [
+            "sector"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "symbols": {
+              "type": "array",
+              "description": "List of stock ticker symbols available for trading in the specified sector. These symbols can be used with get_stock_info to retrieve detailed market data.",
+              "items": {
+                "type": "string",
+                "description": "Stock ticker symbol representing a tradable equity in the sector."
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "filter_stocks_by_price",
+        "description": "Filter a provided list of stock symbols to return only those with current prices within a specified price range.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbols": {
+              "type": "array",
+              "description": "List of stock ticker symbols to filter by price. Can be obtained from get_available_stocks.",
+              "items": {
+                "type": "string",
+                "description": "Stock ticker symbol to evaluate against the price range criteria."
+              }
+            },
+            "min_price": {
+              "type": "number",
+              "description": "Minimum stock price threshold for filtering. Stocks below this price are excluded."
+            },
+            "max_price": {
+              "type": "number",
+              "description": "Maximum stock price threshold for filtering. Stocks above this price are excluded."
+            }
+          },
+          "required": [
+            "symbols",
+            "min_price",
+            "max_price"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "filtered_symbols": {
+              "type": "array",
+              "description": "List of stock ticker symbols with current prices within the specified range. These symbols can be used with get_stock_info for detailed information.",
+              "items": {
+                "type": "string",
+                "description": "Stock ticker symbol that meets the price range criteria."
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "place_order",
+        "description": "Submit a buy or sell order for a specified stock at a given price and quantity. Requires authentication and the market must be open.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "order_type": {
+              "type": "string",
+              "description": "The type of trading order to place. Enum values: 'Buy' (purchase shares), 'Sell' (sell shares).",
+              "enum": [
+                "Buy",
+                "Sell"
+              ]
+            },
+            "symbol": {
+              "type": "string",
+              "description": "The stock ticker symbol to trade. Can be obtained from get_stock_symbol or get_available_stocks."
+            },
+            "price": {
+              "type": "number",
+              "description": "The limit price per share at which to place the order. Must be a positive value."
+            },
+            "quantity": {
+              "type": "integer",
+              "description": "The number of shares to trade in this order. Must be a positive integer."
+            }
+          },
+          "required": [
+            "order_type",
+            "symbol",
+            "price",
+            "quantity"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "integer",
+              "description": "Unique identifier assigned to the placed order, used to track, query, or cancel the order."
+            },
+            "order_type": {
+              "type": "string",
+              "description": "The type of trading order that was placed. Enum values: 'Buy', 'Sell'.",
+              "enum": [
+                "Buy",
+                "Sell"
+              ]
+            },
+            "symbol": {
+              "type": "string",
+              "description": "The stock ticker symbol for which the order was placed."
+            },
+            "price": {
+              "type": "number",
+              "description": "The limit price per share specified in the order."
+            },
+            "quantity": {
+              "type": "integer",
+              "description": "The number of shares specified in the order."
+            },
+            "status": {
+              "type": "string",
+              "description": "Current order status. Enum values: 'Pending' (awaiting processing), 'Open' (active in market), 'Completed' (fully executed), 'Cancelled' (order cancelled).",
+              "enum": [
+                "Pending",
+                "Open",
+                "Completed",
+                "Cancelled"
+              ]
+            },
+            "timestamp": {
+              "type": "string",
+              "description": "Order placement timestamp recording when the order was submitted to the system."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_order_details",
+        "description": "Retrieve comprehensive details about a specific order including its current status, execution information, and all order parameters.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "integer",
+              "description": "The unique identifier of the order to retrieve. Can be obtained from place_order or get_order_history."
+            }
+          },
+          "required": [
+            "order_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "integer",
+              "description": "Unique identifier of the order being queried."
+            },
+            "order_type": {
+              "type": "string",
+              "description": "The type of trading order. Enum values: 'Buy', 'Sell'.",
+              "enum": [
+                "Buy",
+                "Sell"
+              ]
+            },
+            "symbol": {
+              "type": "string",
+              "description": "The stock ticker symbol for which the order was placed."
+            },
+            "price": {
+              "type": "number",
+              "description": "The limit price per share specified in the order."
+            },
+            "quantity": {
+              "type": "integer",
+              "description": "The number of shares specified in the order."
+            },
+            "status": {
+              "type": "string",
+              "description": "Current order status. Enum values: 'Open' (active in market), 'Pending' (awaiting processing), 'Completed' (fully executed), 'Cancelled' (order cancelled).",
+              "enum": [
+                "Open",
+                "Pending",
+                "Completed",
+                "Cancelled"
+              ]
+            },
+            "timestamp": {
+              "type": "string",
+              "description": "Order placement timestamp recording when the order was submitted to the system."
+            },
+            "execution_price": {
+              "type": "number",
+              "description": "Actual price per share at which the order was executed. Only present if the order status is 'Completed'."
+            }
+          }
+        }
+      },
+      {
+        "name": "cancel_order",
+        "description": "Cancel a pending or open order, removing it from the market. Completed orders cannot be cancelled. Requires authentication.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "integer",
+              "description": "The unique identifier of the order to cancel. Can be obtained from place_order or get_order_history."
+            }
+          },
+          "required": [
+            "order_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "integer",
+              "description": "Unique identifier of the order that was targeted for cancellation."
+            },
+            "status": {
+              "type": "string",
+              "description": "Result of the cancellation operation. Enum values: 'Cancelled' (order successfully cancelled), 'Error' (cancellation failed).",
+              "enum": [
+                "Cancelled",
+                "Error"
+              ]
+            },
+            "message": {
+              "type": "string",
+              "description": "Error message explaining why the cancellation failed. Only present if status is 'Error'."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_order_history",
+        "description": "Retrieve the authenticated user's order history with optional filtering by order status or stock symbol to review past trading activity.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Optional filter to retrieve only orders with a specific status. Enum values: 'Open', 'Pending', 'Completed', 'Cancelled'. If not provided, returns orders with all statuses.",
+              "enum": [
+                "Open",
+                "Pending",
+                "Completed",
+                "Cancelled"
+              ]
+            },
+            "symbol": {
+              "type": "string",
+              "description": "Optional filter to retrieve only orders for a specific stock ticker symbol. If not provided, returns orders for all stocks."
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "orders": {
+              "type": "array",
+              "description": "List of order summaries matching the specified filter criteria. Order IDs can be used with get_order_details to retrieve complete order information.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "integer",
+                    "description": "Unique identifier of the order, used to retrieve full details or cancel the order."
+                  },
+                  "order_type": {
+                    "type": "string",
+                    "description": "The type of trading order. Enum values: 'Buy', 'Sell'."
+                  },
+                  "symbol": {
+                    "type": "string",
+                    "description": "The stock ticker symbol for which the order was placed."
+                  },
+                  "price": {
+                    "type": "number",
+                    "description": "The limit price per share specified in the order."
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "description": "The number of shares specified in the order."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "Current order status."
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "description": "Order placement timestamp recording when the order was submitted."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_watchlist",
+        "description": "Retrieve the authenticated user's watchlist containing stock symbols they are monitoring for trading opportunities.",
+        "input_schema": {
+          "type": "object",
+          "properties": {}
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "watchlist_symbols": {
+              "type": "array",
+              "description": "List of stock ticker symbols currently in the user's watchlist. These symbols can be used with get_stock_info to retrieve current prices and market data.",
+              "items": {
+                "type": "string",
+                "description": "Stock ticker symbol being monitored in the watchlist."
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "add_to_watchlist",
+        "description": "Add a stock symbol to the authenticated user's watchlist for monitoring and quick access to market data.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "The stock ticker symbol to add to the watchlist. Can be obtained from get_stock_symbol or get_available_stocks."
+            }
+          },
+          "required": [
+            "symbol"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Operation result status indicating whether the symbol was successfully added to the watchlist or if the operation failed."
+            },
+            "symbol": {
+              "type": "string",
+              "description": "The stock ticker symbol that was added to the watchlist."
+            },
+            "watchlist": {
+              "type": "array",
+              "description": "Updated complete list of stock ticker symbols in the user's watchlist after the addition.",
+              "items": {
+                "type": "string",
+                "description": "Stock ticker symbol in the updated watchlist."
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "remove_from_watchlist",
+        "description": "Remove a stock symbol from the authenticated user's watchlist, stopping monitoring of that stock.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "The stock ticker symbol to remove from the watchlist. Can be obtained from get_watchlist."
+            }
+          },
+          "required": [
+            "symbol"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Operation result status indicating whether the symbol was successfully removed from the watchlist or if the operation failed."
+            },
+            "symbol": {
+              "type": "string",
+              "description": "The stock ticker symbol that was removed from the watchlist."
+            },
+            "watchlist": {
+              "type": "array",
+              "description": "Updated complete list of stock ticker symbols in the user's watchlist after the removal.",
+              "items": {
+                "type": "string",
+                "description": "Stock ticker symbol in the updated watchlist."
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "notify_price_change",
+        "description": "Monitor a list of stock symbols and identify those with significant price changes exceeding a specified percentage threshold.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbols": {
+              "type": "array",
+              "description": "List of stock ticker symbols to monitor for price changes. Can be obtained from get_watchlist or get_available_stocks.",
+              "items": {
+                "type": "string",
+                "description": "Stock ticker symbol to check for significant price movement."
+              }
+            },
+            "threshold": {
+              "type": "number",
+              "description": "Percentage change threshold to trigger notification. Stocks with absolute percentage changes exceeding this value will be reported. Must be a positive value."
+            }
+          },
+          "required": [
+            "symbols",
+            "threshold"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "notification": {
+              "type": "string",
+              "description": "Summary message describing the price change monitoring results and any significant movements detected."
+            },
+            "changed_stocks": {
+              "type": "array",
+              "description": "List of stock ticker symbols that experienced price changes exceeding the threshold. Only present if significant changes were detected.",
+              "items": {
+                "type": "string",
+                "description": "Stock ticker symbol with significant price movement."
+              }
+            },
+            "details": {
+              "type": "array",
+              "description": "Detailed information about each stock with significant price changes. Only present if significant changes were detected.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "symbol": {
+                    "type": "string",
+                    "description": "The stock ticker symbol with significant price movement."
+                  },
+                  "current_price": {
+                    "type": "number",
+                    "description": "Current market price per share of the stock."
+                  },
+                  "percent_change": {
+                    "type": "number",
+                    "description": "Percentage change in stock price that exceeded the threshold."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "update_stock_price",
+        "description": "Manually update the price of a stock, typically used for testing, simulation, or administrative purposes to modify market data.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "The stock ticker symbol to update. Can be obtained from get_stock_symbol or get_available_stocks."
+            },
+            "new_price": {
+              "type": "number",
+              "description": "The new price per share to set for the stock. Must be a positive value."
+            }
+          },
+          "required": [
+            "symbol",
+            "new_price"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "The stock ticker symbol that was updated."
+            },
+            "old_price": {
+              "type": "number",
+              "description": "Previous price per share before the update was applied."
+            },
+            "new_price": {
+              "type": "number",
+              "description": "Updated price per share after the change was applied."
+            },
+            "percent_change": {
+              "type": "number",
+              "description": "Calculated percentage change between the old and new price, showing the magnitude of the price update."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\nimport datetime\n\n# Section 1: Schema\nclass User(BaseModel):\n    \"\"\"Represents a user account.\"\"\"\n    username: str = Field(..., description=\"Username credential\")\n    password: str = Field(..., description=\"Password credential\")\n\nclass Account(BaseModel):\n    \"\"\"Represents a trading account.\"\"\"\n    account_id: int = Field(..., ge=1, description=\"Unique account identifier\")\n    balance: float = Field(..., ge=0, description=\"Available balance\")\n    currency: str = Field(default=\"USD\", description=\"Account currency\")\n    binding_card: Optional[int] = Field(default=None, description=\"Linked card number\")\n\nclass Stock(BaseModel):\n    \"\"\"Represents a stock.\"\"\"\n    symbol: str = Field(..., description=\"Stock ticker symbol\")\n    price: float = Field(..., gt=0, description=\"Current price per share\")\n    percent_change: float = Field(..., description=\"Percentage change in price\")\n    volume: int = Field(..., ge=0, description=\"Trading volume\")\n    ma_5: float = Field(..., description=\"5-day moving average\")\n    ma_20: float = Field(..., description=\"20-day moving average\")\n\nclass Order(BaseModel):\n    \"\"\"Represents a trading order.\"\"\"\n    order_id: int = Field(..., ge=1, description=\"Unique order identifier\")\n    order_type: str = Field(..., description=\"Order type: Buy or Sell\")\n    symbol: str = Field(..., description=\"Stock symbol\")\n    price: float = Field(..., gt=0, description=\"Order price per share\")\n    quantity: int = Field(..., gt=0, description=\"Number of shares\")\n    status: str = Field(..., description=\"Order status\")\n    timestamp: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$\", description=\"Order timestamp\")\n    execution_price: Optional[float] = Field(default=None, description=\"Execution price if completed\")\n\nclass Transaction(BaseModel):\n    \"\"\"Represents a financial transaction.\"\"\"\n    transaction_id: str = Field(..., description=\"Unique transaction identifier\")\n    type: str = Field(..., description=\"Transaction type: deposit or withdrawal\")\n    amount: float = Field(..., gt=0, description=\"Transaction amount\")\n    timestamp: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$\", description=\"Transaction timestamp\")\n\nclass TradingScenario(BaseModel):\n    \"\"\"Main scenario model for trading platform.\"\"\"\n    users: Dict[str, User] = Field(default={}, description=\"Registered users\")\n    accounts: Dict[int, Account] = Field(default={}, description=\"User accounts\")\n    current_user: Optional[str] = Field(default=None, description=\"Currently logged in user\")\n    session_token: Optional[str] = Field(default=None, description=\"Active session token\")\n    market_open: bool = Field(default=True, description=\"Market status\")\n    current_time: str = Field(default=\"09:30 AM\", description=\"Current market time\")\n    stocks: Dict[str, Stock] = Field(default={\n        \"AAPL\": Stock(symbol=\"AAPL\", price=150.25, percent_change=1.2, volume=50000000, ma_5=149.5, ma_20=148.0),\n        \"GOOG\": Stock(symbol=\"GOOG\", price=2750.8, percent_change=-0.5, volume=1500000, ma_5=2760.0, ma_20=2745.0),\n        \"TSLA\": Stock(symbol=\"TSLA\", price=800.15, percent_change=2.8, volume=25000000, ma_5=790.0, ma_20=785.0),\n        \"MSFT\": Stock(symbol=\"MSFT\", price=305.6, percent_change=0.3, volume=20000000, ma_5=304.0, ma_20=302.5),\n        \"NVDA\": Stock(symbol=\"NVDA\", price=220.75, percent_change=-1.2, volume=18000000, ma_5=222.0, ma_20=218.0),\n        \"AMZN\": Stock(symbol=\"AMZN\", price=3200.4, percent_change=0.8, volume=3000000, ma_5=3180.0, ma_20=3150.0),\n        \"ZETA\": Stock(symbol=\"ZETA\", price=45.3, percent_change=3.5, volume=5000000, ma_5=44.0, ma_20=43.0),\n        \"ALPH\": Stock(symbol=\"ALPH\", price=120.9, percent_change=-2.1, volume=2000000, ma_5=123.0, ma_20=125.0),\n        \"OMEG\": Stock(symbol=\"OMEG\", price=78.45, percent_change=1.7, volume=1500000, ma_5=77.0, ma_20=76.0),\n        \"QUAS\": Stock(symbol=\"QUAS\", price=234.6, percent_change=0.9, volume=800000, ma_5=233.0, ma_20=230.0),\n        \"NEPT\": Stock(symbol=\"NEPT\", price=89.12, percent_change=-0.8, volume=1200000, ma_5=90.0, ma_20=91.0),\n        \"SYNX\": Stock(symbol=\"SYNX\", price=156.78, percent_change=2.3, volume=900000, ma_5=154.0, ma_20=152.0)\n    }, description=\"Available stocks\")\n    company_symbols: Dict[str, str] = Field(default={\n        \"Apple\": \"AAPL\", \"Google\": \"GOOG\", \"Tesla\": \"TSLA\", \"Microsoft\": \"MSFT\",\n        \"Nvidia\": \"NVDA\", \"Amazon\": \"AMZN\", \"Zeta Corp\": \"ZETA\", \"Alpha Tech\": \"ALPH\",\n        \"Omega Industries\": \"OMEG\", \"Quasar Ltd.\": \"QUAS\", \"Neptune Systems\": \"NEPT\", \"Synex Solutions\": \"SYNX\"\n    }, description=\"Company to symbol mapping\")\n    sector_stocks: Dict[str, List[str]] = Field(default={\n        \"Technology\": [\"AAPL\", \"GOOG\", \"MSFT\", \"NVDA\"],\n        \"Automobile\": [\"TSLA\"],\n        \"Finance\": [],\n        \"Healthcare\": [],\n        \"Energy\": []\n    }, description=\"Stocks by sector\")\n    orders: Dict[int, Order] = Field(default={}, description=\"All orders\")\n    transactions: List[Transaction] = Field(default=[], description=\"Transaction history\")\n    watchlists: Dict[str, List[str]] = Field(default={}, description=\"User watchlists\")\n    next_order_id: int = Field(default=1, description=\"Next order ID\")\n    next_transaction_id: int = Field(default=1, description=\"Next transaction ID\")\n\nScenario_Schema = [User, Account, Stock, Order, Transaction, TradingScenario]\n\n# Section 2: Class\nclass TradingBot:\n    def __init__(self):\n        \"\"\"Initialize trading bot with empty state.\"\"\"\n        self.users: Dict[str, User] = {}\n        self.accounts: Dict[int, Account] = {}\n        self.current_user: Optional[str] = None\n        self.session_token: Optional[str] = None\n        self.market_open: bool = True\n        self.current_time: str = \"09:30 AM\"\n        self.stocks: Dict[str, Stock] = {}\n        self.company_symbols: Dict[str, str] = {}\n        self.sector_stocks: Dict[str, List[str]] = {}\n        self.orders: Dict[int, Order] = {}\n        self.transactions: List[Transaction] = []\n        self.watchlists: Dict[str, List[str]] = {}\n        self.next_order_id: int = 1\n        self.next_transaction_id: int = 1\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the trading bot.\"\"\"\n        model = TradingScenario(**scenario)\n        self.users = model.users\n        self.accounts = model.accounts\n        self.current_user = model.current_user\n        self.session_token = model.session_token\n        self.market_open = model.market_open\n        self.current_time = model.current_time\n        self.stocks = model.stocks\n        self.company_symbols = model.company_symbols\n        self.sector_stocks = model.sector_stocks\n        self.orders = model.orders\n        self.transactions = model.transactions\n        self.watchlists = model.watchlists\n        self.next_order_id = model.next_order_id\n        self.next_transaction_id = model.next_transaction_id\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"users\": {username: user.dict() for username, user in self.users.items()},\n            \"accounts\": {account_id: account.dict() for account_id, account in self.accounts.items()},\n            \"current_user\": self.current_user,\n            \"session_token\": self.session_token,\n            \"market_open\": self.market_open,\n            \"current_time\": self.current_time,\n            \"stocks\": {symbol: stock.dict() for symbol, stock in self.stocks.items()},\n            \"company_symbols\": self.company_symbols,\n            \"sector_stocks\": self.sector_stocks,\n            \"orders\": {order_id: order.dict() for order_id, order in self.orders.items()},\n            \"transactions\": [transaction.dict() for transaction in self.transactions],\n            \"watchlists\": self.watchlists,\n            \"next_order_id\": self.next_order_id,\n            \"next_transaction_id\": self.next_transaction_id\n        }\n\n    def login(self, username: str, password: str) -> dict:\n        \"\"\"Authenticate user and establish trading session.\"\"\"\n        if username in self.users and self.users[username].password == password:\n            self.current_user = username\n            self.session_token = f\"token_{username}_{int(datetime.datetime.now().timestamp())}\"\n            return {\"status\": \"success\", \"session_token\": self.session_token}\n        return {\"status\": \"failed\"}\n\n    def logout(self) -> dict:\n        \"\"\"Terminate current user session.\"\"\"\n        if self.current_user:\n            self.current_user = None\n            self.session_token = None\n            return {\"status\": \"success\"}\n        return {\"status\": \"failed\"}\n\n    def check_login_status(self) -> dict:\n        \"\"\"Check if user session is active.\"\"\"\n        return {\"is_authenticated\": self.current_user is not None}\n\n    def get_market_status(self) -> dict:\n        \"\"\"Retrieve current market status.\"\"\"\n        return {\"status\": \"Open\" if self.market_open else \"Closed\", \"current_time\": self.current_time}\n\n    def get_account_info(self) -> dict:\n        \"\"\"Get account information for authenticated user.\"\"\"\n        if not self.current_user:\n            return {}\n        for account in self.accounts.values():\n            if account.account_id == hash(self.current_user) % 1000000:\n                return account.dict()\n        return {}\n\n    def make_transaction(self, transaction_type: str, amount: float) -> dict:\n        \"\"\"Execute deposit or withdrawal transaction.\"\"\"\n        if not self.current_user:\n            return {\"status\": \"failed\", \"new_balance\": 0, \"timestamp\": \"\"}\n        \n        account_id = hash(self.current_user) % 1000000\n        if account_id not in self.accounts:\n            return {\"status\": \"failed\", \"new_balance\": 0, \"timestamp\": \"\"}\n        \n        account = self.accounts[account_id]\n        \n        if transaction_type == \"withdrawal\" and not self.market_open:\n            return {\"status\": \"failed\", \"new_balance\": account.balance, \"timestamp\": \"\"}\n        \n        if transaction_type == \"withdrawal\" and account.balance < amount:\n            return {\"status\": \"failed\", \"new_balance\": account.balance, \"timestamp\": \"\"}\n        \n        if transaction_type == \"deposit\":\n            account.balance += amount\n        else:\n            account.balance -= amount\n        \n        timestamp = datetime.datetime.now().strftime(\"%Y-%m-%d %H:%M:%S\")\n        transaction = Transaction(\n            transaction_id=f\"TXN{self.next_transaction_id:06d}\",\n            type=transaction_type,\n            amount=amount,\n            timestamp=timestamp\n        )\n        self.transactions.append(transaction)\n        self.next_transaction_id += 1\n        \n        return {\"status\": \"success\", \"new_balance\": account.balance, \"timestamp\": timestamp}\n\n    def get_transaction_history(self, start_date: Optional[str] = None, end_date: Optional[str] = None) -> dict:\n        \"\"\"Get transaction history with optional date filtering.\"\"\"\n        if not self.current_user:\n            return {\"transactions\": []}\n        \n        filtered_transactions = []\n        for transaction in self.transactions:\n            if start_date and transaction.timestamp < start_date:\n                continue\n            if end_date and transaction.timestamp > end_date + \" 23:59:59\":\n                continue\n            filtered_transactions.append(transaction.dict())\n        \n        return {\"transactions\": filtered_transactions}\n\n    def get_stock_symbol(self, company_name: str) -> dict:\n        \"\"\"Get stock symbol for company name.\"\"\"\n        if company_name in self.company_symbols:\n            return {\"symbol\": self.company_symbols[company_name], \"company_name\": company_name}\n        return {\"symbol\": \"\", \"company_name\": company_name}\n\n    def get_stock_info(self, symbol: str) -> dict:\n        \"\"\"Get comprehensive stock information.\"\"\"\n        if symbol in self.stocks:\n            return self.stocks[symbol].dict()\n        return {}\n\n    def get_available_stocks(self, sector: str) -> dict:\n        \"\"\"Get available stocks in specified sector.\"\"\"\n        if sector in self.sector_stocks:\n            return {\"symbols\": self.sector_stocks[sector]}\n        return {\"symbols\": []}\n\n    def filter_stocks_by_price(self, symbols: List[str], min_price: float, max_price: float) -> dict:\n        \"\"\"Filter stocks by price range.\"\"\"\n        filtered = []\n        for symbol in symbols:\n            if symbol in self.stocks and min_price <= self.stocks[symbol].price <= max_price:\n                filtered.append(symbol)\n        return {\"filtered_symbols\": filtered}\n\n    def place_order(self, order_type: str, symbol: str, price: float, quantity: int) -> dict:\n        \"\"\"Place buy or sell order.\"\"\"\n        if not self.current_user or not self.market_open:\n            return {}\n        \n        if symbol not in self.stocks:\n            return {}\n        \n        account_id = hash(self.current_user) % 1000000\n        if account_id not in self.accounts:\n            return {}\n        \n        account = self.accounts[account_id]\n        \n        if order_type == \"Buy\" and account.balance < price * quantity:\n            return {}\n        \n        timestamp = datetime.datetime.now().strftime(\"%Y-%m-%d %H:%M:%S\")\n        order = Order(\n            order_id=self.next_order_id,\n            order_type=order_type,\n            symbol=symbol,\n            price=price,\n            quantity=quantity,\n            status=\"Pending\",\n            timestamp=timestamp\n        )\n        \n        self.orders[self.next_order_id] = order\n        self.next_order_id += 1\n        \n        if order_type == \"Buy\":\n            account.balance -= price * quantity\n        \n        return order.dict()\n\n    def get_order_details(self, order_id: int) -> dict:\n        \"\"\"Get detailed order information.\"\"\"\n        if order_id in self.orders:\n            return self.orders[order_id].dict()\n        return {}\n\n    def cancel_order(self, order_id: int) -> dict:\n        \"\"\"Cancel pending or open order.\"\"\"\n        if order_id not in self.orders:\n            return {\"order_id\": order_id, \"status\": \"Error\", \"message\": \"Order not found\"}\n        \n        order = self.orders[order_id]\n        if order.status in [\"Completed\", \"Cancelled\"]:\n            return {\"order_id\": order_id, \"status\": \"Error\", \"message\": \"Cannot cancel completed or cancelled order\"}\n        \n        if order.status == \"Pending\":\n            order.status = \"Cancelled\"\n            if order.order_type == \"Buy\":\n                account_id = hash(self.current_user) % 1000000\n                if account_id in self.accounts:\n                    self.accounts[account_id].balance += order.price * order.quantity\n            return {\"order_id\": order_id, \"status\": \"Cancelled\"}\n        \n        return {\"order_id\": order_id, \"status\": \"Error\", \"message\": \"Cannot cancel order in current status\"}\n\n    def get_order_history(self, status: Optional[str] = None, symbol: Optional[str] = None) -> dict:\n        \"\"\"Get order history with optional filtering.\"\"\"\n        if not self.current_user:\n            return {\"orders\": []}\n        \n        filtered_orders = []\n        for order in self.orders.values():\n            if status and order.status != status:\n                continue\n            if symbol and order.symbol != symbol:\n                continue\n            filtered_orders.append(order.dict())\n        \n        return {\"orders\": filtered_orders}\n\n    def get_watchlist(self) -> dict:\n        \"\"\"Get user's watchlist.\"\"\"\n        if not self.current_user:\n            return {\"watchlist_symbols\": []}\n        \n        if self.current_user not in self.watchlists:\n            self.watchlists[self.current_user] = []\n        \n        return {\"watchlist_symbols\": self.watchlists[self.current_user]}\n\n    def add_to_watchlist(self, symbol: str) -> dict:\n        \"\"\"Add stock to watchlist.\"\"\"\n        if not self.current_user or symbol not in self.stocks:\n            return {\"status\": \"failed\", \"symbol\": symbol, \"watchlist\": []}\n        \n        if self.current_user not in self.watchlists:\n            self.watchlists[self.current_user] = []\n        \n        if symbol not in self.watchlists[self.current_user]:\n            self.watchlists[self.current_user].append(symbol)\n        \n        return {\"status\": \"success\", \"symbol\": symbol, \"watchlist\": self.watchlists[self.current_user]}\n\n    def remove_from_watchlist(self, symbol: str) -> dict:\n        \"\"\"Remove stock from watchlist.\"\"\"\n        if not self.current_user:\n            return {\"status\": \"failed\", \"symbol\": symbol, \"watchlist\": []}\n        \n        if self.current_user in self.watchlists and symbol in self.watchlists[self.current_user]:\n            self.watchlists[self.current_user].remove(symbol)\n            return {\"status\": \"success\", \"symbol\": symbol, \"watchlist\": self.watchlists[self.current_user]}\n        \n        return {\"status\": \"failed\", \"symbol\": symbol, \"watchlist\": self.watchlists.get(self.current_user, [])}\n\n    def notify_price_change(self, symbols: List[str], threshold: float) -> dict:\n        \"\"\"Monitor stocks for significant price changes.\"\"\"\n        changed_stocks = []\n        details = []\n        \n        for symbol in symbols:\n            if symbol in self.stocks:\n                stock = self.stocks[symbol]\n                if abs(stock.percent_change) >= threshold:\n                    changed_stocks.append(symbol)\n                    details.append({\n                        \"symbol\": symbol,\n                        \"current_price\": stock.price,\n                        \"percent_change\": stock.percent_change\n                    })\n        \n        notification = f\"Found {len(changed_stocks)} stocks with price changes exceeding {threshold}%\"\n        \n        result = {\"notification\": notification}\n        if changed_stocks:\n            result[\"changed_stocks\"] = changed_stocks\n            result[\"details\"] = details\n        \n        return result\n\n    def update_stock_price(self, symbol: str, new_price: float) -> dict:\n        \"\"\"Update stock price manually.\"\"\"\n        if symbol not in self.stocks:\n            return {}\n        \n        stock = self.stocks[symbol]\n        old_price = stock.price\n        percent_change = ((new_price - old_price) / old_price) * 100\n        \n        stock.price = new_price\n        stock.percent_change = percent_change\n        \n        return {\n            \"symbol\": symbol,\n            \"old_price\": old_price,\n            \"new_price\": new_price,\n            \"percent_change\": percent_change\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"TradingBot\")\nbot = TradingBot()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"Load scenario data into the trading bot.\"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        bot.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"Save current trading state as scenario dictionary.\"\"\"\n    try:\n        return bot.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef login(username: str, password: str) -> dict:\n    \"\"\"Authenticate user and establish trading session.\"\"\"\n    try:\n        if not username or not isinstance(username, str):\n            raise ValueError(\"Username must be a non-empty string\")\n        if not password or not isinstance(password, str):\n            raise ValueError(\"Password must be a non-empty string\")\n        return bot.login(username, password)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef logout() -> dict:\n    \"\"\"Terminate current user session.\"\"\"\n    try:\n        return bot.logout()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef check_login_status() -> dict:\n    \"\"\"Check if user session is active.\"\"\"\n    try:\n        return bot.check_login_status()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_market_status() -> dict:\n    \"\"\"Retrieve current market status.\"\"\"\n    try:\n        return bot.get_market_status()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_account_info() -> dict:\n    \"\"\"Get account information for authenticated user.\"\"\"\n    try:\n        if not bot.current_user:\n            raise ValueError(\"No user logged in\")\n        return bot.get_account_info()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef make_transaction(transaction_type: str, amount: float) -> dict:\n    \"\"\"Execute deposit or withdrawal transaction.\"\"\"\n    try:\n        if not bot.current_user:\n            raise ValueError(\"No user logged in\")\n        if not isinstance(amount, (int, float)) or amount <= 0:\n            raise ValueError(\"Amount must be a positive number\")\n        return bot.make_transaction(transaction_type, amount)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_transaction_history(start_date: Optional[str] = None, end_date: Optional[str] = None) -> dict:\n    \"\"\"Get transaction history with optional date filtering.\"\"\"\n    try:\n        if not bot.current_user:\n            raise ValueError(\"No user logged in\")\n        return bot.get_transaction_history(start_date, end_date)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_stock_symbol(company_name: str) -> dict:\n    \"\"\"Get stock symbol for company name.\"\"\"\n    try:\n        if not company_name or not isinstance(company_name, str):\n            raise ValueError(\"Company name must be a non-empty string\")\n        return bot.get_stock_symbol(company_name)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_stock_info(symbol: str) -> dict:\n    \"\"\"Get comprehensive stock information.\"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        result = bot.get_stock_info(symbol)\n        if not result:\n            raise ValueError(f\"Stock symbol {symbol} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_available_stocks(sector: str) -> dict:\n    \"\"\"Get available stocks in specified sector.\"\"\"\n    try:\n        if not sector or not isinstance(sector, str):\n            raise ValueError(\"Sector must be a non-empty string\")\n        return bot.get_available_stocks(sector)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef filter_stocks_by_price(symbols: List[str], min_price: float, max_price: float) -> dict:\n    \"\"\"Filter stocks by price range.\"\"\"\n    try:\n        if not isinstance(symbols, list):\n            raise ValueError(\"Symbols must be a list\")\n        if not isinstance(min_price, (int, float)) or min_price < 0:\n            raise ValueError(\"Min price must be a non-negative number\")\n        if not isinstance(max_price, (int, float)) or max_price < 0:\n            raise ValueError(\"Max price must be a non-negative number\")\n        if min_price > max_price:\n            raise ValueError(\"Min price cannot exceed max price\")\n        return bot.filter_stocks_by_price(symbols, min_price, max_price)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef place_order(order_type: str, symbol: str, price: float, quantity: int) -> dict:\n    \"\"\"Place buy or sell order.\"\"\"\n    try:\n        if not bot.current_user:\n            raise ValueError(\"No user logged in\")\n        if not bot.market_open:\n            raise ValueError(\"Market is closed\")\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        if not isinstance(price, (int, float)) or price <= 0:\n            raise ValueError(\"Price must be a positive number\")\n        if not isinstance(quantity, int) or quantity <= 0:\n            raise ValueError(\"Quantity must be a positive integer\")\n        result = bot.place_order(order_type, symbol, price, quantity)\n        if not result:\n            raise ValueError(\"Order placement failed - insufficient balance or invalid symbol\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_order_details(order_id: int) -> dict:\n    \"\"\"Get detailed order information.\"\"\"\n    try:\n        if not isinstance(order_id, int) or order_id <= 0:\n            raise ValueError(\"Order ID must be a positive integer\")\n        result = bot.get_order_details(order_id)\n        if not result:\n            raise ValueError(f\"Order {order_id} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef cancel_order(order_id: int) -> dict:\n    \"\"\"Cancel pending or open order.\"\"\"\n    try:\n        if not bot.current_user:\n            raise ValueError(\"No user logged in\")\n        if not isinstance(order_id, int) or order_id <= 0:\n            raise ValueError(\"Order ID must be a positive integer\")\n        return bot.cancel_order(order_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_order_history(status: Optional[str] = None, symbol: Optional[str] = None) -> dict:\n    \"\"\"Get order history with optional filtering.\"\"\"\n    try:\n        if not bot.current_user:\n            raise ValueError(\"No user logged in\")\n        return bot.get_order_history(status, symbol)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_watchlist() -> dict:\n    \"\"\"Get user's watchlist.\"\"\"\n    try:\n        if not bot.current_user:\n            raise ValueError(\"No user logged in\")\n        return bot.get_watchlist()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef add_to_watchlist(symbol: str) -> dict:\n    \"\"\"Add stock to watchlist.\"\"\"\n    try:\n        if not bot.current_user:\n            raise ValueError(\"No user logged in\")\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        return bot.add_to_watchlist(symbol)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef remove_from_watchlist(symbol: str) -> dict:\n    \"\"\"Remove stock from watchlist.\"\"\"\n    try:\n        if not bot.current_user:\n            raise ValueError(\"No user logged in\")\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        return bot.remove_from_watchlist(symbol)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notify_price_change(symbols: List[str], threshold: float) -> dict:\n    \"\"\"Monitor stocks for significant price changes.\"\"\"\n    try:\n        if not isinstance(symbols, list) or len(symbols) == 0:\n            raise ValueError(\"Symbols must be a non-empty list\")\n        if not isinstance(threshold, (int, float)) or threshold <= 0:\n            raise ValueError(\"Threshold must be a positive number\")\n        return bot.notify_price_change(symbols, threshold)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef update_stock_price(symbol: str, new_price: float) -> dict:\n    \"\"\"Update stock price manually.\"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        if not isinstance(new_price, (int, float)) or new_price <= 0:\n            raise ValueError(\"New price must be a positive number\")\n        result = bot.update_stock_price(symbol, new_price)\n        if not result:\n            raise ValueError(f\"Stock symbol {symbol} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-01T18:11:09.007030",
+      "revision_number": null
+    },
+    {
+      "version": 1,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\nimport datetime\n\n# Section 1: Schema\nclass User(BaseModel):\n    \"\"\"Represents a user account.\"\"\"\n    username: str = Field(..., description=\"Username credential\")\n    password: str = Field(..., description=\"Password credential\")\n\nclass Account(BaseModel):\n    \"\"\"Represents a trading account.\"\"\"\n    account_id: int = Field(..., ge=1, description=\"Unique account identifier\")\n    balance: float = Field(..., ge=0, description=\"Available balance\")\n    currency: str = Field(default=\"USD\", description=\"Account currency\")\n    binding_card: Optional[int] = Field(default=None, description=\"Linked card number\")\n\nclass Stock(BaseModel):\n    \"\"\"Represents a stock.\"\"\"\n    symbol: str = Field(..., description=\"Stock ticker symbol\")\n    price: float = Field(..., gt=0, description=\"Current price per share\")\n    percent_change: float = Field(..., description=\"Percentage change in price\")\n    volume: int = Field(..., ge=0, description=\"Trading volume\")\n    ma_5: float = Field(..., description=\"5-day moving average\")\n    ma_20: float = Field(..., description=\"20-day moving average\")\n\nclass Order(BaseModel):\n    \"\"\"Represents a trading order.\"\"\"\n    order_id: int = Field(..., ge=1, description=\"Unique order identifier\")\n    order_type: str = Field(..., description=\"Order type: Buy or Sell\")\n    symbol: str = Field(..., description=\"Stock symbol\")\n    price: float = Field(..., gt=0, description=\"Order price per share\")\n    quantity: int = Field(..., gt=0, description=\"Number of shares\")\n    status: str = Field(..., description=\"Order status\")\n    timestamp: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$\", description=\"Order timestamp\")\n    execution_price: Optional[float] = Field(default=None, description=\"Execution price if completed\")\n\nclass Transaction(BaseModel):\n    \"\"\"Represents a financial transaction.\"\"\"\n    transaction_id: str = Field(..., description=\"Unique transaction identifier\")\n    type: str = Field(..., description=\"Transaction type: deposit or withdrawal\")\n    amount: float = Field(..., gt=0, description=\"Transaction amount\")\n    timestamp: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$\", description=\"Transaction timestamp\")\n\nclass TradingScenario(BaseModel):\n    \"\"\"Main scenario model for trading platform.\"\"\"\n    users: Dict[str, User] = Field(default={}, description=\"Registered users\")\n    accounts: Dict[int, Account] = Field(default={}, description=\"User accounts\")\n    current_user: Optional[str] = Field(default=None, description=\"Currently logged in user\")\n    session_token: Optional[str] = Field(default=None, description=\"Active session token\")\n    market_open: bool = Field(default=True, description=\"Market status\")\n    current_time: str = Field(default=\"09:30 AM\", description=\"Current market time\")\n    stocks: Dict[str, Stock] = Field(default={\n        \"AAPL\": Stock(symbol=\"AAPL\", price=150.25, percent_change=1.2, volume=50000000, ma_5=149.5, ma_20=148.0),\n        \"GOOG\": Stock(symbol=\"GOOG\", price=2750.8, percent_change=-0.5, volume=1500000, ma_5=2760.0, ma_20=2745.0),\n        \"TSLA\": Stock(symbol=\"TSLA\", price=800.15, percent_change=2.8, volume=25000000, ma_5=790.0, ma_20=785.0),\n        \"MSFT\": Stock(symbol=\"MSFT\", price=305.6, percent_change=0.3, volume=20000000, ma_5=304.0, ma_20=302.5),\n        \"NVDA\": Stock(symbol=\"NVDA\", price=220.75, percent_change=-1.2, volume=18000000, ma_5=222.0, ma_20=218.0),\n        \"AMZN\": Stock(symbol=\"AMZN\", price=3200.4, percent_change=0.8, volume=3000000, ma_5=3180.0, ma_20=3150.0),\n        \"ZETA\": Stock(symbol=\"ZETA\", price=45.3, percent_change=3.5, volume=5000000, ma_5=44.0, ma_20=43.0),\n        \"ALPH\": Stock(symbol=\"ALPH\", price=120.9, percent_change=-2.1, volume=2000000, ma_5=123.0, ma_20=125.0),\n        \"OMEG\": Stock(symbol=\"OMEG\", price=78.45, percent_change=1.7, volume=1500000, ma_5=77.0, ma_20=76.0),\n        \"QUAS\": Stock(symbol=\"QUAS\", price=234.6, percent_change=0.9, volume=800000, ma_5=233.0, ma_20=230.0),\n        \"NEPT\": Stock(symbol=\"NEPT\", price=89.12, percent_change=-0.8, volume=1200000, ma_5=90.0, ma_20=91.0),\n        \"SYNX\": Stock(symbol=\"SYNX\", price=156.78, percent_change=2.3, volume=900000, ma_5=154.0, ma_20=152.0)\n    }, description=\"Available stocks\")\n    company_symbols: Dict[str, str] = Field(default={\n        \"Apple\": \"AAPL\", \"Google\": \"GOOG\", \"Tesla\": \"TSLA\", \"Microsoft\": \"MSFT\",\n        \"Nvidia\": \"NVDA\", \"Amazon\": \"AMZN\", \"Zeta Corp\": \"ZETA\", \"Alpha Tech\": \"ALPH\",\n        \"Omega Industries\": \"OMEG\", \"Quasar Ltd.\": \"QUAS\", \"Neptune Systems\": \"NEPT\", \"Synex Solutions\": \"SYNX\"\n    }, description=\"Company to symbol mapping\")\n    sector_stocks: Dict[str, List[str]] = Field(default={\n        \"Technology\": [\"AAPL\", \"GOOG\", \"MSFT\", \"NVDA\"],\n        \"Automobile\": [\"TSLA\"],\n        \"Finance\": [],\n        \"Healthcare\": [],\n        \"Energy\": []\n    }, description=\"Stocks by sector\")\n    orders: Dict[int, Order] = Field(default={}, description=\"All orders\")\n    transactions: List[Transaction] = Field(default=[], description=\"Transaction history\")\n    watchlists: Dict[str, List[str]] = Field(default={}, description=\"User watchlists\")\n    next_order_id: int = Field(default=1, description=\"Next order ID\")\n    next_transaction_id: int = Field(default=1, description=\"Next transaction ID\")\n\nScenario_Schema = [User, Account, Stock, Order, Transaction, TradingScenario]\n\n# Section 2: Class\nclass TradingBot:\n    def __init__(self):\n        \"\"\"Initialize trading bot with empty state.\"\"\"\n        self.users: Dict[str, User] = {}\n        self.accounts: Dict[int, Account] = {}\n        self.current_user: Optional[str] = None\n        self.session_token: Optional[str] = None\n        self.market_open: bool = True\n        self.current_time: str = \"09:30 AM\"\n        self.stocks: Dict[str, Stock] = {}\n        self.company_symbols: Dict[str, str] = {}\n        self.sector_stocks: Dict[str, List[str]] = {}\n        self.orders: Dict[int, Order] = {}\n        self.transactions: List[Transaction] = []\n        self.watchlists: Dict[str, List[str]] = {}\n        self.next_order_id: int = 1\n        self.next_transaction_id: int = 1\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the trading bot.\"\"\"\n        model = TradingScenario(**scenario)\n        self.users = model.users\n        self.accounts = model.accounts\n        self.current_user = model.current_user\n        self.session_token = model.session_token\n        self.market_open = model.market_open\n        self.current_time = model.current_time\n        self.stocks = model.stocks\n        self.company_symbols = model.company_symbols\n        self.sector_stocks = model.sector_stocks\n        self.orders = model.orders\n        self.transactions = model.transactions\n        self.watchlists = model.watchlists\n        self.next_order_id = model.next_order_id\n        self.next_transaction_id = model.next_transaction_id\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"users\": {username: user.dict() for username, user in self.users.items()},\n            \"accounts\": {account_id: account.dict() for account_id, account in self.accounts.items()},\n            \"current_user\": self.current_user,\n            \"session_token\": self.session_token,\n            \"market_open\": self.market_open,\n            \"current_time\": self.current_time,\n            \"stocks\": {symbol: stock.dict() for symbol, stock in self.stocks.items()},\n            \"company_symbols\": self.company_symbols,\n            \"sector_stocks\": self.sector_stocks,\n            \"orders\": {order_id: order.dict() for order_id, order in self.orders.items()},\n            \"transactions\": [transaction.dict() for transaction in self.transactions],\n            \"watchlists\": self.watchlists,\n            \"next_order_id\": self.next_order_id,\n            \"next_transaction_id\": self.next_transaction_id\n        }\n\n    def login(self, username: str, password: str) -> dict:\n        \"\"\"Authenticate user and establish trading session.\"\"\"\n        if username in self.users and self.users[username].password == password:\n            self.current_user = username\n            self.session_token = f\"token_{username}_{int(datetime.datetime.now().timestamp())}\"\n            return {\"status\": \"success\", \"session_token\": self.session_token}\n        return {\"status\": \"failed\"}\n\n    def logout(self) -> dict:\n        \"\"\"Terminate current user session.\"\"\"\n        if self.current_user:\n            self.current_user = None\n            self.session_token = None\n            return {\"status\": \"success\"}\n        return {\"status\": \"failed\"}\n\n    def check_login_status(self) -> dict:\n        \"\"\"Check if user session is active.\"\"\"\n        return {\"is_authenticated\": self.current_user is not None}\n\n    def get_market_status(self) -> dict:\n        \"\"\"Retrieve current market status.\"\"\"\n        return {\"status\": \"Open\" if self.market_open else \"Closed\", \"current_time\": self.current_time}\n\n    def get_account_info(self) -> dict:\n        \"\"\"Get account information for authenticated user.\"\"\"\n        if not self.current_user:\n            return {}\n        \n        # Find account for current user - look for any account since scenarios use various IDs\n        for account in self.accounts.values():\n            return account.dict()\n        return {}\n\n    def make_transaction(self, transaction_type: str, amount: float) -> dict:\n        \"\"\"Execute deposit or withdrawal transaction.\"\"\"\n        if not self.current_user:\n            return {\"status\": \"failed\", \"new_balance\": 0, \"timestamp\": \"\"}\n        \n        # Find any available account for the current user\n        account = None\n        for acc in self.accounts.values():\n            account = acc\n            break\n            \n        if not account:\n            return {\"status\": \"failed\", \"new_balance\": 0, \"timestamp\": \"\"}\n        \n        if transaction_type == \"withdrawal\" and not self.market_open:\n            return {\"status\": \"failed\", \"new_balance\": account.balance, \"timestamp\": \"\"}\n        \n        if transaction_type == \"withdrawal\" and account.balance < amount:\n            return {\"status\": \"failed\", \"new_balance\": account.balance, \"timestamp\": \"\"}\n        \n        if transaction_type == \"deposit\":\n            account.balance += amount\n        else:\n            account.balance -= amount\n        \n        timestamp = datetime.datetime.now().strftime(\"%Y-%m-%d %H:%M:%S\")\n        transaction = Transaction(\n            transaction_id=f\"TXN{self.next_transaction_id:06d}\",\n            type=transaction_type,\n            amount=amount,\n            timestamp=timestamp\n        )\n        self.transactions.append(transaction)\n        self.next_transaction_id += 1\n        \n        return {\"status\": \"success\", \"new_balance\": account.balance, \"timestamp\": timestamp}\n\n    def get_transaction_history(self, start_date: Optional[str] = None, end_date: Optional[str] = None) -> dict:\n        \"\"\"Get transaction history with optional date filtering.\"\"\"\n        if not self.current_user:\n            return {\"transactions\": []}\n        \n        filtered_transactions = []\n        for transaction in self.transactions:\n            if start_date and transaction.timestamp < start_date:\n                continue\n            if end_date and transaction.timestamp > end_date + \" 23:59:59\":\n                continue\n            filtered_transactions.append(transaction.dict())\n        \n        return {\"transactions\": filtered_transactions}\n\n    def get_stock_symbol(self, company_name: str) -> dict:\n        \"\"\"Get stock symbol for company name.\"\"\"\n        if company_name in self.company_symbols:\n            return {\"symbol\": self.company_symbols[company_name], \"company_name\": company_name}\n        return {\"symbol\": \"\", \"company_name\": company_name}\n\n    def get_stock_info(self, symbol: str) -> dict:\n        \"\"\"Get comprehensive stock information.\"\"\"\n        if symbol in self.stocks:\n            return self.stocks[symbol].dict()\n        return {}\n\n    def get_available_stocks(self, sector: str) -> dict:\n        \"\"\"Get available stocks in specified sector.\"\"\"\n        if sector in self.sector_stocks:\n            return {\"symbols\": self.sector_stocks[sector]}\n        return {\"symbols\": []}\n\n    def filter_stocks_by_price(self, symbols: List[str], min_price: float, max_price: float) -> dict:\n        \"\"\"Filter stocks by price range.\"\"\"\n        filtered = []\n        for symbol in symbols:\n            if symbol in self.stocks and min_price <= self.stocks[symbol].price <= max_price:\n                filtered.append(symbol)\n        return {\"filtered_symbols\": filtered}\n\n    def place_order(self, order_type: str, symbol: str, price: float, quantity: int) -> dict:\n        \"\"\"Place buy or sell order.\"\"\"\n        if not self.current_user or not self.market_open:\n            return {}\n        \n        if symbol not in self.stocks:\n            return {}\n        \n        # Find any available account for the current user\n        account = None\n        for acc in self.accounts.values():\n            account = acc\n            break\n            \n        if not account:\n            return {}\n        \n        if order_type == \"Buy\" and account.balance < price * quantity:\n            return {}\n        \n        timestamp = datetime.datetime.now().strftime(\"%Y-%m-%d %H:%M:%S\")\n        order = Order(\n            order_id=self.next_order_id,\n            order_type=order_type,\n            symbol=symbol,\n            price=price,\n            quantity=quantity,\n            status=\"Pending\",\n            timestamp=timestamp\n        )\n        \n        self.orders[self.next_order_id] = order\n        self.next_order_id += 1\n        \n        if order_type == \"Buy\":\n            account.balance -= price * quantity\n        \n        return order.dict()\n\n    def get_order_details(self, order_id: int) -> dict:\n        \"\"\"Get detailed order information.\"\"\"\n        if order_id in self.orders:\n            return self.orders[order_id].dict()\n        return {}\n\n    def cancel_order(self, order_id: int) -> dict:\n        \"\"\"Cancel pending or open order.\"\"\"\n        if order_id not in self.orders:\n            return {\"order_id\": order_id, \"status\": \"Error\", \"message\": \"Order not found\"}\n        \n        order = self.orders[order_id]\n        if order.status in [\"Completed\", \"Cancelled\"]:\n            return {\"order_id\": order_id, \"status\": \"Error\", \"message\": \"Cannot cancel completed or cancelled order\"}\n        \n        if order.status == \"Pending\":\n            order.status = \"Cancelled\"\n            if order.order_type == \"Buy\":\n                # Find any available account to refund\n                account = None\n                for acc in self.accounts.values():\n                    account = acc\n                    break\n                if account:\n                    account.balance += order.price * order.quantity\n            return {\"order_id\": order_id, \"status\": \"Cancelled\"}\n        \n        return {\"order_id\": order_id, \"status\": \"Error\", \"message\": \"Cannot cancel order in current status\"}\n\n    def get_order_history(self, status: Optional[str] = None, symbol: Optional[str] = None) -> dict:\n        \"\"\"Get order history with optional filtering.\"\"\"\n        if not self.current_user:\n            return {\"orders\": []}\n        \n        filtered_orders = []\n        for order in self.orders.values():\n            if status and order.status != status:\n                continue\n            if symbol and order.symbol != symbol:\n                continue\n            filtered_orders.append(order.dict())\n        \n        return {\"orders\": filtered_orders}\n\n    def get_watchlist(self) -> dict:\n        \"\"\"Get user's watchlist.\"\"\"\n        if not self.current_user:\n            return {\"watchlist_symbols\": []}\n        \n        if self.current_user not in self.watchlists:\n            self.watchlists[self.current_user] = []\n        \n        return {\"watchlist_symbols\": self.watchlists[self.current_user]}\n\n    def add_to_watchlist(self, symbol: str) -> dict:\n        \"\"\"Add stock to watchlist.\"\"\"\n        if not self.current_user or symbol not in self.stocks:\n            return {\"status\": \"failed\", \"symbol\": symbol, \"watchlist\": []}\n        \n        if self.current_user not in self.watchlists:\n            self.watchlists[self.current_user] = []\n        \n        if symbol not in self.watchlists[self.current_user]:\n            self.watchlists[self.current_user].append(symbol)\n        \n        return {\"status\": \"success\", \"symbol\": symbol, \"watchlist\": self.watchlists[self.current_user]}\n\n    def remove_from_watchlist(self, symbol: str) -> dict:\n        \"\"\"Remove stock from watchlist.\"\"\"\n        if not self.current_user:\n            return {\"status\": \"failed\", \"symbol\": symbol, \"watchlist\": []}\n        \n        if self.current_user in self.watchlists and symbol in self.watchlists[self.current_user]:\n            self.watchlists[self.current_user].remove(symbol)\n            return {\"status\": \"success\", \"symbol\": symbol, \"watchlist\": self.watchlists[self.current_user]}\n        \n        return {\"status\": \"failed\", \"symbol\": symbol, \"watchlist\": self.watchlists.get(self.current_user, [])}\n\n    def notify_price_change(self, symbols: List[str], threshold: float) -> dict:\n        \"\"\"Monitor stocks for significant price changes.\"\"\"\n        changed_stocks = []\n        details = []\n        \n        for symbol in symbols:\n            if symbol in self.stocks:\n                stock = self.stocks[symbol]\n                if abs(stock.percent_change) >= threshold:\n                    changed_stocks.append(symbol)\n                    details.append({\n                        \"symbol\": symbol,\n                        \"current_price\": stock.price,\n                        \"percent_change\": stock.percent_change\n                    })\n        \n        notification = f\"Found {len(changed_stocks)} stocks with price changes exceeding {threshold}%\"\n        \n        result = {\"notification\": notification}\n        if changed_stocks:\n            result[\"changed_stocks\"] = changed_stocks\n            result[\"details\"] = details\n        \n        return result\n\n    def update_stock_price(self, symbol: str, new_price: float) -> dict:\n        \"\"\"Update stock price manually.\"\"\"\n        if symbol not in self.stocks:\n            return {}\n        \n        stock = self.stocks[symbol]\n        old_price = stock.price\n        percent_change = ((new_price - old_price) / old_price) * 100\n        \n        stock.price = new_price\n        stock.percent_change = percent_change\n        \n        return {\n            \"symbol\": symbol,\n            \"old_price\": old_price,\n            \"new_price\": new_price,\n            \"percent_change\": percent_change\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"TradingBot\")\nbot = TradingBot()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"Load scenario data into the trading bot.\"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        bot.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"Save current trading state as scenario dictionary.\"\"\"\n    try:\n        return bot.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef login(username: str, password: str) -> dict:\n    \"\"\"Authenticate user and establish trading session.\"\"\"\n    try:\n        if not username or not isinstance(username, str):\n            raise ValueError(\"Username must be a non-empty string\")\n        if not password or not isinstance(password, str):\n            raise ValueError(\"Password must be a non-empty string\")\n        return bot.login(username, password)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef logout() -> dict:\n    \"\"\"Terminate current user session.\"\"\"\n    try:\n        return bot.logout()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef check_login_status() -> dict:\n    \"\"\"Check if user session is active.\"\"\"\n    try:\n        return bot.check_login_status()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_market_status() -> dict:\n    \"\"\"Retrieve current market status.\"\"\"\n    try:\n        return bot.get_market_status()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_account_info() -> dict:\n    \"\"\"Get account information for authenticated user.\"\"\"\n    try:\n        if not bot.current_user:\n            raise ValueError(\"No user logged in\")\n        result = bot.get_account_info()\n        if not result:\n            raise ValueError(\"No account found for current user\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef make_transaction(transaction_type: str, amount: float) -> dict:\n    \"\"\"Execute deposit or withdrawal transaction.\"\"\"\n    try:\n        if not bot.current_user:\n            raise ValueError(\"No user logged in\")\n        if not isinstance(amount, (int, float)) or amount <= 0:\n            raise ValueError(\"Amount must be a positive number\")\n        result = bot.make_transaction(transaction_type, amount)\n        if result.get(\"status\") == \"failed\":\n            raise ValueError(\"Transaction failed - no account found or insufficient funds\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_transaction_history(start_date: Optional[str] = None, end_date: Optional[str] = None) -> dict:\n    \"\"\"Get transaction history with optional date filtering.\"\"\"\n    try:\n        if not bot.current_user:\n            raise ValueError(\"No user logged in\")\n        return bot.get_transaction_history(start_date, end_date)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_stock_symbol(company_name: str) -> dict:\n    \"\"\"Get stock symbol for company name.\"\"\"\n    try:\n        if not company_name or not isinstance(company_name, str):\n            raise ValueError(\"Company name must be a non-empty string\")\n        return bot.get_stock_symbol(company_name)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_stock_info(symbol: str) -> dict:\n    \"\"\"Get comprehensive stock information.\"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        result = bot.get_stock_info(symbol)\n        if not result:\n            raise ValueError(f\"Stock symbol {symbol} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_available_stocks(sector: str) -> dict:\n    \"\"\"Get available stocks in specified sector.\"\"\"\n    try:\n        if not sector or not isinstance(sector, str):\n            raise ValueError(\"Sector must be a non-empty string\")\n        return bot.get_available_stocks(sector)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef filter_stocks_by_price(symbols: List[str], min_price: float, max_price: float) -> dict:\n    \"\"\"Filter stocks by price range.\"\"\"\n    try:\n        if not isinstance(symbols, list):\n            raise ValueError(\"Symbols must be a list\")\n        if not isinstance(min_price, (int, float)) or min_price < 0:\n            raise ValueError(\"Min price must be a non-negative number\")\n        if not isinstance(max_price, (int, float)) or max_price < 0:\n            raise ValueError(\"Max price must be a non-negative number\")\n        if min_price > max_price:\n            raise ValueError(\"Min price cannot exceed max price\")\n        return bot.filter_stocks_by_price(symbols, min_price, max_price)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef place_order(order_type: str, symbol: str, price: float, quantity: int) -> dict:\n    \"\"\"Place buy or sell order.\"\"\"\n    try:\n        if not bot.current_user:\n            raise ValueError(\"No user logged in\")\n        if not bot.market_open:\n            raise ValueError(\"Market is closed\")\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        if not isinstance(price, (int, float)) or price <= 0:\n            raise ValueError(\"Price must be a positive number\")\n        if not isinstance(quantity, int) or quantity <= 0:\n            raise ValueError(\"Quantity must be a positive integer\")\n        result = bot.place_order(order_type, symbol, price, quantity)\n        if not result:\n            raise ValueError(\"Order placement failed - no account found or insufficient balance\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_order_details(order_id: int) -> dict:\n    \"\"\"Get detailed order information.\"\"\"\n    try:\n        if not isinstance(order_id, int) or order_id <= 0:\n            raise ValueError(\"Order ID must be a positive integer\")\n        result = bot.get_order_details(order_id)\n        if not result:\n            raise ValueError(f\"Order {order_id} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef cancel_order(order_id: int) -> dict:\n    \"\"\"Cancel pending or open order.\"\"\"\n    try:\n        if not bot.current_user:\n            raise ValueError(\"No user logged in\")\n        if not isinstance(order_id, int) or order_id <= 0:\n            raise ValueError(\"Order ID must be a positive integer\")\n        return bot.cancel_order(order_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_order_history(status: Optional[str] = None, symbol: Optional[str] = None) -> dict:\n    \"\"\"Get order history with optional filtering.\"\"\"\n    try:\n        if not bot.current_user:\n            raise ValueError(\"No user logged in\")\n        return bot.get_order_history(status, symbol)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_watchlist() -> dict:\n    \"\"\"Get user's watchlist.\"\"\"\n    try:\n        if not bot.current_user:\n            raise ValueError(\"No user logged in\")\n        return bot.get_watchlist()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef add_to_watchlist(symbol: str) -> dict:\n    \"\"\"Add stock to watchlist.\"\"\"\n    try:\n        if not bot.current_user:\n            raise ValueError(\"No user logged in\")\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        return bot.add_to_watchlist(symbol)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef remove_from_watchlist(symbol: str) -> dict:\n    \"\"\"Remove stock from watchlist.\"\"\"\n    try:\n        if not bot.current_user:\n            raise ValueError(\"No user logged in\")\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        return bot.remove_from_watchlist(symbol)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef notify_price_change(symbols: List[str], threshold: float) -> dict:\n    \"\"\"Monitor stocks for significant price changes.\"\"\"\n    try:\n        if not isinstance(symbols, list) or len(symbols) == 0:\n            raise ValueError(\"Symbols must be a non-empty list\")\n        if not isinstance(threshold, (int, float)) or threshold <= 0:\n            raise ValueError(\"Threshold must be a positive number\")\n        return bot.notify_price_change(symbols, threshold)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef update_stock_price(symbol: str, new_price: float) -> dict:\n    \"\"\"Update stock price manually.\"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        if not isinstance(new_price, (int, float)) or new_price <= 0:\n            raise ValueError(\"New price must be a positive number\")\n        result = bot.update_stock_price(symbol, new_price)\n        if not result:\n            raise ValueError(f\"Stock symbol {symbol} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-01T18:11:09.007030",
+      "revision_number": 1
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with one registered user, one account, and minimal market data. Tests basic login and account setup.",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "users": {
+          "john_doe": {
+            "username": "john_doe",
+            "password": "SecurePass123"
+          }
+        },
+        "accounts": {
+          "1": {
+            "account_id": 1,
+            "balance": 10000.0,
+            "currency": "USD",
+            "binding_card": null
+          }
+        },
+        "current_user": null,
+        "session_token": null,
+        "market_open": true,
+        "current_time": "09:30 AM",
+        "stocks": {
+          "AAPL": {
+            "symbol": "AAPL",
+            "price": 150.25,
+            "percent_change": 1.2,
+            "volume": 50000000,
+            "ma_5": 149.5,
+            "ma_20": 148.0
+          },
+          "GOOG": {
+            "symbol": "GOOG",
+            "price": 2750.8,
+            "percent_change": -0.5,
+            "volume": 1500000,
+            "ma_5": 2760.0,
+            "ma_20": 2745.0
+          }
+        },
+        "company_symbols": {
+          "Apple": "AAPL",
+          "Google": "GOOG"
+        },
+        "sector_stocks": {
+          "Technology": [
+            "AAPL",
+            "GOOG"
+          ],
+          "Automobile": [],
+          "Finance": [],
+          "Healthcare": [],
+          "Energy": []
+        },
+        "orders": {},
+        "transactions": [],
+        "watchlists": {},
+        "next_order_id": 1,
+        "next_transaction_id": 1
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Active trading scenario with logged-in user, multiple accounts, pending orders, and transaction history. Tests order management and portfolio tracking.",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "users": {
+          "alice_trader": {
+            "username": "alice_trader",
+            "password": "TradeSecure456"
+          },
+          "bob_investor": {
+            "username": "bob_investor",
+            "password": "InvestSafe789"
+          }
+        },
+        "accounts": {
+          "1": {
+            "account_id": 1,
+            "balance": 25000.5,
+            "currency": "USD",
+            "binding_card": 1234567890123456
+          },
+          "2": {
+            "account_id": 2,
+            "balance": 50000.0,
+            "currency": "USD",
+            "binding_card": null
+          }
+        },
+        "current_user": "alice_trader",
+        "session_token": "token_abc123xyz",
+        "market_open": true,
+        "current_time": "02:15 PM",
+        "stocks": {
+          "AAPL": {
+            "symbol": "AAPL",
+            "price": 150.25,
+            "percent_change": 1.2,
+            "volume": 50000000,
+            "ma_5": 149.5,
+            "ma_20": 148.0
+          },
+          "TSLA": {
+            "symbol": "TSLA",
+            "price": 800.15,
+            "percent_change": 2.8,
+            "volume": 25000000,
+            "ma_5": 790.0,
+            "ma_20": 785.0
+          },
+          "MSFT": {
+            "symbol": "MSFT",
+            "price": 305.6,
+            "percent_change": 0.3,
+            "volume": 20000000,
+            "ma_5": 304.0,
+            "ma_20": 302.5
+          },
+          "NVDA": {
+            "symbol": "NVDA",
+            "price": 220.75,
+            "percent_change": -1.2,
+            "volume": 18000000,
+            "ma_5": 222.0,
+            "ma_20": 218.0
+          }
+        },
+        "company_symbols": {
+          "Apple": "AAPL",
+          "Tesla": "TSLA",
+          "Microsoft": "MSFT",
+          "Nvidia": "NVDA"
+        },
+        "sector_stocks": {
+          "Technology": [
+            "AAPL",
+            "MSFT",
+            "NVDA"
+          ],
+          "Automobile": [
+            "TSLA"
+          ],
+          "Finance": [],
+          "Healthcare": [],
+          "Energy": []
+        },
+        "orders": {
+          "1": {
+            "order_id": 1,
+            "order_type": "Buy",
+            "symbol": "AAPL",
+            "price": 150.0,
+            "quantity": 10,
+            "status": "Completed",
+            "timestamp": "2024-01-15 10:30:00",
+            "execution_price": 150.25
+          },
+          "2": {
+            "order_id": 2,
+            "order_type": "Buy",
+            "symbol": "TSLA",
+            "price": 800.0,
+            "quantity": 5,
+            "status": "Pending",
+            "timestamp": "2024-01-15 14:00:00",
+            "execution_price": null
+          },
+          "3": {
+            "order_id": 3,
+            "order_type": "Sell",
+            "symbol": "MSFT",
+            "price": 306.0,
+            "quantity": 20,
+            "status": "Cancelled",
+            "timestamp": "2024-01-15 11:45:00",
+            "execution_price": null
+          }
+        },
+        "transactions": [
+          {
+            "transaction_id": "TXN001",
+            "type": "deposit",
+            "amount": 10000.0,
+            "timestamp": "2024-01-10 09:00:00"
+          },
+          {
+            "transaction_id": "TXN002",
+            "type": "withdrawal",
+            "amount": 2500.0,
+            "timestamp": "2024-01-12 15:30:00"
+          }
+        ],
+        "watchlists": {
+          "alice_trader": [
+            "AAPL",
+            "TSLA",
+            "NVDA"
+          ],
+          "bob_investor": [
+            "MSFT"
+          ]
+        },
+        "next_order_id": 4,
+        "next_transaction_id": 3
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Comprehensive trading platform with multiple users, diverse portfolios, extensive order history, and full market data. Tests complex trading scenarios and market analysis.",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "users": {
+          "trader_pro": {
+            "username": "trader_pro",
+            "password": "ProTrade2024!"
+          },
+          "investor_jane": {
+            "username": "investor_jane",
+            "password": "JaneInvest#99"
+          },
+          "day_trader_mike": {
+            "username": "day_trader_mike",
+            "password": "MikeTrades$$$"
+          }
+        },
+        "accounts": {
+          "1": {
+            "account_id": 1,
+            "balance": 125000.75,
+            "currency": "USD",
+            "binding_card": 4532123456789012
+          },
+          "2": {
+            "account_id": 2,
+            "balance": 75000.0,
+            "currency": "USD",
+            "binding_card": 5412987654321098
+          },
+          "3": {
+            "account_id": 3,
+            "balance": 5000.25,
+            "currency": "USD",
+            "binding_card": null
+          }
+        },
+        "current_user": "trader_pro",
+        "session_token": "session_xyz789abc456",
+        "market_open": false,
+        "current_time": "04:00 PM",
+        "stocks": {
+          "AAPL": {
+            "symbol": "AAPL",
+            "price": 150.25,
+            "percent_change": 1.2,
+            "volume": 50000000,
+            "ma_5": 149.5,
+            "ma_20": 148.0
+          },
+          "GOOG": {
+            "symbol": "GOOG",
+            "price": 2750.8,
+            "percent_change": -0.5,
+            "volume": 1500000,
+            "ma_5": 2760.0,
+            "ma_20": 2745.0
+          },
+          "TSLA": {
+            "symbol": "TSLA",
+            "price": 800.15,
+            "percent_change": 2.8,
+            "volume": 25000000,
+            "ma_5": 790.0,
+            "ma_20": 785.0
+          },
+          "MSFT": {
+            "symbol": "MSFT",
+            "price": 305.6,
+            "percent_change": 0.3,
+            "volume": 20000000,
+            "ma_5": 304.0,
+            "ma_20": 302.5
+          },
+          "NVDA": {
+            "symbol": "NVDA",
+            "price": 220.75,
+            "percent_change": -1.2,
+            "volume": 18000000,
+            "ma_5": 222.0,
+            "ma_20": 218.0
+          },
+          "AMZN": {
+            "symbol": "AMZN",
+            "price": 3200.4,
+            "percent_change": 0.8,
+            "volume": 3000000,
+            "ma_5": 3180.0,
+            "ma_20": 3150.0
+          }
+        },
+        "company_symbols": {
+          "Apple": "AAPL",
+          "Google": "GOOG",
+          "Tesla": "TSLA",
+          "Microsoft": "MSFT",
+          "Nvidia": "NVDA",
+          "Amazon": "AMZN"
+        },
+        "sector_stocks": {
+          "Technology": [
+            "AAPL",
+            "GOOG",
+            "MSFT",
+            "NVDA",
+            "AMZN"
+          ],
+          "Automobile": [
+            "TSLA"
+          ],
+          "Finance": [],
+          "Healthcare": [],
+          "Energy": []
+        },
+        "orders": {
+          "1": {
+            "order_id": 1,
+            "order_type": "Buy",
+            "symbol": "AAPL",
+            "price": 148.5,
+            "quantity": 50,
+            "status": "Completed",
+            "timestamp": "2024-01-15 09:35:00",
+            "execution_price": 148.75
+          },
+          "2": {
+            "order_id": 2,
+            "order_type": "Buy",
+            "symbol": "TSLA",
+            "price": 795.0,
+            "quantity": 15,
+            "status": "Completed",
+            "timestamp": "2024-01-15 10:20:00",
+            "execution_price": 796.5
+          },
+          "3": {
+            "order_id": 3,
+            "order_type": "Sell",
+            "symbol": "AAPL",
+            "price": 151.0,
+            "quantity": 25,
+            "status": "Pending",
+            "timestamp": "2024-01-15 14:30:00",
+            "execution_price": null
+          },
+          "4": {
+            "order_id": 4,
+            "order_type": "Buy",
+            "symbol": "NVDA",
+            "price": 218.0,
+            "quantity": 30,
+            "status": "Completed",
+            "timestamp": "2024-01-15 11:15:00",
+            "execution_price": 219.25
+          },
+          "5": {
+            "order_id": 5,
+            "order_type": "Sell",
+            "symbol": "MSFT",
+            "price": 310.0,
+            "quantity": 10,
+            "status": "Cancelled",
+            "timestamp": "2024-01-15 13:00:00",
+            "execution_price": null
+          },
+          "6": {
+            "order_id": 6,
+            "order_type": "Buy",
+            "symbol": "GOOG",
+            "price": 2740.0,
+            "quantity": 5,
+            "status": "Pending",
+            "timestamp": "2024-01-15 15:45:00",
+            "execution_price": null
+          }
+        },
+        "transactions": [
+          {
+            "transaction_id": "TXN001",
+            "type": "deposit",
+            "amount": 50000.0,
+            "timestamp": "2024-01-01 09:00:00"
+          },
+          {
+            "transaction_id": "TXN002",
+            "type": "deposit",
+            "amount": 25000.0,
+            "timestamp": "2024-01-05 10:30:00"
+          },
+          {
+            "transaction_id": "TXN003",
+            "type": "withdrawal",
+            "amount": 10000.0,
+            "timestamp": "2024-01-10 14:00:00"
+          },
+          {
+            "transaction_id": "TXN004",
+            "type": "deposit",
+            "amount": 75000.0,
+            "timestamp": "2024-01-12 09:15:00"
+          },
+          {
+            "transaction_id": "TXN005",
+            "type": "withdrawal",
+            "amount": 5000.0,
+            "timestamp": "2024-01-14 16:30:00"
+          }
+        ],
+        "watchlists": {
+          "trader_pro": [
+            "AAPL",
+            "TSLA",
+            "NVDA",
+            "GOOG",
+            "AMZN"
+          ],
+          "investor_jane": [
+            "MSFT",
+            "AAPL",
+            "AMZN"
+          ],
+          "day_trader_mike": [
+            "TSLA",
+            "NVDA"
+          ]
+        },
+        "next_order_id": 7,
+        "next_transaction_id": 6
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Edge case scenario with empty collections, market closed, no active session, and minimal stock data. Tests system behavior with minimal data and inactive states.",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "users": {},
+        "accounts": {},
+        "current_user": null,
+        "session_token": null,
+        "market_open": false,
+        "current_time": "06:00 PM",
+        "stocks": {
+          "AAPL": {
+            "symbol": "AAPL",
+            "price": 150.0,
+            "percent_change": 0.0,
+            "volume": 0,
+            "ma_5": 150.0,
+            "ma_20": 150.0
+          }
+        },
+        "company_symbols": {
+          "Apple": "AAPL"
+        },
+        "sector_stocks": {
+          "Technology": [],
+          "Automobile": [],
+          "Finance": [],
+          "Healthcare": [],
+          "Energy": []
+        },
+        "orders": {},
+        "transactions": [],
+        "watchlists": {},
+        "next_order_id": 1,
+        "next_transaction_id": 1
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 1,
+      "failed_scenarios": 3,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Tool Logic Error",
+              "error_location": "get_account_info",
+              "error_details": "Tool returned empty dictionary {} instead of account information for logged-in user 'john_doe'",
+              "expected_vs_actual": "Expected: Account information with account_id, balance, currency, etc. Actual: Empty dictionary {}",
+              "root_cause": "The get_account_info method is not properly retrieving account data from the accounts dictionary. The scenario has account '1' with balance 10000.0, but the tool doesn't return this information. Likely issue: the method doesn't properly map username to account_id or doesn't retrieve account data correctly.",
+              "expected_error": false
+            },
+            {
+              "error_type": "Tool Logic Error",
+              "error_location": "make_transaction",
+              "error_details": "Transaction returned status 'failed' with new_balance: 0 and empty timestamp for a valid deposit transaction",
+              "expected_vs_actual": "Expected: status='success', new_balance=15000.0 (10000 + 5000 deposit), valid timestamp. Actual: status='failed', new_balance=0, timestamp=''",
+              "root_cause": "The make_transaction method is failing to process valid transactions. This is likely related to the get_account_info issue - if the method cannot retrieve account information, it cannot process transactions. The method should handle deposits and withdrawals for authenticated users with valid accounts.",
+              "expected_error": false
+            },
+            {
+              "error_type": "Tool Logic Error",
+              "error_location": "place_order",
+              "error_details": "Order placement failed with error 'Order placement failed - insufficient balance or invalid symbol' for valid inputs (buy AAPL at 150.25, quantity 10)",
+              "expected_vs_actual": "Expected: Successful order placement with order_id=1, status='open', total cost=1502.50. Actual: Error raised indicating insufficient balance or invalid symbol",
+              "root_cause": "The place_order method is failing despite valid inputs (AAPL exists in stocks, market is open, user is logged in). This is likely cascading from the account retrieval issue - if get_account_info returns empty, place_order cannot verify the account balance (10000.0) is sufficient for the order (1502.50). The root cause appears to be in the account data retrieval mechanism that affects multiple transaction-related tools.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_market_status",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "login",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "check_login_status",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_info",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_available_stocks",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_account_info",
+                "passed": false,
+                "error": "Tool returned empty dictionary instead of account information"
+              },
+              {
+                "tool_name": "get_stock_symbol",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "filter_stocks_by_price",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "make_transaction",
+                "passed": false,
+                "error": "Transaction failed with status 'failed' and zero balance returned"
+              },
+              {
+                "tool_name": "get_transaction_history",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "place_order",
+                "passed": false,
+                "error": "Order placement failed - insufficient balance or invalid symbol"
+              },
+              {
+                "tool_name": "get_order_history",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_watchlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "add_to_watchlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "remove_from_watchlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notify_price_change",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_stock_price",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "logout",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_order",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 97.7924656867981
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Tool Logic Error",
+              "error_location": "get_account_info",
+              "error_details": "Tool returned empty dictionary {} instead of account information",
+              "expected_vs_actual": "Expected: Account object with fields {account_id, balance, currency, binding_card} for current user 'alice_trader' (account_id: 1). Actual: Empty dictionary {}",
+              "root_cause": "The get_account_info method likely doesn't properly map users to their accounts. The scenario has alice_trader as current_user but the tool doesn't retrieve the corresponding account (account_id: 1) from the accounts dictionary.",
+              "expected_error": false
+            },
+            {
+              "error_type": "Tool Logic Error",
+              "error_location": "make_transaction",
+              "error_details": "Transaction failed with status='failed', new_balance=0, timestamp=''",
+              "expected_vs_actual": "Expected: Successful deposit of 1000.0 with status='success', updated balance (25000.5 + 1000.0 = 26000.5), and valid timestamp. Actual: status='failed', new_balance=0, timestamp=''",
+              "root_cause": "The make_transaction method is failing because it cannot find or access the user's account. This is likely related to the same issue as get_account_info - the user-to-account mapping is not working correctly. The method returns a failed transaction structure instead of processing the deposit.",
+              "expected_error": false
+            },
+            {
+              "error_type": "Tool Logic Error",
+              "error_location": "place_order",
+              "error_details": "Order placement failed with error: 'Order placement failed - insufficient balance or invalid symbol'",
+              "expected_vs_actual": "Expected: Successful order placement for 10 shares of NVDA at 220.0 (total cost: 2200.0). User alice_trader has balance of 25000.5 USD which is sufficient. NVDA is a valid symbol in the stocks dictionary. Actual: Error raised indicating insufficient balance or invalid symbol.",
+              "root_cause": "The place_order method is failing despite having sufficient balance and valid symbol. This appears to be another manifestation of the user-to-account mapping issue. The method cannot access the user's account balance to verify funds, so it returns the generic error message. The underlying issue is that the bot cannot properly retrieve account information for the current user.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "login",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "logout",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "check_login_status",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_market_status",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_account_info",
+                "passed": false,
+                "error": "Tool returned empty dictionary instead of account information. Expected account data for alice_trader (account_id: 1) with balance, currency, and binding_card fields."
+              },
+              {
+                "tool_name": "make_transaction",
+                "passed": false,
+                "error": "Transaction failed with status 'failed', new_balance: 0, and empty timestamp. Expected successful deposit of 1000.0 with updated balance and valid timestamp."
+              },
+              {
+                "tool_name": "get_transaction_history",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_symbol",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_info",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_available_stocks",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "filter_stocks_by_price",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "place_order",
+                "passed": false,
+                "error": "Order placement failed with error: 'Order placement failed - insufficient balance or invalid symbol'. User alice_trader has balance of 25000.5 USD, attempting to buy 10 shares of NVDA at 220.0 (total: 2200.0) should succeed."
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_history",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_watchlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "add_to_watchlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "remove_from_watchlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notify_price_change",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_stock_price",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 100.89126515388489
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Tool execution error",
+              "error_location": "get_account_info",
+              "error_details": "Tool returned empty dictionary {} instead of account information for logged-in user 'trader_pro'",
+              "expected_vs_actual": "Expected: Account information with balance, currency, binding_card fields. Actual: Empty dictionary {}",
+              "root_cause": "The get_account_info method likely fails to retrieve account data from the accounts dictionary. The scenario has accounts keyed by string IDs ('1', '2', '3'), but the method may be looking up accounts using a different mechanism or the user-to-account mapping is not properly established in the load_scenario method.",
+              "expected_error": false
+            },
+            {
+              "error_type": "Tool execution error",
+              "error_location": "make_transaction",
+              "error_details": "Transaction returned status='failed', new_balance=0, timestamp='' when attempting to deposit $10,000",
+              "expected_vs_actual": "Expected: Successful transaction with updated balance and timestamp. Actual: Failed transaction with zero balance and empty timestamp",
+              "root_cause": "The make_transaction method is failing to process the transaction. This could be due to: (1) Missing user-to-account mapping, (2) The method not finding the correct account for the current user, or (3) Logic error in the transaction processing code. Since get_account_info also returns empty data, this suggests the account lookup mechanism is broken.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "check_login_status",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_market_status",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_account_info",
+                "passed": false,
+                "error": "Tool returned empty dictionary instead of account information"
+              },
+              {
+                "tool_name": "get_stock_info",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_symbol",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_available_stocks",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "filter_stocks_by_price",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_history",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_transaction_history",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_watchlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "add_to_watchlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "remove_from_watchlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notify_price_change",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_stock_price",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "make_transaction",
+                "passed": false,
+                "error": "Transaction failed with status 'failed', returned zero balance and empty timestamp"
+              },
+              {
+                "tool_name": "cancel_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "place_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "login",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "logout",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 93.83204102516174
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_market_status",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "check_login_status",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_symbol",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_info",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_available_stocks",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "filter_stocks_by_price",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_stock_price",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notify_price_change",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "login",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "logout",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_account_info",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "make_transaction",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_transaction_history",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "place_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_history",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_watchlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "add_to_watchlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "remove_from_watchlist",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 86.4151086807251
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 3,
+      "passed_scenarios": 2,
+      "failed_scenarios": 1,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "check_login_status",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "login",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_market_status",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_account_info",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_transaction_history",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "make_transaction",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_info",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_available_stocks",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_symbol",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "filter_stocks_by_price",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_stock_price",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "place_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_history",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_watchlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "add_to_watchlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "remove_from_watchlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notify_price_change",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "logout",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 94.95976138114929
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Validation Exception",
+              "error_details": "litellm.RateLimitError: AnthropicException - {\"error\":{\"message\":\"并发请求数量过多，请稍后再试\",\"type\":\"rate_limit_error\"},\"type\":\"error\"}\n",
+              "root_cause": "Scenario validation failed: litellm.RateLimitError: AnthropicException - {\"error\":{\"message\":\"并发请求数量过多，请稍后再试\",\"type\":\"rate_limit_error\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "medium",
+          "execution_time": 65.16420555114746
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "check_login_status",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_account_info",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_market_status",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_transaction_history",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_symbol",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_info",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_available_stocks",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "filter_stocks_by_price",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_watchlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "add_to_watchlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "remove_from_watchlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_history",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "notify_price_change",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_stock_price",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "logout",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "login",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "make_transaction",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "place_order",
+                "passed": true,
+                "error": null,
+                "note": "Expected failure - market is closed"
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 118.86155796051025
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_003",
+        "scenario_002",
+        "scenario_001"
+      ],
+      "aggregated_errors": {
+        "common_errors": [
+          {
+            "tool_name": "get_account_info",
+            "occurrence_count": 3,
+            "affected_scenarios": [
+              "scenario_001",
+              "scenario_002",
+              "scenario_003"
+            ],
+            "sample_error": {
+              "error_type": "Tool Logic Error",
+              "error_location": "get_account_info",
+              "error_details": "Tool returned empty dictionary {} instead of account information for logged-in user 'john_doe'",
+              "expected_vs_actual": "Expected: Account information with account_id, balance, currency, etc. Actual: Empty dictionary {}",
+              "root_cause": "The get_account_info method is not properly retrieving account data from the accounts dictionary. The scenario has account '1' with balance 10000.0, but the tool doesn't return this information. Likely issue: the method doesn't properly map username to account_id or doesn't retrieve account data correctly.",
+              "expected_error": false
+            }
+          },
+          {
+            "tool_name": "make_transaction",
+            "occurrence_count": 3,
+            "affected_scenarios": [
+              "scenario_001",
+              "scenario_002",
+              "scenario_003"
+            ],
+            "sample_error": {
+              "error_type": "Tool Logic Error",
+              "error_location": "make_transaction",
+              "error_details": "Transaction returned status 'failed' with new_balance: 0 and empty timestamp for a valid deposit transaction",
+              "expected_vs_actual": "Expected: status='success', new_balance=15000.0 (10000 + 5000 deposit), valid timestamp. Actual: status='failed', new_balance=0, timestamp=''",
+              "root_cause": "The make_transaction method is failing to process valid transactions. This is likely related to the get_account_info issue - if the method cannot retrieve account information, it cannot process transactions. The method should handle deposits and withdrawals for authenticated users with valid accounts.",
+              "expected_error": false
+            }
+          },
+          {
+            "tool_name": "place_order",
+            "occurrence_count": 2,
+            "affected_scenarios": [
+              "scenario_001",
+              "scenario_002"
+            ],
+            "sample_error": {
+              "error_type": "Tool Logic Error",
+              "error_location": "place_order",
+              "error_details": "Order placement failed with error 'Order placement failed - insufficient balance or invalid symbol' for valid inputs (buy AAPL at 150.25, quantity 10)",
+              "expected_vs_actual": "Expected: Successful order placement with order_id=1, status='open', total cost=1502.50. Actual: Error raised indicating insufficient balance or invalid symbol",
+              "root_cause": "The place_order method is failing despite valid inputs (AAPL exists in stocks, market is open, user is logged in). This is likely cascading from the account retrieval issue - if get_account_info returns empty, place_order cannot verify the account balance (10000.0) is sufficient for the order (1502.50). The root cause appears to be in the account data retrieval mechanism that affects multiple transaction-related tools.",
+              "expected_error": false
+            }
+          }
+        ],
+        "scenario_specific_errors": [
+          {
+            "scenario_id": "scenario_001",
+            "complexity_level": "simple",
+            "errors": [
+              {
+                "error_type": "Tool Logic Error",
+                "error_location": "get_account_info",
+                "error_details": "Tool returned empty dictionary {} instead of account information for logged-in user 'john_doe'",
+                "expected_vs_actual": "Expected: Account information with account_id, balance, currency, etc. Actual: Empty dictionary {}",
+                "root_cause": "The get_account_info method is not properly retrieving account data from the accounts dictionary. The scenario has account '1' with balance 10000.0, but the tool doesn't return this information. Likely issue: the method doesn't properly map username to account_id or doesn't retrieve account data correctly.",
+                "expected_error": false
+              },
+              {
+                "error_type": "Tool Logic Error",
+                "error_location": "make_transaction",
+                "error_details": "Transaction returned status 'failed' with new_balance: 0 and empty timestamp for a valid deposit transaction",
+                "expected_vs_actual": "Expected: status='success', new_balance=15000.0 (10000 + 5000 deposit), valid timestamp. Actual: status='failed', new_balance=0, timestamp=''",
+                "root_cause": "The make_transaction method is failing to process valid transactions. This is likely related to the get_account_info issue - if the method cannot retrieve account information, it cannot process transactions. The method should handle deposits and withdrawals for authenticated users with valid accounts.",
+                "expected_error": false
+              },
+              {
+                "error_type": "Tool Logic Error",
+                "error_location": "place_order",
+                "error_details": "Order placement failed with error 'Order placement failed - insufficient balance or invalid symbol' for valid inputs (buy AAPL at 150.25, quantity 10)",
+                "expected_vs_actual": "Expected: Successful order placement with order_id=1, status='open', total cost=1502.50. Actual: Error raised indicating insufficient balance or invalid symbol",
+                "root_cause": "The place_order method is failing despite valid inputs (AAPL exists in stocks, market is open, user is logged in). This is likely cascading from the account retrieval issue - if get_account_info returns empty, place_order cannot verify the account balance (10000.0) is sufficient for the order (1502.50). The root cause appears to be in the account data retrieval mechanism that affects multiple transaction-related tools.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_market_status",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "login",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "check_login_status",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_stock_info",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_available_stocks",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_account_info",
+                  "passed": false,
+                  "error": "Tool returned empty dictionary instead of account information"
+                },
+                {
+                  "tool_name": "get_stock_symbol",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "filter_stocks_by_price",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "make_transaction",
+                  "passed": false,
+                  "error": "Transaction failed with status 'failed' and zero balance returned"
+                },
+                {
+                  "tool_name": "get_transaction_history",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "place_order",
+                  "passed": false,
+                  "error": "Order placement failed - insufficient balance or invalid symbol"
+                },
+                {
+                  "tool_name": "get_order_history",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_watchlist",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "add_to_watchlist",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "remove_from_watchlist",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "notify_price_change",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "update_stock_price",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "logout",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_order_details",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "cancel_order",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              },
+              "summary": {}
+            }
+          },
+          {
+            "scenario_id": "scenario_002",
+            "complexity_level": "medium",
+            "errors": [
+              {
+                "error_type": "Tool Logic Error",
+                "error_location": "get_account_info",
+                "error_details": "Tool returned empty dictionary {} instead of account information",
+                "expected_vs_actual": "Expected: Account object with fields {account_id, balance, currency, binding_card} for current user 'alice_trader' (account_id: 1). Actual: Empty dictionary {}",
+                "root_cause": "The get_account_info method likely doesn't properly map users to their accounts. The scenario has alice_trader as current_user but the tool doesn't retrieve the corresponding account (account_id: 1) from the accounts dictionary.",
+                "expected_error": false
+              },
+              {
+                "error_type": "Tool Logic Error",
+                "error_location": "make_transaction",
+                "error_details": "Transaction failed with status='failed', new_balance=0, timestamp=''",
+                "expected_vs_actual": "Expected: Successful deposit of 1000.0 with status='success', updated balance (25000.5 + 1000.0 = 26000.5), and valid timestamp. Actual: status='failed', new_balance=0, timestamp=''",
+                "root_cause": "The make_transaction method is failing because it cannot find or access the user's account. This is likely related to the same issue as get_account_info - the user-to-account mapping is not working correctly. The method returns a failed transaction structure instead of processing the deposit.",
+                "expected_error": false
+              },
+              {
+                "error_type": "Tool Logic Error",
+                "error_location": "place_order",
+                "error_details": "Order placement failed with error: 'Order placement failed - insufficient balance or invalid symbol'",
+                "expected_vs_actual": "Expected: Successful order placement for 10 shares of NVDA at 220.0 (total cost: 2200.0). User alice_trader has balance of 25000.5 USD which is sufficient. NVDA is a valid symbol in the stocks dictionary. Actual: Error raised indicating insufficient balance or invalid symbol.",
+                "root_cause": "The place_order method is failing despite having sufficient balance and valid symbol. This appears to be another manifestation of the user-to-account mapping issue. The method cannot access the user's account balance to verify funds, so it returns the generic error message. The underlying issue is that the bot cannot properly retrieve account information for the current user.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "login",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "logout",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "check_login_status",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_market_status",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_account_info",
+                  "passed": false,
+                  "error": "Tool returned empty dictionary instead of account information. Expected account data for alice_trader (account_id: 1) with balance, currency, and binding_card fields."
+                },
+                {
+                  "tool_name": "make_transaction",
+                  "passed": false,
+                  "error": "Transaction failed with status 'failed', new_balance: 0, and empty timestamp. Expected successful deposit of 1000.0 with updated balance and valid timestamp."
+                },
+                {
+                  "tool_name": "get_transaction_history",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_stock_symbol",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_stock_info",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_available_stocks",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "filter_stocks_by_price",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "place_order",
+                  "passed": false,
+                  "error": "Order placement failed with error: 'Order placement failed - insufficient balance or invalid symbol'. User alice_trader has balance of 25000.5 USD, attempting to buy 10 shares of NVDA at 220.0 (total: 2200.0) should succeed."
+                },
+                {
+                  "tool_name": "get_order_details",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "cancel_order",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_order_history",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_watchlist",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "add_to_watchlist",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "remove_from_watchlist",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "notify_price_change",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "update_stock_price",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              },
+              "summary": {}
+            }
+          },
+          {
+            "scenario_id": "scenario_003",
+            "complexity_level": "complex",
+            "errors": [
+              {
+                "error_type": "Tool execution error",
+                "error_location": "get_account_info",
+                "error_details": "Tool returned empty dictionary {} instead of account information for logged-in user 'trader_pro'",
+                "expected_vs_actual": "Expected: Account information with balance, currency, binding_card fields. Actual: Empty dictionary {}",
+                "root_cause": "The get_account_info method likely fails to retrieve account data from the accounts dictionary. The scenario has accounts keyed by string IDs ('1', '2', '3'), but the method may be looking up accounts using a different mechanism or the user-to-account mapping is not properly established in the load_scenario method.",
+                "expected_error": false
+              },
+              {
+                "error_type": "Tool execution error",
+                "error_location": "make_transaction",
+                "error_details": "Transaction returned status='failed', new_balance=0, timestamp='' when attempting to deposit $10,000",
+                "expected_vs_actual": "Expected: Successful transaction with updated balance and timestamp. Actual: Failed transaction with zero balance and empty timestamp",
+                "root_cause": "The make_transaction method is failing to process the transaction. This could be due to: (1) Missing user-to-account mapping, (2) The method not finding the correct account for the current user, or (3) Logic error in the transaction processing code. Since get_account_info also returns empty data, this suggests the account lookup mechanism is broken.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "check_login_status",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_market_status",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_account_info",
+                  "passed": false,
+                  "error": "Tool returned empty dictionary instead of account information"
+                },
+                {
+                  "tool_name": "get_stock_info",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_stock_symbol",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_available_stocks",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "filter_stocks_by_price",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_order_details",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_order_history",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_transaction_history",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_watchlist",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "add_to_watchlist",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "remove_from_watchlist",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "notify_price_change",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "update_stock_price",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "make_transaction",
+                  "passed": false,
+                  "error": "Transaction failed with status 'failed', returned zero balance and empty timestamp"
+                },
+                {
+                  "tool_name": "cancel_order",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "place_order",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "login",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "logout",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              },
+              "summary": {}
+            }
+          }
+        ],
+        "error_by_tool": {
+          "get_account_info": [
+            {
+              "scenario_id": "scenario_001",
+              "complexity_level": "simple",
+              "error": {
+                "error_type": "Tool Logic Error",
+                "error_location": "get_account_info",
+                "error_details": "Tool returned empty dictionary {} instead of account information for logged-in user 'john_doe'",
+                "expected_vs_actual": "Expected: Account information with account_id, balance, currency, etc. Actual: Empty dictionary {}",
+                "root_cause": "The get_account_info method is not properly retrieving account data from the accounts dictionary. The scenario has account '1' with balance 10000.0, but the tool doesn't return this information. Likely issue: the method doesn't properly map username to account_id or doesn't retrieve account data correctly.",
+                "expected_error": false
+              }
+            },
+            {
+              "scenario_id": "scenario_002",
+              "complexity_level": "medium",
+              "error": {
+                "error_type": "Tool Logic Error",
+                "error_location": "get_account_info",
+                "error_details": "Tool returned empty dictionary {} instead of account information",
+                "expected_vs_actual": "Expected: Account object with fields {account_id, balance, currency, binding_card} for current user 'alice_trader' (account_id: 1). Actual: Empty dictionary {}",
+                "root_cause": "The get_account_info method likely doesn't properly map users to their accounts. The scenario has alice_trader as current_user but the tool doesn't retrieve the corresponding account (account_id: 1) from the accounts dictionary.",
+                "expected_error": false
+              }
+            },
+            {
+              "scenario_id": "scenario_003",
+              "complexity_level": "complex",
+              "error": {
+                "error_type": "Tool execution error",
+                "error_location": "get_account_info",
+                "error_details": "Tool returned empty dictionary {} instead of account information for logged-in user 'trader_pro'",
+                "expected_vs_actual": "Expected: Account information with balance, currency, binding_card fields. Actual: Empty dictionary {}",
+                "root_cause": "The get_account_info method likely fails to retrieve account data from the accounts dictionary. The scenario has accounts keyed by string IDs ('1', '2', '3'), but the method may be looking up accounts using a different mechanism or the user-to-account mapping is not properly established in the load_scenario method.",
+                "expected_error": false
+              }
+            }
+          ],
+          "make_transaction": [
+            {
+              "scenario_id": "scenario_001",
+              "complexity_level": "simple",
+              "error": {
+                "error_type": "Tool Logic Error",
+                "error_location": "make_transaction",
+                "error_details": "Transaction returned status 'failed' with new_balance: 0 and empty timestamp for a valid deposit transaction",
+                "expected_vs_actual": "Expected: status='success', new_balance=15000.0 (10000 + 5000 deposit), valid timestamp. Actual: status='failed', new_balance=0, timestamp=''",
+                "root_cause": "The make_transaction method is failing to process valid transactions. This is likely related to the get_account_info issue - if the method cannot retrieve account information, it cannot process transactions. The method should handle deposits and withdrawals for authenticated users with valid accounts.",
+                "expected_error": false
+              }
+            },
+            {
+              "scenario_id": "scenario_002",
+              "complexity_level": "medium",
+              "error": {
+                "error_type": "Tool Logic Error",
+                "error_location": "make_transaction",
+                "error_details": "Transaction failed with status='failed', new_balance=0, timestamp=''",
+                "expected_vs_actual": "Expected: Successful deposit of 1000.0 with status='success', updated balance (25000.5 + 1000.0 = 26000.5), and valid timestamp. Actual: status='failed', new_balance=0, timestamp=''",
+                "root_cause": "The make_transaction method is failing because it cannot find or access the user's account. This is likely related to the same issue as get_account_info - the user-to-account mapping is not working correctly. The method returns a failed transaction structure instead of processing the deposit.",
+                "expected_error": false
+              }
+            },
+            {
+              "scenario_id": "scenario_003",
+              "complexity_level": "complex",
+              "error": {
+                "error_type": "Tool execution error",
+                "error_location": "make_transaction",
+                "error_details": "Transaction returned status='failed', new_balance=0, timestamp='' when attempting to deposit $10,000",
+                "expected_vs_actual": "Expected: Successful transaction with updated balance and timestamp. Actual: Failed transaction with zero balance and empty timestamp",
+                "root_cause": "The make_transaction method is failing to process the transaction. This could be due to: (1) Missing user-to-account mapping, (2) The method not finding the correct account for the current user, or (3) Logic error in the transaction processing code. Since get_account_info also returns empty data, this suggests the account lookup mechanism is broken.",
+                "expected_error": false
+              }
+            }
+          ],
+          "place_order": [
+            {
+              "scenario_id": "scenario_001",
+              "complexity_level": "simple",
+              "error": {
+                "error_type": "Tool Logic Error",
+                "error_location": "place_order",
+                "error_details": "Order placement failed with error 'Order placement failed - insufficient balance or invalid symbol' for valid inputs (buy AAPL at 150.25, quantity 10)",
+                "expected_vs_actual": "Expected: Successful order placement with order_id=1, status='open', total cost=1502.50. Actual: Error raised indicating insufficient balance or invalid symbol",
+                "root_cause": "The place_order method is failing despite valid inputs (AAPL exists in stocks, market is open, user is logged in). This is likely cascading from the account retrieval issue - if get_account_info returns empty, place_order cannot verify the account balance (10000.0) is sufficient for the order (1502.50). The root cause appears to be in the account data retrieval mechanism that affects multiple transaction-related tools.",
+                "expected_error": false
+              }
+            },
+            {
+              "scenario_id": "scenario_002",
+              "complexity_level": "medium",
+              "error": {
+                "error_type": "Tool Logic Error",
+                "error_location": "place_order",
+                "error_details": "Order placement failed with error: 'Order placement failed - insufficient balance or invalid symbol'",
+                "expected_vs_actual": "Expected: Successful order placement for 10 shares of NVDA at 220.0 (total cost: 2200.0). User alice_trader has balance of 25000.5 USD which is sufficient. NVDA is a valid symbol in the stocks dictionary. Actual: Error raised indicating insufficient balance or invalid symbol.",
+                "root_cause": "The place_order method is failing despite having sufficient balance and valid symbol. This appears to be another manifestation of the user-to-account mapping issue. The method cannot access the user's account balance to verify funds, so it returns the generic error message. The underlying issue is that the bot cannot properly retrieve account information for the current user.",
+                "expected_error": false
+              }
+            }
+          ]
+        },
+        "error_categories": {
+          "critical_load_failures": [],
+          "critical_schema_mismatches": [],
+          "high_tool_logic_errors": [
+            {
+              "error_type": "Tool Logic Error",
+              "error_location": "get_account_info",
+              "error_details": "Tool returned empty dictionary {} instead of account information for logged-in user 'john_doe'",
+              "expected_vs_actual": "Expected: Account information with account_id, balance, currency, etc. Actual: Empty dictionary {}",
+              "root_cause": "The get_account_info method is not properly retrieving account data from the accounts dictionary. The scenario has account '1' with balance 10000.0, but the tool doesn't return this information. Likely issue: the method doesn't properly map username to account_id or doesn't retrieve account data correctly.",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Tool Logic Error",
+              "error_location": "make_transaction",
+              "error_details": "Transaction returned status 'failed' with new_balance: 0 and empty timestamp for a valid deposit transaction",
+              "expected_vs_actual": "Expected: status='success', new_balance=15000.0 (10000 + 5000 deposit), valid timestamp. Actual: status='failed', new_balance=0, timestamp=''",
+              "root_cause": "The make_transaction method is failing to process valid transactions. This is likely related to the get_account_info issue - if the method cannot retrieve account information, it cannot process transactions. The method should handle deposits and withdrawals for authenticated users with valid accounts.",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Tool Logic Error",
+              "error_location": "place_order",
+              "error_details": "Order placement failed with error 'Order placement failed - insufficient balance or invalid symbol' for valid inputs (buy AAPL at 150.25, quantity 10)",
+              "expected_vs_actual": "Expected: Successful order placement with order_id=1, status='open', total cost=1502.50. Actual: Error raised indicating insufficient balance or invalid symbol",
+              "root_cause": "The place_order method is failing despite valid inputs (AAPL exists in stocks, market is open, user is logged in). This is likely cascading from the account retrieval issue - if get_account_info returns empty, place_order cannot verify the account balance (10000.0) is sufficient for the order (1502.50). The root cause appears to be in the account data retrieval mechanism that affects multiple transaction-related tools.",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Tool Logic Error",
+              "error_location": "get_account_info",
+              "error_details": "Tool returned empty dictionary {} instead of account information",
+              "expected_vs_actual": "Expected: Account object with fields {account_id, balance, currency, binding_card} for current user 'alice_trader' (account_id: 1). Actual: Empty dictionary {}",
+              "root_cause": "The get_account_info method likely doesn't properly map users to their accounts. The scenario has alice_trader as current_user but the tool doesn't retrieve the corresponding account (account_id: 1) from the accounts dictionary.",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Tool Logic Error",
+              "error_location": "make_transaction",
+              "error_details": "Transaction failed with status='failed', new_balance=0, timestamp=''",
+              "expected_vs_actual": "Expected: Successful deposit of 1000.0 with status='success', updated balance (25000.5 + 1000.0 = 26000.5), and valid timestamp. Actual: status='failed', new_balance=0, timestamp=''",
+              "root_cause": "The make_transaction method is failing because it cannot find or access the user's account. This is likely related to the same issue as get_account_info - the user-to-account mapping is not working correctly. The method returns a failed transaction structure instead of processing the deposit.",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Tool Logic Error",
+              "error_location": "place_order",
+              "error_details": "Order placement failed with error: 'Order placement failed - insufficient balance or invalid symbol'",
+              "expected_vs_actual": "Expected: Successful order placement for 10 shares of NVDA at 220.0 (total cost: 2200.0). User alice_trader has balance of 25000.5 USD which is sufficient. NVDA is a valid symbol in the stocks dictionary. Actual: Error raised indicating insufficient balance or invalid symbol.",
+              "root_cause": "The place_order method is failing despite having sufficient balance and valid symbol. This appears to be another manifestation of the user-to-account mapping issue. The method cannot access the user's account balance to verify funds, so it returns the generic error message. The underlying issue is that the bot cannot properly retrieve account information for the current user.",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Tool execution error",
+              "error_location": "get_account_info",
+              "error_details": "Tool returned empty dictionary {} instead of account information for logged-in user 'trader_pro'",
+              "expected_vs_actual": "Expected: Account information with balance, currency, binding_card fields. Actual: Empty dictionary {}",
+              "root_cause": "The get_account_info method likely fails to retrieve account data from the accounts dictionary. The scenario has accounts keyed by string IDs ('1', '2', '3'), but the method may be looking up accounts using a different mechanism or the user-to-account mapping is not properly established in the load_scenario method.",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Tool execution error",
+              "error_location": "make_transaction",
+              "error_details": "Transaction returned status='failed', new_balance=0, timestamp='' when attempting to deposit $10,000",
+              "expected_vs_actual": "Expected: Successful transaction with updated balance and timestamp. Actual: Failed transaction with zero balance and empty timestamp",
+              "root_cause": "The make_transaction method is failing to process the transaction. This could be due to: (1) Missing user-to-account mapping, (2) The method not finding the correct account for the current user, or (3) Logic error in the transaction processing code. Since get_account_info also returns empty data, this suggests the account lookup mechanism is broken.",
+              "expected_error": false,
+              "severity": "HIGH"
+            }
+          ],
+          "medium_state_errors": [],
+          "low_edge_case_failures": []
+        },
+        "severity_summary": {
+          "critical": 0,
+          "high": 8,
+          "medium": 0,
+          "low": 0
+        },
+        "total_failed_scenarios": 3,
+        "expected_failures": 0,
+        "unexpected_failures": 3
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 3,
+        "passed_scenarios": 2,
+        "failed_scenarios": 1,
+        "all_passed": false,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "check_login_status",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "login",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_market_status",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_account_info",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_transaction_history",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "make_transaction",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_stock_info",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_available_stocks",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_stock_symbol",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "filter_stocks_by_price",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "update_stock_price",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "place_order",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_order_details",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_order_history",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "cancel_order",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_watchlist",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "add_to_watchlist",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "remove_from_watchlist",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "notify_price_change",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "logout",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              },
+              "summary": {}
+            },
+            "complexity_level": "simple",
+            "execution_time": 94.95976138114929
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": false,
+            "errors": [
+              {
+                "error_type": "Validation Exception",
+                "error_details": "litellm.RateLimitError: AnthropicException - {\"error\":{\"message\":\"并发请求数量过多，请稍后再试\",\"type\":\"rate_limit_error\"},\"type\":\"error\"}\n",
+                "root_cause": "Scenario validation failed: litellm.RateLimitError: AnthropicException - {\"error\":{\"message\":\"并发请求数量过多，请稍后再试\",\"type\":\"rate_limit_error\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "medium",
+            "execution_time": 65.16420555114746
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "check_login_status",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_account_info",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_market_status",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_transaction_history",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_stock_symbol",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_stock_info",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_available_stocks",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "filter_stocks_by_price",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_watchlist",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "add_to_watchlist",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "remove_from_watchlist",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_order_details",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_order_history",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "notify_price_change",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "update_stock_price",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "logout",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "login",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "make_transaction",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "cancel_order",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "place_order",
+                  "passed": true,
+                  "error": null,
+                  "note": "Expected failure - market is closed"
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              },
+              "summary": {}
+            },
+            "complexity_level": "complex",
+            "execution_time": 118.86155796051025
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 1,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/TradingBot.py"
+  }
+}

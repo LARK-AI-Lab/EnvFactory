@@ -1,0 +1,1848 @@
+{
+  "class_name": "GitHubServer",
+  "description": "A comprehensive GitHub API server providing repository management, file operations, issue tracking, pull request workflows, and search capabilities.",
+  "tools": [
+    {
+      "name": "create_file",
+      "description": "Create a new file in a GitHub repository with specified content and commit message.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "path": {
+            "type": "string",
+            "description": "The file path within the repository."
+          },
+          "content": {
+            "type": "string",
+            "description": "The content to be written to the file."
+          },
+          "message": {
+            "type": "string",
+            "description": "The commit message for creating the file."
+          },
+          "branch": {
+            "type": "string",
+            "description": "The branch name where the file will be created."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "path",
+          "content",
+          "message",
+          "branch"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "commit_sha": {
+            "type": "string",
+            "description": "The SHA hash of the commit that created the file."
+          },
+          "file_sha": {
+            "type": "string",
+            "description": "The SHA hash of the created file."
+          },
+          "path": {
+            "type": "string",
+            "description": "The file path within the repository."
+          }
+        }
+      }
+    },
+    {
+      "name": "search_repositories",
+      "description": "Search for GitHub repositories using GitHub repository search syntax.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string",
+            "description": "The search query using GitHub repository search syntax."
+          },
+          "sort": {
+            "type": "string",
+            "description": "The field to sort results by."
+          },
+          "order": {
+            "type": "string",
+            "description": "The sort direction (asc or desc)."
+          },
+          "per_page": {
+            "type": "string",
+            "description": "The number of results per page (max 100)."
+          },
+          "page": {
+            "type": "integer",
+            "description": "The page number of results."
+          }
+        },
+        "required": [
+          "q"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "repositories": {
+            "type": "array",
+            "description": "List of repositories matching the search criteria.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "owner": {
+                  "type": "string",
+                  "description": "The repository owner."
+                },
+                "repo": {
+                  "type": "string",
+                  "description": "The repository name."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "The repository description."
+                },
+                "stars": {
+                  "type": "integer",
+                  "description": "The number of stars the repository has."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "create_repository",
+      "description": "Create a new GitHub repository in your account.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the new repository."
+          },
+          "description": {
+            "type": "string",
+            "description": "The repository description."
+          },
+          "private": {
+            "type": "boolean",
+            "description": "Whether the repository should be private."
+          },
+          "autoInit": {
+            "type": "string",
+            "description": "Whether to initialize the repository with a README.md file."
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "url": {
+            "type": "string",
+            "description": "The URL of the repository."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "The creation timestamp in ISO 8601 format."
+          }
+        }
+      }
+    },
+    {
+      "name": "delete_repository",
+      "description": "Delete a GitHub repository.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          }
+        },
+        "required": [
+          "owner",
+          "repo"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "Whether the repository was successfully deleted."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_file_contents",
+      "description": "Get file or directory contents from a GitHub repository.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "path": {
+            "type": "string",
+            "description": "The file or directory path."
+          },
+          "branch": {
+            "type": "string",
+            "description": "The branch name (defaults to repository default)."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "path"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The file path within the repository."
+          },
+          "content": {
+            "type": "string",
+            "description": "The file content."
+          },
+          "encoding": {
+            "type": "string",
+            "description": "The content encoding."
+          },
+          "size": {
+            "type": "integer",
+            "description": "The file size in bytes."
+          }
+        }
+      }
+    },
+    {
+      "name": "delete_file",
+      "description": "Delete a file from a GitHub repository.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "path": {
+            "type": "string",
+            "description": "The file path to delete."
+          },
+          "message": {
+            "type": "string",
+            "description": "The commit message for the deletion."
+          },
+          "branch": {
+            "type": "string",
+            "description": "The branch name."
+          },
+          "sha": {
+            "type": "string",
+            "description": "The file SHA required for deletion."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "path",
+          "message",
+          "branch",
+          "sha"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "commit_sha": {
+            "type": "string",
+            "description": "The SHA hash of the commit that deleted the file."
+          },
+          "path": {
+            "type": "string",
+            "description": "The file path that was deleted."
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "Whether the file was successfully deleted."
+          }
+        }
+      }
+    },
+    {
+      "name": "push_files",
+      "description": "Push multiple files to a GitHub repository in a single commit.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "branch": {
+            "type": "string",
+            "description": "The branch name."
+          },
+          "files": {
+            "type": "array",
+            "description": "List of file operations to perform.",
+            "items": {
+              "type": "object"
+            }
+          },
+          "message": {
+            "type": "string",
+            "description": "The commit message."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "branch",
+          "files",
+          "message"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "commit_sha": {
+            "type": "string",
+            "description": "The SHA hash of the commit."
+          },
+          "files_changed": {
+            "type": "integer",
+            "description": "The number of files changed."
+          },
+          "branch": {
+            "type": "string",
+            "description": "The branch where changes were pushed."
+          }
+        }
+      }
+    },
+    {
+      "name": "create_issue",
+      "description": "Create a new issue in a GitHub repository.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "title": {
+            "type": "string",
+            "description": "The issue title."
+          },
+          "body": {
+            "type": "string",
+            "description": "The issue description."
+          },
+          "assignees": {
+            "type": "string",
+            "description": "List of assignee usernames."
+          },
+          "labels": {
+            "type": "string",
+            "description": "List of labels."
+          },
+          "milestone": {
+            "type": "string",
+            "description": "The milestone number."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "title"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "issue_number": {
+            "type": "integer",
+            "description": "The issue number."
+          },
+          "title": {
+            "type": "string",
+            "description": "The issue title."
+          },
+          "state": {
+            "type": "string",
+            "description": "The issue state."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "The creation timestamp in ISO 8601 format."
+          }
+        }
+      }
+    },
+    {
+      "name": "create_pull_request",
+      "description": "Create a new pull request in a GitHub repository.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "title": {
+            "type": "string",
+            "description": "The PR title."
+          },
+          "head": {
+            "type": "string",
+            "description": "The branch containing changes."
+          },
+          "base": {
+            "type": "string",
+            "description": "The branch to merge into."
+          },
+          "body": {
+            "type": "string",
+            "description": "The PR description."
+          },
+          "draft": {
+            "type": "string",
+            "description": "Whether to create as draft PR."
+          },
+          "maintainer_can_modify": {
+            "type": "string",
+            "description": "Whether maintainer can modify the PR."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "title",
+          "head",
+          "base"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "pull_number": {
+            "type": "integer",
+            "description": "The pull request number."
+          },
+          "title": {
+            "type": "string",
+            "description": "The PR title."
+          },
+          "state": {
+            "type": "string",
+            "description": "The PR state."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "The creation timestamp in ISO 8601 format."
+          }
+        }
+      }
+    },
+    {
+      "name": "fork_repository",
+      "description": "Fork a GitHub repository to your account or specified organization.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "organization": {
+            "type": "string",
+            "description": "The organization to fork to (defaults to personal account)."
+          }
+        },
+        "required": [
+          "owner",
+          "repo"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The fork owner."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The fork repository name."
+          },
+          "forked_from": {
+            "type": "string",
+            "description": "The original repository that was forked."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "The creation timestamp in ISO 8601 format."
+          }
+        }
+      }
+    },
+    {
+      "name": "create_branch",
+      "description": "Create a new branch in a GitHub repository.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "branch": {
+            "type": "string",
+            "description": "The new branch name."
+          },
+          "from_branch": {
+            "type": "string",
+            "description": "The source branch (defaults to repository default)."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "branch"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "branch": {
+            "type": "string",
+            "description": "The created branch name."
+          },
+          "sha": {
+            "type": "string",
+            "description": "The SHA hash of the branch."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "The creation timestamp in ISO 8601 format."
+          }
+        }
+      }
+    },
+    {
+      "name": "list_branches",
+      "description": "List branches in a GitHub repository.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "per_page": {
+            "type": "integer",
+            "description": "The number of results per page (default 30, max 100)."
+          },
+          "page": {
+            "type": "integer",
+            "description": "The page number (default 1)."
+          }
+        },
+        "required": [
+          "owner",
+          "repo"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "branches": {
+            "type": "array",
+            "description": "List of branches in the repository.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The branch name."
+                },
+                "sha": {
+                  "type": "string",
+                  "description": "The SHA hash of the branch."
+                },
+                "protected": {
+                  "type": "boolean",
+                  "description": "Whether the branch is protected."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "list_commits",
+      "description": "Get list of commits for a GitHub repository branch.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "page": {
+            "type": "integer",
+            "description": "The page number."
+          },
+          "per_page": {
+            "type": "string",
+            "description": "Records per page."
+          },
+          "sha": {
+            "type": "string",
+            "description": "The branch name or commit SHA."
+          },
+          "path": {
+            "type": "string",
+            "description": "File path filter."
+          },
+          "author": {
+            "type": "string",
+            "description": "Author filter."
+          },
+          "since": {
+            "type": "string",
+            "description": "Start date in ISO 8601 format."
+          },
+          "until": {
+            "type": "string",
+            "description": "End date in ISO 8601 format."
+          }
+        },
+        "required": [
+          "owner",
+          "repo"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "commits": {
+            "type": "array",
+            "description": "List of commits matching the criteria.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sha": {
+                  "type": "string",
+                  "description": "The commit SHA hash."
+                },
+                "message": {
+                  "type": "string",
+                  "description": "The commit message."
+                },
+                "author": {
+                  "type": "string",
+                  "description": "The commit author."
+                },
+                "date": {
+                  "type": "string",
+                  "description": "The commit date in ISO 8601 format."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "list_issues",
+      "description": "List issues in a GitHub repository with filtering options.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "state": {
+            "type": "string",
+            "description": "State filter."
+          },
+          "labels": {
+            "type": "string",
+            "description": "Label filter."
+          },
+          "sort": {
+            "type": "string",
+            "description": "Sort method."
+          },
+          "direction": {
+            "type": "string",
+            "description": "Sort direction."
+          },
+          "since": {
+            "type": "string",
+            "description": "Date filter in ISO 8601 format."
+          },
+          "page": {
+            "type": "integer",
+            "description": "Page number."
+          },
+          "per_page": {
+            "type": "string",
+            "description": "Results per page."
+          }
+        },
+        "required": [
+          "owner",
+          "repo"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "issues": {
+            "type": "array",
+            "description": "List of issues matching the criteria.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "issue_number": {
+                  "type": "integer",
+                  "description": "The issue number."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The issue title."
+                },
+                "state": {
+                  "type": "string",
+                  "description": "The issue state."
+                },
+                "created_at": {
+                  "type": "string",
+                  "description": "The creation timestamp in ISO 8601 format."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "update_issue",
+      "description": "Update an existing issue in a GitHub repository.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "issue_number": {
+            "type": "integer",
+            "description": "The issue number."
+          },
+          "title": {
+            "type": "string",
+            "description": "New title."
+          },
+          "body": {
+            "type": "string",
+            "description": "New description."
+          },
+          "state": {
+            "type": "string",
+            "description": "New state."
+          },
+          "labels": {
+            "type": "string",
+            "description": "New labels."
+          },
+          "assignees": {
+            "type": "string",
+            "description": "New assignees."
+          },
+          "milestone": {
+            "type": "string",
+            "description": "New milestone number."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "issue_number"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "issue_number": {
+            "type": "integer",
+            "description": "The issue number."
+          },
+          "title": {
+            "type": "string",
+            "description": "The issue title."
+          },
+          "state": {
+            "type": "string",
+            "description": "The issue state."
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "The update timestamp in ISO 8601 format."
+          }
+        }
+      }
+    },
+    {
+      "name": "add_issue_comment",
+      "description": "Add a comment to an existing issue.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "issue_number": {
+            "type": "integer",
+            "description": "The issue number."
+          },
+          "body": {
+            "type": "string",
+            "description": "The comment content."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "issue_number",
+          "body"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "comment_id": {
+            "type": "integer",
+            "description": "The comment ID."
+          },
+          "issue_number": {
+            "type": "integer",
+            "description": "The issue number."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "The creation timestamp in ISO 8601 format."
+          }
+        }
+      }
+    },
+    {
+      "name": "close_issue",
+      "description": "Close an existing issue in a GitHub repository.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "issue_number": {
+            "type": "integer",
+            "description": "The issue number."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "issue_number"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "issue_number": {
+            "type": "integer",
+            "description": "The issue number."
+          },
+          "title": {
+            "type": "string",
+            "description": "The issue title."
+          },
+          "state": {
+            "type": "string",
+            "description": "The issue state."
+          },
+          "closed_at": {
+            "type": "string",
+            "description": "The closing timestamp in ISO 8601 format."
+          }
+        }
+      }
+    },
+    {
+      "name": "search_code",
+      "description": "Search for code in GitHub repositories.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string",
+            "description": "The search query using GitHub code search syntax."
+          },
+          "sort": {
+            "type": "string",
+            "description": "The field to sort results by."
+          },
+          "order": {
+            "type": "string",
+            "description": "The sort direction (asc or desc)."
+          },
+          "per_page": {
+            "type": "string",
+            "description": "The number of results per page (max 100)."
+          },
+          "page": {
+            "type": "integer",
+            "description": "The page number."
+          }
+        },
+        "required": [
+          "q"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "description": "List of code search results.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "repo": {
+                  "type": "string",
+                  "description": "The repository containing the code."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The file path containing the code."
+                },
+                "content": {
+                  "type": "string",
+                  "description": "The code content."
+                },
+                "line_number": {
+                  "type": "integer",
+                  "description": "The line number of the code."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "search_issues",
+      "description": "Search for issues and pull requests in GitHub repositories.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string",
+            "description": "The search query using GitHub issue search syntax."
+          },
+          "sort": {
+            "type": "string",
+            "description": "The field to sort results by."
+          },
+          "order": {
+            "type": "string",
+            "description": "The sort direction (asc or desc)."
+          },
+          "per_page": {
+            "type": "string",
+            "description": "The number of results per page (max 100)."
+          },
+          "page": {
+            "type": "integer",
+            "description": "The page number."
+          }
+        },
+        "required": [
+          "q"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "issues": {
+            "type": "array",
+            "description": "List of issues and pull requests matching the search criteria.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "owner": {
+                  "type": "string",
+                  "description": "The repository owner."
+                },
+                "repo": {
+                  "type": "string",
+                  "description": "The repository name."
+                },
+                "issue_number": {
+                  "type": "integer",
+                  "description": "The issue number."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The issue title."
+                },
+                "state": {
+                  "type": "string",
+                  "description": "The issue state."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "search_users",
+      "description": "Search for users on GitHub.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string",
+            "description": "The search query using GitHub user search syntax."
+          },
+          "sort": {
+            "type": "string",
+            "description": "The field to sort results by."
+          },
+          "order": {
+            "type": "string",
+            "description": "The sort direction (asc or desc)."
+          },
+          "per_page": {
+            "type": "string",
+            "description": "The number of results per page (max 100)."
+          },
+          "page": {
+            "type": "integer",
+            "description": "The page number."
+          }
+        },
+        "required": [
+          "q"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "array",
+            "description": "List of users matching the search criteria.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string",
+                  "description": "The username."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The user's display name."
+                },
+                "company": {
+                  "type": "string",
+                  "description": "The user's company."
+                },
+                "location": {
+                  "type": "string",
+                  "description": "The user's location."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_issue",
+      "description": "Get detailed information for a specific issue.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "issue_number": {
+            "type": "integer",
+            "description": "The issue number."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "issue_number"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "issue_number": {
+            "type": "integer",
+            "description": "The issue number."
+          },
+          "title": {
+            "type": "string",
+            "description": "The issue title."
+          },
+          "body": {
+            "type": "string",
+            "description": "The issue description."
+          },
+          "state": {
+            "type": "string",
+            "description": "The issue state."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "The creation timestamp in ISO 8601 format."
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "The update timestamp in ISO 8601 format."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_pull_request",
+      "description": "Get detailed information for a specific pull request.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "pull_number": {
+            "type": "integer",
+            "description": "The PR number."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "pull_number"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "pull_number": {
+            "type": "integer",
+            "description": "The pull request number."
+          },
+          "title": {
+            "type": "string",
+            "description": "The PR title."
+          },
+          "body": {
+            "type": "string",
+            "description": "The PR description."
+          },
+          "state": {
+            "type": "string",
+            "description": "The PR state."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "The creation timestamp in ISO 8601 format."
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "The update timestamp in ISO 8601 format."
+          }
+        }
+      }
+    },
+    {
+      "name": "list_pull_requests",
+      "description": "List and filter pull requests in a repository.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "state": {
+            "type": "string",
+            "description": "State filter."
+          },
+          "head": {
+            "type": "string",
+            "description": "Head branch filter."
+          },
+          "base": {
+            "type": "string",
+            "description": "Base branch filter."
+          },
+          "sort": {
+            "type": "string",
+            "description": "Sort method."
+          },
+          "direction": {
+            "type": "string",
+            "description": "Sort direction."
+          },
+          "per_page": {
+            "type": "string",
+            "description": "Results per page."
+          },
+          "page": {
+            "type": "integer",
+            "description": "Page number."
+          }
+        },
+        "required": [
+          "owner",
+          "repo"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "pull_requests": {
+            "type": "array",
+            "description": "List of pull requests matching the criteria.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pull_number": {
+                  "type": "integer",
+                  "description": "The pull request number."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The PR title."
+                },
+                "state": {
+                  "type": "string",
+                  "description": "The PR state."
+                },
+                "created_at": {
+                  "type": "string",
+                  "description": "The creation timestamp in ISO 8601 format."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "create_pull_request_review",
+      "description": "Create a review for a pull request.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "pull_number": {
+            "type": "integer",
+            "description": "The PR number."
+          },
+          "body": {
+            "type": "string",
+            "description": "The review comment."
+          },
+          "event": {
+            "type": "string",
+            "description": "The review action."
+          },
+          "commit_id": {
+            "type": "string",
+            "description": "The commit SHA to review."
+          },
+          "comments": {
+            "type": "string",
+            "description": "Line-level comments."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "pull_number",
+          "body",
+          "event"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "review_id": {
+            "type": "integer",
+            "description": "The review ID."
+          },
+          "pull_number": {
+            "type": "integer",
+            "description": "The pull request number."
+          },
+          "state": {
+            "type": "string",
+            "description": "The review state."
+          },
+          "submitted_at": {
+            "type": "string",
+            "description": "The submission timestamp in ISO 8601 format."
+          }
+        }
+      }
+    },
+    {
+      "name": "merge_pull_request",
+      "description": "Merge a pull request.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "pull_number": {
+            "type": "integer",
+            "description": "The PR number."
+          },
+          "commit_title": {
+            "type": "string",
+            "description": "The merge commit title."
+          },
+          "commit_message": {
+            "type": "string",
+            "description": "The merge commit message."
+          },
+          "merge_method": {
+            "type": "string",
+            "description": "The merge method."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "pull_number"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "pull_number": {
+            "type": "integer",
+            "description": "The pull request number."
+          },
+          "merged": {
+            "type": "boolean",
+            "description": "Whether the PR was successfully merged."
+          },
+          "merge_commit_sha": {
+            "type": "string",
+            "description": "The SHA hash of the merge commit."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_pull_request_files",
+      "description": "Get list of files changed in a pull request.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "pull_number": {
+            "type": "integer",
+            "description": "The PR number."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "pull_number"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "type": "array",
+            "description": "List of files changed in the pull request.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "filename": {
+                  "type": "string",
+                  "description": "The filename."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "The file status."
+                },
+                "additions": {
+                  "type": "integer",
+                  "description": "The number of lines added."
+                },
+                "deletions": {
+                  "type": "integer",
+                  "description": "The number of lines deleted."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_pull_request_status",
+      "description": "Get comprehensive status of all status checks for a pull request.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "pull_number": {
+            "type": "integer",
+            "description": "The PR number."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "pull_number"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "pull_number": {
+            "type": "integer",
+            "description": "The pull request number."
+          },
+          "state": {
+            "type": "string",
+            "description": "The overall PR state."
+          },
+          "statuses": {
+            "type": "array",
+            "description": "List of status checks.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "type": "string",
+                  "description": "The status check context."
+                },
+                "state": {
+                  "type": "string",
+                  "description": "The status check state."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "The status check description."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "update_pull_request_branch",
+      "description": "Update pull request branch with latest changes from base branch.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "pull_number": {
+            "type": "integer",
+            "description": "The PR number."
+          },
+          "expected_head_sha": {
+            "type": "string",
+            "description": "The expected HEAD SHA."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "pull_number"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "pull_number": {
+            "type": "integer",
+            "description": "The pull request number."
+          },
+          "updated": {
+            "type": "boolean",
+            "description": "Whether the branch was successfully updated."
+          },
+          "message": {
+            "type": "string",
+            "description": "Status message."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_pull_request_comments",
+      "description": "Get review comments for a pull request.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "pull_number": {
+            "type": "integer",
+            "description": "The PR number."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "pull_number"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "comments": {
+            "type": "array",
+            "description": "List of review comments.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "comment_id": {
+                  "type": "integer",
+                  "description": "The comment ID."
+                },
+                "body": {
+                  "type": "string",
+                  "description": "The comment content."
+                },
+                "user": {
+                  "type": "string",
+                  "description": "The user who made the comment."
+                },
+                "created_at": {
+                  "type": "string",
+                  "description": "The creation timestamp in ISO 8601 format."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_pull_request_reviews",
+      "description": "Get reviews for a pull request.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "The repository owner (username or organization)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The repository name."
+          },
+          "pull_number": {
+            "type": "integer",
+            "description": "The PR number."
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "pull_number"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "reviews": {
+            "type": "array",
+            "description": "List of reviews.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "review_id": {
+                  "type": "integer",
+                  "description": "The review ID."
+                },
+                "user": {
+                  "type": "string",
+                  "description": "The user who submitted the review."
+                },
+                "state": {
+                  "type": "string",
+                  "description": "The review state."
+                },
+                "submitted_at": {
+                  "type": "string",
+                  "description": "The submission timestamp in ISO 8601 format."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "list_user_repositories",
+      "description": "List repositories for the current user.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Repository type (all, owner, public, private, member)."
+          },
+          "sort": {
+            "type": "string",
+            "description": "Sort method (created, updated, pushed, full_name)."
+          },
+          "direction": {
+            "type": "string",
+            "description": "Sort direction (asc, desc)."
+          },
+          "per_page": {
+            "type": "string",
+            "description": "Results per page (default 30, max 100)."
+          },
+          "page": {
+            "type": "integer",
+            "description": "Page number (default 1)."
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "repositories": {
+            "type": "array",
+            "description": "List of repositories for the current user.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "owner": {
+                  "type": "string",
+                  "description": "The repository owner."
+                },
+                "repo": {
+                  "type": "string",
+                  "description": "The repository name."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "The repository description."
+                },
+                "private": {
+                  "type": "boolean",
+                  "description": "Whether the repository is private."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_github_user_info",
+      "description": "Get GitHub user information for the current authenticated user.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "The username."
+          },
+          "name": {
+            "type": "string",
+            "description": "The user's display name."
+          },
+          "email": {
+            "type": "string",
+            "description": "The user's email."
+          },
+          "company": {
+            "type": "string",
+            "description": "The user's company."
+          },
+          "location": {
+            "type": "string",
+            "description": "The user's location."
+          }
+        }
+      }
+    }
+  ]
+}

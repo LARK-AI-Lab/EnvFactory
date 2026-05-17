@@ -1,0 +1,2375 @@
+{
+  "metadata": {
+    "class_name": "Kuaidi100",
+    "metadata_path": "envs\\metadata\\Kuaidi100_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-04T01:25:02.472477",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "Kuaidi100",
+    "description": "A logistics service server providing package tracking, delivery time estimation, and shipping cost estimation for major Chinese courier companies.",
+    "tools": [
+      {
+        "name": "query_trace",
+        "description": "Query logistics tracking information for a package using its tracking number.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "kuaidi_num": {
+              "type": "string",
+              "description": "The tracking number of the package to query."
+            },
+            "phone": {
+              "type": "string",
+              "description": "The recipient's phone number. Required when the courier company is SF Express (shunfeng) for identity verification."
+            }
+          },
+          "required": [
+            "kuaidi_num"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "kuaidi_num": {
+              "type": "string",
+              "description": "The tracking number of the queried package."
+            },
+            "kuaidi_company": {
+              "type": "string",
+              "description": "The courier company code that handles this package (e.g., shunfeng, jd, yuantong)."
+            },
+            "data": {
+              "type": "array",
+              "description": "Chronological list of tracking events for the package.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "time": {
+                    "type": "string",
+                    "description": "The timestamp when the tracking event occurred."
+                  },
+                  "context": {
+                    "type": "string",
+                    "description": "The description of the tracking event at this node (e.g., package picked up, in transit, delivered)."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "estimate_time",
+        "description": "Estimate delivery time based on courier company, origin/destination addresses, order time, and service type. For in-transit packages, historical tracking data can be provided for more accurate prediction.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "from_addr": {
+              "type": "string",
+              "description": "The origin address for shipping. Must include 3 administrative levels (province/city/district), e.g., '广东省深圳市南山区'. Complete missing levels if necessary."
+            },
+            "kuaidi_company": {
+              "type": "string",
+              "description": "The courier company code in lowercase. Supported values: shunfeng, jd, debangkuaidi, yuantong, zhongtong, shentong, yunda, ems."
+            },
+            "to_addr": {
+              "type": "string",
+              "description": "The destination address for shipping. Must include 3 administrative levels (province/city/district), e.g., '北京市海淀区'. Complete missing levels if necessary."
+            },
+            "exp_type": {
+              "type": "string",
+              "description": "The service or product type for shipping. Allowed values: '标准快递' (standard), '经济快递' (economy), '特快专递' (express).",
+              "enum": [
+                "标准快递",
+                "经济快递",
+                "特快专递"
+              ]
+            },
+            "order_time": {
+              "type": "string",
+              "description": "The order placement time in format 'yyyy-MM-dd HH:mm:ss', e.g., '2023-08-08 08:08:08'. Defaults to current time if not provided. For relative dates like 'tomorrow', calculate from today as base."
+            },
+            "logistic": {
+              "type": "string",
+              "description": "Historical tracking data for predicting remaining transit time for in-transit packages. Format: JSON array string, e.g., '[{\"time\":\"2025-05-09 13:15:26\",\"context\":\"您的快件离开【吉林省吉林市桦甸市】\"}]'. Each object contains 'time' (tracking node timestamp) and 'context' (event description)."
+            }
+          },
+          "required": [
+            "from_addr",
+            "kuaidi_company",
+            "to_addr"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "arrivalTime": {
+              "type": "string",
+              "description": "The estimated arrival date and time for the package delivery."
+            },
+            "remaining_transit_time": {
+              "type": "integer",
+              "description": "The estimated remaining transit time in hours until delivery."
+            }
+          }
+        }
+      },
+      {
+        "name": "estimate_price",
+        "description": "Estimate shipping cost based on courier company, origin/destination addresses, and package weight.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "kuaidi_company": {
+              "type": "string",
+              "description": "The courier company code in lowercase. Supported values: shunfeng, jd, debangkuaidi, yuantong, zhongtong, shentong, yunda, ems."
+            },
+            "from_addr": {
+              "type": "string",
+              "description": "The origin address for shipping. Must include 3 administrative levels (province/city/district), e.g., '广东省深圳市南山区'. Complete missing levels if necessary."
+            },
+            "to_addr": {
+              "type": "string",
+              "description": "The destination address for shipping. Must include 3 administrative levels (province/city/district), e.g., '北京市海淀区'. Complete missing levels if necessary. If user doesn't provide destination, prompt them for it before calling this service."
+            },
+            "weight": {
+              "type": "string",
+              "description": "The package weight in kilograms (no unit suffix needed), e.g., '1.0'. Defaults to '1.0' kg if not specified."
+            }
+          },
+          "required": [
+            "kuaidi_company",
+            "from_addr",
+            "to_addr"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "price": {
+              "type": "number",
+              "description": "The estimated shipping cost for the package."
+            },
+            "currency": {
+              "type": "string",
+              "description": "The currency code for the price (e.g., 'CNY' for Chinese Yuan)."
+            },
+            "estimated_days": {
+              "type": "integer",
+              "description": "The estimated number of days for delivery."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\nimport re\nfrom datetime import datetime, timedelta\n\n# Section 1: Schema\nclass TrackingEvent(BaseModel):\n    \"\"\"Represents a single tracking event.\"\"\"\n    time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$\", description=\"Event timestamp in format yyyy-MM-dd HH:mm:ss\")\n    context: str = Field(..., description=\"Event description\")\n\nclass TrackingData(BaseModel):\n    \"\"\"Represents complete tracking information.\"\"\"\n    kuaidi_num: str = Field(..., description=\"Package tracking number\")\n    kuaidi_company: str = Field(..., description=\"Courier company code\")\n    data: List[TrackingEvent] = Field(default=[], description=\"List of tracking events\")\n\nclass DeliveryEstimate(BaseModel):\n    \"\"\"Represents delivery time estimate.\"\"\"\n    arrivalTime: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$\", description=\"Estimated arrival time\")\n    remaining_transit_time: int = Field(..., ge=0, description=\"Remaining transit time in hours\")\n\nclass PriceEstimate(BaseModel):\n    \"\"\"Represents shipping cost estimate.\"\"\"\n    price: float = Field(..., ge=0, description=\"Estimated shipping cost\")\n    currency: str = Field(default=\"CNY\", description=\"Currency code\")\n    estimated_days: int = Field(..., ge=0, description=\"Estimated delivery days\")\n\nclass Kuaidi100Scenario(BaseModel):\n    \"\"\"Main scenario model for Kuaidi100 logistics service.\"\"\"\n    tracking_records: Dict[str, TrackingData] = Field(default={}, description=\"Active tracking records by tracking number\")\n    company_zones: Dict[str, int] = Field(default={\n        \"shunfeng\": 1, \"jd\": 2, \"debangkuaidi\": 3, \"yuantong\": 4, \"zhongtong\": 5,\n        \"shentong\": 6, \"yunda\": 7, \"ems\": 8\n    }, description=\"Courier company zone mapping\")\n    base_rates: Dict[str, float] = Field(default={\n        \"shunfeng\": 12.0, \"jd\": 10.0, \"debangkuaidi\": 8.0, \"yuantong\": 6.0, \"zhongtong\": 5.0,\n        \"shentong\": 6.0, \"yunda\": 5.0, \"ems\": 15.0\n    }, description=\"Base shipping rates per kg in CNY\")\n    zone_multipliers: Dict[str, float] = Field(default={\n        \"1-1\": 1.0, \"1-2\": 1.2, \"1-3\": 1.5, \"1-4\": 1.8, \"1-5\": 2.0,\n        \"2-1\": 1.2, \"2-2\": 1.0, \"2-3\": 1.3, \"2-4\": 1.6, \"2-5\": 1.9,\n        \"3-1\": 1.5, \"3-2\": 1.3, \"3-3\": 1.0, \"3-4\": 1.4, \"3-5\": 1.7,\n        \"4-1\": 1.8, \"4-2\": 1.6, \"4-3\": 1.4, \"4-4\": 1.0, \"4-5\": 1.3,\n        \"5-1\": 2.0, \"5-2\": 1.9, \"5-3\": 1.7, \"5-4\": 1.3, \"5-5\": 1.0\n    }, description=\"Zone-based price multipliers\")\n    service_speeds: Dict[str, int] = Field(default={\n        \"标准快递\": 48, \"经济快递\": 72, \"特快专递\": 24\n    }, description=\"Service type delivery speeds in hours\")\n    zone_distances: Dict[str, int] = Field(default={\n        \"1-1\": 500, \"1-2\": 800, \"1-3\": 1200, \"1-4\": 1800, \"1-5\": 2500,\n        \"2-1\": 800, \"2-2\": 400, \"2-3\": 900, \"2-4\": 1400, \"2-5\": 2000,\n        \"3-1\": 1200, \"3-2\": 900, \"3-3\": 600, \"3-4\": 1000, \"3-5\": 1600,\n        \"4-1\": 1800, \"4-2\": 1400, \"4-3\": 1000, \"4-4\": 700, \"4-5\": 1200,\n        \"5-1\": 2500, \"5-2\": 2000, \"5-3\": 1600, \"5-4\": 1200, \"5-5\": 800\n    }, description=\"Zone distances in kilometers\")\n\nScenario_Schema = [TrackingEvent, TrackingData, DeliveryEstimate, PriceEstimate, Kuaidi100Scenario]\n\n# Section 2: Class\nclass Kuaidi100API:\n    def __init__(self):\n        \"\"\"Initialize Kuaidi100 API with empty state.\"\"\"\n        self.tracking_records: Dict[str, TrackingData] = {}\n        self.company_zones: Dict[str, int] = {}\n        self.base_rates: Dict[str, float] = {}\n        self.zone_multipliers: Dict[str, float] = {}\n        self.service_speeds: Dict[str, int] = {}\n        self.zone_distances: Dict[str, int] = {}\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = Kuaidi100Scenario(**scenario)\n        self.tracking_records = model.tracking_records\n        self.company_zones = model.company_zones\n        self.base_rates = model.base_rates\n        self.zone_multipliers = model.zone_multipliers\n        self.service_speeds = model.service_speeds\n        self.zone_distances = model.zone_distances\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"tracking_records\": {num: data.dict() for num, data in self.tracking_records.items()},\n            \"company_zones\": self.company_zones,\n            \"base_rates\": self.base_rates,\n            \"zone_multipliers\": self.zone_multipliers,\n            \"service_speeds\": self.service_speeds,\n            \"zone_distances\": self.zone_distances\n        }\n\n    def _extract_zone(self, address: str) -> int:\n        \"\"\"Extract zone from address (simplified logic).\"\"\"\n        if any(city in address for city in [\"北京\", \"天津\", \"河北\", \"山西\", \"内蒙古\"]):\n            return 1\n        elif any(city in address for city in [\"上海\", \"江苏\", \"浙江\", \"安徽\", \"山东\"]):\n            return 2\n        elif any(city in address for city in [\"广东\", \"广西\", \"海南\", \"福建\", \"江西\"]):\n            return 3\n        elif any(city in address for city in [\"四川\", \"重庆\", \"贵州\", \"云南\", \"西藏\"]):\n            return 4\n        else:\n            return 5\n\n    def query_trace(self, kuaidi_num: str, phone: Optional[str] = None) -> dict:\n        \"\"\"Query logistics tracking information for a package.\"\"\"\n        if kuaidi_num not in self.tracking_records:\n            return {\"kuaidi_num\": kuaidi_num, \"kuaidi_company\": \"unknown\", \"data\": []}\n        \n        tracking_data = self.tracking_records[kuaidi_num]\n        return {\n            \"kuaidi_num\": tracking_data.kuaidi_num,\n            \"kuaidi_company\": tracking_data.kuaidi_company,\n            \"data\": [{\"time\": event.time, \"context\": event.context} for event in tracking_data.data]\n        }\n\n    def estimate_time(self, from_addr: str, kuaidi_company: str, to_addr: str, \n                     exp_type: str = \"标准快递\", order_time: Optional[str] = None, \n                     logistic: Optional[str] = None) -> dict:\n        \"\"\"Estimate delivery time based on various factors.\"\"\"\n        from_zone = self._extract_zone(from_addr)\n        to_zone = self._extract_zone(to_addr)\n        zone_key = f\"{min(from_zone, to_zone)}-{max(from_zone, to_zone)}\"\n        \n        base_hours = self.service_speeds.get(exp_type, 48)\n        distance = self.zone_distances.get(zone_key, 1000)\n        \n        # Adjust for distance\n        distance_multiplier = max(1.0, distance / 1000)\n        total_hours = int(base_hours * distance_multiplier)\n        \n        # Use order_time or current time as base\n        if order_time:\n            base_time = datetime.strptime(order_time, \"%Y-%m-%d %H:%M:%S\")\n        else:\n            base_time = datetime.now()\n        \n        arrival_time = base_time + timedelta(hours=total_hours)\n        \n        return {\n            \"arrivalTime\": arrival_time.strftime(\"%Y-%m-%d %H:%M:%S\"),\n            \"remaining_transit_time\": total_hours\n        }\n\n    def estimate_price(self, kuaidi_company: str, from_addr: str, to_addr: str, \n                      weight: str = \"1.0\") -> dict:\n        \"\"\"Estimate shipping cost based on various factors.\"\"\"\n        from_zone = self._extract_zone(from_addr)\n        to_zone = self._extract_zone(to_addr)\n        zone_key = f\"{min(from_zone, to_zone)}-{max(from_zone, to_zone)}\"\n        \n        base_rate = self.base_rates.get(kuaidi_company, 10.0)\n        multiplier = self.zone_multipliers.get(zone_key, 1.5)\n        \n        try:\n            weight_kg = float(weight)\n        except ValueError:\n            weight_kg = 1.0\n        \n        price = base_rate * weight_kg * multiplier\n        \n        # Estimate days based on zones\n        if from_zone == to_zone:\n            days = 1\n        elif abs(from_zone - to_zone) <= 2:\n            days = 2\n        else:\n            days = 3\n        \n        return {\n            \"price\": round(price, 2),\n            \"currency\": \"CNY\",\n            \"estimated_days\": days\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"Kuaidi100\")\napi = Kuaidi100API()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Kuaidi100 API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching Kuaidi100Scenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Kuaidi100 state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef query_trace(kuaidi_num: str, phone: Optional[str] = None) -> dict:\n    \"\"\"\n    Query logistics tracking information for a package.\n    \n    Args:\n        kuaidi_num (str): The tracking number of the package to query.\n        phone (str) [Optional]: The recipient's phone number for SF Express verification.\n    \n    Returns:\n        kuaidi_num (str): The tracking number of the queried package.\n        kuaidi_company (str): The courier company code.\n        data (list): List of tracking events with time and context.\n    \"\"\"\n    try:\n        if not kuaidi_num or not isinstance(kuaidi_num, str):\n            raise ValueError(\"Tracking number must be a non-empty string\")\n        return api.query_trace(kuaidi_num, phone)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef estimate_time(from_addr: str, kuaidi_company: str, to_addr: str, \n                 exp_type: str = \"标准快递\", order_time: Optional[str] = None, \n                 logistic: Optional[str] = None) -> dict:\n    \"\"\"\n    Estimate delivery time based on courier company, addresses, and service type.\n    \n    Args:\n        from_addr (str): Origin address with 3 administrative levels.\n        kuaidi_company (str): Courier company code in lowercase.\n        to_addr (str): Destination address with 3 administrative levels.\n        exp_type (str) [Optional]: Service type - 标准快递, 经济快递, or 特快专递.\n        order_time (str) [Optional]: Order time in format yyyy-MM-dd HH:mm:ss.\n        logistic (str) [Optional]: Historical tracking data JSON array string.\n    \n    Returns:\n        arrivalTime (str): Estimated arrival date and time.\n        remaining_transit_time (int): Remaining transit time in hours.\n    \"\"\"\n    try:\n        if not from_addr or not isinstance(from_addr, str):\n            raise ValueError(\"From address must be a non-empty string\")\n        if not kuaidi_company or not isinstance(kuaidi_company, str):\n            raise ValueError(\"Courier company must be a non-empty string\")\n        if not to_addr or not isinstance(to_addr, str):\n            raise ValueError(\"To address must be a non-empty string\")\n        if exp_type not in [\"标准快递\", \"经济快递\", \"特快专递\"]:\n            raise ValueError(\"Invalid service type\")\n        return api.estimate_time(from_addr, kuaidi_company, to_addr, exp_type, order_time, logistic)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef estimate_price(kuaidi_company: str, from_addr: str, to_addr: str, \n                  weight: str = \"1.0\") -> dict:\n    \"\"\"\n    Estimate shipping cost based on courier company, addresses, and weight.\n    \n    Args:\n        kuaidi_company (str): Courier company code in lowercase.\n        from_addr (str): Origin address with 3 administrative levels.\n        to_addr (str): Destination address with 3 administrative levels.\n        weight (str) [Optional]: Package weight in kilograms, defaults to 1.0kg.\n    \n    Returns:\n        price (float): Estimated shipping cost.\n        currency (str): Currency code (CNY).\n        estimated_days (int): Estimated delivery days.\n    \"\"\"\n    try:\n        if not kuaidi_company or not isinstance(kuaidi_company, str):\n            raise ValueError(\"Courier company must be a non-empty string\")\n        if not from_addr or not isinstance(from_addr, str):\n            raise ValueError(\"From address must be a non-empty string\")\n        if not to_addr or not isinstance(to_addr, str):\n            raise ValueError(\"To address must be a non-empty string\")\n        return api.estimate_price(kuaidi_company, from_addr, to_addr, weight)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-04T01:25:02.472477",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic tracking with single package in transit - tests basic tracking functionality",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "tracking_records": {
+          "SF1234567890": {
+            "kuaidi_num": "SF1234567890",
+            "kuaidi_company": "shunfeng",
+            "data": [
+              {
+                "time": "2024-01-15 09:30:00",
+                "context": "【北京市】快件已被 北京朝阳区三里屯营业点 揽收"
+              },
+              {
+                "time": "2024-01-15 14:20:00",
+                "context": "【北京市】快件离开 北京转运中心 已发往 上海转运中心"
+              }
+            ]
+          }
+        },
+        "company_zones": {
+          "shunfeng": 1,
+          "jd": 2,
+          "debangkuaidi": 3,
+          "yuantong": 4,
+          "zhongtong": 5,
+          "shentong": 6,
+          "yunda": 7,
+          "ems": 8
+        },
+        "base_rates": {
+          "shunfeng": 12.0,
+          "jd": 10.0,
+          "debangkuaidi": 8.0,
+          "yuantong": 6.0,
+          "zhongtong": 5.0,
+          "shentong": 6.0,
+          "yunda": 5.0,
+          "ems": 15.0
+        },
+        "zone_multipliers": {
+          "1-1": 1.0,
+          "1-2": 1.2,
+          "1-3": 1.5,
+          "1-4": 1.8,
+          "1-5": 2.0,
+          "2-1": 1.2,
+          "2-2": 1.0,
+          "2-3": 1.3,
+          "2-4": 1.6,
+          "2-5": 1.9,
+          "3-1": 1.5,
+          "3-2": 1.3,
+          "3-3": 1.0,
+          "3-4": 1.4,
+          "3-5": 1.7,
+          "4-1": 1.8,
+          "4-2": 1.6,
+          "4-3": 1.4,
+          "4-4": 1.0,
+          "4-5": 1.3,
+          "5-1": 2.0,
+          "5-2": 1.9,
+          "5-3": 1.7,
+          "5-4": 1.3,
+          "5-5": 1.0
+        },
+        "service_speeds": {
+          "标准快递": 48,
+          "经济快递": 72,
+          "特快专递": 24
+        },
+        "zone_distances": {
+          "1-1": 500,
+          "1-2": 800,
+          "1-3": 1200,
+          "1-4": 1800,
+          "1-5": 2500,
+          "2-1": 800,
+          "2-2": 400,
+          "2-3": 900,
+          "2-4": 1400,
+          "2-5": 2000,
+          "3-1": 1200,
+          "3-2": 900,
+          "3-3": 600,
+          "3-4": 1000,
+          "3-5": 1600,
+          "4-1": 1800,
+          "4-2": 1400,
+          "4-3": 1000,
+          "4-4": 700,
+          "4-5": 1200,
+          "5-1": 2500,
+          "5-2": 2000,
+          "5-3": 1600,
+          "5-4": 1200,
+          "5-5": 800
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple packages from different carriers with varying delivery stages - tests multi-carrier tracking and price estimation",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "tracking_records": {
+          "JD9876543210": {
+            "kuaidi_num": "JD9876543210",
+            "kuaidi_company": "jd",
+            "data": [
+              {
+                "time": "2024-01-16 08:00:00",
+                "context": "【深圳市】您的订单已打包完成"
+              },
+              {
+                "time": "2024-01-16 10:30:00",
+                "context": "【深圳市】快件已从 深圳龙华营业部 发出"
+              },
+              {
+                "time": "2024-01-16 18:45:00",
+                "context": "【广州市】快件到达 广州转运中心"
+              },
+              {
+                "time": "2024-01-17 02:15:00",
+                "context": "【广州市】快件离开 广州转运中心 已发往 武汉转运中心"
+              }
+            ]
+          },
+          "YT2024010001": {
+            "kuaidi_num": "YT2024010001",
+            "kuaidi_company": "yuantong",
+            "data": [
+              {
+                "time": "2024-01-14 15:20:00",
+                "context": "【杭州市】快件已被 杭州西湖区文一路营业点 揽收"
+              },
+              {
+                "time": "2024-01-15 01:30:00",
+                "context": "【杭州市】快件离开 杭州转运中心 已发往 成都转运中心"
+              },
+              {
+                "time": "2024-01-16 09:00:00",
+                "context": "【成都市】快件到达 成都转运中心"
+              },
+              {
+                "time": "2024-01-16 14:30:00",
+                "context": "【成都市】快件已派送，派送员：张师傅，电话：138****5678"
+              },
+              {
+                "time": "2024-01-16 16:45:00",
+                "context": "【成都市】快件已签收，签收人：本人签收"
+              }
+            ]
+          },
+          "ZTO555888999": {
+            "kuaidi_num": "ZTO555888999",
+            "kuaidi_company": "zhongtong",
+            "data": [
+              {
+                "time": "2024-01-17 11:00:00",
+                "context": "【西安市】快件已被 西安雁塔区小寨营业点 揽收"
+              }
+            ]
+          }
+        },
+        "company_zones": {
+          "shunfeng": 1,
+          "jd": 2,
+          "debangkuaidi": 3,
+          "yuantong": 4,
+          "zhongtong": 5,
+          "shentong": 6,
+          "yunda": 7,
+          "ems": 8
+        },
+        "base_rates": {
+          "shunfeng": 12.0,
+          "jd": 10.0,
+          "debangkuaidi": 8.0,
+          "yuantong": 6.0,
+          "zhongtong": 5.0,
+          "shentong": 6.0,
+          "yunda": 5.0,
+          "ems": 15.0
+        },
+        "zone_multipliers": {
+          "1-1": 1.0,
+          "1-2": 1.2,
+          "1-3": 1.5,
+          "1-4": 1.8,
+          "1-5": 2.0,
+          "2-1": 1.2,
+          "2-2": 1.0,
+          "2-3": 1.3,
+          "2-4": 1.6,
+          "2-5": 1.9,
+          "3-1": 1.5,
+          "3-2": 1.3,
+          "3-3": 1.0,
+          "3-4": 1.4,
+          "3-5": 1.7,
+          "4-1": 1.8,
+          "4-2": 1.6,
+          "4-3": 1.4,
+          "4-4": 1.0,
+          "4-5": 1.3,
+          "5-1": 2.0,
+          "5-2": 1.9,
+          "5-3": 1.7,
+          "5-4": 1.3,
+          "5-5": 1.0
+        },
+        "service_speeds": {
+          "标准快递": 48,
+          "经济快递": 72,
+          "特快专递": 24
+        },
+        "zone_distances": {
+          "1-1": 500,
+          "1-2": 800,
+          "1-3": 1200,
+          "1-4": 1800,
+          "1-5": 2500,
+          "2-1": 800,
+          "2-2": 400,
+          "2-3": 900,
+          "2-4": 1400,
+          "2-5": 2000,
+          "3-1": 1200,
+          "3-2": 900,
+          "3-3": 600,
+          "3-4": 1000,
+          "3-5": 1600,
+          "4-1": 1800,
+          "4-2": 1400,
+          "4-3": 1000,
+          "4-4": 700,
+          "4-5": 1200,
+          "5-1": 2500,
+          "5-2": 2000,
+          "5-3": 1600,
+          "5-4": 1200,
+          "5-5": 800
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Comprehensive multi-carrier scenario with complete delivery lifecycle and cross-zone shipments - tests all tool features including delivery estimates and price calculations",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "tracking_records": {
+          "SF2024011501": {
+            "kuaidi_num": "SF2024011501",
+            "kuaidi_company": "shunfeng",
+            "data": [
+              {
+                "time": "2024-01-15 07:30:00",
+                "context": "【上海市】快件已被 上海浦东新区陆家嘴营业点 揽收，揽件员：李师傅"
+              },
+              {
+                "time": "2024-01-15 09:15:00",
+                "context": "【上海市】快件到达 上海浦东集散中心"
+              },
+              {
+                "time": "2024-01-15 11:30:00",
+                "context": "【上海市】快件离开 上海浦东集散中心 已发往 北京顺义集散中心"
+              },
+              {
+                "time": "2024-01-15 22:45:00",
+                "context": "【北京市】快件到达 北京顺义集散中心"
+              },
+              {
+                "time": "2024-01-16 06:20:00",
+                "context": "【北京市】快件离开 北京顺义集散中心 已发往 北京海淀区中关村营业点"
+              },
+              {
+                "time": "2024-01-16 08:00:00",
+                "context": "【北京市】快件到达 北京海淀区中关村营业点"
+              },
+              {
+                "time": "2024-01-16 09:30:00",
+                "context": "【北京市】快件已派送，派送员：王师傅，电话：139****1234"
+              },
+              {
+                "time": "2024-01-16 11:15:00",
+                "context": "【北京市】快件已签收，签收人：本人签收，感谢使用顺丰速运"
+              }
+            ]
+          },
+          "EMS9988776655": {
+            "kuaidi_num": "EMS9988776655",
+            "kuaidi_company": "ems",
+            "data": [
+              {
+                "time": "2024-01-14 13:00:00",
+                "context": "【乌鲁木齐市】收寄局已收寄，揽投员：赵师傅"
+              },
+              {
+                "time": "2024-01-14 20:30:00",
+                "context": "【乌鲁木齐市】离开 乌鲁木齐邮件处理中心 发往 西安邮件处理中心"
+              },
+              {
+                "time": "2024-01-15 18:00:00",
+                "context": "【西安市】到达 西安邮件处理中心"
+              },
+              {
+                "time": "2024-01-16 02:30:00",
+                "context": "【西安市】离开 西安邮件处理中心 发往 上海邮件处理中心"
+              },
+              {
+                "time": "2024-01-16 20:15:00",
+                "context": "【上海市】到达 上海邮件处理中心"
+              },
+              {
+                "time": "2024-01-17 08:00:00",
+                "context": "【上海市】安排投递，预计17日14:00前投递"
+              }
+            ]
+          },
+          "DB2024011700": {
+            "kuaidi_num": "DB2024011700",
+            "kuaidi_company": "debangkuaidi",
+            "data": [
+              {
+                "time": "2024-01-17 10:00:00",
+                "context": "【广州市】您的快件已由 广州天河区石牌营业部 揽收"
+              },
+              {
+                "time": "2024-01-17 14:30:00",
+                "context": "【广州市】快件已到达 广州转运中心"
+              },
+              {
+                "time": "2024-01-17 18:00:00",
+                "context": "【广州市】快件已从 广州转运中心 发出，下一站 深圳转运中心"
+              }
+            ]
+          },
+          "ST1122334455": {
+            "kuaidi_num": "ST1122334455",
+            "kuaidi_company": "shentong",
+            "data": [
+              {
+                "time": "2024-01-16 16:00:00",
+                "context": "【南京市】快件已被 南京鼓楼区湖南路营业点 揽收"
+              },
+              {
+                "time": "2024-01-16 22:30:00",
+                "context": "【南京市】快件离开 南京转运中心 已发往 杭州转运中心"
+              },
+              {
+                "time": "2024-01-17 06:45:00",
+                "context": "【杭州市】快件到达 杭州转运中心"
+              },
+              {
+                "time": "2024-01-17 09:00:00",
+                "context": "【杭州市】快件离开 杭州转运中心 已发往 杭州西湖区文三路营业点"
+              },
+              {
+                "time": "2024-01-17 10:30:00",
+                "context": "【杭州市】快件已派送，派送员：陈师傅，电话：137****9876"
+              }
+            ]
+          },
+          "YD7788990011": {
+            "kuaidi_num": "YD7788990011",
+            "kuaidi_company": "yunda",
+            "data": [
+              {
+                "time": "2024-01-17 12:00:00",
+                "context": "【重庆市】快件已被 重庆渝中区解放碑营业点 揽收"
+              }
+            ]
+          }
+        },
+        "company_zones": {
+          "shunfeng": 1,
+          "jd": 2,
+          "debangkuaidi": 3,
+          "yuantong": 4,
+          "zhongtong": 5,
+          "shentong": 6,
+          "yunda": 7,
+          "ems": 8
+        },
+        "base_rates": {
+          "shunfeng": 12.0,
+          "jd": 10.0,
+          "debangkuaidi": 8.0,
+          "yuantong": 6.0,
+          "zhongtong": 5.0,
+          "shentong": 6.0,
+          "yunda": 5.0,
+          "ems": 15.0
+        },
+        "zone_multipliers": {
+          "1-1": 1.0,
+          "1-2": 1.2,
+          "1-3": 1.5,
+          "1-4": 1.8,
+          "1-5": 2.0,
+          "2-1": 1.2,
+          "2-2": 1.0,
+          "2-3": 1.3,
+          "2-4": 1.6,
+          "2-5": 1.9,
+          "3-1": 1.5,
+          "3-2": 1.3,
+          "3-3": 1.0,
+          "3-4": 1.4,
+          "3-5": 1.7,
+          "4-1": 1.8,
+          "4-2": 1.6,
+          "4-3": 1.4,
+          "4-4": 1.0,
+          "4-5": 1.3,
+          "5-1": 2.0,
+          "5-2": 1.9,
+          "5-3": 1.7,
+          "5-4": 1.3,
+          "5-5": 1.0
+        },
+        "service_speeds": {
+          "标准快递": 48,
+          "经济快递": 72,
+          "特快专递": 24
+        },
+        "zone_distances": {
+          "1-1": 500,
+          "1-2": 800,
+          "1-3": 1200,
+          "1-4": 1800,
+          "1-5": 2500,
+          "2-1": 800,
+          "2-2": 400,
+          "2-3": 900,
+          "2-4": 1400,
+          "2-5": 2000,
+          "3-1": 1200,
+          "3-2": 900,
+          "3-3": 600,
+          "3-4": 1000,
+          "3-5": 1600,
+          "4-1": 1800,
+          "4-2": 1400,
+          "4-3": 1000,
+          "4-4": 700,
+          "4-5": 1200,
+          "5-1": 2500,
+          "5-2": 2000,
+          "5-3": 1600,
+          "5-4": 1200,
+          "5-5": 800
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty tracking records - tests handling of no active shipments and validates price estimation with minimal data",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "tracking_records": {},
+        "company_zones": {
+          "shunfeng": 1,
+          "jd": 2,
+          "debangkuaidi": 3,
+          "yuantong": 4,
+          "zhongtong": 5,
+          "shentong": 6,
+          "yunda": 7,
+          "ems": 8
+        },
+        "base_rates": {
+          "shunfeng": 12.0,
+          "jd": 10.0,
+          "debangkuaidi": 8.0,
+          "yuantong": 6.0,
+          "zhongtong": 5.0,
+          "shentong": 6.0,
+          "yunda": 5.0,
+          "ems": 15.0
+        },
+        "zone_multipliers": {
+          "1-1": 1.0,
+          "1-2": 1.2,
+          "1-3": 1.5,
+          "1-4": 1.8,
+          "1-5": 2.0,
+          "2-1": 1.2,
+          "2-2": 1.0,
+          "2-3": 1.3,
+          "2-4": 1.6,
+          "2-5": 1.9,
+          "3-1": 1.5,
+          "3-2": 1.3,
+          "3-3": 1.0,
+          "3-4": 1.4,
+          "3-5": 1.7,
+          "4-1": 1.8,
+          "4-2": 1.6,
+          "4-3": 1.4,
+          "4-4": 1.0,
+          "4-5": 1.3,
+          "5-1": 2.0,
+          "5-2": 1.9,
+          "5-3": 1.7,
+          "5-4": 1.3,
+          "5-5": 1.0
+        },
+        "service_speeds": {
+          "标准快递": 48,
+          "经济快递": 72,
+          "特快专递": 24
+        },
+        "zone_distances": {
+          "1-1": 500,
+          "1-2": 800,
+          "1-3": 1200,
+          "1-4": 1800,
+          "1-5": 2500,
+          "2-1": 800,
+          "2-2": 400,
+          "2-3": 900,
+          "2-4": 1400,
+          "2-5": 2000,
+          "3-1": 1200,
+          "3-2": 900,
+          "3-3": 600,
+          "3-4": 1000,
+          "3-5": 1600,
+          "4-1": 1800,
+          "4-2": 1400,
+          "4-3": 1000,
+          "4-4": 700,
+          "4-5": 1200,
+          "5-1": 2500,
+          "5-2": 2000,
+          "5-3": 1600,
+          "5-4": 1200,
+          "5-5": 800
+        }
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "query_trace",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Query existing tracking number with phone",
+                    "input": {
+                      "kuaidi_num": "SF1234567890",
+                      "phone": "13800138000"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "SF1234567890",
+                      "kuaidi_company": "shunfeng",
+                      "data": [
+                        {
+                          "time": "2024-01-15 09:30:00",
+                          "context": "【北京市】快件已被 北京朝阳区三里屯营业点 揽收"
+                        },
+                        {
+                          "time": "2024-01-15 14:20:00",
+                          "context": "【北京市】快件离开 北京转运中心 已发往 上海转运中心"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Query existing tracking number without phone",
+                    "input": {
+                      "kuaidi_num": "SF1234567890"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "SF1234567890",
+                      "kuaidi_company": "shunfeng",
+                      "data": [
+                        {
+                          "time": "2024-01-15 09:30:00",
+                          "context": "【北京市】快件已被 北京朝阳区三里屯营业点 揽收"
+                        },
+                        {
+                          "time": "2024-01-15 14:20:00",
+                          "context": "【北京市】快件离开 北京转运中心 已发往 上海转运中心"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Empty tracking number",
+                    "input": {
+                      "kuaidi_num": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Tracking number must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_time",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Standard express service",
+                    "input": {
+                      "from_addr": "北京市,朝阳区,三里屯",
+                      "kuaidi_company": "shunfeng",
+                      "to_addr": "上海市,浦东新区,陆家嘴",
+                      "exp_type": "标准快递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-06 01:23:17",
+                      "remaining_transit_time": 48
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Express service (fastest)",
+                    "input": {
+                      "from_addr": "北京市,朝阳区,三里屯",
+                      "kuaidi_company": "shunfeng",
+                      "to_addr": "上海市,浦东新区,陆家嘴",
+                      "exp_type": "特快专递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-05 01:23:21",
+                      "remaining_transit_time": 24
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Invalid service type",
+                    "input": {
+                      "from_addr": "北京市,朝阳区,三里屯",
+                      "kuaidi_company": "shunfeng",
+                      "to_addr": "上海市,浦东新区,陆家嘴",
+                      "exp_type": "invalid_type"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Invalid service type",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_price",
+                "test_cases": [
+                  {
+                    "description": "Valid case - SF Express 1kg package",
+                    "input": {
+                      "kuaidi_company": "shunfeng",
+                      "from_addr": "北京市,朝阳区,三里屯",
+                      "to_addr": "上海市,浦东新区,陆家嘴",
+                      "weight": "1.0"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 14.4,
+                      "currency": "CNY",
+                      "estimated_days": 2
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Yuantong Express 5kg package",
+                    "input": {
+                      "kuaidi_company": "yuantong",
+                      "from_addr": "广州市,天河区,珠江新城",
+                      "to_addr": "深圳市,南山区,科技园",
+                      "weight": "5.0"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 30.0,
+                      "currency": "CNY",
+                      "estimated_days": 1
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Empty courier company",
+                    "input": {
+                      "kuaidi_company": "",
+                      "from_addr": "北京市,朝阳区,三里屯",
+                      "to_addr": "上海市,浦东新区,陆家嘴",
+                      "weight": "1.0"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Courier company must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All state variables preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 64.5597767829895
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "query_trace",
+                "test_cases": [
+                  {
+                    "case_name": "Valid tracking number - JD Express",
+                    "input": {
+                      "kuaidi_num": "JD9876543210"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "JD9876543210",
+                      "kuaidi_company": "jd",
+                      "data_count": 4
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Valid tracking number - Yuantong Express",
+                    "input": {
+                      "kuaidi_num": "YT2024010001"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "YT2024010001",
+                      "kuaidi_company": "yuantong",
+                      "data_count": 5
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Valid tracking number - Zhongtong Express",
+                    "input": {
+                      "kuaidi_num": "ZTO555888999"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "ZTO555888999",
+                      "kuaidi_company": "zhongtong",
+                      "data_count": 1
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Invalid tracking number - Not found",
+                    "input": {
+                      "kuaidi_num": "INVALID123"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "INVALID123",
+                      "kuaidi_company": "unknown",
+                      "data_count": 0
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_time",
+                "test_cases": [
+                  {
+                    "case_name": "Standard express - JD from Shenzhen to Wuhan",
+                    "input": {
+                      "from_addr": "广东省,深圳市,龙华区",
+                      "kuaidi_company": "jd",
+                      "to_addr": "湖北省,武汉市,洪山区",
+                      "exp_type": "标准快递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-07 05:23:21",
+                      "remaining_transit_time": 76
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Express delivery - Yuantong from Hangzhou to Chengdu",
+                    "input": {
+                      "from_addr": "浙江省,杭州市,西湖区",
+                      "kuaidi_company": "yuantong",
+                      "to_addr": "四川省,成都市,武侯区",
+                      "exp_type": "特快专递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-05 10:23:26",
+                      "remaining_transit_time": 33
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Economy express - Zhongtong from Xi'an to Beijing",
+                    "input": {
+                      "from_addr": "陕西省,西安市,雁塔区",
+                      "kuaidi_company": "zhongtong",
+                      "to_addr": "北京市,北京市,朝阳区",
+                      "exp_type": "经济快递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-11 13:23:30",
+                      "remaining_transit_time": 180
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Invalid service type - Error case",
+                    "input": {
+                      "from_addr": "广东省,深圳市,龙华区",
+                      "kuaidi_company": "jd",
+                      "to_addr": "湖北省,武汉市,洪山区",
+                      "exp_type": "超级快递"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Invalid service type",
+                    "note": "Expected validation error - correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_price",
+                "test_cases": [
+                  {
+                    "case_name": "Standard weight - JD from Shenzhen to Wuhan",
+                    "input": {
+                      "kuaidi_company": "jd",
+                      "from_addr": "广东省,深圳市,龙华区",
+                      "to_addr": "湖北省,武汉市,洪山区",
+                      "weight": "1.0"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 17.0,
+                      "currency": "CNY",
+                      "estimated_days": 2
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Heavy package - Yuantong from Hangzhou to Chengdu",
+                    "input": {
+                      "kuaidi_company": "yuantong",
+                      "from_addr": "浙江省,杭州市,西湖区",
+                      "to_addr": "四川省,成都市,武侯区",
+                      "weight": "2.5"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 24.0,
+                      "currency": "CNY",
+                      "estimated_days": 2
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Light package - Shunfeng from Beijing to Shanghai",
+                    "input": {
+                      "kuaidi_company": "shunfeng",
+                      "from_addr": "北京市,北京市,朝阳区",
+                      "to_addr": "上海市,上海市,浦东新区",
+                      "weight": "0.5"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 7.2,
+                      "currency": "CNY",
+                      "estimated_days": 2
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Very heavy package - Zhongtong long distance",
+                    "input": {
+                      "kuaidi_company": "zhongtong",
+                      "from_addr": "陕西省,西安市,雁塔区",
+                      "to_addr": "新疆维吾尔自治区,乌鲁木齐市,天山区",
+                      "weight": "10.0"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 50.0,
+                      "currency": "CNY",
+                      "estimated_days": 1
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Empty courier company - Error case",
+                    "input": {
+                      "kuaidi_company": "",
+                      "from_addr": "广东省,深圳市,龙华区",
+                      "to_addr": "湖北省,武汉市,洪山区",
+                      "weight": "1.0"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Courier company must be a non-empty string",
+                    "note": "Expected validation error - correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario data perfectly. All tracking records, company zones, base rates, zone multipliers, service speeds, and zone distances are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 83.90710139274597
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "query_trace",
+                "test_cases": [
+                  {
+                    "case_name": "Valid tracking - Yunda Express (single event)",
+                    "input": {
+                      "kuaidi_num": "YD7788990011"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "YD7788990011",
+                      "kuaidi_company": "yunda",
+                      "data": [
+                        {
+                          "time": "2024-01-17 12:00:00",
+                          "context": "【重庆市】快件已被 重庆渝中区解放碑营业点 揽收"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Valid tracking - SF Express (multiple events)",
+                    "input": {
+                      "kuaidi_num": "SF2024011501"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "SF2024011501",
+                      "kuaidi_company": "shunfeng",
+                      "data_count": 8
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Valid tracking - EMS (in transit)",
+                    "input": {
+                      "kuaidi_num": "EMS9988776655"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "EMS9988776655",
+                      "kuaidi_company": "ems",
+                      "data_count": 6
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Invalid tracking number",
+                    "input": {
+                      "kuaidi_num": "INVALID123"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "INVALID123",
+                      "kuaidi_company": "unknown",
+                      "data": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Error case - Empty tracking number",
+                    "input": {
+                      "kuaidi_num": ""
+                    },
+                    "passed": true,
+                    "expected_error": true,
+                    "error": "Tracking number must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_time",
+                "test_cases": [
+                  {
+                    "case_name": "Standard express - Shanghai to Beijing",
+                    "input": {
+                      "from_addr": "上海市,浦东新区,陆家嘴",
+                      "kuaidi_company": "shunfeng",
+                      "to_addr": "北京市,海淀区,中关村",
+                      "exp_type": "标准快递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-06 01:23:26",
+                      "remaining_transit_time": 48
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Express delivery - Guangzhou to Shenzhen",
+                    "input": {
+                      "from_addr": "广州市,天河区,石牌",
+                      "kuaidi_company": "debangkuaidi",
+                      "to_addr": "深圳市,南山区,科技园",
+                      "exp_type": "特快专递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-05 01:23:30",
+                      "remaining_transit_time": 24
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Economy express - Nanjing to Hangzhou",
+                    "input": {
+                      "from_addr": "南京市,鼓楼区,湖南路",
+                      "kuaidi_company": "shentong",
+                      "to_addr": "杭州市,西湖区,文三路",
+                      "exp_type": "经济快递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-07 01:23:34",
+                      "remaining_transit_time": 72
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Error case - Empty from address",
+                    "input": {
+                      "from_addr": "",
+                      "kuaidi_company": "shunfeng",
+                      "to_addr": "北京市,海淀区,中关村",
+                      "exp_type": "标准快递"
+                    },
+                    "passed": true,
+                    "expected_error": true,
+                    "error": "From address must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_price",
+                "test_cases": [
+                  {
+                    "case_name": "SF Express - Shanghai to Beijing (1kg)",
+                    "input": {
+                      "kuaidi_company": "shunfeng",
+                      "from_addr": "上海市,浦东新区,陆家嘴",
+                      "to_addr": "北京市,海淀区,中关村",
+                      "weight": "1.0"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 14.4,
+                      "currency": "CNY",
+                      "estimated_days": 2
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "EMS - Urumqi to Shanghai (2.5kg)",
+                    "input": {
+                      "kuaidi_company": "ems",
+                      "from_addr": "乌鲁木齐市,天山区,红山",
+                      "to_addr": "上海市,黄浦区,外滩",
+                      "weight": "2.5"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 71.25,
+                      "currency": "CNY",
+                      "estimated_days": 3
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Yunda - Chongqing to Chengdu (0.5kg)",
+                    "input": {
+                      "kuaidi_company": "yunda",
+                      "from_addr": "重庆市,渝中区,解放碑",
+                      "to_addr": "成都市,武侯区,天府广场",
+                      "weight": "0.5"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 3.25,
+                      "currency": "CNY",
+                      "estimated_days": 2
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Error case - Empty courier company",
+                    "input": {
+                      "kuaidi_company": "",
+                      "from_addr": "上海市,浦东新区,陆家嘴",
+                      "to_addr": "北京市,海淀区,中关村",
+                      "weight": "1.0"
+                    },
+                    "passed": true,
+                    "expected_error": true,
+                    "error": "Courier company must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario data perfectly. All tracking records, company zones, base rates, zone multipliers, service speeds, and zone distances are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 89.00523018836975
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "query_trace",
+                "test_cases": [
+                  {
+                    "test_case": "Valid tracking number without phone",
+                    "input": {
+                      "kuaidi_num": "SF1234567890"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "SF1234567890",
+                      "kuaidi_company": "unknown",
+                      "data": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid tracking number with phone",
+                    "input": {
+                      "kuaidi_num": "SF1234567890",
+                      "phone": "13800138000"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "SF1234567890",
+                      "kuaidi_company": "unknown",
+                      "data": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_case": "Invalid empty tracking number",
+                    "input": {
+                      "kuaidi_num": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Tracking number must be a non-empty string",
+                    "note": "Expected validation error - correctly rejected"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_time",
+                "test_cases": [
+                  {
+                    "test_case": "Valid standard express estimation",
+                    "input": {
+                      "from_addr": "广东省,深圳市,南山区",
+                      "kuaidi_company": "shunfeng",
+                      "to_addr": "北京市,北京市,朝阳区",
+                      "exp_type": "标准快递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-06 10:24:21",
+                      "remaining_transit_time": 57
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid express delivery estimation",
+                    "input": {
+                      "from_addr": "上海市,上海市,浦东新区",
+                      "kuaidi_company": "ems",
+                      "to_addr": "四川省,成都市,武侯区",
+                      "exp_type": "特快专递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-05 10:24:25",
+                      "remaining_transit_time": 33
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_case": "Invalid service type",
+                    "input": {
+                      "from_addr": "上海市,上海市,浦东新区",
+                      "kuaidi_company": "ems",
+                      "to_addr": "四川省,成都市,武侯区",
+                      "exp_type": "invalid_type"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Invalid service type",
+                    "note": "Expected validation error - correctly rejected"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_price",
+                "test_cases": [
+                  {
+                    "test_case": "Valid price estimation with 1kg weight",
+                    "input": {
+                      "kuaidi_company": "shunfeng",
+                      "from_addr": "广东省,深圳市,南山区",
+                      "to_addr": "北京市,北京市,朝阳区",
+                      "weight": "1.0"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 18.0,
+                      "currency": "CNY",
+                      "estimated_days": 2
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid price estimation with 5kg weight",
+                    "input": {
+                      "kuaidi_company": "yuantong",
+                      "from_addr": "浙江省,杭州市,西湖区",
+                      "to_addr": "江苏省,南京市,鼓楼区",
+                      "weight": "5.0"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 30.0,
+                      "currency": "CNY",
+                      "estimated_days": 1
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_case": "Invalid empty courier company",
+                    "input": {
+                      "kuaidi_company": "",
+                      "from_addr": "浙江省,杭州市,西湖区",
+                      "to_addr": "江苏省,南京市,鼓楼区",
+                      "weight": "5.0"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Courier company must be a non-empty string",
+                    "note": "Expected validation error - correctly rejected"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All state variables (tracking_records, company_zones, base_rates, zone_multipliers, service_speeds, zone_distances) are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 62.07226276397705
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "query_trace",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Query existing tracking number with phone",
+                    "input": {
+                      "kuaidi_num": "SF1234567890",
+                      "phone": "13800138000"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "SF1234567890",
+                      "kuaidi_company": "shunfeng",
+                      "data": [
+                        {
+                          "time": "2024-01-15 09:30:00",
+                          "context": "【北京市】快件已被 北京朝阳区三里屯营业点 揽收"
+                        },
+                        {
+                          "time": "2024-01-15 14:20:00",
+                          "context": "【北京市】快件离开 北京转运中心 已发往 上海转运中心"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Query existing tracking number without phone",
+                    "input": {
+                      "kuaidi_num": "SF1234567890"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "SF1234567890",
+                      "kuaidi_company": "shunfeng",
+                      "data": [
+                        {
+                          "time": "2024-01-15 09:30:00",
+                          "context": "【北京市】快件已被 北京朝阳区三里屯营业点 揽收"
+                        },
+                        {
+                          "time": "2024-01-15 14:20:00",
+                          "context": "【北京市】快件离开 北京转运中心 已发往 上海转运中心"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Empty tracking number",
+                    "input": {
+                      "kuaidi_num": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Tracking number must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_time",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Standard express service",
+                    "input": {
+                      "from_addr": "北京市,朝阳区,三里屯",
+                      "kuaidi_company": "shunfeng",
+                      "to_addr": "上海市,浦东新区,陆家嘴",
+                      "exp_type": "标准快递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-06 01:23:17",
+                      "remaining_transit_time": 48
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Express service (fastest)",
+                    "input": {
+                      "from_addr": "北京市,朝阳区,三里屯",
+                      "kuaidi_company": "shunfeng",
+                      "to_addr": "上海市,浦东新区,陆家嘴",
+                      "exp_type": "特快专递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-05 01:23:21",
+                      "remaining_transit_time": 24
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Invalid service type",
+                    "input": {
+                      "from_addr": "北京市,朝阳区,三里屯",
+                      "kuaidi_company": "shunfeng",
+                      "to_addr": "上海市,浦东新区,陆家嘴",
+                      "exp_type": "invalid_type"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Invalid service type",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_price",
+                "test_cases": [
+                  {
+                    "description": "Valid case - SF Express 1kg package",
+                    "input": {
+                      "kuaidi_company": "shunfeng",
+                      "from_addr": "北京市,朝阳区,三里屯",
+                      "to_addr": "上海市,浦东新区,陆家嘴",
+                      "weight": "1.0"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 14.4,
+                      "currency": "CNY",
+                      "estimated_days": 2
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Valid case - Yuantong Express 5kg package",
+                    "input": {
+                      "kuaidi_company": "yuantong",
+                      "from_addr": "广州市,天河区,珠江新城",
+                      "to_addr": "深圳市,南山区,科技园",
+                      "weight": "5.0"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 30.0,
+                      "currency": "CNY",
+                      "estimated_days": 1
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case - Empty courier company",
+                    "input": {
+                      "kuaidi_company": "",
+                      "from_addr": "北京市,朝阳区,三里屯",
+                      "to_addr": "上海市,浦东新区,陆家嘴",
+                      "weight": "1.0"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Courier company must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All state variables preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 64.5597767829895
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "query_trace",
+                "test_cases": [
+                  {
+                    "case_name": "Valid tracking number - JD Express",
+                    "input": {
+                      "kuaidi_num": "JD9876543210"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "JD9876543210",
+                      "kuaidi_company": "jd",
+                      "data_count": 4
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Valid tracking number - Yuantong Express",
+                    "input": {
+                      "kuaidi_num": "YT2024010001"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "YT2024010001",
+                      "kuaidi_company": "yuantong",
+                      "data_count": 5
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Valid tracking number - Zhongtong Express",
+                    "input": {
+                      "kuaidi_num": "ZTO555888999"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "ZTO555888999",
+                      "kuaidi_company": "zhongtong",
+                      "data_count": 1
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Invalid tracking number - Not found",
+                    "input": {
+                      "kuaidi_num": "INVALID123"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "INVALID123",
+                      "kuaidi_company": "unknown",
+                      "data_count": 0
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_time",
+                "test_cases": [
+                  {
+                    "case_name": "Standard express - JD from Shenzhen to Wuhan",
+                    "input": {
+                      "from_addr": "广东省,深圳市,龙华区",
+                      "kuaidi_company": "jd",
+                      "to_addr": "湖北省,武汉市,洪山区",
+                      "exp_type": "标准快递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-07 05:23:21",
+                      "remaining_transit_time": 76
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Express delivery - Yuantong from Hangzhou to Chengdu",
+                    "input": {
+                      "from_addr": "浙江省,杭州市,西湖区",
+                      "kuaidi_company": "yuantong",
+                      "to_addr": "四川省,成都市,武侯区",
+                      "exp_type": "特快专递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-05 10:23:26",
+                      "remaining_transit_time": 33
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Economy express - Zhongtong from Xi'an to Beijing",
+                    "input": {
+                      "from_addr": "陕西省,西安市,雁塔区",
+                      "kuaidi_company": "zhongtong",
+                      "to_addr": "北京市,北京市,朝阳区",
+                      "exp_type": "经济快递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-11 13:23:30",
+                      "remaining_transit_time": 180
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Invalid service type - Error case",
+                    "input": {
+                      "from_addr": "广东省,深圳市,龙华区",
+                      "kuaidi_company": "jd",
+                      "to_addr": "湖北省,武汉市,洪山区",
+                      "exp_type": "超级快递"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Invalid service type",
+                    "note": "Expected validation error - correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_price",
+                "test_cases": [
+                  {
+                    "case_name": "Standard weight - JD from Shenzhen to Wuhan",
+                    "input": {
+                      "kuaidi_company": "jd",
+                      "from_addr": "广东省,深圳市,龙华区",
+                      "to_addr": "湖北省,武汉市,洪山区",
+                      "weight": "1.0"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 17.0,
+                      "currency": "CNY",
+                      "estimated_days": 2
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Heavy package - Yuantong from Hangzhou to Chengdu",
+                    "input": {
+                      "kuaidi_company": "yuantong",
+                      "from_addr": "浙江省,杭州市,西湖区",
+                      "to_addr": "四川省,成都市,武侯区",
+                      "weight": "2.5"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 24.0,
+                      "currency": "CNY",
+                      "estimated_days": 2
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Light package - Shunfeng from Beijing to Shanghai",
+                    "input": {
+                      "kuaidi_company": "shunfeng",
+                      "from_addr": "北京市,北京市,朝阳区",
+                      "to_addr": "上海市,上海市,浦东新区",
+                      "weight": "0.5"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 7.2,
+                      "currency": "CNY",
+                      "estimated_days": 2
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Very heavy package - Zhongtong long distance",
+                    "input": {
+                      "kuaidi_company": "zhongtong",
+                      "from_addr": "陕西省,西安市,雁塔区",
+                      "to_addr": "新疆维吾尔自治区,乌鲁木齐市,天山区",
+                      "weight": "10.0"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 50.0,
+                      "currency": "CNY",
+                      "estimated_days": 1
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Empty courier company - Error case",
+                    "input": {
+                      "kuaidi_company": "",
+                      "from_addr": "广东省,深圳市,龙华区",
+                      "to_addr": "湖北省,武汉市,洪山区",
+                      "weight": "1.0"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Courier company must be a non-empty string",
+                    "note": "Expected validation error - correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario data perfectly. All tracking records, company zones, base rates, zone multipliers, service speeds, and zone distances are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 83.90710139274597
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "query_trace",
+                "test_cases": [
+                  {
+                    "case_name": "Valid tracking - Yunda Express (single event)",
+                    "input": {
+                      "kuaidi_num": "YD7788990011"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "YD7788990011",
+                      "kuaidi_company": "yunda",
+                      "data": [
+                        {
+                          "time": "2024-01-17 12:00:00",
+                          "context": "【重庆市】快件已被 重庆渝中区解放碑营业点 揽收"
+                        }
+                      ]
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Valid tracking - SF Express (multiple events)",
+                    "input": {
+                      "kuaidi_num": "SF2024011501"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "SF2024011501",
+                      "kuaidi_company": "shunfeng",
+                      "data_count": 8
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Valid tracking - EMS (in transit)",
+                    "input": {
+                      "kuaidi_num": "EMS9988776655"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "EMS9988776655",
+                      "kuaidi_company": "ems",
+                      "data_count": 6
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Invalid tracking number",
+                    "input": {
+                      "kuaidi_num": "INVALID123"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "INVALID123",
+                      "kuaidi_company": "unknown",
+                      "data": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Error case - Empty tracking number",
+                    "input": {
+                      "kuaidi_num": ""
+                    },
+                    "passed": true,
+                    "expected_error": true,
+                    "error": "Tracking number must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_time",
+                "test_cases": [
+                  {
+                    "case_name": "Standard express - Shanghai to Beijing",
+                    "input": {
+                      "from_addr": "上海市,浦东新区,陆家嘴",
+                      "kuaidi_company": "shunfeng",
+                      "to_addr": "北京市,海淀区,中关村",
+                      "exp_type": "标准快递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-06 01:23:26",
+                      "remaining_transit_time": 48
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Express delivery - Guangzhou to Shenzhen",
+                    "input": {
+                      "from_addr": "广州市,天河区,石牌",
+                      "kuaidi_company": "debangkuaidi",
+                      "to_addr": "深圳市,南山区,科技园",
+                      "exp_type": "特快专递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-05 01:23:30",
+                      "remaining_transit_time": 24
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Economy express - Nanjing to Hangzhou",
+                    "input": {
+                      "from_addr": "南京市,鼓楼区,湖南路",
+                      "kuaidi_company": "shentong",
+                      "to_addr": "杭州市,西湖区,文三路",
+                      "exp_type": "经济快递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-07 01:23:34",
+                      "remaining_transit_time": 72
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Error case - Empty from address",
+                    "input": {
+                      "from_addr": "",
+                      "kuaidi_company": "shunfeng",
+                      "to_addr": "北京市,海淀区,中关村",
+                      "exp_type": "标准快递"
+                    },
+                    "passed": true,
+                    "expected_error": true,
+                    "error": "From address must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_price",
+                "test_cases": [
+                  {
+                    "case_name": "SF Express - Shanghai to Beijing (1kg)",
+                    "input": {
+                      "kuaidi_company": "shunfeng",
+                      "from_addr": "上海市,浦东新区,陆家嘴",
+                      "to_addr": "北京市,海淀区,中关村",
+                      "weight": "1.0"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 14.4,
+                      "currency": "CNY",
+                      "estimated_days": 2
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "EMS - Urumqi to Shanghai (2.5kg)",
+                    "input": {
+                      "kuaidi_company": "ems",
+                      "from_addr": "乌鲁木齐市,天山区,红山",
+                      "to_addr": "上海市,黄浦区,外滩",
+                      "weight": "2.5"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 71.25,
+                      "currency": "CNY",
+                      "estimated_days": 3
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Yunda - Chongqing to Chengdu (0.5kg)",
+                    "input": {
+                      "kuaidi_company": "yunda",
+                      "from_addr": "重庆市,渝中区,解放碑",
+                      "to_addr": "成都市,武侯区,天府广场",
+                      "weight": "0.5"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 3.25,
+                      "currency": "CNY",
+                      "estimated_days": 2
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Error case - Empty courier company",
+                    "input": {
+                      "kuaidi_company": "",
+                      "from_addr": "上海市,浦东新区,陆家嘴",
+                      "to_addr": "北京市,海淀区,中关村",
+                      "weight": "1.0"
+                    },
+                    "passed": true,
+                    "expected_error": true,
+                    "error": "Courier company must be a non-empty string"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario data perfectly. All tracking records, company zones, base rates, zone multipliers, service speeds, and zone distances are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 89.00523018836975
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "query_trace",
+                "test_cases": [
+                  {
+                    "test_case": "Valid tracking number without phone",
+                    "input": {
+                      "kuaidi_num": "SF1234567890"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "SF1234567890",
+                      "kuaidi_company": "unknown",
+                      "data": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid tracking number with phone",
+                    "input": {
+                      "kuaidi_num": "SF1234567890",
+                      "phone": "13800138000"
+                    },
+                    "passed": true,
+                    "output": {
+                      "kuaidi_num": "SF1234567890",
+                      "kuaidi_company": "unknown",
+                      "data": []
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_case": "Invalid empty tracking number",
+                    "input": {
+                      "kuaidi_num": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Tracking number must be a non-empty string",
+                    "note": "Expected validation error - correctly rejected"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_time",
+                "test_cases": [
+                  {
+                    "test_case": "Valid standard express estimation",
+                    "input": {
+                      "from_addr": "广东省,深圳市,南山区",
+                      "kuaidi_company": "shunfeng",
+                      "to_addr": "北京市,北京市,朝阳区",
+                      "exp_type": "标准快递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-06 10:24:21",
+                      "remaining_transit_time": 57
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid express delivery estimation",
+                    "input": {
+                      "from_addr": "上海市,上海市,浦东新区",
+                      "kuaidi_company": "ems",
+                      "to_addr": "四川省,成都市,武侯区",
+                      "exp_type": "特快专递"
+                    },
+                    "passed": true,
+                    "output": {
+                      "arrivalTime": "2026-01-05 10:24:25",
+                      "remaining_transit_time": 33
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_case": "Invalid service type",
+                    "input": {
+                      "from_addr": "上海市,上海市,浦东新区",
+                      "kuaidi_company": "ems",
+                      "to_addr": "四川省,成都市,武侯区",
+                      "exp_type": "invalid_type"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Invalid service type",
+                    "note": "Expected validation error - correctly rejected"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_price",
+                "test_cases": [
+                  {
+                    "test_case": "Valid price estimation with 1kg weight",
+                    "input": {
+                      "kuaidi_company": "shunfeng",
+                      "from_addr": "广东省,深圳市,南山区",
+                      "to_addr": "北京市,北京市,朝阳区",
+                      "weight": "1.0"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 18.0,
+                      "currency": "CNY",
+                      "estimated_days": 2
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_case": "Valid price estimation with 5kg weight",
+                    "input": {
+                      "kuaidi_company": "yuantong",
+                      "from_addr": "浙江省,杭州市,西湖区",
+                      "to_addr": "江苏省,南京市,鼓楼区",
+                      "weight": "5.0"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price": 30.0,
+                      "currency": "CNY",
+                      "estimated_days": 1
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_case": "Invalid empty courier company",
+                    "input": {
+                      "kuaidi_company": "",
+                      "from_addr": "浙江省,杭州市,西湖区",
+                      "to_addr": "江苏省,南京市,鼓楼区",
+                      "weight": "5.0"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Courier company must be a non-empty string",
+                    "note": "Expected validation error - correctly rejected"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All state variables (tracking_records, company_zones, base_rates, zone_multipliers, service_speeds, zone_distances) are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 62.07226276397705
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/Kuaidi100.py"
+  }
+}

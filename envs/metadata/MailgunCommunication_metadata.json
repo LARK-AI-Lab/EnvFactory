@@ -1,0 +1,352 @@
+{
+  "class_name": "MailgunCommunication",
+  "description": "Email delivery and analytics service for sending transactional emails, tracking engagement metrics, validating addresses, and retrieving delivery statistics through the Mailgun API.",
+  "tools": [
+    {
+      "name": "send_email",
+      "description": "Send a transactional email with optional HTML content, template rendering, and engagement tracking capabilities.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "to_email": {
+            "type": "string",
+            "description": "The recipient's email address where the message will be delivered."
+          },
+          "subject": {
+            "type": "string",
+            "description": "The subject line that appears in the recipient's inbox."
+          },
+          "text": {
+            "type": "string",
+            "description": "Plain text version of the email body for clients that don't support HTML."
+          },
+          "from_email": {
+            "type": "string",
+            "description": "The sender's email address. If not provided, uses the domain's default sender address."
+          },
+          "html": {
+            "type": "string",
+            "description": "HTML-formatted version of the email body for rich content display."
+          },
+          "template": {
+            "type": "string",
+            "description": "Name of a pre-configured Mailgun template to use for email rendering."
+          },
+          "tracking_clicks": {
+            "type": "boolean",
+            "description": "Enable tracking of link clicks within the email content (default: true)."
+          },
+          "tracking_opens": {
+            "type": "boolean",
+            "description": "Enable tracking of email opens via invisible pixel (default: true)."
+          }
+        },
+        "required": [
+          "to_email",
+          "subject",
+          "text"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique message identifier assigned by Mailgun for tracking and reference."
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable status message describing the send operation result."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current delivery status of the email: 'queued' (accepted for delivery) or 'sent' (transmitted to recipient server)."
+          }
+        }
+      }
+    },
+    {
+      "name": "send_mime_email",
+      "description": "Send a pre-formatted MIME message for advanced use cases requiring full control over email structure and headers.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "to_email": {
+            "type": "string",
+            "description": "The recipient's email address where the message will be delivered."
+          },
+          "mime_message": {
+            "type": "string",
+            "description": "Complete MIME-encoded email message including headers, body, and attachments."
+          },
+          "from_email": {
+            "type": "string",
+            "description": "The sender's email address. If not provided, uses the domain's default sender address."
+          }
+        },
+        "required": [
+          "to_email",
+          "mime_message"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique message identifier assigned by Mailgun for tracking and reference."
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable status message describing the send operation result."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_events",
+      "description": "Retrieve detailed event logs for email lifecycle tracking including delivery, opens, clicks, bounces, and complaints.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "The Mailgun sending domain to query events for."
+          },
+          "event_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter results by specific event types: 'accepted', 'delivered', 'failed', 'opened', 'clicked', 'unsubscribed', 'complained', or 'stored'."
+          },
+          "begin_time": {
+            "type": "string",
+            "description": "Start of the time range to query, formatted as RFC 2822 timestamp (e.g., 'Mon, 01 Jan 2026 00:00:00 GMT')."
+          },
+          "end_time": {
+            "type": "string",
+            "description": "End of the time range to query, formatted as RFC 2822 timestamp (e.g., 'Mon, 01 Jan 2026 23:59:59 GMT')."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of events to return in a single response (default: 100, maximum: 300)."
+          }
+        },
+        "required": [
+          "domain"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "event": {
+                  "type": "string",
+                  "description": "Type of email event that occurred (e.g., 'delivered', 'opened', 'clicked', 'bounced')."
+                },
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for this specific event occurrence."
+                },
+                "timestamp": {
+                  "type": "number",
+                  "description": "Unix timestamp indicating when the event occurred."
+                },
+                "recipient": {
+                  "type": "string",
+                  "description": "Email address of the recipient associated with this event."
+                },
+                "domain": {
+                  "type": "string",
+                  "description": "The Mailgun sending domain that originated the message."
+                },
+                "message": {
+                  "type": "object",
+                  "description": "Message headers and metadata associated with the event."
+                }
+              }
+            },
+            "description": "Array of email events matching the query criteria."
+          },
+          "paging": {
+            "type": "object",
+            "properties": {
+              "next": {
+                "type": "string",
+                "description": "URL to retrieve the next page of results if more events are available."
+              },
+              "previous": {
+                "type": "string",
+                "description": "URL to retrieve the previous page of results."
+              }
+            },
+            "description": "Pagination controls for navigating through large result sets."
+          }
+        }
+      }
+    },
+    {
+      "name": "validate_email",
+      "description": "Verify email address validity, syntax correctness, and mailbox existence using Mailgun's validation service.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "The email address to validate for syntax, domain, and mailbox verification."
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string",
+            "description": "The normalized email address that was validated."
+          },
+          "is_valid": {
+            "type": "boolean",
+            "description": "Overall validation result indicating whether the email address is valid and deliverable."
+          },
+          "mailbox_verification": {
+            "type": "string",
+            "description": "Mailbox existence check result: 'true' (exists), 'false' (doesn't exist), 'unknown' (cannot verify), or 'null' (not checked)."
+          },
+          "parts": {
+            "type": "object",
+            "properties": {
+              "local_part": {
+                "type": "string",
+                "description": "The username portion before the @ symbol."
+              },
+              "domain": {
+                "type": "string",
+                "description": "The domain portion after the @ symbol."
+              },
+              "display_name": {
+                "type": "string",
+                "description": "Display name if the address was provided in 'Name <email>' format."
+              }
+            },
+            "description": "Parsed components of the email address."
+          },
+          "did_you_mean": {
+            "type": "string",
+            "description": "Suggested correction if a common typo or misspelling was detected in the email address."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_stats",
+      "description": "Retrieve aggregated email delivery and engagement statistics for a sending domain.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "The Mailgun sending domain to retrieve statistics for."
+          },
+          "event_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter statistics by specific event types: 'accepted', 'delivered', 'failed', 'opened', 'clicked', 'complained', or 'unsubscribed'."
+          }
+        },
+        "required": [
+          "domain"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "stats": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "time": {
+                  "type": "string",
+                  "description": "Timestamp for this statistics bucket."
+                },
+                "accepted": {
+                  "type": "object",
+                  "properties": {
+                    "incoming": {
+                      "type": "integer",
+                      "description": "Number of incoming messages accepted."
+                    },
+                    "outgoing": {
+                      "type": "integer",
+                      "description": "Number of outgoing messages accepted for delivery."
+                    }
+                  },
+                  "description": "Count of messages accepted by Mailgun."
+                },
+                "delivered": {
+                  "type": "object",
+                  "properties": {
+                    "smtp": {
+                      "type": "integer",
+                      "description": "Number of messages successfully delivered via SMTP."
+                    },
+                    "http": {
+                      "type": "integer",
+                      "description": "Number of messages successfully delivered via HTTP."
+                    }
+                  },
+                  "description": "Count of messages successfully delivered to recipients."
+                },
+                "failed": {
+                  "type": "object",
+                  "properties": {
+                    "temporary": {
+                      "type": "integer",
+                      "description": "Number of temporary delivery failures (will be retried)."
+                    },
+                    "permanent": {
+                      "type": "integer",
+                      "description": "Number of permanent delivery failures (will not be retried)."
+                    }
+                  },
+                  "description": "Count of failed delivery attempts."
+                },
+                "opened": {
+                  "type": "integer",
+                  "description": "Number of emails opened by recipients (requires open tracking enabled)."
+                },
+                "clicked": {
+                  "type": "integer",
+                  "description": "Number of link clicks within emails (requires click tracking enabled)."
+                },
+                "complained": {
+                  "type": "integer",
+                  "description": "Number of spam complaints reported by recipients."
+                },
+                "unsubscribed": {
+                  "type": "integer",
+                  "description": "Number of recipients who unsubscribed from the mailing list."
+                }
+              }
+            },
+            "description": "Time-series statistics broken down by time period."
+          },
+          "total_stats": {
+            "type": "object",
+            "description": "Aggregated totals across all time periods in the query range."
+          }
+        }
+      }
+    }
+  ]
+}

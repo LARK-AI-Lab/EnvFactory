@@ -1,0 +1,1308 @@
+{
+  "metadata": {
+    "class_name": "ShopifyEcommerce",
+    "metadata_path": "envs\\metadata\\ShopifyEcommerce_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-03-05T20:28:52.667488",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "ShopifyEcommerce",
+    "description": "E-commerce platform integration for managing products, orders, and customers in a Shopify store.",
+    "tools": [
+      {
+        "name": "get_products",
+        "description": "Retrieve products from the store catalog with optional filtering by vendor or product type.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "Number of products to return (maximum 250, default 10)."
+            },
+            "vendor": {
+              "type": "string",
+              "description": "Filter products by the vendor or brand name."
+            },
+            "product_type": {
+              "type": "string",
+              "description": "Filter products by the product category or type."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "products": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "The unique identifier of the product."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The name or title of the product."
+                  },
+                  "body_html": {
+                    "type": "string",
+                    "description": "The product description in HTML format."
+                  },
+                  "vendor": {
+                    "type": "string",
+                    "description": "The vendor or brand name of the product."
+                  },
+                  "product_type": {
+                    "type": "string",
+                    "description": "The product category or type classification."
+                  },
+                  "variants": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "description": "The unique identifier of the product variant."
+                        },
+                        "title": {
+                          "type": "string",
+                          "description": "The title or name of the variant."
+                        },
+                        "price": {
+                          "type": "string",
+                          "description": "The price of the variant in the store's currency."
+                        },
+                        "sku": {
+                          "type": "string",
+                          "description": "The stock keeping unit identifier for inventory tracking."
+                        },
+                        "inventory_quantity": {
+                          "type": "integer",
+                          "description": "The available inventory quantity for this variant."
+                        }
+                      }
+                    }
+                  },
+                  "images": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "src": {
+                          "type": "string",
+                          "description": "The URL of the product image."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "create_product",
+        "description": "Create a new product in the store with optional variants and details.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "The name or title of the product."
+            },
+            "body_html": {
+              "type": "string",
+              "description": "The product description in HTML format."
+            },
+            "vendor": {
+              "type": "string",
+              "description": "The vendor or brand name of the product."
+            },
+            "product_type": {
+              "type": "string",
+              "description": "The product category or type classification."
+            },
+            "variants": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "price": {
+                    "type": "string",
+                    "description": "The price of the variant in the store's currency."
+                  },
+                  "sku": {
+                    "type": "string",
+                    "description": "The stock keeping unit identifier for inventory tracking."
+                  },
+                  "inventory_quantity": {
+                    "type": "integer",
+                    "description": "The available inventory quantity for this variant."
+                  }
+                }
+              },
+              "description": "List of product variants with pricing and inventory details."
+            }
+          },
+          "required": [
+            "title"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "product": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "description": "The unique identifier of the created product."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The name or title of the product."
+                },
+                "body_html": {
+                  "type": "string",
+                  "description": "The product description in HTML format."
+                },
+                "vendor": {
+                  "type": "string",
+                  "description": "The vendor or brand name of the product."
+                },
+                "product_type": {
+                  "type": "string",
+                  "description": "The product category or type classification."
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_orders",
+        "description": "Retrieve orders from the store with optional filtering by status or creation date.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Filter orders by fulfillment status: 'open', 'closed', 'cancelled', or 'any'."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Number of orders to return (maximum 250, default 50)."
+            },
+            "created_at_min": {
+              "type": "string",
+              "description": "Filter orders created on or after this date (ISO 8601 format, e.g., '2026-01-01T00:00:00Z')."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "orders": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "The unique identifier of the order."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The order name or number displayed to customers."
+                  },
+                  "total_price": {
+                    "type": "string",
+                    "description": "The total price of the order in the store's currency."
+                  },
+                  "financial_status": {
+                    "type": "string",
+                    "description": "The payment status of the order (e.g., 'pending', 'paid', 'refunded')."
+                  },
+                  "fulfillment_status": {
+                    "type": "string",
+                    "description": "The shipping fulfillment status of the order (e.g., 'fulfilled', 'unfulfilled')."
+                  },
+                  "line_items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "title": {
+                          "type": "string",
+                          "description": "The name or title of the ordered item."
+                        },
+                        "quantity": {
+                          "type": "integer",
+                          "description": "The quantity of this item in the order."
+                        },
+                        "price": {
+                          "type": "string",
+                          "description": "The price per unit of this item in the store's currency."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "create_order",
+        "description": "Create a new order in the store with line items and optional customer information.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "line_items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "variant_id": {
+                    "type": "integer",
+                    "description": "The unique identifier of the product variant to order."
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "description": "The quantity of this item in the order."
+                  },
+                  "price": {
+                    "type": "string",
+                    "description": "The price per unit of this item in the store's currency."
+                  }
+                }
+              },
+              "description": "List of items to include in the order with variant IDs, quantities, and prices."
+            },
+            "customer": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "description": "The email address of the customer."
+                },
+                "first_name": {
+                  "type": "string",
+                  "description": "The first name of the customer."
+                },
+                "last_name": {
+                  "type": "string",
+                  "description": "The last name of the customer."
+                }
+              },
+              "description": "Customer information to associate with the order."
+            },
+            "financial_status": {
+              "type": "string",
+              "description": "The payment status of the order: 'pending', 'authorized', or 'paid'."
+            }
+          },
+          "required": [
+            "line_items"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "order": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "description": "The unique identifier of the created order."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The order name or number displayed to customers."
+                },
+                "total_price": {
+                  "type": "string",
+                  "description": "The total price of the order in the store's currency."
+                },
+                "financial_status": {
+                  "type": "string",
+                  "description": "The payment status of the order (e.g., 'pending', 'paid', 'refunded')."
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_customers",
+        "description": "Retrieve customers from the store with optional filtering by email address.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "Number of customers to return (maximum 250, default 50)."
+            },
+            "email": {
+              "type": "string",
+              "description": "Filter customers by the email address."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "customers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "The unique identifier of the customer."
+                  },
+                  "email": {
+                    "type": "string",
+                    "description": "The email address of the customer."
+                  },
+                  "first_name": {
+                    "type": "string",
+                    "description": "The first name of the customer."
+                  },
+                  "last_name": {
+                    "type": "string",
+                    "description": "The last name of the customer."
+                  },
+                  "orders_count": {
+                    "type": "integer",
+                    "description": "The total number of orders placed by this customer."
+                  },
+                  "total_spent": {
+                    "type": "string",
+                    "description": "The total amount spent by this customer in the store's currency."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass ProductVariant(BaseModel):\n    \"\"\"Represents a product variant.\"\"\"\n    id: int = Field(..., ge=0, description=\"Variant ID\")\n    title: str = Field(default=\"\", description=\"Variant title\")\n    price: str = Field(..., description=\"Variant price\")\n    sku: str = Field(default=\"\", description=\"SKU\")\n    inventory_quantity: int = Field(default=0, ge=0, description=\"Inventory quantity\")\n\nclass ProductImage(BaseModel):\n    \"\"\"Represents a product image.\"\"\"\n    src: str = Field(..., description=\"Image URL\")\n\nclass Product(BaseModel):\n    \"\"\"Represents a product.\"\"\"\n    id: int = Field(..., ge=0, description=\"Product ID\")\n    title: str = Field(..., description=\"Product title\")\n    body_html: str = Field(default=\"\", description=\"Product description\")\n    vendor: str = Field(default=\"\", description=\"Vendor name\")\n    product_type: str = Field(default=\"\", description=\"Product type\")\n    variants: List[ProductVariant] = Field(default=[], description=\"Product variants\")\n    images: List[ProductImage] = Field(default=[], description=\"Product images\")\n\nclass OrderLineItem(BaseModel):\n    \"\"\"Represents an order line item.\"\"\"\n    title: str = Field(..., description=\"Item title\")\n    quantity: int = Field(..., ge=1, description=\"Item quantity\")\n    price: str = Field(..., description=\"Item price\")\n    variant_id: Optional[int] = Field(default=None, ge=0, description=\"Variant ID\")\n\nclass Customer(BaseModel):\n    \"\"\"Represents a customer.\"\"\"\n    id: Optional[int] = Field(default=None, ge=0, description=\"Customer ID\")\n    email: str = Field(..., description=\"Customer email\")\n    first_name: str = Field(default=\"\", description=\"First name\")\n    last_name: str = Field(default=\"\", description=\"Last name\")\n    orders_count: int = Field(default=0, ge=0, description=\"Orders count\")\n    total_spent: str = Field(default=\"0.00\", description=\"Total spent\")\n\nclass Order(BaseModel):\n    \"\"\"Represents an order.\"\"\"\n    id: int = Field(..., ge=0, description=\"Order ID\")\n    name: str = Field(..., description=\"Order name\")\n    total_price: str = Field(..., description=\"Total price\")\n    financial_status: str = Field(default=\"pending\", description=\"Financial status\")\n    fulfillment_status: Optional[str] = Field(default=None, description=\"Fulfillment status\")\n    line_items: List[OrderLineItem] = Field(default=[], description=\"Line items\")\n    customer: Optional[Customer] = Field(default=None, description=\"Customer\")\n\nclass ShopifyScenario(BaseModel):\n    \"\"\"Main scenario model for Shopify e-commerce.\"\"\"\n    products: Dict[int, Product] = Field(default={}, description=\"Products catalog\")\n    orders: Dict[int, Order] = Field(default={}, description=\"Orders\")\n    customers: Dict[int, Customer] = Field(default={}, description=\"Customers\")\n    next_product_id: int = Field(default=1, ge=1, description=\"Next product ID\")\n    next_order_id: int = Field(default=1001, ge=1, description=\"Next order ID\")\n    next_customer_id: int = Field(default=1, ge=1, description=\"Next customer ID\")\n    next_variant_id: int = Field(default=1, ge=1, description=\"Next variant ID\")\n\nScenario_Schema = [ProductVariant, ProductImage, Product, OrderLineItem, Customer, Order, ShopifyScenario]\n\n# Section 2: Class\nclass ShopifyEcommerce:\n    def __init__(self):\n        \"\"\"Initialize Shopify e-commerce API with empty state.\"\"\"\n        self.products: Dict[int, Product] = {}\n        self.orders: Dict[int, Order] = {}\n        self.customers: Dict[int, Customer] = {}\n        self.next_product_id: int = 1\n        self.next_order_id: int = 1001\n        self.next_customer_id: int = 1\n        self.next_variant_id: int = 1\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = ShopifyScenario(**scenario)\n        self.products = model.products\n        self.orders = model.orders\n        self.customers = model.customers\n        self.next_product_id = model.next_product_id\n        self.next_order_id = model.next_order_id\n        self.next_customer_id = model.next_customer_id\n        self.next_variant_id = model.next_variant_id\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"products\": {pid: p.model_dump() for pid, p in self.products.items()},\n            \"orders\": {oid: o.model_dump() for oid, o in self.orders.items()},\n            \"customers\": {cid: c.model_dump() for cid, c in self.customers.items()},\n            \"next_product_id\": self.next_product_id,\n            \"next_order_id\": self.next_order_id,\n            \"next_customer_id\": self.next_customer_id,\n            \"next_variant_id\": self.next_variant_id\n        }\n\n    def get_products(self, limit: int, vendor: Optional[str], product_type: Optional[str]) -> dict:\n        \"\"\"Retrieve products with optional filtering.\"\"\"\n        filtered = list(self.products.values())\n        if vendor:\n            filtered = [p for p in filtered if p.vendor == vendor]\n        if product_type:\n            filtered = [p for p in filtered if p.product_type == product_type]\n        return {\"products\": [p.model_dump() for p in filtered[:limit]]}\n\n    def create_product(self, title: str, body_html: Optional[str], vendor: Optional[str], \n                      product_type: Optional[str], variants: Optional[List[dict]]) -> dict:\n        \"\"\"Create a new product.\"\"\"\n        pid = self.next_product_id\n        self.next_product_id += 1\n        \n        variant_list = []\n        if variants:\n            for v in variants:\n                vid = self.next_variant_id\n                self.next_variant_id += 1\n                variant_list.append(ProductVariant(\n                    id=vid,\n                    title=v.get(\"title\", \"Default\"),\n                    price=v.get(\"price\", \"0.00\"),\n                    sku=v.get(\"sku\", \"\"),\n                    inventory_quantity=v.get(\"inventory_quantity\", 0)\n                ))\n        \n        product = Product(\n            id=pid,\n            title=title,\n            body_html=body_html or \"\",\n            vendor=vendor or \"\",\n            product_type=product_type or \"\",\n            variants=variant_list,\n            images=[]\n        )\n        self.products[pid] = product\n        return {\"product\": {\n            \"id\": product.id,\n            \"title\": product.title,\n            \"body_html\": product.body_html,\n            \"vendor\": product.vendor,\n            \"product_type\": product.product_type\n        }}\n\n    def get_orders(self, status: Optional[str], limit: int, created_at_min: Optional[str]) -> dict:\n        \"\"\"Retrieve orders with optional filtering.\"\"\"\n        filtered = list(self.orders.values())\n        if status and status != \"any\":\n            if status == \"open\":\n                filtered = [o for o in filtered if o.fulfillment_status != \"fulfilled\"]\n            elif status == \"closed\":\n                filtered = [o for o in filtered if o.fulfillment_status == \"fulfilled\"]\n            elif status == \"cancelled\":\n                filtered = [o for o in filtered if o.financial_status == \"refunded\"]\n        return {\"orders\": [o.model_dump() for o in filtered[:limit]]}\n\n    def create_order(self, line_items: List[dict], customer: Optional[dict], \n                    financial_status: Optional[str]) -> dict:\n        \"\"\"Create a new order.\"\"\"\n        oid = self.next_order_id\n        self.next_order_id += 1\n        \n        items = []\n        total = 0.0\n        for item in line_items:\n            items.append(OrderLineItem(\n                title=f\"Product Variant {item['variant_id']}\",\n                quantity=item[\"quantity\"],\n                price=item[\"price\"],\n                variant_id=item[\"variant_id\"]\n            ))\n            total += float(item[\"price\"]) * item[\"quantity\"]\n        \n        cust = None\n        if customer:\n            cust = Customer(\n                email=customer[\"email\"],\n                first_name=customer.get(\"first_name\", \"\"),\n                last_name=customer.get(\"last_name\", \"\")\n            )\n        \n        order = Order(\n            id=oid,\n            name=f\"#{oid}\",\n            total_price=f\"{total:.2f}\",\n            financial_status=financial_status or \"pending\",\n            fulfillment_status=None,\n            line_items=items,\n            customer=cust\n        )\n        self.orders[oid] = order\n        return {\"order\": {\n            \"id\": order.id,\n            \"name\": order.name,\n            \"total_price\": order.total_price,\n            \"financial_status\": order.financial_status\n        }}\n\n    def get_customers(self, limit: int, email: Optional[str]) -> dict:\n        \"\"\"Retrieve customers with optional filtering.\"\"\"\n        filtered = list(self.customers.values())\n        if email:\n            filtered = [c for c in filtered if c.email == email]\n        return {\"customers\": [c.model_dump() for c in filtered[:limit]]}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"ShopifyEcommerce\")\napi = ShopifyEcommerce()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Shopify e-commerce API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching ShopifyScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Shopify state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_products(limit: int = 10, vendor: Optional[str] = None, product_type: Optional[str] = None) -> dict:\n    \"\"\"\n    Retrieve products from the store catalog with optional filtering.\n\n    Args:\n        limit (int): Number of products to return (maximum 250, default 10). [Optional]\n        vendor (str): Filter products by vendor name. [Optional]\n        product_type (str): Filter products by product type. [Optional]\n\n    Returns:\n        products (list): List of product objects with id, title, body_html, vendor, product_type, variants, and images.\n    \"\"\"\n    try:\n        if limit > 250:\n            limit = 250\n        return api.get_products(limit, vendor, product_type)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef create_product(title: str, body_html: Optional[str] = None, vendor: Optional[str] = None,\n                  product_type: Optional[str] = None, variants: Optional[List[dict]] = None) -> dict:\n    \"\"\"\n    Create a new product in the store.\n\n    Args:\n        title (str): Product title.\n        body_html (str): Product description in HTML format. [Optional]\n        vendor (str): Vendor name. [Optional]\n        product_type (str): Product type. [Optional]\n        variants (list): List of variant dictionaries with price, sku, inventory_quantity. [Optional]\n\n    Returns:\n        product (dict): Created product object with id, title, body_html, vendor, and product_type.\n    \"\"\"\n    try:\n        if not title or not isinstance(title, str):\n            raise ValueError(\"Title must be a non-empty string\")\n        return api.create_product(title, body_html, vendor, product_type, variants)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_orders(status: Optional[str] = None, limit: int = 50, created_at_min: Optional[str] = None) -> dict:\n    \"\"\"\n    Retrieve orders from the store with optional filtering.\n\n    Args:\n        status (str): Filter by status: 'open', 'closed', 'cancelled', or 'any'. [Optional]\n        limit (int): Number of orders to return (maximum 250, default 50). [Optional]\n        created_at_min (str): Filter orders created on or after this date (ISO 8601 format). [Optional]\n\n    Returns:\n        orders (list): List of order objects with id, name, total_price, financial_status, fulfillment_status, and line_items.\n    \"\"\"\n    try:\n        if limit > 250:\n            limit = 250\n        return api.get_orders(status, limit, created_at_min)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef create_order(line_items: List[dict], customer: Optional[dict] = None, \n                financial_status: Optional[str] = None) -> dict:\n    \"\"\"\n    Create a new order in the store.\n\n    Args:\n        line_items (list): List of item dictionaries with variant_id, quantity, and price.\n        customer (dict): Customer information with email, first_name, last_name. [Optional]\n        financial_status (str): Payment status: 'pending', 'authorized', or 'paid'. [Optional]\n\n    Returns:\n        order (dict): Created order object with id, name, total_price, and financial_status.\n    \"\"\"\n    try:\n        if not line_items or not isinstance(line_items, list):\n            raise ValueError(\"Line items must be a non-empty list\")\n        return api.create_order(line_items, customer, financial_status)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_customers(limit: int = 50, email: Optional[str] = None) -> dict:\n    \"\"\"\n    Retrieve customers from the store with optional filtering.\n\n    Args:\n        limit (int): Number of customers to return (maximum 250, default 50). [Optional]\n        email (str): Filter customers by email address. [Optional]\n\n    Returns:\n        customers (list): List of customer objects with id, email, first_name, last_name, orders_count, and total_spent.\n    \"\"\"\n    try:\n        if limit > 250:\n            limit = 250\n        return api.get_customers(limit, email)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-03-05T20:28:52.667488",
+      "revision_number": 1
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic store with one product and no orders",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "products": {
+          "1": {
+            "id": 1,
+            "title": "Basic T-Shirt",
+            "body_html": "Comfortable cotton t-shirt",
+            "vendor": "Fashion Co",
+            "product_type": "Apparel",
+            "variants": [
+              {
+                "id": 1,
+                "title": "Small",
+                "price": "19.99",
+                "sku": "TSHIRT-S",
+                "inventory_quantity": 50
+              }
+            ],
+            "images": [
+              {
+                "src": "https://example.com/tshirt.jpg"
+              }
+            ]
+          }
+        },
+        "orders": {},
+        "customers": {},
+        "next_product_id": 2,
+        "next_order_id": 1001,
+        "next_customer_id": 1,
+        "next_variant_id": 2
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Store with multiple products, one customer, and one order",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "products": {
+          "1": {
+            "id": 1,
+            "title": "Wireless Mouse",
+            "body_html": "Ergonomic wireless mouse with USB receiver",
+            "vendor": "Tech Gear",
+            "product_type": "Electronics",
+            "variants": [
+              {
+                "id": 1,
+                "title": "Black",
+                "price": "29.99",
+                "sku": "MOUSE-BLK",
+                "inventory_quantity": 100
+              },
+              {
+                "id": 2,
+                "title": "White",
+                "price": "29.99",
+                "sku": "MOUSE-WHT",
+                "inventory_quantity": 75
+              }
+            ],
+            "images": [
+              {
+                "src": "https://example.com/mouse-black.jpg"
+              }
+            ]
+          },
+          "2": {
+            "id": 2,
+            "title": "Laptop Stand",
+            "body_html": "",
+            "vendor": "Tech Gear",
+            "product_type": "Accessories",
+            "variants": [
+              {
+                "id": 3,
+                "title": "Default",
+                "price": "49.99",
+                "sku": "STAND-001",
+                "inventory_quantity": 30
+              }
+            ],
+            "images": []
+          }
+        },
+        "orders": {
+          "1001": {
+            "id": 1001,
+            "name": "#1001",
+            "total_price": "79.98",
+            "financial_status": "paid",
+            "fulfillment_status": "fulfilled",
+            "line_items": [
+              {
+                "title": "Wireless Mouse",
+                "quantity": 1,
+                "price": "29.99",
+                "variant_id": 1
+              },
+              {
+                "title": "Laptop Stand",
+                "quantity": 1,
+                "price": "49.99",
+                "variant_id": 3
+              }
+            ],
+            "customer": {
+              "id": 1,
+              "email": "john@example.com",
+              "first_name": "John",
+              "last_name": "Doe",
+              "orders_count": 1,
+              "total_spent": "79.98"
+            }
+          }
+        },
+        "customers": {
+          "1": {
+            "id": 1,
+            "email": "john@example.com",
+            "first_name": "John",
+            "last_name": "Doe",
+            "orders_count": 1,
+            "total_spent": "79.98"
+          }
+        },
+        "next_product_id": 3,
+        "next_order_id": 1002,
+        "next_customer_id": 2,
+        "next_variant_id": 4
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Full store with multiple products, customers, and orders with various statuses",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "products": {
+          "1": {
+            "id": 1,
+            "title": "Premium Headphones",
+            "body_html": "Noise-cancelling wireless headphones with 30-hour battery",
+            "vendor": "Audio Pro",
+            "product_type": "Electronics",
+            "variants": [
+              {
+                "id": 1,
+                "title": "Black",
+                "price": "299.99",
+                "sku": "HP-BLK-001",
+                "inventory_quantity": 25
+              },
+              {
+                "id": 2,
+                "title": "Silver",
+                "price": "299.99",
+                "sku": "HP-SLV-001",
+                "inventory_quantity": 15
+              }
+            ],
+            "images": [
+              {
+                "src": "https://example.com/headphones-black.jpg"
+              },
+              {
+                "src": "https://example.com/headphones-silver.jpg"
+              }
+            ]
+          },
+          "2": {
+            "id": 2,
+            "title": "USB-C Cable",
+            "body_html": "Fast charging USB-C cable, 2 meters",
+            "vendor": "Cable Co",
+            "product_type": "Accessories",
+            "variants": [
+              {
+                "id": 3,
+                "title": "2m",
+                "price": "12.99",
+                "sku": "USBC-2M",
+                "inventory_quantity": 200
+              }
+            ],
+            "images": [
+              {
+                "src": "https://example.com/usbc-cable.jpg"
+              }
+            ]
+          },
+          "3": {
+            "id": 3,
+            "title": "Laptop Backpack",
+            "body_html": "Water-resistant backpack with laptop compartment",
+            "vendor": "Bag World",
+            "product_type": "Bags",
+            "variants": [
+              {
+                "id": 4,
+                "title": "Navy Blue",
+                "price": "79.99",
+                "sku": "BP-NAVY",
+                "inventory_quantity": 40
+              },
+              {
+                "id": 5,
+                "title": "Gray",
+                "price": "79.99",
+                "sku": "BP-GRAY",
+                "inventory_quantity": 35
+              }
+            ],
+            "images": [
+              {
+                "src": "https://example.com/backpack-navy.jpg"
+              }
+            ]
+          }
+        },
+        "orders": {
+          "1001": {
+            "id": 1001,
+            "name": "#1001",
+            "total_price": "312.98",
+            "financial_status": "paid",
+            "fulfillment_status": "fulfilled",
+            "line_items": [
+              {
+                "title": "Premium Headphones",
+                "quantity": 1,
+                "price": "299.99",
+                "variant_id": 1
+              },
+              {
+                "title": "USB-C Cable",
+                "quantity": 1,
+                "price": "12.99",
+                "variant_id": 3
+              }
+            ],
+            "customer": {
+              "id": 1,
+              "email": "alice@example.com",
+              "first_name": "Alice",
+              "last_name": "Smith",
+              "orders_count": 2,
+              "total_spent": "392.97"
+            }
+          },
+          "1002": {
+            "id": 1002,
+            "name": "#1002",
+            "total_price": "79.99",
+            "financial_status": "pending",
+            "fulfillment_status": null,
+            "line_items": [
+              {
+                "title": "Laptop Backpack",
+                "quantity": 1,
+                "price": "79.99",
+                "variant_id": 4
+              }
+            ],
+            "customer": {
+              "id": 1,
+              "email": "alice@example.com",
+              "first_name": "Alice",
+              "last_name": "Smith",
+              "orders_count": 2,
+              "total_spent": "392.97"
+            }
+          },
+          "1003": {
+            "id": 1003,
+            "name": "#1003",
+            "total_price": "25.98",
+            "financial_status": "paid",
+            "fulfillment_status": "partial",
+            "line_items": [
+              {
+                "title": "USB-C Cable",
+                "quantity": 2,
+                "price": "12.99",
+                "variant_id": 3
+              }
+            ],
+            "customer": {
+              "id": 2,
+              "email": "bob@example.com",
+              "first_name": "Bob",
+              "last_name": "Johnson",
+              "orders_count": 1,
+              "total_spent": "25.98"
+            }
+          }
+        },
+        "customers": {
+          "1": {
+            "id": 1,
+            "email": "alice@example.com",
+            "first_name": "Alice",
+            "last_name": "Smith",
+            "orders_count": 2,
+            "total_spent": "392.97"
+          },
+          "2": {
+            "id": 2,
+            "email": "bob@example.com",
+            "first_name": "Bob",
+            "last_name": "Johnson",
+            "orders_count": 1,
+            "total_spent": "25.98"
+          }
+        },
+        "next_product_id": 4,
+        "next_order_id": 1004,
+        "next_customer_id": 3,
+        "next_variant_id": 6
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty store with no products, orders, or customers",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "products": {},
+        "orders": {},
+        "customers": {},
+        "next_product_id": 1,
+        "next_order_id": 1001,
+        "next_customer_id": 1,
+        "next_variant_id": 1
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 2,
+      "failed_scenarios": 2,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_products",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_product",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_orders",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_customers",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {},
+            "tool_execution": [],
+            "save_scenario": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {},
+            "tool_execution": [],
+            "save_scenario": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_products",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_product",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_orders",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_customers",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_products",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_product",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_orders",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_customers",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_products",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_product",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_orders",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_customers",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_products",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_product",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_orders",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_customers",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "type": "Schema Validation Error",
+              "location": "create_product with numeric price",
+              "details": "Price field in variants expects string but received float",
+              "expected_vs_actual": "Expected numeric price to be accepted or automatically converted, but received validation error",
+              "root_cause": "The API schema expects price as string but the tool documentation doesn't specify this requirement clearly",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "get_products",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_product",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_orders",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_order",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_customers",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_002",
+        "scenario_003"
+      ],
+      "aggregated_errors": {
+        "total_failed": 2,
+        "scenario_ids": [
+          "scenario_002",
+          "scenario_003"
+        ],
+        "error_categories": {
+          "critical": [],
+          "high": [],
+          "medium": [],
+          "low": []
+        },
+        "error_patterns": [],
+        "severity_summary": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0
+        }
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 4,
+        "failed_scenarios": 0,
+        "all_passed": true,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "get_products",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "create_product",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_orders",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "create_order",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_customers",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "simple",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "get_products",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "create_product",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_orders",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "create_order",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_customers",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "medium",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "get_products",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "create_product",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_orders",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "create_order",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_customers",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "complex",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": true,
+            "errors": [
+              {
+                "type": "Schema Validation Error",
+                "location": "create_product with numeric price",
+                "details": "Price field in variants expects string but received float",
+                "expected_vs_actual": "Expected numeric price to be accepted or automatically converted, but received validation error",
+                "root_cause": "The API schema expects price as string but the tool documentation doesn't specify this requirement clearly",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "get_products",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "create_product",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_orders",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "create_order",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_customers",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "boundary",
+            "execution_time": 0.0
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 1,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/ShopifyEcommerce.py"
+  }
+}

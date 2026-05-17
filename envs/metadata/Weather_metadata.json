@@ -1,0 +1,423 @@
+{
+  "class_name": "Weather",
+  "description": "Global weather intelligence service providing current conditions, forecasts, alerts, historical data, and location management via precise geographic coordinates.",
+  "tools": [
+    {
+      "name": "get_forecast",
+      "description": "Retrieve a multi-day weather forecast for any coordinate on Earth.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "description": "The latitude of the location in decimal degrees, ranging from -90 to 90."
+          },
+          "longitude": {
+            "type": "number",
+            "description": "The longitude of the location in decimal degrees, ranging from -180 to 180."
+          },
+          "days": {
+            "type": "integer",
+            "description": "Number of forecast days to return (default 3)."
+          }
+        },
+        "required": [
+          "latitude",
+          "longitude"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "temperature": {
+            "type": "number",
+            "description": "Forecasted temperature in degrees Celsius."
+          },
+          "precipitation": {
+            "type": "object",
+            "description": "Chances and amounts of precipitation for each forecast day."
+          },
+          "wind_speed": {
+            "type": "number",
+            "description": "Forecasted wind speed in km/h."
+          },
+          "humidity": {
+            "type": "number",
+            "description": "Forecasted relative humidity percentage."
+          },
+          "weather_conditions": {
+            "type": "string",
+            "description": "Descriptive summary of expected weather (e.g., sunny, cloudy)."
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 timestamp when the forecast data was generated."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_current_weather",
+      "description": "Fetch real-time weather conditions for any coordinate on Earth.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "description": "The latitude of the location in decimal degrees, ranging from -90 to 90."
+          },
+          "longitude": {
+            "type": "number",
+            "description": "The longitude of the location in decimal degrees, ranging from -180 to 180."
+          }
+        },
+        "required": [
+          "latitude",
+          "longitude"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "temperature": {
+            "type": "number",
+            "description": "Current temperature in degrees Celsius."
+          },
+          "humidity": {
+            "type": "number",
+            "description": "Current relative humidity percentage."
+          },
+          "wind": {
+            "type": "object",
+            "description": "Current wind metrics including speed and direction."
+          },
+          "pressure": {
+            "type": "number",
+            "description": "Atmospheric pressure in hPa."
+          }
+        }
+      }
+    },
+    {
+      "name": "search_location",
+      "description": "Resolve a city name into geographic coordinates and metadata.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "description": "City name to search for (e.g., 'Paris' or 'New York')."
+          }
+        },
+        "required": [
+          "city"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "description": "The latitude of the location in decimal degrees, ranging from -90 to 90."
+              },
+              "longitude": {
+                "type": "number",
+                "description": "The longitude of the location in decimal degrees, ranging from -180 to 180."
+              }
+            },
+            "description": "Geographic coordinates of the searched city."
+          },
+          "population": {
+            "type": "integer",
+            "description": "Population count of the matched city."
+          },
+          "country": {
+            "type": "string",
+            "description": "Country in which the city is located."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_alerts",
+      "description": "Retrieve active or all weather alerts for a specific coordinate.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "description": "The latitude of the location in decimal degrees, ranging from -90 to 90."
+          },
+          "longitude": {
+            "type": "number",
+            "description": "The longitude of the location in decimal degrees, ranging from -180 to 180."
+          },
+          "active_only": {
+            "type": "boolean",
+            "description": "When true, return only currently active alerts; when false, include past alerts as well."
+          }
+        },
+        "required": [
+          "latitude",
+          "longitude"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "alerts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "severity": {
+                  "type": "string",
+                  "description": "Alert severity level: Extreme → Severe → Moderate → Minor."
+                },
+                "urgency": {
+                  "type": "string",
+                  "description": "Urgency classification of the alert."
+                },
+                "event": {
+                  "type": "string",
+                  "description": "Short description of the weather event."
+                },
+                "instructions": {
+                  "type": "string",
+                  "description": "Recommended safety actions for the public."
+                },
+                "areas": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "List of geographic areas affected by this alert."
+                }
+              }
+            },
+            "description": "List of weather alerts applicable to the requested coordinates."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_historical_weather",
+      "description": "Observe past weather conditions for a coordinate within a date range.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "description": "The latitude of the location in decimal degrees, ranging from -90 to 90."
+          },
+          "longitude": {
+            "type": "number",
+            "description": "The longitude of the location in decimal degrees, ranging from -180 to 180."
+          },
+          "start_date": {
+            "type": "string",
+            "description": "Start date for historical data in ISO 8601 format (YYYY-MM-DD)."
+          },
+          "end_date": {
+            "type": "string",
+            "description": "End date for historical data in ISO 8601 format (YYYY-MM-DD)."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of historical records to return (default 10)."
+          }
+        },
+        "required": [
+          "latitude",
+          "longitude",
+          "start_date",
+          "end_date"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "temperature": {
+                  "type": "number",
+                  "description": "Recorded temperature in degrees Celsius."
+                },
+                "conditions": {
+                  "type": "string",
+                  "description": "Observed weather summary (e.g., clear, rain)."
+                },
+                "wind_speed": {
+                  "type": "number",
+                  "description": "Recorded wind speed in km/h."
+                },
+                "humidity": {
+                  "type": "number",
+                  "description": "Recorded relative humidity percentage."
+                },
+                "pressure": {
+                  "type": "number",
+                  "description": "Recorded atmospheric pressure in hPa."
+                },
+                "date": {
+                  "type": "string",
+                  "description": "ISO 8601 date of the observation."
+                }
+              }
+            },
+            "description": "Chronological list of historical weather observations."
+          }
+        }
+      }
+    },
+    {
+      "name": "save_location",
+      "description": "Store a geographic coordinate under a custom alias for quick future access.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "alias": {
+            "type": "string",
+            "description": "Short unique identifier you will use to recall this location."
+          },
+          "latitude": {
+            "type": "number",
+            "description": "The latitude of the location in decimal degrees, ranging from -90 to 90."
+          },
+          "longitude": {
+            "type": "number",
+            "description": "The longitude of the location in decimal degrees, ranging from -180 to 180."
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable display name for the saved location."
+          }
+        },
+        "required": [
+          "alias",
+          "latitude",
+          "longitude",
+          "name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "list_saved_locations",
+      "description": "Enumerate all previously saved location aliases with their coordinates.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "locations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "alias": {
+                  "type": "string",
+                  "description": "User-defined alias for the saved location."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Display name of the saved location."
+                },
+                "latitude": {
+                  "type": "number",
+                  "description": "Latitude of the saved location."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "Longitude of the saved location."
+                }
+              }
+            },
+            "description": "List of all saved locations with aliases and coordinates."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_saved_location",
+      "description": "Retrieve details of a single saved location by its alias.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "alias": {
+            "type": "string",
+            "description": "The alias of the location to retrieve."
+          }
+        },
+        "required": [
+          "alias"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "alias": {
+            "type": "string",
+            "description": "User-defined alias for the saved location."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the saved location."
+          },
+          "timezone": {
+            "type": "string",
+            "description": "Timezone identifier for the saved location."
+          },
+          "latitude": {
+            "type": "number",
+            "description": "Latitude of the saved location."
+          },
+          "longitude": {
+            "type": "number",
+            "description": "Longitude of the saved location."
+          }
+        }
+      }
+    },
+    {
+      "name": "remove_saved_location",
+      "description": "Delete a saved location using its alias.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "alias": {
+            "type": "string",
+            "description": "The alias of the location to delete."
+          }
+        },
+        "required": [
+          "alias"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "confirmation": {
+            "type": "string",
+            "description": "Message confirming successful removal of the saved location."
+          },
+          "remaining_count": {
+            "type": "integer",
+            "description": "Number of locations still saved after this deletion."
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,1981 @@
+{
+  "metadata": {
+    "class_name": "ChinaRailway",
+    "metadata_path": "envs\\metadata\\ChinaRailway_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-01T15:01:26.777576",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "ChinaRailway",
+    "description": "Provides comprehensive access to China Railway (12306) services, including station lookup, ticket availability queries, and train route information for planning rail travel across China.",
+    "tools": [
+      {
+        "name": "get_stations_code_in_city",
+        "description": "Retrieves all railway stations within a specified Chinese city, returning their station codes and names for use in ticket queries.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string",
+              "description": "The Chinese name of the city to search for railway stations (e.g., '北京', '上海')."
+            }
+          },
+          "required": [
+            "city"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "stations": {
+              "type": "array",
+              "description": "List of all railway stations located in the specified city.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "station_code": {
+                    "type": "string",
+                    "description": "The unique station code used in the China Railway system for identifying this station."
+                  },
+                  "station_name": {
+                    "type": "string",
+                    "description": "The official Chinese name of the railway station."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_station_code_by_name",
+        "description": "Looks up the unique station code for a railway station by its Chinese name, enabling precise station identification for ticket searches.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "station_name": {
+              "type": "string",
+              "description": "The official Chinese name of the railway station to look up (e.g., '北京南站')."
+            }
+          },
+          "required": [
+            "station_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "station_code": {
+              "type": "string",
+              "description": "The unique station code used in the China Railway system for identifying this station."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_station_by_code",
+        "description": "Retrieves detailed information about a railway station using its station code, including contact details and location.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "station_code": {
+              "type": "string",
+              "description": "The unique station code used in the China Railway system for identifying this station."
+            }
+          },
+          "required": [
+            "station_code"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "station_name": {
+              "type": "string",
+              "description": "The official Chinese name of the railway station."
+            },
+            "address": {
+              "type": "string",
+              "description": "The geographical location or physical address of the railway station."
+            },
+            "phone": {
+              "type": "string",
+              "description": "The contact telephone number for the railway station."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_tickets",
+        "description": "Queries the 12306 system for available train tickets between two stations on a specific date, returning train schedules and seat availability.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": "string",
+              "description": "The travel date for the ticket query in ISO 8601 format (yyyy-mm-dd), e.g., '2024-03-15'."
+            },
+            "from_station_code": {
+              "type": "string",
+              "description": "The unique station code used in the China Railway system for identifying the departure station."
+            },
+            "to_station_code": {
+              "type": "string",
+              "description": "The unique station code used in the China Railway system for identifying the arrival station."
+            }
+          },
+          "required": [
+            "date",
+            "from_station_code",
+            "to_station_code"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "trains": {
+              "type": "array",
+              "description": "List of available train services matching the query criteria, including schedule and seat availability.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "train_no": {
+                    "type": "string",
+                    "description": "The unique train number identifier for this service (e.g., 'G123', '240000G10336')."
+                  },
+                  "departure_time": {
+                    "type": "string",
+                    "description": "The scheduled departure time from the origin station in HH:MM format."
+                  },
+                  "arrival_time": {
+                    "type": "string",
+                    "description": "The scheduled arrival time at the destination station in HH:MM format."
+                  },
+                  "duration": {
+                    "type": "string",
+                    "description": "The total travel time for this train journey (e.g., '5h 30m')."
+                  },
+                  "seat_availability": {
+                    "type": "object",
+                    "description": "Current ticket availability for different seat classes on this train.",
+                    "properties": {
+                      "business_class": {
+                        "type": "integer",
+                        "description": "Number of available business class seats remaining for booking."
+                      },
+                      "first_class": {
+                        "type": "integer",
+                        "description": "Number of available first class seats remaining for booking."
+                      },
+                      "second_class": {
+                        "type": "integer",
+                        "description": "Number of available second class seats remaining for booking."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_train_route_stations",
+        "description": "Retrieves the complete route information for a specific train, including all intermediate stops with arrival and departure times.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": "string",
+              "description": "The travel date for the train route query in ISO 8601 format (yyyy-mm-dd), e.g., '2024-03-15'."
+            },
+            "from_station_code": {
+              "type": "string",
+              "description": "The unique station code used in the China Railway system for identifying the departure station."
+            },
+            "to_station_code": {
+              "type": "string",
+              "description": "The unique station code used in the China Railway system for identifying the arrival station."
+            },
+            "train_no": {
+              "type": "string",
+              "description": "The unique train number identifier for this service (e.g., '240000G10336'), as returned by the get_tickets tool."
+            }
+          },
+          "required": [
+            "date",
+            "from_station_code",
+            "to_station_code",
+            "train_no"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "route_stations": {
+              "type": "array",
+              "description": "Ordered list of all stations along the train's route, from origin to final destination.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "station_name": {
+                    "type": "string",
+                    "description": "The official Chinese name of the railway station on this route."
+                  },
+                  "arrival_time": {
+                    "type": "string",
+                    "description": "The scheduled arrival time at this station in HH:MM format (empty for the origin station)."
+                  },
+                  "departure_time": {
+                    "type": "string",
+                    "description": "The scheduled departure time from this station in HH:MM format (empty for the final station)."
+                  },
+                  "stop_duration": {
+                    "type": "string",
+                    "description": "The length of time the train stops at this station (e.g., '2 minutes', '5 minutes')."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Station(BaseModel):\n    \"\"\"Represents a railway station.\"\"\"\n    station_code: str = Field(..., description=\"The unique station code used in the China Railway system\")\n    station_name: str = Field(..., description=\"The official Chinese name of the railway station\")\n    address: str = Field(default=\"\", description=\"The geographical location or physical address of the railway station\")\n    phone: str = Field(default=\"\", description=\"The contact telephone number for the railway station\")\n\nclass SeatAvailability(BaseModel):\n    \"\"\"Represents seat availability for different classes.\"\"\"\n    business_class: int = Field(..., ge=0, description=\"Number of available business class seats\")\n    first_class: int = Field(..., ge=0, description=\"Number of available first class seats\")\n    second_class: int = Field(..., ge=0, description=\"Number of available second class seats\")\n\nclass Train(BaseModel):\n    \"\"\"Represents a train service.\"\"\"\n    train_no: str = Field(..., description=\"The unique train number identifier\")\n    departure_time: str = Field(..., pattern=r\"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$\", description=\"Scheduled departure time in HH:MM format\")\n    arrival_time: str = Field(..., pattern=r\"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$\", description=\"Scheduled arrival time in HH:MM format\")\n    duration: str = Field(..., description=\"Total travel time for this train journey\")\n    seat_availability: SeatAvailability = Field(..., description=\"Current ticket availability for different seat classes\")\n\nclass RouteStation(BaseModel):\n    \"\"\"Represents a station along a train route.\"\"\"\n    station_name: str = Field(..., description=\"The official Chinese name of the railway station\")\n    arrival_time: str = Field(default=\"\", description=\"Scheduled arrival time in HH:MM format\")\n    departure_time: str = Field(default=\"\", description=\"Scheduled departure time in HH:MM format\")\n    stop_duration: str = Field(default=\"\", description=\"Length of time the train stops at this station\")\n\nclass ChinaRailwayScenario(BaseModel):\n    \"\"\"Main scenario model for China Railway system.\"\"\"\n    stations: Dict[str, Station] = Field(default={}, description=\"All railway stations indexed by station code\")\n    city_stations: Dict[str, List[str]] = Field(default={}, description=\"Mapping of city names to station codes\")\n    trains: Dict[str, List[Train]] = Field(default={}, description=\"Available trains indexed by date_from_to key\")\n    train_routes: Dict[str, List[RouteStation]] = Field(default={}, description=\"Train routes indexed by date_from_to_trainno key\")\n    station_details_map: Dict[str, Dict[str, Any]] = Field(default={\n        \"BJP\": {\"station_name\": \"北京\", \"address\": \"北京市西城区莲花池东路\", \"phone\": \"010-12306\"},\n        \"BXP\": {\"station_name\": \"北京西\", \"address\": \"北京市丰台区莲花池东路\", \"phone\": \"010-51826273\"},\n        \"VNP\": {\"station_name\": \"北京南\", \"address\": \"北京市丰台区永外大街\", \"phone\": \"010-51867182\"},\n        \"AOH\": {\"station_name\": \"上海\", \"address\": \"上海市静安区秣陵路\", \"phone\": \"021-12306\"},\n        \"SHH\": {\"station_name\": \"上海虹桥\", \"address\": \"上海市闵行区申虹路\", \"phone\": \"021-12306\"},\n        \"GZQ\": {\"station_name\": \"广州\", \"address\": \"广州市越秀区环市西路\", \"phone\": \"020-12306\"},\n        \"IZQ\": {\"station_name\": \"广州南\", \"address\": \"广州市番禺区石壁街道\", \"phone\": \"020-39267222\"},\n        \"SZQ\": {\"station_name\": \"深圳\", \"address\": \"深圳市罗湖区和平路\", \"phone\": \"0755-12306\"},\n        \"IOQ\": {\"station_name\": \"深圳北\", \"address\": \"深圳市龙华区民治街道\", \"phone\": \"0755-12306\"},\n        \"NJH\": {\"station_name\": \"南京\", \"address\": \"南京市玄武区龙蟠路\", \"phone\": \"025-12306\"},\n        \"NKH\": {\"station_name\": \"南京南\", \"address\": \"南京市雨花台区玉兰路\", \"phone\": \"025-12306\"},\n        \"HZH\": {\"station_name\": \"杭州\", \"address\": \"杭州市上城区环城东路\", \"phone\": \"0571-12306\"},\n        \"HGH\": {\"station_name\": \"杭州东\", \"address\": \"杭州市江干区天城路\", \"phone\": \"0571-12306\"},\n        \"TJP\": {\"station_name\": \"天津\", \"address\": \"天津市河北区新纬路\", \"phone\": \"022-12306\"},\n        \"TIP\": {\"station_name\": \"天津西\", \"address\": \"天津市红桥区西青道\", \"phone\": \"022-12306\"},\n        \"CQW\": {\"station_name\": \"重庆\", \"address\": \"重庆市渝中区菜园坝\", \"phone\": \"023-12306\"},\n        \"CXW\": {\"station_name\": \"重庆北\", \"address\": \"重庆市渝北区龙头寺\", \"phone\": \"023-12306\"},\n        \"CDW\": {\"station_name\": \"成都\", \"address\": \"成都市金牛区荷花池\", \"phone\": \"028-12306\"},\n        \"ICW\": {\"station_name\": \"成都东\", \"address\": \"成都市成华区保和街道\", \"phone\": \"028-12306\"},\n        \"WHN\": {\"station_name\": \"武汉\", \"address\": \"武汉市武昌区中山路\", \"phone\": \"027-12306\"}\n    }, description=\"Station details lookup map\")\n\nScenario_Schema = [Station, SeatAvailability, Train, RouteStation, ChinaRailwayScenario]\n\n# Section 2: Class\nclass ChinaRailwayAPI:\n    def __init__(self):\n        \"\"\"Initialize China Railway API with empty state.\"\"\"\n        self.stations: Dict[str, Station] = {}\n        self.city_stations: Dict[str, List[str]] = {}\n        self.trains: Dict[str, List[Train]] = {}\n        self.train_routes: Dict[str, List[RouteStation]] = {}\n        self.station_details_map: Dict[str, Dict[str, Any]] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = ChinaRailwayScenario(**scenario)\n        self.stations = model.stations\n        self.city_stations = model.city_stations\n        self.trains = model.trains\n        self.train_routes = model.train_routes\n        self.station_details_map = model.station_details_map\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"stations\": {code: station.dict() for code, station in self.stations.items()},\n            \"city_stations\": self.city_stations,\n            \"trains\": {key: [train.dict() for train in trains] for key, trains in self.trains.items()},\n            \"train_routes\": {key: [station.dict() for station in stations] for key, stations in self.train_routes.items()},\n            \"station_details_map\": self.station_details_map\n        }\n\n    def get_stations_code_in_city(self, city: str) -> dict:\n        \"\"\"Retrieve all railway stations within a specified city.\"\"\"\n        station_codes = self.city_stations.get(city, [])\n        stations = []\n        for code in station_codes:\n            if code in self.stations:\n                station = self.stations[code]\n                stations.append({\n                    \"station_code\": station.station_code,\n                    \"station_name\": station.station_name\n                })\n        return {\"stations\": stations}\n\n    def get_station_code_by_name(self, station_name: str) -> dict:\n        \"\"\"Look up the unique station code for a railway station by its name.\"\"\"\n        for code, station in self.stations.items():\n            if station.station_name == station_name:\n                return {\"station_code\": station.station_code}\n        return {\"station_code\": \"\"}\n\n    def get_station_by_code(self, station_code: str) -> dict:\n        \"\"\"Retrieve detailed information about a railway station using its code.\"\"\"\n        if station_code in self.station_details_map:\n            details = self.station_details_map[station_code]\n            return {\n                \"station_name\": details.get(\"station_name\", \"\"),\n                \"address\": details.get(\"address\", \"\"),\n                \"phone\": details.get(\"phone\", \"\")\n            }\n        \n        if station_code in self.stations:\n            station = self.stations[station_code]\n            return {\n                \"station_name\": station.station_name,\n                \"address\": station.address,\n                \"phone\": station.phone\n            }\n        \n        return {\"station_name\": \"\", \"address\": \"\", \"phone\": \"\"}\n\n    def get_tickets(self, date: str, from_station_code: str, to_station_code: str) -> dict:\n        \"\"\"Query available train tickets between two stations on a specific date.\"\"\"\n        key = f\"{date}_{from_station_code}_{to_station_code}\"\n        trains = self.trains.get(key, [])\n        trains_list = []\n        for train in trains:\n            trains_list.append({\n                \"train_no\": train.train_no,\n                \"departure_time\": train.departure_time,\n                \"arrival_time\": train.arrival_time,\n                \"duration\": train.duration,\n                \"seat_availability\": {\n                    \"business_class\": train.seat_availability.business_class,\n                    \"first_class\": train.seat_availability.first_class,\n                    \"second_class\": train.seat_availability.second_class\n                }\n            })\n        return {\"trains\": trains_list}\n\n    def get_train_route_stations(self, date: str, from_station_code: str, to_station_code: str, train_no: str) -> dict:\n        \"\"\"Retrieve the complete route information for a specific train.\"\"\"\n        key = f\"{date}_{from_station_code}_{to_station_code}_{train_no}\"\n        route_stations = self.train_routes.get(key, [])\n        stations_list = []\n        for station in route_stations:\n            stations_list.append({\n                \"station_name\": station.station_name,\n                \"arrival_time\": station.arrival_time,\n                \"departure_time\": station.departure_time,\n                \"stop_duration\": station.stop_duration\n            })\n        return {\"route_stations\": stations_list}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"ChinaRailway\")\napi = ChinaRailwayAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the China Railway API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching ChinaRailwayScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current China Railway state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_stations_code_in_city(city: str) -> dict:\n    \"\"\"\n    Retrieves all railway stations within a specified Chinese city.\n    \n    Args:\n        city (str): The Chinese name of the city to search for railway stations.\n    \n    Returns:\n        stations (list): List of all railway stations located in the specified city, each containing:\n            station_code (str): The unique station code used in the China Railway system.\n            station_name (str): The official Chinese name of the railway station.\n    \"\"\"\n    try:\n        if not city or not isinstance(city, str):\n            raise ValueError(\"City must be a non-empty string\")\n        return api.get_stations_code_in_city(city)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_station_code_by_name(station_name: str) -> dict:\n    \"\"\"\n    Looks up the unique station code for a railway station by its Chinese name.\n    \n    Args:\n        station_name (str): The official Chinese name of the railway station to look up.\n    \n    Returns:\n        station_code (str): The unique station code used in the China Railway system.\n    \"\"\"\n    try:\n        if not station_name or not isinstance(station_name, str):\n            raise ValueError(\"Station name must be a non-empty string\")\n        return api.get_station_code_by_name(station_name)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_station_by_code(station_code: str) -> dict:\n    \"\"\"\n    Retrieves detailed information about a railway station using its station code.\n    \n    Args:\n        station_code (str): The unique station code used in the China Railway system.\n    \n    Returns:\n        station_name (str): The official Chinese name of the railway station.\n        address (str): The geographical location or physical address of the railway station.\n        phone (str): The contact telephone number for the railway station.\n    \"\"\"\n    try:\n        if not station_code or not isinstance(station_code, str):\n            raise ValueError(\"Station code must be a non-empty string\")\n        return api.get_station_by_code(station_code)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_tickets(date: str, from_station_code: str, to_station_code: str) -> dict:\n    \"\"\"\n    Queries available train tickets between two stations on a specific date.\n    \n    Args:\n        date (str): The travel date for the ticket query in ISO 8601 format (yyyy-mm-dd).\n        from_station_code (str): The unique station code for the departure station.\n        to_station_code (str): The unique station code for the arrival station.\n    \n    Returns:\n        trains (list): List of available train services, each containing:\n            train_no (str): The unique train number identifier.\n            departure_time (str): Scheduled departure time in HH:MM format.\n            arrival_time (str): Scheduled arrival time in HH:MM format.\n            duration (str): Total travel time for this train journey.\n            seat_availability (dict): Current ticket availability containing:\n                business_class (int): Number of available business class seats.\n                first_class (int): Number of available first class seats.\n                second_class (int): Number of available second class seats.\n    \"\"\"\n    try:\n        if not date or not isinstance(date, str):\n            raise ValueError(\"Date must be a non-empty string\")\n        if not from_station_code or not isinstance(from_station_code, str):\n            raise ValueError(\"From station code must be a non-empty string\")\n        if not to_station_code or not isinstance(to_station_code, str):\n            raise ValueError(\"To station code must be a non-empty string\")\n        return api.get_tickets(date, from_station_code, to_station_code)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_train_route_stations(date: str, from_station_code: str, to_station_code: str, train_no: str) -> dict:\n    \"\"\"\n    Retrieves the complete route information for a specific train.\n    \n    Args:\n        date (str): The travel date for the train route query in ISO 8601 format (yyyy-mm-dd).\n        from_station_code (str): The unique station code for the departure station.\n        to_station_code (str): The unique station code for the arrival station.\n        train_no (str): The unique train number identifier.\n    \n    Returns:\n        route_stations (list): Ordered list of all stations along the train's route, each containing:\n            station_name (str): The official Chinese name of the railway station.\n            arrival_time (str): Scheduled arrival time in HH:MM format.\n            departure_time (str): Scheduled departure time in HH:MM format.\n            stop_duration (str): Length of time the train stops at this station.\n    \"\"\"\n    try:\n        if not date or not isinstance(date, str):\n            raise ValueError(\"Date must be a non-empty string\")\n        if not from_station_code or not isinstance(from_station_code, str):\n            raise ValueError(\"From station code must be a non-empty string\")\n        if not to_station_code or not isinstance(to_station_code, str):\n            raise ValueError(\"To station code must be a non-empty string\")\n        if not train_no or not isinstance(train_no, str):\n            raise ValueError(\"Train number must be a non-empty string\")\n        return api.get_train_route_stations(date, from_station_code, to_station_code, train_no)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-01T15:01:26.777576",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with minimal data - single route between Beijing and Shanghai with one train",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "stations": {
+          "BJP": {
+            "station_code": "BJP",
+            "station_name": "北京",
+            "address": "北京市西城区莲花池东路",
+            "phone": "010-12306"
+          },
+          "AOH": {
+            "station_code": "AOH",
+            "station_name": "上海",
+            "address": "上海市静安区秣陵路",
+            "phone": "021-12306"
+          }
+        },
+        "city_stations": {
+          "北京": [
+            "BJP"
+          ],
+          "上海": [
+            "AOH"
+          ]
+        },
+        "trains": {
+          "2024-01-15_BJP_AOH": [
+            {
+              "train_no": "G101",
+              "departure_time": "08:00",
+              "arrival_time": "13:30",
+              "duration": "5小时30分",
+              "seat_availability": {
+                "business_class": 10,
+                "first_class": 25,
+                "second_class": 150
+              }
+            }
+          ]
+        },
+        "train_routes": {
+          "2024-01-15_BJP_AOH_G101": [
+            {
+              "station_name": "北京",
+              "arrival_time": "",
+              "departure_time": "08:00",
+              "stop_duration": ""
+            },
+            {
+              "station_name": "上海",
+              "arrival_time": "13:30",
+              "departure_time": "",
+              "stop_duration": ""
+            }
+          ]
+        },
+        "station_details_map": {
+          "BJP": {
+            "station_name": "北京",
+            "address": "北京市西城区莲花池东路",
+            "phone": "010-12306"
+          },
+          "AOH": {
+            "station_name": "上海",
+            "address": "上海市静安区秣陵路",
+            "phone": "021-12306"
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Medium complexity with multiple cities, stations, and trains with varying seat availability",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "stations": {
+          "BJP": {
+            "station_code": "BJP",
+            "station_name": "北京",
+            "address": "北京市西城区莲花池东路",
+            "phone": "010-12306"
+          },
+          "VNP": {
+            "station_code": "VNP",
+            "station_name": "北京南",
+            "address": "北京市丰台区永外大街",
+            "phone": "010-51867182"
+          },
+          "SHH": {
+            "station_code": "SHH",
+            "station_name": "上海虹桥",
+            "address": "上海市闵行区申虹路",
+            "phone": "021-12306"
+          },
+          "NKH": {
+            "station_code": "NKH",
+            "station_name": "南京南",
+            "address": "南京市雨花台区玉兰路",
+            "phone": "025-12306"
+          }
+        },
+        "city_stations": {
+          "北京": [
+            "BJP",
+            "VNP"
+          ],
+          "上海": [
+            "SHH"
+          ],
+          "南京": [
+            "NKH"
+          ]
+        },
+        "trains": {
+          "2024-02-20_VNP_SHH": [
+            {
+              "train_no": "G103",
+              "departure_time": "09:15",
+              "arrival_time": "14:00",
+              "duration": "4小时45分",
+              "seat_availability": {
+                "business_class": 0,
+                "first_class": 5,
+                "second_class": 80
+              }
+            },
+            {
+              "train_no": "G107",
+              "departure_time": "15:30",
+              "arrival_time": "20:15",
+              "duration": "4小时45分",
+              "seat_availability": {
+                "business_class": 15,
+                "first_class": 40,
+                "second_class": 200
+              }
+            }
+          ],
+          "2024-02-20_BJP_NKH": [
+            {
+              "train_no": "G201",
+              "departure_time": "07:00",
+              "arrival_time": "11:30",
+              "duration": "4小时30分",
+              "seat_availability": {
+                "business_class": 8,
+                "first_class": 20,
+                "second_class": 120
+              }
+            }
+          ]
+        },
+        "train_routes": {
+          "2024-02-20_VNP_SHH_G103": [
+            {
+              "station_name": "北京南",
+              "arrival_time": "",
+              "departure_time": "09:15",
+              "stop_duration": ""
+            },
+            {
+              "station_name": "南京南",
+              "arrival_time": "12:00",
+              "departure_time": "12:05",
+              "stop_duration": "5分钟"
+            },
+            {
+              "station_name": "上海虹桥",
+              "arrival_time": "14:00",
+              "departure_time": "",
+              "stop_duration": ""
+            }
+          ],
+          "2024-02-20_BJP_NKH_G201": [
+            {
+              "station_name": "北京",
+              "arrival_time": "",
+              "departure_time": "07:00",
+              "stop_duration": ""
+            },
+            {
+              "station_name": "南京南",
+              "arrival_time": "11:30",
+              "departure_time": "",
+              "stop_duration": ""
+            }
+          ]
+        },
+        "station_details_map": {
+          "BJP": {
+            "station_name": "北京",
+            "address": "北京市西城区莲花池东路",
+            "phone": "010-12306"
+          },
+          "VNP": {
+            "station_name": "北京南",
+            "address": "北京市丰台区永外大街",
+            "phone": "010-51867182"
+          },
+          "SHH": {
+            "station_name": "上海虹桥",
+            "address": "上海市闵行区申虹路",
+            "phone": "021-12306"
+          },
+          "NKH": {
+            "station_name": "南京南",
+            "address": "南京市雨花台区玉兰路",
+            "phone": "025-12306"
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Complex scenario with multiple routes, intermediate stops, and edge cases like midnight times",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "stations": {
+          "BXP": {
+            "station_code": "BXP",
+            "station_name": "北京西",
+            "address": "北京市丰台区莲花池东路",
+            "phone": "010-51826273"
+          },
+          "GZQ": {
+            "station_code": "GZQ",
+            "station_name": "广州",
+            "address": "广州市越秀区环市西路",
+            "phone": "020-12306"
+          },
+          "IZQ": {
+            "station_code": "IZQ",
+            "station_name": "广州南",
+            "address": "广州市番禺区石壁街道",
+            "phone": "020-39267222"
+          },
+          "WHN": {
+            "station_code": "WHN",
+            "station_name": "武汉",
+            "address": "武汉市武昌区中山路",
+            "phone": "027-12306"
+          },
+          "HGH": {
+            "station_code": "HGH",
+            "station_name": "杭州东",
+            "address": "杭州市江干区天城路",
+            "phone": "0571-12306"
+          }
+        },
+        "city_stations": {
+          "北京": [
+            "BXP"
+          ],
+          "广州": [
+            "GZQ",
+            "IZQ"
+          ],
+          "武汉": [
+            "WHN"
+          ],
+          "杭州": [
+            "HGH"
+          ]
+        },
+        "trains": {
+          "2024-03-10_BXP_GZQ": [
+            {
+              "train_no": "Z201",
+              "departure_time": "23:45",
+              "arrival_time": "14:30",
+              "duration": "14小时45分",
+              "seat_availability": {
+                "business_class": 0,
+                "first_class": 0,
+                "second_class": 50
+              }
+            },
+            {
+              "train_no": "G501",
+              "departure_time": "08:30",
+              "arrival_time": "16:45",
+              "duration": "8小时15分",
+              "seat_availability": {
+                "business_class": 20,
+                "first_class": 60,
+                "second_class": 300
+              }
+            }
+          ],
+          "2024-03-10_IZQ_HGH": [
+            {
+              "train_no": "G1301",
+              "departure_time": "06:00",
+              "arrival_time": "12:30",
+              "duration": "6小时30分",
+              "seat_availability": {
+                "business_class": 12,
+                "first_class": 35,
+                "second_class": 180
+              }
+            }
+          ]
+        },
+        "train_routes": {
+          "2024-03-10_BXP_GZQ_Z201": [
+            {
+              "station_name": "北京西",
+              "arrival_time": "",
+              "departure_time": "23:45",
+              "stop_duration": ""
+            },
+            {
+              "station_name": "武汉",
+              "arrival_time": "06:20",
+              "departure_time": "06:35",
+              "stop_duration": "15分钟"
+            },
+            {
+              "station_name": "广州",
+              "arrival_time": "14:30",
+              "departure_time": "",
+              "stop_duration": ""
+            }
+          ],
+          "2024-03-10_BXP_GZQ_G501": [
+            {
+              "station_name": "北京西",
+              "arrival_time": "",
+              "departure_time": "08:30",
+              "stop_duration": ""
+            },
+            {
+              "station_name": "武汉",
+              "arrival_time": "12:45",
+              "departure_time": "12:50",
+              "stop_duration": "5分钟"
+            },
+            {
+              "station_name": "广州",
+              "arrival_time": "16:45",
+              "departure_time": "",
+              "stop_duration": ""
+            }
+          ],
+          "2024-03-10_IZQ_HGH_G1301": [
+            {
+              "station_name": "广州南",
+              "arrival_time": "",
+              "departure_time": "06:00",
+              "stop_duration": ""
+            },
+            {
+              "station_name": "杭州东",
+              "arrival_time": "12:30",
+              "departure_time": "",
+              "stop_duration": ""
+            }
+          ]
+        },
+        "station_details_map": {
+          "BXP": {
+            "station_name": "北京西",
+            "address": "北京市丰台区莲花池东路",
+            "phone": "010-51826273"
+          },
+          "GZQ": {
+            "station_name": "广州",
+            "address": "广州市越秀区环市西路",
+            "phone": "020-12306"
+          },
+          "IZQ": {
+            "station_name": "广州南",
+            "address": "广州市番禺区石壁街道",
+            "phone": "020-39267222"
+          },
+          "WHN": {
+            "station_name": "武汉",
+            "address": "武汉市武昌区中山路",
+            "phone": "027-12306"
+          },
+          "HGH": {
+            "station_name": "杭州东",
+            "address": "杭州市江干区天城路",
+            "phone": "0571-12306"
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Boundary case with empty collections and invalid time format to test error handling",
+      "expected_behavior": "validation_error",
+      "scenario_data": {
+        "stations": {
+          "TEST": {
+            "station_code": "TEST",
+            "station_name": "测试站",
+            "address": "",
+            "phone": ""
+          }
+        },
+        "city_stations": {},
+        "trains": {
+          "2024-01-01_TEST_TEST": [
+            {
+              "train_no": "G999",
+              "departure_time": "25:99",
+              "arrival_time": "26:00",
+              "duration": "1小时",
+              "seat_availability": {
+                "business_class": 0,
+                "first_class": 0,
+                "second_class": 0
+              }
+            }
+          ]
+        },
+        "train_routes": {},
+        "station_details_map": {
+          "TEST": {
+            "station_name": "测试站",
+            "address": "",
+            "phone": ""
+          }
+        }
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_stations_code_in_city",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Beijing city",
+                    "input": {
+                      "city": "北京"
+                    },
+                    "expected": "List of stations in Beijing",
+                    "actual": {
+                      "stations": [
+                        {
+                          "station_code": "BJP",
+                          "station_name": "北京"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Shanghai city",
+                    "input": {
+                      "city": "上海"
+                    },
+                    "expected": "List of stations in Shanghai",
+                    "actual": {
+                      "stations": [
+                        {
+                          "station_code": "AOH",
+                          "station_name": "上海"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case - Non-existent city",
+                    "input": {
+                      "city": "广州"
+                    },
+                    "expected": "Empty list",
+                    "actual": {
+                      "stations": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_station_code_by_name",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Beijing station",
+                    "input": {
+                      "station_name": "北京"
+                    },
+                    "expected": "Station code BJP",
+                    "actual": {
+                      "station_code": "BJP"
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Shanghai station",
+                    "input": {
+                      "station_name": "上海"
+                    },
+                    "expected": "Station code AOH",
+                    "actual": {
+                      "station_code": "AOH"
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_station_by_code",
+                "test_cases": [
+                  {
+                    "description": "Valid case - BJP station code",
+                    "input": {
+                      "station_code": "BJP"
+                    },
+                    "expected": "Beijing station details",
+                    "actual": {
+                      "station_name": "北京",
+                      "address": "北京市西城区莲花池东路",
+                      "phone": "010-12306"
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - AOH station code",
+                    "input": {
+                      "station_code": "AOH"
+                    },
+                    "expected": "Shanghai station details",
+                    "actual": {
+                      "station_name": "上海",
+                      "address": "上海市静安区秣陵路",
+                      "phone": "021-12306"
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_tickets",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Available train on 2024-01-15",
+                    "input": {
+                      "date": "2024-01-15",
+                      "from_station_code": "BJP",
+                      "to_station_code": "AOH"
+                    },
+                    "expected": "List with G101 train",
+                    "actual": {
+                      "trains": [
+                        {
+                          "train_no": "G101",
+                          "departure_time": "08:00",
+                          "arrival_time": "13:30",
+                          "duration": "5小时30分",
+                          "seat_availability": {
+                            "business_class": 10,
+                            "first_class": 25,
+                            "second_class": 150
+                          }
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case - No trains on different date",
+                    "input": {
+                      "date": "2024-01-16",
+                      "from_station_code": "BJP",
+                      "to_station_code": "AOH"
+                    },
+                    "expected": "Empty list",
+                    "actual": {
+                      "trains": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_train_route_stations",
+                "test_cases": [
+                  {
+                    "description": "Valid case - G101 route on 2024-01-15",
+                    "input": {
+                      "date": "2024-01-15",
+                      "from_station_code": "BJP",
+                      "to_station_code": "AOH",
+                      "train_no": "G101"
+                    },
+                    "expected": "Route with Beijing and Shanghai stations",
+                    "actual": {
+                      "route_stations": [
+                        {
+                          "station_name": "北京",
+                          "arrival_time": "",
+                          "departure_time": "08:00",
+                          "stop_duration": ""
+                        },
+                        {
+                          "station_name": "上海",
+                          "arrival_time": "13:30",
+                          "departure_time": "",
+                          "stop_duration": ""
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All state variables preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 58.097771883010864
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_stations_code_in_city",
+                "test_cases": [
+                  {
+                    "test_name": "Valid city - Beijing",
+                    "input": {
+                      "city": "北京"
+                    },
+                    "expected": "List of 2 stations (BJP, VNP)",
+                    "actual": "Returned 2 stations correctly",
+                    "passed": true
+                  },
+                  {
+                    "test_name": "Valid city - Shanghai",
+                    "input": {
+                      "city": "上海"
+                    },
+                    "expected": "List of 1 station (SHH)",
+                    "actual": "Returned 1 station correctly",
+                    "passed": true
+                  },
+                  {
+                    "test_name": "Valid city - Nanjing",
+                    "input": {
+                      "city": "南京"
+                    },
+                    "expected": "List of 1 station (NKH)",
+                    "actual": "Returned 1 station correctly",
+                    "passed": true
+                  },
+                  {
+                    "test_name": "Non-existent city - Guangzhou",
+                    "input": {
+                      "city": "广州"
+                    },
+                    "expected": "Empty list",
+                    "actual": "Returned empty list",
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_station_code_by_name",
+                "test_cases": [
+                  {
+                    "test_name": "Valid station name - Beijing South",
+                    "input": {
+                      "station_name": "北京南"
+                    },
+                    "expected": "VNP",
+                    "actual": "VNP",
+                    "passed": true
+                  },
+                  {
+                    "test_name": "Valid station name - Shanghai Hongqiao",
+                    "input": {
+                      "station_name": "上海虹桥"
+                    },
+                    "expected": "SHH",
+                    "actual": "SHH",
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_station_by_code",
+                "test_cases": [
+                  {
+                    "test_name": "Valid station code - BJP",
+                    "input": {
+                      "station_code": "BJP"
+                    },
+                    "expected": "Station details for Beijing",
+                    "actual": "Returned correct station name, address, and phone",
+                    "passed": true
+                  },
+                  {
+                    "test_name": "Valid station code - VNP",
+                    "input": {
+                      "station_code": "VNP"
+                    },
+                    "expected": "Station details for Beijing South",
+                    "actual": "Returned correct station name, address, and phone",
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_tickets",
+                "test_cases": [
+                  {
+                    "test_name": "Valid route - VNP to SHH on 2024-02-20",
+                    "input": {
+                      "date": "2024-02-20",
+                      "from_station_code": "VNP",
+                      "to_station_code": "SHH"
+                    },
+                    "expected": "List of 2 trains (G103, G107)",
+                    "actual": "Returned 2 trains with complete details including seat availability",
+                    "passed": true
+                  },
+                  {
+                    "test_name": "Valid route - BJP to NKH on 2024-02-20",
+                    "input": {
+                      "date": "2024-02-20",
+                      "from_station_code": "BJP",
+                      "to_station_code": "NKH"
+                    },
+                    "expected": "List of 1 train (G201)",
+                    "actual": "Returned 1 train with complete details including seat availability",
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_train_route_stations",
+                "test_cases": [
+                  {
+                    "test_name": "Valid train route - G103",
+                    "input": {
+                      "date": "2024-02-20",
+                      "from_station_code": "VNP",
+                      "to_station_code": "SHH",
+                      "train_no": "G103"
+                    },
+                    "expected": "Route with 3 stations (Beijing South, Nanjing South, Shanghai Hongqiao)",
+                    "actual": "Returned 3 stations with correct arrival/departure times and stop durations",
+                    "passed": true
+                  },
+                  {
+                    "test_name": "Valid train route - G201",
+                    "input": {
+                      "date": "2024-02-20",
+                      "from_station_code": "BJP",
+                      "to_station_code": "NKH",
+                      "train_no": "G201"
+                    },
+                    "expected": "Route with 2 stations (Beijing, Nanjing South)",
+                    "actual": "Returned 2 stations with correct arrival/departure times",
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches the original loaded scenario exactly. All data structures (stations, city_stations, trains, train_routes, station_details_map) are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 71.34791350364685
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_stations_code_in_city",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case: City with multiple stations (广州)",
+                    "input": {
+                      "city": "广州"
+                    },
+                    "expected": "List of 2 stations (GZQ, IZQ)",
+                    "actual": "Returned 2 stations correctly",
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case: City with single station (北京)",
+                    "input": {
+                      "city": "北京"
+                    },
+                    "expected": "List of 1 station (BXP)",
+                    "actual": "Returned 1 station correctly",
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case: Non-existent city (上海)",
+                    "input": {
+                      "city": "上海"
+                    },
+                    "expected": "Empty list",
+                    "actual": "Returned empty list",
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_station_code_by_name",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Existing station (北京西)",
+                    "input": {
+                      "station_name": "北京西"
+                    },
+                    "expected": "Station code BXP",
+                    "actual": "Returned BXP",
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case: Existing station (广州南)",
+                    "input": {
+                      "station_name": "广州南"
+                    },
+                    "expected": "Station code IZQ",
+                    "actual": "Returned IZQ",
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case: Non-existent station",
+                    "input": {
+                      "station_name": "不存在的站"
+                    },
+                    "expected": "Empty string",
+                    "actual": "Returned empty string",
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_station_by_code",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Existing station code (WHN)",
+                    "input": {
+                      "station_code": "WHN"
+                    },
+                    "expected": "Station details for 武汉",
+                    "actual": "Returned complete station details",
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case: Existing station code (BXP)",
+                    "input": {
+                      "station_code": "BXP"
+                    },
+                    "expected": "Station details for 北京西",
+                    "actual": "Returned complete station details",
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case: Invalid station code",
+                    "input": {
+                      "station_code": "INVALID"
+                    },
+                    "expected": "Empty station details",
+                    "actual": "Returned empty fields",
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_tickets",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Route with multiple trains (BXP to GZQ on 2024-03-10)",
+                    "input": {
+                      "date": "2024-03-10",
+                      "from_station_code": "BXP",
+                      "to_station_code": "GZQ"
+                    },
+                    "expected": "List of 2 trains (Z201, G501)",
+                    "actual": "Returned 2 trains with complete details",
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case: Route with single train (IZQ to HGH on 2024-03-10)",
+                    "input": {
+                      "date": "2024-03-10",
+                      "from_station_code": "IZQ",
+                      "to_station_code": "HGH"
+                    },
+                    "expected": "List of 1 train (G1301)",
+                    "actual": "Returned 1 train with complete details",
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case: Non-existent date",
+                    "input": {
+                      "date": "2024-03-11",
+                      "from_station_code": "BXP",
+                      "to_station_code": "GZQ"
+                    },
+                    "expected": "Empty list",
+                    "actual": "Returned empty list",
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_train_route_stations",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Train Z201 route (BXP to GZQ)",
+                    "input": {
+                      "date": "2024-03-10",
+                      "from_station_code": "BXP",
+                      "to_station_code": "GZQ",
+                      "train_no": "Z201"
+                    },
+                    "expected": "Route with 3 stations (北京西, 武汉, 广州)",
+                    "actual": "Returned 3 stations with complete timing details",
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case: Train G501 route (BXP to GZQ)",
+                    "input": {
+                      "date": "2024-03-10",
+                      "from_station_code": "BXP",
+                      "to_station_code": "GZQ",
+                      "train_no": "G501"
+                    },
+                    "expected": "Route with 3 stations (北京西, 武汉, 广州)",
+                    "actual": "Returned 3 stations with complete timing details",
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case: Train G1301 route (IZQ to HGH)",
+                    "input": {
+                      "date": "2024-03-10",
+                      "from_station_code": "IZQ",
+                      "to_station_code": "HGH",
+                      "train_no": "G1301"
+                    },
+                    "expected": "Route with 2 stations (广州南, 杭州东)",
+                    "actual": "Returned 2 stations with complete timing details",
+                    "passed": true
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All data structures (stations, city_stations, trains, train_routes, station_details_map) are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 76.31328535079956
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "error_type": "Expected Validation Error",
+              "error_location": "load_scenario - trains.2024-01-01_TEST_TEST.0.departure_time and arrival_time",
+              "error_details": "2 validation errors: (1) departure_time='25:99' should match pattern '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$' - hour 25 exceeds max 23, minute 99 exceeds max 59; (2) arrival_time='26:00' should match pattern - hour 26 exceeds max 23",
+              "expected_vs_actual": "Expected: Validation error for invalid time formats. Actual: Validation error occurred as expected",
+              "root_cause": "Scenario contains boundary test data with intentionally invalid time values (25:99, 26:00) that violate HH:MM format constraints (hours: 0-23, minutes: 0-59). Pydantic schema validation correctly rejected these values.",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null,
+              "note": "Expected validation error occurred - tool correctly rejected invalid time formats"
+            },
+            "tool_executions": [
+              {
+                "tool_name": "load_scenario",
+                "passed": true,
+                "error": null,
+                "note": "Correctly rejected invalid data with validation errors for departure_time='25:99' and arrival_time='26:00'"
+              }
+            ],
+            "save_scenario": {
+              "success": false,
+              "consistency_check": false,
+              "error": "Skipped due to expected load_scenario validation failure"
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 18.864375591278076
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_stations_code_in_city",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Beijing city",
+                    "input": {
+                      "city": "北京"
+                    },
+                    "expected": "List of stations in Beijing",
+                    "actual": {
+                      "stations": [
+                        {
+                          "station_code": "BJP",
+                          "station_name": "北京"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Shanghai city",
+                    "input": {
+                      "city": "上海"
+                    },
+                    "expected": "List of stations in Shanghai",
+                    "actual": {
+                      "stations": [
+                        {
+                          "station_code": "AOH",
+                          "station_name": "上海"
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case - Non-existent city",
+                    "input": {
+                      "city": "广州"
+                    },
+                    "expected": "Empty list",
+                    "actual": {
+                      "stations": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_station_code_by_name",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Beijing station",
+                    "input": {
+                      "station_name": "北京"
+                    },
+                    "expected": "Station code BJP",
+                    "actual": {
+                      "station_code": "BJP"
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - Shanghai station",
+                    "input": {
+                      "station_name": "上海"
+                    },
+                    "expected": "Station code AOH",
+                    "actual": {
+                      "station_code": "AOH"
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_station_by_code",
+                "test_cases": [
+                  {
+                    "description": "Valid case - BJP station code",
+                    "input": {
+                      "station_code": "BJP"
+                    },
+                    "expected": "Beijing station details",
+                    "actual": {
+                      "station_name": "北京",
+                      "address": "北京市西城区莲花池东路",
+                      "phone": "010-12306"
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case - AOH station code",
+                    "input": {
+                      "station_code": "AOH"
+                    },
+                    "expected": "Shanghai station details",
+                    "actual": {
+                      "station_name": "上海",
+                      "address": "上海市静安区秣陵路",
+                      "phone": "021-12306"
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_tickets",
+                "test_cases": [
+                  {
+                    "description": "Valid case - Available train on 2024-01-15",
+                    "input": {
+                      "date": "2024-01-15",
+                      "from_station_code": "BJP",
+                      "to_station_code": "AOH"
+                    },
+                    "expected": "List with G101 train",
+                    "actual": {
+                      "trains": [
+                        {
+                          "train_no": "G101",
+                          "departure_time": "08:00",
+                          "arrival_time": "13:30",
+                          "duration": "5小时30分",
+                          "seat_availability": {
+                            "business_class": 10,
+                            "first_class": 25,
+                            "second_class": 150
+                          }
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case - No trains on different date",
+                    "input": {
+                      "date": "2024-01-16",
+                      "from_station_code": "BJP",
+                      "to_station_code": "AOH"
+                    },
+                    "expected": "Empty list",
+                    "actual": {
+                      "trains": []
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_train_route_stations",
+                "test_cases": [
+                  {
+                    "description": "Valid case - G101 route on 2024-01-15",
+                    "input": {
+                      "date": "2024-01-15",
+                      "from_station_code": "BJP",
+                      "to_station_code": "AOH",
+                      "train_no": "G101"
+                    },
+                    "expected": "Route with Beijing and Shanghai stations",
+                    "actual": {
+                      "route_stations": [
+                        {
+                          "station_name": "北京",
+                          "arrival_time": "",
+                          "departure_time": "08:00",
+                          "stop_duration": ""
+                        },
+                        {
+                          "station_name": "上海",
+                          "arrival_time": "13:30",
+                          "departure_time": "",
+                          "stop_duration": ""
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All state variables preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 58.097771883010864
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_stations_code_in_city",
+                "test_cases": [
+                  {
+                    "test_name": "Valid city - Beijing",
+                    "input": {
+                      "city": "北京"
+                    },
+                    "expected": "List of 2 stations (BJP, VNP)",
+                    "actual": "Returned 2 stations correctly",
+                    "passed": true
+                  },
+                  {
+                    "test_name": "Valid city - Shanghai",
+                    "input": {
+                      "city": "上海"
+                    },
+                    "expected": "List of 1 station (SHH)",
+                    "actual": "Returned 1 station correctly",
+                    "passed": true
+                  },
+                  {
+                    "test_name": "Valid city - Nanjing",
+                    "input": {
+                      "city": "南京"
+                    },
+                    "expected": "List of 1 station (NKH)",
+                    "actual": "Returned 1 station correctly",
+                    "passed": true
+                  },
+                  {
+                    "test_name": "Non-existent city - Guangzhou",
+                    "input": {
+                      "city": "广州"
+                    },
+                    "expected": "Empty list",
+                    "actual": "Returned empty list",
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_station_code_by_name",
+                "test_cases": [
+                  {
+                    "test_name": "Valid station name - Beijing South",
+                    "input": {
+                      "station_name": "北京南"
+                    },
+                    "expected": "VNP",
+                    "actual": "VNP",
+                    "passed": true
+                  },
+                  {
+                    "test_name": "Valid station name - Shanghai Hongqiao",
+                    "input": {
+                      "station_name": "上海虹桥"
+                    },
+                    "expected": "SHH",
+                    "actual": "SHH",
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_station_by_code",
+                "test_cases": [
+                  {
+                    "test_name": "Valid station code - BJP",
+                    "input": {
+                      "station_code": "BJP"
+                    },
+                    "expected": "Station details for Beijing",
+                    "actual": "Returned correct station name, address, and phone",
+                    "passed": true
+                  },
+                  {
+                    "test_name": "Valid station code - VNP",
+                    "input": {
+                      "station_code": "VNP"
+                    },
+                    "expected": "Station details for Beijing South",
+                    "actual": "Returned correct station name, address, and phone",
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_tickets",
+                "test_cases": [
+                  {
+                    "test_name": "Valid route - VNP to SHH on 2024-02-20",
+                    "input": {
+                      "date": "2024-02-20",
+                      "from_station_code": "VNP",
+                      "to_station_code": "SHH"
+                    },
+                    "expected": "List of 2 trains (G103, G107)",
+                    "actual": "Returned 2 trains with complete details including seat availability",
+                    "passed": true
+                  },
+                  {
+                    "test_name": "Valid route - BJP to NKH on 2024-02-20",
+                    "input": {
+                      "date": "2024-02-20",
+                      "from_station_code": "BJP",
+                      "to_station_code": "NKH"
+                    },
+                    "expected": "List of 1 train (G201)",
+                    "actual": "Returned 1 train with complete details including seat availability",
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_train_route_stations",
+                "test_cases": [
+                  {
+                    "test_name": "Valid train route - G103",
+                    "input": {
+                      "date": "2024-02-20",
+                      "from_station_code": "VNP",
+                      "to_station_code": "SHH",
+                      "train_no": "G103"
+                    },
+                    "expected": "Route with 3 stations (Beijing South, Nanjing South, Shanghai Hongqiao)",
+                    "actual": "Returned 3 stations with correct arrival/departure times and stop durations",
+                    "passed": true
+                  },
+                  {
+                    "test_name": "Valid train route - G201",
+                    "input": {
+                      "date": "2024-02-20",
+                      "from_station_code": "BJP",
+                      "to_station_code": "NKH",
+                      "train_no": "G201"
+                    },
+                    "expected": "Route with 2 stations (Beijing, Nanjing South)",
+                    "actual": "Returned 2 stations with correct arrival/departure times",
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches the original loaded scenario exactly. All data structures (stations, city_stations, trains, train_routes, station_details_map) are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 71.34791350364685
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_stations_code_in_city",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case: City with multiple stations (广州)",
+                    "input": {
+                      "city": "广州"
+                    },
+                    "expected": "List of 2 stations (GZQ, IZQ)",
+                    "actual": "Returned 2 stations correctly",
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case: City with single station (北京)",
+                    "input": {
+                      "city": "北京"
+                    },
+                    "expected": "List of 1 station (BXP)",
+                    "actual": "Returned 1 station correctly",
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case: Non-existent city (上海)",
+                    "input": {
+                      "city": "上海"
+                    },
+                    "expected": "Empty list",
+                    "actual": "Returned empty list",
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_station_code_by_name",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Existing station (北京西)",
+                    "input": {
+                      "station_name": "北京西"
+                    },
+                    "expected": "Station code BXP",
+                    "actual": "Returned BXP",
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case: Existing station (广州南)",
+                    "input": {
+                      "station_name": "广州南"
+                    },
+                    "expected": "Station code IZQ",
+                    "actual": "Returned IZQ",
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case: Non-existent station",
+                    "input": {
+                      "station_name": "不存在的站"
+                    },
+                    "expected": "Empty string",
+                    "actual": "Returned empty string",
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_station_by_code",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Existing station code (WHN)",
+                    "input": {
+                      "station_code": "WHN"
+                    },
+                    "expected": "Station details for 武汉",
+                    "actual": "Returned complete station details",
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case: Existing station code (BXP)",
+                    "input": {
+                      "station_code": "BXP"
+                    },
+                    "expected": "Station details for 北京西",
+                    "actual": "Returned complete station details",
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case: Invalid station code",
+                    "input": {
+                      "station_code": "INVALID"
+                    },
+                    "expected": "Empty station details",
+                    "actual": "Returned empty fields",
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_tickets",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Route with multiple trains (BXP to GZQ on 2024-03-10)",
+                    "input": {
+                      "date": "2024-03-10",
+                      "from_station_code": "BXP",
+                      "to_station_code": "GZQ"
+                    },
+                    "expected": "List of 2 trains (Z201, G501)",
+                    "actual": "Returned 2 trains with complete details",
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case: Route with single train (IZQ to HGH on 2024-03-10)",
+                    "input": {
+                      "date": "2024-03-10",
+                      "from_station_code": "IZQ",
+                      "to_station_code": "HGH"
+                    },
+                    "expected": "List of 1 train (G1301)",
+                    "actual": "Returned 1 train with complete details",
+                    "passed": true
+                  },
+                  {
+                    "description": "Boundary case: Non-existent date",
+                    "input": {
+                      "date": "2024-03-11",
+                      "from_station_code": "BXP",
+                      "to_station_code": "GZQ"
+                    },
+                    "expected": "Empty list",
+                    "actual": "Returned empty list",
+                    "passed": true
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_train_route_stations",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "description": "Valid case: Train Z201 route (BXP to GZQ)",
+                    "input": {
+                      "date": "2024-03-10",
+                      "from_station_code": "BXP",
+                      "to_station_code": "GZQ",
+                      "train_no": "Z201"
+                    },
+                    "expected": "Route with 3 stations (北京西, 武汉, 广州)",
+                    "actual": "Returned 3 stations with complete timing details",
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case: Train G501 route (BXP to GZQ)",
+                    "input": {
+                      "date": "2024-03-10",
+                      "from_station_code": "BXP",
+                      "to_station_code": "GZQ",
+                      "train_no": "G501"
+                    },
+                    "expected": "Route with 3 stations (北京西, 武汉, 广州)",
+                    "actual": "Returned 3 stations with complete timing details",
+                    "passed": true
+                  },
+                  {
+                    "description": "Valid case: Train G1301 route (IZQ to HGH)",
+                    "input": {
+                      "date": "2024-03-10",
+                      "from_station_code": "IZQ",
+                      "to_station_code": "HGH",
+                      "train_no": "G1301"
+                    },
+                    "expected": "Route with 2 stations (广州南, 杭州东)",
+                    "actual": "Returned 2 stations with complete timing details",
+                    "passed": true
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All data structures (stations, city_stations, trains, train_routes, station_details_map) are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 76.31328535079956
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "error_type": "Expected Validation Error",
+              "error_location": "load_scenario - trains.2024-01-01_TEST_TEST.0.departure_time and arrival_time",
+              "error_details": "2 validation errors: (1) departure_time='25:99' should match pattern '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$' - hour 25 exceeds max 23, minute 99 exceeds max 59; (2) arrival_time='26:00' should match pattern - hour 26 exceeds max 23",
+              "expected_vs_actual": "Expected: Validation error for invalid time formats. Actual: Validation error occurred as expected",
+              "root_cause": "Scenario contains boundary test data with intentionally invalid time values (25:99, 26:00) that violate HH:MM format constraints (hours: 0-23, minutes: 0-59). Pydantic schema validation correctly rejected these values.",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null,
+              "note": "Expected validation error occurred - tool correctly rejected invalid time formats"
+            },
+            "tool_executions": [
+              {
+                "tool_name": "load_scenario",
+                "passed": true,
+                "error": null,
+                "note": "Correctly rejected invalid data with validation errors for departure_time='25:99' and arrival_time='26:00'"
+              }
+            ],
+            "save_scenario": {
+              "success": false,
+              "consistency_check": false,
+              "error": "Skipped due to expected load_scenario validation failure"
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 18.864375591278076
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/ChinaRailway.py"
+  }
+}

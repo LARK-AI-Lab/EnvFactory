@@ -1,0 +1,1735 @@
+{
+  "metadata": {
+    "class_name": "SanvelloMentalHealthServer",
+    "metadata_path": "envs\\metadata\\SanvelloMentalHealthServer_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-03-05T20:32:16.287421",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "SanvelloMentalHealthServer",
+    "description": "CBT-based mental health platform providing mood tracking, guided therapeutic journeys, evidence-based coping tools, and peer support communities.",
+    "tools": [
+      {
+        "name": "daily_check_in",
+        "description": "Record daily mood check-in with CBT-based assessment and receive personalized insights.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "user_id": {
+              "type": "string",
+              "description": "The unique identifier of the user account."
+            },
+            "mood_rating": {
+              "type": "integer",
+              "description": "Mood rating on a scale from 1 (lowest) to 10 (highest)."
+            },
+            "feelings": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of selected emotions describing current state (e.g., 'anxious', 'tired', 'hopeful')."
+            },
+            "notes": {
+              "type": "string",
+              "description": "Optional journal entry or additional notes about the day."
+            }
+          },
+          "required": [
+            "user_id",
+            "mood_rating",
+            "feelings"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "check_in_id": {
+              "type": "string",
+              "description": "Unique identifier for this check-in record."
+            },
+            "timestamp": {
+              "type": "string",
+              "description": "ISO 8601 timestamp when the check-in was recorded."
+            },
+            "insights": {
+              "type": "string",
+              "description": "Pattern insights derived from historical mood data and current check-in."
+            },
+            "recommended_tools": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of suggested coping tools based on current mood and feelings."
+            },
+            "guided_journey_suggestion": {
+              "type": "string",
+              "description": "Recommended therapeutic program based on mood patterns and needs."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_guided_journeys",
+        "description": "Retrieve structured CBT-based therapeutic programs for various mental health needs.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "string",
+              "description": "Optional filter by mental health category: 'anxiety', 'depression', 'stress', 'sleep', or 'social_anxiety'."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "journeys": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "journey_id": {
+                    "type": "string",
+                    "description": "Unique identifier for the therapeutic program."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Name of the guided journey program."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Detailed explanation of the program's goals and approach."
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Mental health category this journey addresses."
+                  },
+                  "total_steps": {
+                    "type": "integer",
+                    "description": "Number of steps or sessions in the complete program."
+                  },
+                  "duration_weeks": {
+                    "type": "integer",
+                    "description": "Expected duration to complete the program in weeks."
+                  },
+                  "techniques": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of CBT techniques and therapeutic methods used in this journey."
+                  },
+                  "clinical_approach": {
+                    "type": "string",
+                    "description": "Evidence-based clinical methodology underlying the program."
+                  }
+                }
+              },
+              "description": "List of available guided therapeutic journeys."
+            }
+          }
+        }
+      },
+      {
+        "name": "start_journey",
+        "description": "Enroll user in a guided mental health program and initialize progress tracking.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "user_id": {
+              "type": "string",
+              "description": "The unique identifier of the user account."
+            },
+            "journey_id": {
+              "type": "string",
+              "description": "Unique identifier for the therapeutic program to enroll in."
+            }
+          },
+          "required": [
+            "user_id",
+            "journey_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "enrollment_id": {
+              "type": "string",
+              "description": "Unique identifier for this enrollment instance."
+            },
+            "current_step": {
+              "type": "integer",
+              "description": "Current step number in the program (starts at 1)."
+            },
+            "progress_percent": {
+              "type": "number",
+              "description": "Completion percentage of the journey (0-100)."
+            },
+            "weekly_goal": {
+              "type": "object",
+              "description": "Structured goal for the current week of the program."
+            },
+            "next_activity": {
+              "type": "object",
+              "description": "Details of the next recommended activity or session."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_coping_tools",
+        "description": "Retrieve evidence-based coping tools for immediate mental health relief.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "tool_type": {
+              "type": "string",
+              "description": "Optional filter by tool category: 'breathing', 'meditation', 'grounding', 'visualization', or 'journaling'."
+            },
+            "situation": {
+              "type": "string",
+              "description": "Optional filter by specific situation: 'test_taking', 'public_speaking', 'morning_dread', or 'panic'."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "tools": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "tool_id": {
+                    "type": "string",
+                    "description": "Unique identifier for the coping tool."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the coping technique."
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "Category of the coping tool."
+                  },
+                  "duration_minutes": {
+                    "type": "integer",
+                    "description": "Expected time to complete the exercise in minutes."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Explanation of the tool's purpose and benefits."
+                  },
+                  "instructions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Step-by-step instructions for using the coping tool."
+                  },
+                  "for_crisis": {
+                    "type": "boolean",
+                    "description": "Whether this tool is suitable for acute crisis situations."
+                  }
+                }
+              },
+              "description": "List of available coping tools matching the filters."
+            }
+          }
+        }
+      },
+      {
+        "name": "track_progress",
+        "description": "Retrieve comprehensive progress tracking across mood, journeys, tools, and wellness metrics.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "user_id": {
+              "type": "string",
+              "description": "The unique identifier of the user account."
+            },
+            "metric_type": {
+              "type": "string",
+              "description": "Optional filter for specific metrics: 'mood', 'journeys', 'tools', 'sleep', or 'all' for comprehensive view."
+            }
+          },
+          "required": [
+            "user_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "overview": {
+              "type": "object",
+              "properties": {
+                "total_check_ins": {
+                  "type": "integer",
+                  "description": "Total number of mood check-ins recorded."
+                },
+                "current_streak": {
+                  "type": "integer",
+                  "description": "Number of consecutive days with check-ins."
+                },
+                "improvement_score": {
+                  "type": "number",
+                  "description": "Calculated wellness metric indicating overall mental health improvement trend."
+                }
+              },
+              "description": "High-level summary of user engagement and wellness."
+            },
+            "mood_trends": {
+              "type": "object",
+              "properties": {
+                "weekly_average": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "description": "Average mood ratings for each day of the week."
+                },
+                "best_day": {
+                  "type": "string",
+                  "description": "Day of the week with highest average mood."
+                },
+                "common_triggers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Identified patterns or situations associated with mood changes."
+                }
+              },
+              "description": "Analysis of mood patterns over time."
+            },
+            "journey_progress": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "description": "Progress details for all enrolled therapeutic programs."
+            },
+            "weekly_report": {
+              "type": "object",
+              "properties": {
+                "summary": {
+                  "type": "string",
+                  "description": "Narrative summary of the week's mental health journey."
+                },
+                "wins": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Positive achievements and milestones from the week."
+                },
+                "areas_for_growth": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Identified opportunities for continued improvement."
+                }
+              },
+              "description": "Weekly reflection and progress summary."
+            }
+          }
+        }
+      },
+      {
+        "name": "join_community_group",
+        "description": "Join anonymous peer support community groups for shared mental health experiences.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "group_topic": {
+              "type": "string",
+              "description": "Topic of the support group: 'anxiety_support', 'depression_recovery', 'stress_management', or 'sleep_tips'."
+            }
+          },
+          "required": [
+            "group_topic"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "group_id": {
+              "type": "string",
+              "description": "Unique identifier for the community group."
+            },
+            "group_name": {
+              "type": "string",
+              "description": "Display name of the support group."
+            },
+            "member_count": {
+              "type": "integer",
+              "description": "Current number of active members in the group."
+            },
+            "moderated": {
+              "type": "boolean",
+              "description": "Whether the group has professional moderation."
+            },
+            "recent_discussions": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "description": "List of recent discussion threads in the group."
+            },
+            "guidelines": {
+              "type": "string",
+              "description": "Community guidelines and participation rules for the group."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass CheckIn(BaseModel):\n    \"\"\"Represents a daily mood check-in record.\"\"\"\n    check_in_id: str = Field(..., description=\"Unique identifier for this check-in\")\n    user_id: str = Field(..., description=\"User identifier\")\n    mood_rating: int = Field(..., ge=1, le=10, description=\"Mood rating 1-10\")\n    feelings: List[str] = Field(..., description=\"List of emotions\")\n    notes: str = Field(default=\"\", description=\"Optional journal notes\")\n    timestamp: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"ISO 8601 timestamp\")\n\nclass Journey(BaseModel):\n    \"\"\"Represents a guided therapeutic program.\"\"\"\n    journey_id: str = Field(..., description=\"Unique journey identifier\")\n    title: str = Field(..., description=\"Journey title\")\n    description: str = Field(..., description=\"Journey description\")\n    category: str = Field(..., description=\"Mental health category\")\n    total_steps: int = Field(..., ge=1, description=\"Total steps in program\")\n    duration_weeks: int = Field(..., ge=1, description=\"Duration in weeks\")\n    techniques: List[str] = Field(..., description=\"CBT techniques used\")\n    clinical_approach: str = Field(..., description=\"Clinical methodology\")\n\nclass Enrollment(BaseModel):\n    \"\"\"Represents user enrollment in a journey.\"\"\"\n    enrollment_id: str = Field(..., description=\"Unique enrollment identifier\")\n    user_id: str = Field(..., description=\"User identifier\")\n    journey_id: str = Field(..., description=\"Journey identifier\")\n    current_step: int = Field(..., ge=1, description=\"Current step number\")\n    progress_percent: float = Field(..., ge=0, le=100, description=\"Completion percentage\")\n\nclass CopingTool(BaseModel):\n    \"\"\"Represents an evidence-based coping tool.\"\"\"\n    tool_id: str = Field(..., description=\"Unique tool identifier\")\n    name: str = Field(..., description=\"Tool name\")\n    type: str = Field(..., description=\"Tool category\")\n    duration_minutes: int = Field(..., ge=1, description=\"Duration in minutes\")\n    description: str = Field(..., description=\"Tool description\")\n    instructions: List[str] = Field(..., description=\"Step-by-step instructions\")\n    for_crisis: bool = Field(..., description=\"Suitable for crisis\")\n\nclass CommunityGroup(BaseModel):\n    \"\"\"Represents a peer support community group.\"\"\"\n    group_id: str = Field(..., description=\"Unique group identifier\")\n    group_name: str = Field(..., description=\"Group display name\")\n    topic: str = Field(..., description=\"Group topic\")\n    member_count: int = Field(..., ge=0, description=\"Active member count\")\n    moderated: bool = Field(..., description=\"Has professional moderation\")\n    guidelines: str = Field(..., description=\"Community guidelines\")\n\nclass SanvelloScenario(BaseModel):\n    \"\"\"Main scenario model for Sanvello mental health platform.\"\"\"\n    check_ins: Dict[str, CheckIn] = Field(default={}, description=\"All check-in records\")\n    journeys: Dict[str, Journey] = Field(default={}, description=\"Available journeys\")\n    enrollments: Dict[str, Enrollment] = Field(default={}, description=\"User enrollments\")\n    coping_tools: Dict[str, CopingTool] = Field(default={}, description=\"Available coping tools\")\n    community_groups: Dict[str, CommunityGroup] = Field(default={}, description=\"Community groups\")\n    user_check_in_history: Dict[str, List[str]] = Field(default={}, description=\"User check-in IDs\")\n    user_enrollments: Dict[str, List[str]] = Field(default={}, description=\"User enrollment IDs\")\n    current_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"Current timestamp\")\n    next_check_in_id: int = Field(default=1, ge=1, description=\"Next check-in ID counter\")\n    next_enrollment_id: int = Field(default=1, ge=1, description=\"Next enrollment ID counter\")\n\nScenario_Schema = [CheckIn, Journey, Enrollment, CopingTool, CommunityGroup, SanvelloScenario]\n\n# Section 2: Class\nclass SanvelloMentalHealthAPI:\n    def __init__(self):\n        \"\"\"Initialize Sanvello API with empty state.\"\"\"\n        self.check_ins: Dict[str, CheckIn] = {}\n        self.journeys: Dict[str, Journey] = {}\n        self.enrollments: Dict[str, Enrollment] = {}\n        self.coping_tools: Dict[str, CopingTool] = {}\n        self.community_groups: Dict[str, CommunityGroup] = {}\n        self.user_check_in_history: Dict[str, List[str]] = {}\n        self.user_enrollments: Dict[str, List[str]] = {}\n        self.current_time: str = \"\"\n        self.next_check_in_id: int = 1\n        self.next_enrollment_id: int = 1\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = SanvelloScenario(**scenario)\n        self.check_ins = model.check_ins\n        self.journeys = model.journeys\n        self.enrollments = model.enrollments\n        self.coping_tools = model.coping_tools\n        self.community_groups = model.community_groups\n        self.user_check_in_history = model.user_check_in_history\n        self.user_enrollments = model.user_enrollments\n        self.current_time = model.current_time\n        self.next_check_in_id = model.next_check_in_id\n        self.next_enrollment_id = model.next_enrollment_id\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"check_ins\": {cid: ci.model_dump() for cid, ci in self.check_ins.items()},\n            \"journeys\": {jid: j.model_dump() for jid, j in self.journeys.items()},\n            \"enrollments\": {eid: e.model_dump() for eid, e in self.enrollments.items()},\n            \"coping_tools\": {tid: t.model_dump() for tid, t in self.coping_tools.items()},\n            \"community_groups\": {gid: g.model_dump() for gid, g in self.community_groups.items()},\n            \"user_check_in_history\": self.user_check_in_history,\n            \"user_enrollments\": self.user_enrollments,\n            \"current_time\": self.current_time,\n            \"next_check_in_id\": self.next_check_in_id,\n            \"next_enrollment_id\": self.next_enrollment_id\n        }\n\n    def daily_check_in(self, user_id: str, mood_rating: int, feelings: List[str], notes: str) -> dict:\n        \"\"\"Record daily mood check-in.\"\"\"\n        check_in_id = f\"ci_{self.next_check_in_id}\"\n        self.next_check_in_id += 1\n        \n        check_in = CheckIn(\n            check_in_id=check_in_id,\n            user_id=user_id,\n            mood_rating=mood_rating,\n            feelings=feelings,\n            notes=notes,\n            timestamp=self.current_time\n        )\n        self.check_ins[check_in_id] = check_in\n        \n        if user_id not in self.user_check_in_history:\n            self.user_check_in_history[user_id] = []\n        self.user_check_in_history[user_id].append(check_in_id)\n        \n        user_history = [self.check_ins[cid] for cid in self.user_check_in_history[user_id]]\n        avg_mood = sum(ci.mood_rating for ci in user_history) / len(user_history)\n        insights = f\"Your average mood is {avg_mood:.1f}. \"\n        if mood_rating < avg_mood:\n            insights += \"Today's mood is below your average.\"\n        else:\n            insights += \"Today's mood is at or above your average.\"\n        \n        recommended_tools = []\n        if mood_rating <= 4:\n            recommended_tools = [\"breathing\", \"grounding\"]\n        elif mood_rating <= 7:\n            recommended_tools = [\"meditation\", \"journaling\"]\n        else:\n            recommended_tools = [\"visualization\"]\n        \n        journey_suggestion = \"anxiety\" if \"anxious\" in feelings else \"stress\"\n        \n        return {\n            \"check_in_id\": check_in_id,\n            \"timestamp\": self.current_time,\n            \"insights\": insights,\n            \"recommended_tools\": recommended_tools,\n            \"guided_journey_suggestion\": journey_suggestion\n        }\n\n    def get_guided_journeys(self, category: Optional[str]) -> dict:\n        \"\"\"Retrieve guided therapeutic programs.\"\"\"\n        filtered = [j for j in self.journeys.values() if not category or j.category == category]\n        return {\n            \"journeys\": [\n                {\n                    \"journey_id\": j.journey_id,\n                    \"title\": j.title,\n                    \"description\": j.description,\n                    \"category\": j.category,\n                    \"total_steps\": j.total_steps,\n                    \"duration_weeks\": j.duration_weeks,\n                    \"techniques\": j.techniques,\n                    \"clinical_approach\": j.clinical_approach\n                }\n                for j in filtered\n            ]\n        }\n\n    def start_journey(self, user_id: str, journey_id: str) -> dict:\n        \"\"\"Enroll user in a guided program.\"\"\"\n        journey = self.journeys[journey_id]\n        enrollment_id = f\"en_{self.next_enrollment_id}\"\n        self.next_enrollment_id += 1\n        \n        enrollment = Enrollment(\n            enrollment_id=enrollment_id,\n            user_id=user_id,\n            journey_id=journey_id,\n            current_step=1,\n            progress_percent=0.0\n        )\n        self.enrollments[enrollment_id] = enrollment\n        \n        if user_id not in self.user_enrollments:\n            self.user_enrollments[user_id] = []\n        self.user_enrollments[user_id].append(enrollment_id)\n        \n        return {\n            \"enrollment_id\": enrollment_id,\n            \"current_step\": 1,\n            \"progress_percent\": 0.0,\n            \"weekly_goal\": {\"week\": 1, \"goal\": f\"Complete step 1 of {journey.title}\"},\n            \"next_activity\": {\"step\": 1, \"title\": \"Introduction\", \"description\": \"Begin your journey\"}\n        }\n\n    def get_coping_tools(self, tool_type: Optional[str], situation: Optional[str]) -> dict:\n        \"\"\"Retrieve evidence-based coping tools.\"\"\"\n        filtered = [\n            t for t in self.coping_tools.values()\n            if (not tool_type or t.type == tool_type)\n        ]\n        return {\n            \"tools\": [\n                {\n                    \"tool_id\": t.tool_id,\n                    \"name\": t.name,\n                    \"type\": t.type,\n                    \"duration_minutes\": t.duration_minutes,\n                    \"description\": t.description,\n                    \"instructions\": t.instructions,\n                    \"for_crisis\": t.for_crisis\n                }\n                for t in filtered\n            ]\n        }\n\n    def track_progress(self, user_id: str, metric_type: Optional[str]) -> dict:\n        \"\"\"Retrieve comprehensive progress tracking.\"\"\"\n        user_check_ins = [self.check_ins[cid] for cid in self.user_check_in_history.get(user_id, [])]\n        total_check_ins = len(user_check_ins)\n        current_streak = min(total_check_ins, 7)\n        improvement_score = sum(ci.mood_rating for ci in user_check_ins) / max(total_check_ins, 1)\n        \n        weekly_avg = [0.0] * 7\n        if user_check_ins:\n            for i in range(7):\n                weekly_avg[i] = sum(ci.mood_rating for ci in user_check_ins[-7:]) / len(user_check_ins[-7:])\n        \n        best_day = \"Monday\"\n        common_triggers = [\"work stress\", \"sleep issues\"]\n        \n        user_enroll = [self.enrollments[eid] for eid in self.user_enrollments.get(user_id, [])]\n        journey_progress = [\n            {\n                \"enrollment_id\": e.enrollment_id,\n                \"journey_id\": e.journey_id,\n                \"current_step\": e.current_step,\n                \"progress_percent\": e.progress_percent\n            }\n            for e in user_enroll\n        ]\n        \n        return {\n            \"overview\": {\n                \"total_check_ins\": total_check_ins,\n                \"current_streak\": current_streak,\n                \"improvement_score\": improvement_score\n            },\n            \"mood_trends\": {\n                \"weekly_average\": weekly_avg,\n                \"best_day\": best_day,\n                \"common_triggers\": common_triggers\n            },\n            \"journey_progress\": journey_progress,\n            \"weekly_report\": {\n                \"summary\": \"You've made progress this week\",\n                \"wins\": [\"Consistent check-ins\", \"Started new journey\"],\n                \"areas_for_growth\": [\"Try more coping tools\", \"Engage with community\"]\n            }\n        }\n\n    def join_community_group(self, group_topic: str) -> dict:\n        \"\"\"Join anonymous peer support community group.\"\"\"\n        group = next((g for g in self.community_groups.values() if g.topic == group_topic), None)\n        return {\n            \"group_id\": group.group_id,\n            \"group_name\": group.group_name,\n            \"member_count\": group.member_count,\n            \"moderated\": group.moderated,\n            \"recent_discussions\": [\n                {\"thread_id\": \"t1\", \"title\": \"Coping with morning anxiety\", \"replies\": 12},\n                {\"thread_id\": \"t2\", \"title\": \"Sleep tips that worked for me\", \"replies\": 8}\n            ],\n            \"guidelines\": group.guidelines\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"SanvelloMentalHealthServer\")\napi = SanvelloMentalHealthAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Sanvello API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching SanvelloScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Sanvello state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef daily_check_in(user_id: str, mood_rating: int, feelings: list, notes: str = \"\") -> dict:\n    \"\"\"\n    Record daily mood check-in with CBT-based assessment.\n\n    Args:\n        user_id (str): The unique identifier of the user account.\n        mood_rating (int): Mood rating on a scale from 1 (lowest) to 10 (highest).\n        feelings (list): List of selected emotions describing current state.\n        notes (str): [Optional] Journal entry or additional notes about the day.\n\n    Returns:\n        check_in_id (str): Unique identifier for this check-in record.\n        timestamp (str): ISO 8601 timestamp when the check-in was recorded.\n        insights (str): Pattern insights derived from historical mood data.\n        recommended_tools (list): List of suggested coping tools.\n        guided_journey_suggestion (str): Recommended therapeutic program.\n    \"\"\"\n    try:\n        if not user_id or not isinstance(user_id, str):\n            raise ValueError(\"user_id must be a non-empty string\")\n        if not isinstance(feelings, list) or not feelings:\n            raise ValueError(\"feelings must be a non-empty list\")\n        return api.daily_check_in(user_id, mood_rating, feelings, notes)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_guided_journeys(category: str = None) -> dict:\n    \"\"\"\n    Retrieve structured CBT-based therapeutic programs.\n\n    Args:\n        category (str): [Optional] Filter by mental health category.\n\n    Returns:\n        journeys (list): List of available guided therapeutic journeys.\n    \"\"\"\n    try:\n        return api.get_guided_journeys(category)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef start_journey(user_id: str, journey_id: str) -> dict:\n    \"\"\"\n    Enroll user in a guided mental health program.\n\n    Args:\n        user_id (str): The unique identifier of the user account.\n        journey_id (str): Unique identifier for the therapeutic program to enroll in.\n\n    Returns:\n        enrollment_id (str): Unique identifier for this enrollment instance.\n        current_step (int): Current step number in the program.\n        progress_percent (float): Completion percentage of the journey.\n        weekly_goal (dict): Structured goal for the current week.\n        next_activity (dict): Details of the next recommended activity.\n    \"\"\"\n    try:\n        if not user_id or not isinstance(user_id, str):\n            raise ValueError(\"user_id must be a non-empty string\")\n        if not journey_id or not isinstance(journey_id, str):\n            raise ValueError(\"journey_id must be a non-empty string\")\n        if journey_id not in api.journeys:\n            raise ValueError(f\"Journey {journey_id} not found\")\n        return api.start_journey(user_id, journey_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_coping_tools(tool_type: str = None, situation: str = None) -> dict:\n    \"\"\"\n    Retrieve evidence-based coping tools for immediate relief.\n\n    Args:\n        tool_type (str): [Optional] Filter by tool category.\n        situation (str): [Optional] Filter by specific situation.\n\n    Returns:\n        tools (list): List of available coping tools matching the filters.\n    \"\"\"\n    try:\n        return api.get_coping_tools(tool_type, situation)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef track_progress(user_id: str, metric_type: str = None) -> dict:\n    \"\"\"\n    Retrieve comprehensive progress tracking across all metrics.\n\n    Args:\n        user_id (str): The unique identifier of the user account.\n        metric_type (str): [Optional] Filter for specific metrics.\n\n    Returns:\n        overview (dict): High-level summary of user engagement and wellness.\n        mood_trends (dict): Analysis of mood patterns over time.\n        journey_progress (list): Progress details for all enrolled programs.\n        weekly_report (dict): Weekly reflection and progress summary.\n    \"\"\"\n    try:\n        if not user_id or not isinstance(user_id, str):\n            raise ValueError(\"user_id must be a non-empty string\")\n        return api.track_progress(user_id, metric_type)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef join_community_group(group_topic: str) -> dict:\n    \"\"\"\n    Join anonymous peer support community groups.\n\n    Args:\n        group_topic (str): Topic of the support group.\n\n    Returns:\n        group_id (str): Unique identifier for the community group.\n        group_name (str): Display name of the support group.\n        member_count (int): Current number of active members.\n        moderated (bool): Whether the group has professional moderation.\n        recent_discussions (list): List of recent discussion threads.\n        guidelines (str): Community guidelines and participation rules.\n    \"\"\"\n    try:\n        if not group_topic or not isinstance(group_topic, str):\n            raise ValueError(\"group_topic must be a non-empty string\")\n        group = next((g for g in api.community_groups.values() if g.topic == group_topic), None)\n        if not group:\n            raise ValueError(f\"Community group with topic {group_topic} not found\")\n        return api.join_community_group(group_topic)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-03-05T20:32:16.287421",
+      "revision_number": 1
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Minimal setup with one user check-in and one available journey",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "check_ins": {
+          "CHK001": {
+            "check_in_id": "CHK001",
+            "user_id": "user_001",
+            "mood_rating": 7,
+            "feelings": [
+              "calm",
+              "hopeful"
+            ],
+            "notes": "Feeling better today",
+            "timestamp": "2026-03-05T08:00:00"
+          }
+        },
+        "journeys": {
+          "JRN001": {
+            "journey_id": "JRN001",
+            "title": "Managing Anxiety",
+            "description": "Learn techniques to reduce anxiety",
+            "category": "Anxiety",
+            "total_steps": 8,
+            "duration_weeks": 4,
+            "techniques": [
+              "breathing exercises",
+              "cognitive restructuring"
+            ],
+            "clinical_approach": "CBT"
+          }
+        },
+        "enrollments": {},
+        "coping_tools": {},
+        "community_groups": {},
+        "user_check_in_history": {
+          "user_001": [
+            "CHK001"
+          ]
+        },
+        "user_enrollments": {},
+        "current_time": "2026-03-05T12:00:00",
+        "next_check_in_id": 2,
+        "next_enrollment_id": 1
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple users with check-ins, active enrollments, and coping tools",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "check_ins": {
+          "CHK001": {
+            "check_in_id": "CHK001",
+            "user_id": "user_001",
+            "mood_rating": 5,
+            "feelings": [
+              "anxious",
+              "stressed"
+            ],
+            "notes": "Work deadline approaching",
+            "timestamp": "2026-03-04T09:30:00"
+          },
+          "CHK002": {
+            "check_in_id": "CHK002",
+            "user_id": "user_001",
+            "mood_rating": 7,
+            "feelings": [
+              "relieved",
+              "accomplished"
+            ],
+            "notes": "Completed project successfully",
+            "timestamp": "2026-03-05T10:15:00"
+          },
+          "CHK003": {
+            "check_in_id": "CHK003",
+            "user_id": "user_002",
+            "mood_rating": 3,
+            "feelings": [
+              "sad",
+              "lonely"
+            ],
+            "notes": "",
+            "timestamp": "2026-03-05T11:00:00"
+          }
+        },
+        "journeys": {
+          "JRN001": {
+            "journey_id": "JRN001",
+            "title": "Depression Recovery",
+            "description": "Evidence-based program for depression",
+            "category": "Depression",
+            "total_steps": 12,
+            "duration_weeks": 8,
+            "techniques": [
+              "behavioral activation",
+              "thought records"
+            ],
+            "clinical_approach": "CBT"
+          },
+          "JRN002": {
+            "journey_id": "JRN002",
+            "title": "Stress Management",
+            "description": "Build resilience and manage stress",
+            "category": "Stress",
+            "total_steps": 6,
+            "duration_weeks": 3,
+            "techniques": [
+              "mindfulness",
+              "time management"
+            ],
+            "clinical_approach": "Mindfulness-Based Stress Reduction"
+          }
+        },
+        "enrollments": {
+          "ENR001": {
+            "enrollment_id": "ENR001",
+            "user_id": "user_001",
+            "journey_id": "JRN002",
+            "current_step": 3,
+            "progress_percent": 50.0
+          },
+          "ENR002": {
+            "enrollment_id": "ENR002",
+            "user_id": "user_002",
+            "journey_id": "JRN001",
+            "current_step": 1,
+            "progress_percent": 8.33
+          }
+        },
+        "coping_tools": {
+          "TOOL001": {
+            "tool_id": "TOOL001",
+            "name": "Box Breathing",
+            "type": "Breathing Exercise",
+            "duration_minutes": 5,
+            "description": "Calming breath technique",
+            "instructions": [
+              "Inhale for 4 counts",
+              "Hold for 4 counts",
+              "Exhale for 4 counts",
+              "Hold for 4 counts"
+            ],
+            "for_crisis": true
+          },
+          "TOOL002": {
+            "tool_id": "TOOL002",
+            "name": "Gratitude Journal",
+            "type": "Journaling",
+            "duration_minutes": 10,
+            "description": "Write three things you're grateful for",
+            "instructions": [
+              "Find a quiet space",
+              "List three positive things from today",
+              "Reflect on why they matter"
+            ],
+            "for_crisis": false
+          }
+        },
+        "community_groups": {
+          "GRP001": {
+            "group_id": "GRP001",
+            "group_name": "Anxiety Support Circle",
+            "topic": "Anxiety Management",
+            "member_count": 247,
+            "moderated": true,
+            "guidelines": "Be respectful, no medical advice, share experiences only"
+          }
+        },
+        "user_check_in_history": {
+          "user_001": [
+            "CHK001",
+            "CHK002"
+          ],
+          "user_002": [
+            "CHK003"
+          ]
+        },
+        "user_enrollments": {
+          "user_001": [
+            "ENR001"
+          ],
+          "user_002": [
+            "ENR002"
+          ]
+        },
+        "current_time": "2026-03-05T12:00:00",
+        "next_check_in_id": 4,
+        "next_enrollment_id": 3
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich platform with multiple journeys, active community, diverse coping tools, and extensive user history",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "check_ins": {
+          "CHK001": {
+            "check_in_id": "CHK001",
+            "user_id": "user_001",
+            "mood_rating": 4,
+            "feelings": [
+              "anxious",
+              "overwhelmed",
+              "tired"
+            ],
+            "notes": "Struggling with sleep and work stress",
+            "timestamp": "2026-03-01T07:00:00"
+          },
+          "CHK002": {
+            "check_in_id": "CHK002",
+            "user_id": "user_001",
+            "mood_rating": 6,
+            "feelings": [
+              "hopeful",
+              "motivated"
+            ],
+            "notes": "Started new journey, feeling positive",
+            "timestamp": "2026-03-03T08:30:00"
+          },
+          "CHK003": {
+            "check_in_id": "CHK003",
+            "user_id": "user_002",
+            "mood_rating": 2,
+            "feelings": [
+              "depressed",
+              "hopeless"
+            ],
+            "notes": "Very difficult day",
+            "timestamp": "2026-03-02T14:00:00"
+          },
+          "CHK004": {
+            "check_in_id": "CHK004",
+            "user_id": "user_003",
+            "mood_rating": 8,
+            "feelings": [
+              "content",
+              "peaceful"
+            ],
+            "notes": "Meditation practice is helping",
+            "timestamp": "2026-03-04T19:00:00"
+          },
+          "CHK005": {
+            "check_in_id": "CHK005",
+            "user_id": "user_002",
+            "mood_rating": 5,
+            "feelings": [
+              "neutral",
+              "tired"
+            ],
+            "notes": "",
+            "timestamp": "2026-03-05T09:00:00"
+          }
+        },
+        "journeys": {
+          "JRN001": {
+            "journey_id": "JRN001",
+            "title": "Overcoming Depression",
+            "description": "Comprehensive CBT program for depression",
+            "category": "Depression",
+            "total_steps": 16,
+            "duration_weeks": 12,
+            "techniques": [
+              "behavioral activation",
+              "cognitive restructuring",
+              "problem solving"
+            ],
+            "clinical_approach": "Cognitive Behavioral Therapy"
+          },
+          "JRN002": {
+            "journey_id": "JRN002",
+            "title": "Anxiety Mastery",
+            "description": "Learn to manage and reduce anxiety",
+            "category": "Anxiety",
+            "total_steps": 10,
+            "duration_weeks": 6,
+            "techniques": [
+              "exposure therapy",
+              "relaxation training",
+              "worry management"
+            ],
+            "clinical_approach": "CBT with Exposure"
+          },
+          "JRN003": {
+            "journey_id": "JRN003",
+            "title": "Mindful Living",
+            "description": "Develop mindfulness practice",
+            "category": "Mindfulness",
+            "total_steps": 8,
+            "duration_weeks": 8,
+            "techniques": [
+              "body scan",
+              "mindful breathing",
+              "loving-kindness"
+            ],
+            "clinical_approach": "MBSR"
+          }
+        },
+        "enrollments": {
+          "ENR001": {
+            "enrollment_id": "ENR001",
+            "user_id": "user_001",
+            "journey_id": "JRN002",
+            "current_step": 4,
+            "progress_percent": 40.0
+          },
+          "ENR002": {
+            "enrollment_id": "ENR002",
+            "user_id": "user_002",
+            "journey_id": "JRN001",
+            "current_step": 2,
+            "progress_percent": 12.5
+          },
+          "ENR003": {
+            "enrollment_id": "ENR003",
+            "user_id": "user_003",
+            "journey_id": "JRN003",
+            "current_step": 7,
+            "progress_percent": 87.5
+          }
+        },
+        "coping_tools": {
+          "TOOL001": {
+            "tool_id": "TOOL001",
+            "name": "5-4-3-2-1 Grounding",
+            "type": "Grounding Exercise",
+            "duration_minutes": 3,
+            "description": "Sensory grounding technique for anxiety",
+            "instructions": [
+              "Name 5 things you see",
+              "Name 4 things you touch",
+              "Name 3 things you hear",
+              "Name 2 things you smell",
+              "Name 1 thing you taste"
+            ],
+            "for_crisis": true
+          },
+          "TOOL002": {
+            "tool_id": "TOOL002",
+            "name": "Progressive Muscle Relaxation",
+            "type": "Relaxation",
+            "duration_minutes": 15,
+            "description": "Systematic tension and release of muscle groups",
+            "instructions": [
+              "Find comfortable position",
+              "Tense feet for 5 seconds",
+              "Release and notice relaxation",
+              "Continue through all muscle groups"
+            ],
+            "for_crisis": false
+          },
+          "TOOL003": {
+            "tool_id": "TOOL003",
+            "name": "Thought Record",
+            "type": "Cognitive Tool",
+            "duration_minutes": 10,
+            "description": "Challenge negative automatic thoughts",
+            "instructions": [
+              "Identify triggering situation",
+              "Note automatic thought",
+              "List evidence for and against",
+              "Generate balanced thought"
+            ],
+            "for_crisis": false
+          },
+          "TOOL004": {
+            "tool_id": "TOOL004",
+            "name": "Crisis Hotline Numbers",
+            "type": "Crisis Resource",
+            "duration_minutes": 1,
+            "description": "Emergency mental health contacts",
+            "instructions": [
+              "988 - Suicide & Crisis Lifeline",
+              "741741 - Crisis Text Line",
+              "Call 911 for immediate danger"
+            ],
+            "for_crisis": true
+          }
+        },
+        "community_groups": {
+          "GRP001": {
+            "group_id": "GRP001",
+            "group_name": "Depression Warriors",
+            "topic": "Depression Support",
+            "member_count": 1523,
+            "moderated": true,
+            "guidelines": "Safe space for sharing experiences. No judgment. Professional moderators available."
+          },
+          "GRP002": {
+            "group_id": "GRP002",
+            "group_name": "Anxiety Anonymous",
+            "topic": "Anxiety Management",
+            "member_count": 892,
+            "moderated": true,
+            "guidelines": "Share coping strategies. Respect privacy. No medical advice."
+          },
+          "GRP003": {
+            "group_id": "GRP003",
+            "group_name": "Mindfulness Circle",
+            "topic": "Meditation & Mindfulness",
+            "member_count": 456,
+            "moderated": false,
+            "guidelines": "Weekly meditation sessions. Share mindfulness tips and experiences."
+          }
+        },
+        "user_check_in_history": {
+          "user_001": [
+            "CHK001",
+            "CHK002"
+          ],
+          "user_002": [
+            "CHK003",
+            "CHK005"
+          ],
+          "user_003": [
+            "CHK004"
+          ]
+        },
+        "user_enrollments": {
+          "user_001": [
+            "ENR001"
+          ],
+          "user_002": [
+            "ENR002"
+          ],
+          "user_003": [
+            "ENR003"
+          ]
+        },
+        "current_time": "2026-03-05T12:00:00",
+        "next_check_in_id": 6,
+        "next_enrollment_id": 4
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Edge cases: empty platform, extreme mood ratings, minimal duration tools",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "check_ins": {
+          "CHK001": {
+            "check_in_id": "CHK001",
+            "user_id": "user_001",
+            "mood_rating": 1,
+            "feelings": [
+              "hopeless"
+            ],
+            "notes": "",
+            "timestamp": "2026-03-05T00:00:00"
+          },
+          "CHK002": {
+            "check_in_id": "CHK002",
+            "user_id": "user_002",
+            "mood_rating": 10,
+            "feelings": [
+              "ecstatic",
+              "joyful",
+              "energized"
+            ],
+            "notes": "Best day ever!",
+            "timestamp": "2026-03-05T23:59:59"
+          }
+        },
+        "journeys": {
+          "JRN001": {
+            "journey_id": "JRN001",
+            "title": "Quick Start",
+            "description": "Minimal journey",
+            "category": "General",
+            "total_steps": 1,
+            "duration_weeks": 1,
+            "techniques": [
+              "intro"
+            ],
+            "clinical_approach": "Psychoeducation"
+          }
+        },
+        "enrollments": {
+          "ENR001": {
+            "enrollment_id": "ENR001",
+            "user_id": "user_001",
+            "journey_id": "JRN001",
+            "current_step": 1,
+            "progress_percent": 100.0
+          }
+        },
+        "coping_tools": {
+          "TOOL001": {
+            "tool_id": "TOOL001",
+            "name": "Quick Breath",
+            "type": "Emergency",
+            "duration_minutes": 1,
+            "description": "Immediate calming",
+            "instructions": [
+              "Take one deep breath"
+            ],
+            "for_crisis": true
+          }
+        },
+        "community_groups": {
+          "GRP001": {
+            "group_id": "GRP001",
+            "group_name": "New Members",
+            "topic": "Getting Started",
+            "member_count": 0,
+            "moderated": false,
+            "guidelines": "Welcome!"
+          }
+        },
+        "user_check_in_history": {
+          "user_001": [
+            "CHK001"
+          ],
+          "user_002": [
+            "CHK002"
+          ]
+        },
+        "user_enrollments": {
+          "user_001": [
+            "ENR001"
+          ]
+        },
+        "current_time": "2026-03-05T12:00:00",
+        "next_check_in_id": 3,
+        "next_enrollment_id": 2
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 3,
+      "failed_scenarios": 1,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [
+            {
+              "type": "Tool execution error",
+              "location": "join_community_group",
+              "details": "Community group with topic Anxiety Support not found",
+              "expected_vs_actual": "Expected to find a community group with topic 'Anxiety Support' but none exists in the current scenario",
+              "root_cause": "The scenario data doesn't include any community groups, so attempting to join any group will fail. The tool correctly validates that the group exists before allowing enrollment.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "daily_check_in",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_guided_journeys",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "start_journey",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_coping_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "track_progress",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "join_community_group",
+                "passed": false,
+                "error": "Community group with topic Anxiety Support not found"
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_execution": [
+              {
+                "tool_name": "daily_check_in",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_guided_journeys",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "start_journey",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_coping_tools",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "track_progress",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "join_community_group",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "daily_check_in - empty user_id",
+              "details": "Error executing tool daily_check_in: user_id must be a non-empty string",
+              "expected_vs_actual": "Expected validation error for empty user_id - tool correctly rejected invalid input",
+              "root_cause": "Proper validation of user_id parameter",
+              "expected_error": true
+            },
+            {
+              "type": "Validation Error",
+              "location": "start_journey - invalid journey_id",
+              "details": "Error executing tool start_journey: Journey JRN999 not found",
+              "expected_vs_actual": "Expected validation error for invalid journey_id - tool correctly rejected non-existent journey",
+              "root_cause": "Proper validation of journey_id parameter",
+              "expected_error": true
+            },
+            {
+              "type": "Validation Error",
+              "location": "track_progress - empty user_id",
+              "details": "Error executing tool track_progress: user_id must be a non-empty string",
+              "expected_vs_actual": "Expected validation error for empty user_id - tool correctly rejected invalid input",
+              "root_cause": "Proper validation of user_id parameter",
+              "expected_error": true
+            },
+            {
+              "type": "Validation Error",
+              "location": "join_community_group - invalid topic",
+              "details": "Error executing tool join_community_group: Community group with topic Invalid Topic not found",
+              "expected_vs_actual": "Expected validation error for invalid topic - tool correctly rejected non-existent group",
+              "root_cause": "Proper validation of group_topic parameter",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "daily_check_in",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_guided_journeys",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "start_journey",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_coping_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "track_progress",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "join_community_group",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": false,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {},
+            "tool_execution": [],
+            "save_scenario": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_execution": [
+              {
+                "tool_name": "daily_check_in",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_guided_journeys",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "start_journey",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_coping_tools",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "track_progress",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "join_community_group",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "daily_check_in",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_guided_journeys",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "start_journey",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_coping_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "track_progress",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "join_community_group",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "daily_check_in",
+              "details": "user_id must be a non-empty string",
+              "expected_vs_actual": "Expected validation error when empty user_id provided, got validation error as expected",
+              "root_cause": "Proper input validation working correctly",
+              "expected_error": true
+            },
+            {
+              "type": "Validation Error",
+              "location": "start_journey",
+              "details": "Journey JRN999 not found",
+              "expected_vs_actual": "Expected validation error when invalid journey_id provided, got validation error as expected",
+              "root_cause": "Proper journey existence validation working correctly",
+              "expected_error": true
+            },
+            {
+              "type": "Validation Error",
+              "location": "track_progress",
+              "details": "user_id must be a non-empty string",
+              "expected_vs_actual": "Expected validation error when empty user_id provided, got validation error as expected",
+              "root_cause": "Proper input validation working correctly",
+              "expected_error": true
+            },
+            {
+              "type": "Validation Error",
+              "location": "join_community_group",
+              "details": "Community group with topic Invalid Topic not found",
+              "expected_vs_actual": "Expected validation error when invalid group_topic provided, got validation error as expected",
+              "root_cause": "Proper group existence validation working correctly",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "daily_check_in",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_guided_journeys",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "start_journey",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_coping_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "track_progress",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "join_community_group",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "daily_check_in",
+              "details": "user_id must be a non-empty string",
+              "expected_vs_actual": "Expected validation error when empty user_id provided",
+              "root_cause": "Tool correctly validates input parameters",
+              "expected_error": true
+            },
+            {
+              "type": "Validation Error",
+              "location": "start_journey",
+              "details": "Journey INVALID not found",
+              "expected_vs_actual": "Expected validation error when invalid journey_id provided",
+              "root_cause": "Tool correctly validates journey existence",
+              "expected_error": true
+            },
+            {
+              "type": "Validation Error",
+              "location": "track_progress",
+              "details": "user_id must be a non-empty string",
+              "expected_vs_actual": "Expected validation error when empty user_id provided",
+              "root_cause": "Tool correctly validates input parameters",
+              "expected_error": true
+            },
+            {
+              "type": "Validation Error",
+              "location": "join_community_group",
+              "details": "Community group with topic NonExistent not found",
+              "expected_vs_actual": "Expected validation error when invalid group topic provided",
+              "root_cause": "Tool correctly validates group existence",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "daily_check_in",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_guided_journeys",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "start_journey",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_coping_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "track_progress",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "join_community_group",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_004"
+      ],
+      "aggregated_errors": {
+        "total_failed": 1,
+        "scenario_ids": [
+          "scenario_004"
+        ],
+        "error_categories": {
+          "critical": [],
+          "high": [],
+          "medium": [],
+          "low": []
+        },
+        "error_patterns": [],
+        "severity_summary": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0
+        }
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 4,
+        "failed_scenarios": 0,
+        "all_passed": true,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": ""
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "daily_check_in",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "get_guided_journeys",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "start_journey",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "get_coping_tools",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "track_progress",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "join_community_group",
+                  "passed": true,
+                  "error": ""
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": ""
+              }
+            },
+            "complexity_level": "simple",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "daily_check_in",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_guided_journeys",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "start_journey",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_coping_tools",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "track_progress",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "join_community_group",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "medium",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": true,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "daily_check_in",
+                "details": "user_id must be a non-empty string",
+                "expected_vs_actual": "Expected validation error when empty user_id provided, got validation error as expected",
+                "root_cause": "Proper input validation working correctly",
+                "expected_error": true
+              },
+              {
+                "type": "Validation Error",
+                "location": "start_journey",
+                "details": "Journey JRN999 not found",
+                "expected_vs_actual": "Expected validation error when invalid journey_id provided, got validation error as expected",
+                "root_cause": "Proper journey existence validation working correctly",
+                "expected_error": true
+              },
+              {
+                "type": "Validation Error",
+                "location": "track_progress",
+                "details": "user_id must be a non-empty string",
+                "expected_vs_actual": "Expected validation error when empty user_id provided, got validation error as expected",
+                "root_cause": "Proper input validation working correctly",
+                "expected_error": true
+              },
+              {
+                "type": "Validation Error",
+                "location": "join_community_group",
+                "details": "Community group with topic Invalid Topic not found",
+                "expected_vs_actual": "Expected validation error when invalid group_topic provided, got validation error as expected",
+                "root_cause": "Proper group existence validation working correctly",
+                "expected_error": true
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "daily_check_in",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_guided_journeys",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "start_journey",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_coping_tools",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "track_progress",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "join_community_group",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "complex",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": true,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "daily_check_in",
+                "details": "user_id must be a non-empty string",
+                "expected_vs_actual": "Expected validation error when empty user_id provided",
+                "root_cause": "Tool correctly validates input parameters",
+                "expected_error": true
+              },
+              {
+                "type": "Validation Error",
+                "location": "start_journey",
+                "details": "Journey INVALID not found",
+                "expected_vs_actual": "Expected validation error when invalid journey_id provided",
+                "root_cause": "Tool correctly validates journey existence",
+                "expected_error": true
+              },
+              {
+                "type": "Validation Error",
+                "location": "track_progress",
+                "details": "user_id must be a non-empty string",
+                "expected_vs_actual": "Expected validation error when empty user_id provided",
+                "root_cause": "Tool correctly validates input parameters",
+                "expected_error": true
+              },
+              {
+                "type": "Validation Error",
+                "location": "join_community_group",
+                "details": "Community group with topic NonExistent not found",
+                "expected_vs_actual": "Expected validation error when invalid group topic provided",
+                "root_cause": "Tool correctly validates group existence",
+                "expected_error": true
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "daily_check_in",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_guided_journeys",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "start_journey",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_coping_tools",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "track_progress",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "join_community_group",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "boundary",
+            "execution_time": 0.0
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 1,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/SanvelloMentalHealthServer.py"
+  }
+}

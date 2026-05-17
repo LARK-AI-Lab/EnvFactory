@@ -1,0 +1,1632 @@
+{
+  "metadata": {
+    "class_name": "DrugBank",
+    "metadata_path": "envs\\metadata\\DrugBank_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-03-05T18:37:34.289534",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "DrugBank",
+    "description": "Clinical drug information server providing access to pharmaceutical databases, including drug search, detailed monographs, interaction checking, condition-based medication discovery, and product barcode identification services.",
+    "tools": [
+      {
+        "name": "search_drugs",
+        "description": "Search the DrugBank database for pharmaceutical substances by name, brand, active ingredient, or chemical synonym.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Search term matching drug names, brand names, active ingredients, or chemical identifiers."
+            },
+            "fuzzy": {
+              "type": "boolean",
+              "description": "Enable approximate string matching to accommodate spelling variations and typographical errors (default: true)."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of search results to return, controlling result set size (default: 10)."
+            }
+          },
+          "required": [
+            "query"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "drugs": {
+              "type": "array",
+              "description": "List of pharmaceutical substances matching the search criteria.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "drugbank_id": {
+                    "type": "string",
+                    "description": "The unique DrugBank accession identifier assigned to the pharmaceutical compound."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The primary generic or proprietary name of the pharmaceutical product."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Comprehensive clinical description of the drug's pharmacological properties and therapeutic applications."
+                  },
+                  "synonyms": {
+                    "type": "array",
+                    "description": "Alternative brand names, chemical names, or abbreviations used to identify the drug.",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "categories": {
+                    "type": "array",
+                    "description": "Therapeutic classification categories indicating the drug's medical use or pharmacological class.",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "atc_codes": {
+                    "type": "array",
+                    "description": "Anatomical Therapeutic Chemical (ATC) classification codes from the WHO drug classification system.",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_drug_details",
+        "description": "Retrieve comprehensive pharmacological and clinical information for a specific drug using its DrugBank identifier.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "drugbank_id": {
+              "type": "string",
+              "description": "The unique DrugBank accession identifier assigned to the pharmaceutical compound."
+            }
+          },
+          "required": [
+            "drugbank_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "drugbank_id": {
+              "type": "string",
+              "description": "The unique DrugBank accession identifier assigned to the pharmaceutical compound."
+            },
+            "name": {
+              "type": "string",
+              "description": "The primary generic or proprietary name of the pharmaceutical product."
+            },
+            "description": {
+              "type": "string",
+              "description": "Comprehensive clinical description of the drug's pharmacological properties and therapeutic applications."
+            },
+            "mechanism_of_action": {
+              "type": "string",
+              "description": "Description of the specific biochemical interaction through which the drug produces its pharmacological effect."
+            },
+            "pharmacodynamics": {
+              "type": "string",
+              "description": "Description of the drug's biochemical and physiological effects on the body and mechanism of action."
+            },
+            "absorption": {
+              "type": "string",
+              "description": "Information regarding the drug's uptake into systemic circulation from the site of administration."
+            },
+            "metabolism": {
+              "type": "string",
+              "description": "Description of the chemical transformation processes the drug undergoes within the body."
+            },
+            "indications": {
+              "type": "array",
+              "description": "List of medically approved therapeutic uses and conditions for which the drug is prescribed.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "contraindications": {
+              "type": "array",
+              "description": "List of medical conditions or circumstances where the drug should not be used due to potential harm.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "dosage_forms": {
+              "type": "array",
+              "description": "Available pharmaceutical formulations and routes of administration (e.g., tablet, injection, suspension).",
+              "items": {
+                "type": "string"
+              }
+            },
+            "side_effects": {
+              "type": "array",
+              "description": "Documented adverse reactions and unwanted effects associated with therapeutic use.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "pregnancy_category": {
+              "type": "string",
+              "description": "FDA or standard pregnancy safety classification indicating risk level during gestation."
+            }
+          }
+        }
+      },
+      {
+        "name": "check_drug_interactions",
+        "description": "Analyze multiple drugs for potential pharmacological interactions, contraindications, and clinical severity.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "drugs": {
+              "type": "array",
+              "description": "List of drug identifiers (DrugBank IDs or common names) to analyze for potential pharmacological interactions.",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "drugs"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "interactions": {
+              "type": "array",
+              "description": "List of clinically significant drug-drug interactions identified between the specified medications.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "drug1": {
+                    "type": "string",
+                    "description": "The identifier or name of the first drug involved in the interaction."
+                  },
+                  "drug2": {
+                    "type": "string",
+                    "description": "The identifier or name of the second drug involved in the interaction."
+                  },
+                  "severity": {
+                    "type": "string",
+                    "description": "Clinical severity rating of the interaction (minor, moderate, or major)."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Detailed explanation of the pharmacological interaction mechanism and clinical effects."
+                  },
+                  "management": {
+                    "type": "string",
+                    "description": "Clinical recommendations for managing or mitigating the interaction risk."
+                  }
+                }
+              }
+            },
+            "interaction_count": {
+              "type": "integer",
+              "description": "Total number of clinically significant interactions identified between the specified drugs."
+            },
+            "highest_severity": {
+              "type": "string",
+              "description": "The most severe interaction level detected among all drug pairs analyzed (none, minor, moderate, or major)."
+            }
+          }
+        }
+      },
+      {
+        "name": "search_by_condition",
+        "description": "Discover medications used to treat specific medical conditions, diseases, or therapeutic indications.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "condition": {
+              "type": "string",
+              "description": "Medical condition, disease name, or therapeutic indication to search for appropriate treatments."
+            }
+          },
+          "required": [
+            "condition"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "drugs": {
+              "type": "array",
+              "description": "List of pharmaceutical products indicated for treatment of the specified medical condition.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "drugbank_id": {
+                    "type": "string",
+                    "description": "The unique DrugBank accession identifier assigned to the pharmaceutical compound."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The primary generic or proprietary name of the pharmaceutical product."
+                  },
+                  "indication_type": {
+                    "type": "string",
+                    "description": "Classification of the drug's approval status for the specific condition (approved, off-label, or investigational)."
+                  },
+                  "efficacy": {
+                    "type": "string",
+                    "description": "Qualitative or quantitative assessment of the drug's therapeutic effectiveness for the indication."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_drug_by_barcode",
+        "description": "Identify pharmaceutical products and retrieve detailed information using commercial product barcodes.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "barcode": {
+              "type": "string",
+              "description": "Universal Product Code (UPC) or European Article Number (EAN) barcode digits from product packaging."
+            }
+          },
+          "required": [
+            "barcode"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "drugbank_id": {
+              "type": "string",
+              "description": "The unique DrugBank accession identifier assigned to the pharmaceutical compound."
+            },
+            "product_name": {
+              "type": "string",
+              "description": "The commercial product name as registered by the manufacturer."
+            },
+            "manufacturer": {
+              "type": "string",
+              "description": "The pharmaceutical company or organization responsible for producing the commercial product."
+            },
+            "active_ingredients": {
+              "type": "array",
+              "description": "List of pharmacologically active compounds contained in the pharmaceutical preparation.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "dosage_strength": {
+              "type": "string",
+              "description": "The concentration or potency of active ingredients per dosage unit."
+            },
+            "packaging": {
+              "type": "string",
+              "description": "Description of the commercial packaging configuration and container specifications."
+            },
+            "approved": {
+              "type": "boolean",
+              "description": "Boolean indicating whether the product has received regulatory approval for marketing."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Drug(BaseModel):\n    \"\"\"Represents a drug in the database.\"\"\"\n    drugbank_id: str = Field(..., pattern=r\"^DB\\d{5}$\", description=\"DrugBank ID (format: DB followed by 5 digits)\")\n    name: str = Field(..., description=\"Primary drug name\")\n    description: str = Field(default=\"\", description=\"Clinical description\")\n    synonyms: List[str] = Field(default_factory=list, description=\"Alternative names\")\n    categories: List[str] = Field(default_factory=list, description=\"Therapeutic categories\")\n    atc_codes: List[str] = Field(default_factory=list, description=\"ATC classification codes\")\n    mechanism_of_action: str = Field(default=\"\", description=\"Mechanism of action\")\n    pharmacodynamics: str = Field(default=\"\", description=\"Pharmacodynamics\")\n    absorption: str = Field(default=\"\", description=\"Absorption information\")\n    metabolism: str = Field(default=\"\", description=\"Metabolism information\")\n    indications: List[str] = Field(default_factory=list, description=\"Approved therapeutic uses\")\n    contraindications: List[str] = Field(default_factory=list, description=\"Contraindications\")\n    dosage_forms: List[str] = Field(default_factory=list, description=\"Available dosage forms\")\n    side_effects: List[str] = Field(default_factory=list, description=\"Adverse reactions\")\n    pregnancy_category: str = Field(default=\"\", description=\"Pregnancy safety category\")\n\nclass Interaction(BaseModel):\n    \"\"\"Represents a drug-drug interaction.\"\"\"\n    drug1: str = Field(..., description=\"First drug identifier\")\n    drug2: str = Field(..., description=\"Second drug identifier\")\n    severity: str = Field(..., pattern=r\"^(minor|moderate|major)$\", description=\"Interaction severity\")\n    description: str = Field(..., description=\"Interaction description\")\n    management: str = Field(..., description=\"Management recommendations\")\n\nclass Product(BaseModel):\n    \"\"\"Represents a commercial drug product.\"\"\"\n    barcode: str = Field(..., pattern=r\"^\\d{8,14}$\", description=\"UPC/EAN barcode\")\n    drugbank_id: str = Field(..., pattern=r\"^DB\\d{5}$\", description=\"DrugBank ID\")\n    product_name: str = Field(..., description=\"Commercial product name\")\n    manufacturer: str = Field(..., description=\"Manufacturer name\")\n    active_ingredients: List[str] = Field(..., description=\"Active ingredients\")\n    dosage_strength: str = Field(..., description=\"Dosage strength\")\n    packaging: str = Field(..., description=\"Packaging description\")\n    approved: bool = Field(..., description=\"Regulatory approval status\")\n\nclass DrugBankScenario(BaseModel):\n    \"\"\"Main scenario model for DrugBank database.\"\"\"\n    drugs: Dict[str, Drug] = Field(default_factory=dict, description=\"Drugs indexed by DrugBank ID\")\n    interactions: List[Interaction] = Field(default_factory=list, description=\"Drug-drug interactions\")\n    products: Dict[str, Product] = Field(default_factory=dict, description=\"Products indexed by barcode\")\n    condition_index: Dict[str, List[str]] = Field(default_factory=dict, description=\"Condition to drug IDs mapping\")\n\nScenario_Schema = [Drug, Interaction, Product, DrugBankScenario]\n\n# Section 2: Class\nclass DrugBankAPI:\n    def __init__(self):\n        \"\"\"Initialize DrugBank API with empty state.\"\"\"\n        self.drugs: Dict[str, Drug] = {}\n        self.interactions: List[Interaction] = []\n        self.products: Dict[str, Product] = {}\n        self.condition_index: Dict[str, List[str]] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = DrugBankScenario(**scenario)\n        self.drugs = {k: Drug(**v) if isinstance(v, dict) else v for k, v in model.drugs.items()}\n        self.interactions = [Interaction(**i) if isinstance(i, dict) else i for i in model.interactions]\n        self.products = {k: Product(**v) if isinstance(v, dict) else v for k, v in model.products.items()}\n        self.condition_index = model.condition_index\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"drugs\": {k: v.model_dump() for k, v in self.drugs.items()},\n            \"interactions\": [i.model_dump() for i in self.interactions],\n            \"products\": {k: v.model_dump() for k, v in self.products.items()},\n            \"condition_index\": self.condition_index\n        }\n\n    def search_drugs(self, query: str, fuzzy: bool, limit: int) -> dict:\n        \"\"\"Search drugs by name or synonym.\"\"\"\n        results = []\n        query_lower = query.lower()\n        \n        for drug in self.drugs.values():\n            if query_lower in drug.name.lower() or any(query_lower in syn.lower() for syn in drug.synonyms):\n                results.append({\n                    \"drugbank_id\": drug.drugbank_id,\n                    \"name\": drug.name,\n                    \"description\": drug.description,\n                    \"synonyms\": drug.synonyms,\n                    \"categories\": drug.categories,\n                    \"atc_codes\": drug.atc_codes\n                })\n                if len(results) >= limit:\n                    break\n        \n        return {\"drugs\": results}\n\n    def get_drug_details(self, drugbank_id: str) -> dict:\n        \"\"\"Retrieve comprehensive drug information.\"\"\"\n        drug = self.drugs[drugbank_id]\n        return {\n            \"drugbank_id\": drug.drugbank_id,\n            \"name\": drug.name,\n            \"description\": drug.description,\n            \"mechanism_of_action\": drug.mechanism_of_action,\n            \"pharmacodynamics\": drug.pharmacodynamics,\n            \"absorption\": drug.absorption,\n            \"metabolism\": drug.metabolism,\n            \"indications\": drug.indications,\n            \"contraindications\": drug.contraindications,\n            \"dosage_forms\": drug.dosage_forms,\n            \"side_effects\": drug.side_effects,\n            \"pregnancy_category\": drug.pregnancy_category\n        }\n\n    def check_drug_interactions(self, drugs: List[str]) -> dict:\n        \"\"\"Analyze drugs for interactions.\"\"\"\n        found_interactions = []\n        severity_order = {\"minor\": 1, \"moderate\": 2, \"major\": 3}\n        highest_severity = \"none\"\n        \n        for interaction in self.interactions:\n            if interaction.drug1 in drugs and interaction.drug2 in drugs:\n                found_interactions.append({\n                    \"drug1\": interaction.drug1,\n                    \"drug2\": interaction.drug2,\n                    \"severity\": interaction.severity,\n                    \"description\": interaction.description,\n                    \"management\": interaction.management\n                })\n                if severity_order.get(interaction.severity, 0) > severity_order.get(highest_severity, 0):\n                    highest_severity = interaction.severity\n        \n        return {\n            \"interactions\": found_interactions,\n            \"interaction_count\": len(found_interactions),\n            \"highest_severity\": highest_severity\n        }\n\n    def search_by_condition(self, condition: str) -> dict:\n        \"\"\"Find drugs for a medical condition.\"\"\"\n        condition_lower = condition.lower()\n        drug_ids = []\n        \n        for cond, ids in self.condition_index.items():\n            if condition_lower in cond.lower():\n                drug_ids.extend(ids)\n        \n        results = []\n        for drug_id in drug_ids:\n            if drug_id in self.drugs:\n                drug = self.drugs[drug_id]\n                results.append({\n                    \"drugbank_id\": drug.drugbank_id,\n                    \"name\": drug.name,\n                    \"indication_type\": \"approved\",\n                    \"efficacy\": \"established\"\n                })\n        \n        return {\"drugs\": results}\n\n    def get_drug_by_barcode(self, barcode: str) -> dict:\n        \"\"\"Identify drug product by barcode.\"\"\"\n        product = self.products[barcode]\n        return {\n            \"drugbank_id\": product.drugbank_id,\n            \"product_name\": product.product_name,\n            \"manufacturer\": product.manufacturer,\n            \"active_ingredients\": product.active_ingredients,\n            \"dosage_strength\": product.dosage_strength,\n            \"packaging\": product.packaging,\n            \"approved\": product.approved\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"DrugBank\")\napi = DrugBankAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the DrugBank API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching DrugBankScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current DrugBank state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_drugs(query: str, fuzzy: bool = True, limit: int = 10) -> dict:\n    \"\"\"\n    Search the DrugBank database for pharmaceutical substances.\n\n    Args:\n        query (str): Search term matching drug names or identifiers.\n        fuzzy (bool): Enable approximate string matching [Optional].\n        limit (int): Maximum number of results to return [Optional].\n\n    Returns:\n        drugs (list): List of matching pharmaceutical substances with drugbank_id, name, description, synonyms, categories, and atc_codes.\n    \"\"\"\n    try:\n        if not query or not isinstance(query, str):\n            raise ValueError(\"Query must be a non-empty string\")\n        return api.search_drugs(query, fuzzy, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_drug_details(drugbank_id: str) -> dict:\n    \"\"\"\n    Retrieve comprehensive pharmacological information for a specific drug.\n\n    Args:\n        drugbank_id (str): The unique DrugBank accession identifier.\n\n    Returns:\n        drugbank_id (str): DrugBank identifier.\n        name (str): Primary drug name.\n        description (str): Clinical description.\n        mechanism_of_action (str): Mechanism of action.\n        pharmacodynamics (str): Pharmacodynamics.\n        absorption (str): Absorption information.\n        metabolism (str): Metabolism information.\n        indications (list): Approved therapeutic uses.\n        contraindications (list): Contraindications.\n        dosage_forms (list): Available dosage forms.\n        side_effects (list): Adverse reactions.\n        pregnancy_category (str): Pregnancy safety category.\n    \"\"\"\n    try:\n        if not drugbank_id or not isinstance(drugbank_id, str):\n            raise ValueError(\"DrugBank ID must be a non-empty string\")\n        if drugbank_id not in api.drugs:\n            raise ValueError(f\"Drug {drugbank_id} not found\")\n        return api.get_drug_details(drugbank_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef check_drug_interactions(drugs: List[str]) -> dict:\n    \"\"\"\n    Analyze multiple drugs for potential pharmacological interactions.\n\n    Args:\n        drugs (list): List of drug identifiers to analyze for interactions.\n\n    Returns:\n        interactions (list): List of interactions with drug1, drug2, severity, description, and management.\n        interaction_count (int): Total number of interactions identified.\n        highest_severity (str): Most severe interaction level detected.\n    \"\"\"\n    try:\n        if not drugs or not isinstance(drugs, list):\n            raise ValueError(\"Drugs must be a non-empty list\")\n        return api.check_drug_interactions(drugs)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_by_condition(condition: str) -> dict:\n    \"\"\"\n    Discover medications used to treat specific medical conditions.\n\n    Args:\n        condition (str): Medical condition or disease name to search for treatments.\n\n    Returns:\n        drugs (list): List of pharmaceutical products with drugbank_id, name, indication_type, and efficacy.\n    \"\"\"\n    try:\n        if not condition or not isinstance(condition, str):\n            raise ValueError(\"Condition must be a non-empty string\")\n        return api.search_by_condition(condition)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_drug_by_barcode(barcode: str) -> dict:\n    \"\"\"\n    Identify pharmaceutical products using commercial product barcodes.\n\n    Args:\n        barcode (str): UPC or EAN barcode digits from product packaging.\n\n    Returns:\n        drugbank_id (str): DrugBank identifier.\n        product_name (str): Commercial product name.\n        manufacturer (str): Manufacturer name.\n        active_ingredients (list): Active compounds.\n        dosage_strength (str): Dosage strength.\n        packaging (str): Packaging description.\n        approved (bool): Regulatory approval status.\n    \"\"\"\n    try:\n        if not barcode or not isinstance(barcode, str):\n            raise ValueError(\"Barcode must be a non-empty string\")\n        if barcode not in api.products:\n            raise ValueError(f\"Product with barcode {barcode} not found\")\n        return api.get_drug_by_barcode(barcode)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-03-05T18:37:34.289534",
+      "revision_number": null
+    },
+    {
+      "version": 1,
+      "code": "\n```python\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Drug(BaseModel):\n    \"\"\"Represents a drug in the database.\"\"\"\n    drugbank_id: str = Field(..., pattern=r\"^DB\\d{5}$\", description=\"DrugBank ID (format: DB followed by 5 digits)\")\n    name: str = Field(..., description=\"Primary drug name\")\n    description: str = Field(default=\"\", description=\"Clinical description\")\n    synonyms: List[str] = Field(default_factory=list, description=\"Alternative names\")\n    categories: List[str] = Field(default_factory=list, description=\"Therapeutic categories\")\n    atc_codes: List[str] = Field(default_factory=list, description=\"ATC classification codes\")\n    mechanism_of_action: str = Field(default=\"\", description=\"Mechanism of action\")\n    pharmacodynamics: str = Field(default=\"\", description=\"Pharmacodynamics\")\n    absorption: str = Field(default=\"\", description=\"Absorption information\")\n    metabolism: str = Field(default=\"\", description=\"Metabolism information\")\n    indications: List[str] = Field(default_factory=list, description=\"Approved therapeutic uses\")\n    contraindications: List[str] = Field(default_factory=list, description=\"Contraindications\")\n    dosage_forms: List[str] = Field(default_factory=list, description=\"Available dosage forms\")\n    side_effects: List[str] = Field(default_factory=list, description=\"Adverse reactions\")\n    pregnancy_category: str = Field(default=\"\", description=\"Pregnancy safety category\")\n\nclass Interaction(BaseModel):\n    \"\"\"Represents a drug-drug interaction.\"\"\"\n    drug1: str = Field(..., description=\"First drug identifier\")\n    drug2: str = Field(..., description=\"Second drug identifier\")\n    severity: str = Field(..., pattern=r\"^(minor|moderate|major)$\", description=\"Interaction severity\")\n    description: str = Field(..., description=\"Interaction description\")\n    management: str = Field(..., description=\"Management recommendations\")\n\nclass Product(BaseModel):\n    \"\"\"Represents a commercial drug product.\"\"\"\n    barcode: str = Field(..., pattern=r\"^\\d{8,14}$\", description=\"UPC/EAN barcode\")\n    drugbank_id: str = Field(..., pattern=r\"^DB\\d{5}$\", description=\"DrugBank ID\")\n    product_name: str = Field(..., description=\"Commercial product name\")\n    manufacturer: str = Field(..., description=\"Manufacturer name\")\n    active_ingredients: List[str] = Field(..., description=\"Active ingredients\")\n    dosage_strength: str = Field(..., description=\"Dosage strength\")\n    packaging: str = Field(..., description=\"Packaging description\")\n    approved: bool = Field(..., description=\"Regulatory approval status\")\n\nclass DrugBankScenario(BaseModel):\n    \"\"\"Main scenario model for DrugBank database.\"\"\"\n    drugs: Dict[str, Drug] = Field(default_factory=dict, description=\"Drugs indexed by DrugBank ID\")\n    interactions: List[Interaction] = Field(default_factory=list, description=\"Drug-drug interactions\")\n    products: Dict[str, Product] = Field(default_factory=dict, description=\"Products indexed by barcode\")\n    condition_index: Dict[str, List[str]] = Field(default_factory=dict, description=\"Condition to drug IDs mapping\")\n\nScenario_Schema = [Drug, Interaction, Product, DrugBankScenario]\n\n# Section 2: Class\nclass DrugBankAPI:\n    def __init__(self):\n        \"\"\"Initialize DrugBank API with empty state.\"\"\"\n        self.drugs: Dict[str, Drug] = {}\n        self.interactions: List[Interaction] = []\n        self.products: Dict[str, Product] = {}\n        self.condition_index: Dict[str, List[str]] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = DrugBankScenario(**scenario)\n        self.drugs = model.drugs\n        self.interactions = model.interactions\n        self.products = model.products\n        self.condition_index = model.condition_index\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"drugs\": {k: v.model_dump() for k, v in self.drugs.items()},\n            \"interactions\": [i.model_dump() for i in self.interactions],\n            \"products\": {k: v.model_dump() for k, v in self.products.items()},\n            \"condition_index\": self.condition_index\n        }\n\n    def search_drugs(self, query: str, fuzzy: bool, limit: int) -> dict:\n        \"\"\"Search drugs by name or synonym.\"\"\"\n        results = []\n        query_lower = query.lower()\n        \n        for drug in self.drugs.values():\n            if query_lower in drug.name.lower() or any(query_lower in syn.lower() for syn in drug.synonyms):\n                results.append({\n                    \"drugbank_id\": drug.drugbank_id,\n                    \"name\": drug.name,\n                    \"description\": drug.description,\n                    \"synonyms\": drug.synonyms,\n                    \"categories\": drug.categories,\n                    \"atc_codes\": drug.atc_codes\n                })\n                if len(results) >= limit:\n                    break\n        \n        return {\"drugs\": results}\n\n    def get_drug_details(self, drugbank_id: str) -> dict:\n        \"\"\"Retrieve comprehensive drug information.\"\"\"\n        drug = self.drugs[drugbank_id]\n        return {\n            \"drugbank_id\": drug.drugbank_id,\n            \"name\": drug.name,\n            \"description\": drug.description,\n            \"mechanism_of_action\": drug.mechanism_of_action,\n            \"pharmacodynamics\": drug.pharmacodynamics,\n            \"absorption\": drug.absorption,\n            \"metabolism\": drug.metabolism,\n            \"indications\": drug.indications,\n            \"contraindications\": drug.contraindications,\n            \"dosage_forms\": drug.dosage_forms,\n            \"side_effects\": drug.side_effects,\n            \"pregnancy_category\": drug.pregnancy_category\n        }\n\n    def check_drug_interactions(self, drugs: List[str]) -> dict:\n        \"\"\"Analyze drugs for interactions.\"\"\"\n        found_interactions = []\n        severity_order = {\"minor\": 1, \"moderate\": 2, \"major\": 3}\n        highest_severity = \"none\"\n        \n        for interaction in self.interactions:\n            if interaction.drug1 in drugs and interaction.drug2 in drugs:\n                found_interactions.append({\n                    \"drug1\": interaction.drug1,\n                    \"drug2\": interaction.drug2,\n                    \"severity\": interaction.severity,\n                    \"description\": interaction.description,\n                    \"management\": interaction.management\n                })\n                if severity_order.get(interaction.severity, 0) > severity_order.get(highest_severity, 0):\n                    highest_severity = interaction.severity\n        \n        return {\n            \"interactions\": found_interactions,\n            \"interaction_count\": len(found_interactions),\n            \"highest_severity\": highest_severity\n        }\n\n    def search_by_condition(self, condition: str) -> dict:\n        \"\"\"Find drugs for a medical condition.\"\"\"\n        condition_lower = condition.lower()\n        drug_ids = []\n        \n        for cond, ids in self.condition_index.items():\n            if condition_lower in cond.lower():\n                drug_ids.extend(ids)\n        \n        results = []\n        for drug_id in drug_ids:\n            if drug_id in self.drugs:\n                drug = self.drugs[drug_id]\n                results.append({\n                    \"drugbank_id\": drug.drugbank_id,\n                    \"name\": drug.name,\n                    \"indication_type\": \"approved\",\n                    \"efficacy\": \"established\"\n                })\n        \n        return {\"drugs\": results}\n\n    def get_drug_by_barcode(self, barcode: str) -> dict:\n        \"\"\"Identify drug product by barcode.\"\"\"\n        product = self.products[barcode]\n        return {\n            \"drugbank_id\": product.drugbank_id,\n            \"product_name\": product.product_name,\n            \"manufacturer\": product.manufacturer,\n            \"active_ingredients\": product.active_ingredients,\n            \"dosage_strength\": product.dosage_strength,\n            \"packaging\": product.packaging,\n            \"approved\": product.approved\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"DrugBank\")\napi = DrugBankAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the DrugBank API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching DrugBankScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current DrugBank state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_drugs(query: str, fuzzy: bool = True, limit: int = 10) -> dict:\n    \"\"\"\n    Search the DrugBank database for pharmaceutical substances.\n\n    Args:\n        query (str): Search term matching drug names or identifiers.\n        fuzzy (bool): Enable approximate string matching [Optional].\n        limit (int): Maximum number of results to return [Optional].\n\n    Returns:\n        drugs (list): List of matching pharmaceutical substances with drugbank_id, name, description, synonyms, categories, and atc_codes.\n    \"\"\"\n    try:\n        if not query or not isinstance(query, str):\n            raise ValueError(\"Query must be a non-empty string\")\n        return api.search_drugs(query, fuzzy, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_drug_details(drugbank_id: str) -> dict:\n    \"\"\"\n    Retrieve comprehensive pharmacological information for a specific drug.\n\n    Args:\n        drugbank_id (str): The unique DrugBank accession identifier.\n\n    Returns:\n        drugbank_id (str): DrugBank identifier.\n        name (str): Primary drug name.\n        description (str): Clinical description.\n        mechanism_of_action (str): Mechanism of action.\n        pharmacodynamics (str): Pharmacodynamics.\n        absorption (str): Absorption information.\n        metabolism (str): Metabolism information.\n        indications (list): Approved therapeutic uses.\n        contraindications (list): Contraindications.\n        dosage_forms (list): Available dosage forms.\n        side_effects (list): Adverse reactions.\n        pregnancy_category (str): Pregnancy safety category.\n    \"\"\"\n    try:\n        if not drugbank_id or not isinstance(drugbank_id, str):\n            raise ValueError(\"DrugBank ID must be a non-empty string\")\n        if drugbank_id not in api.drugs:\n            raise ValueError(f\"Drug {drugbank_id} not found\")\n        return api.get_drug_details(drugbank_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef check_drug_interactions(drugs: List[str]) -> dict:\n    \"\"\"\n    Analyze multiple drugs for potential pharmacological interactions.\n\n    Args:\n        drugs (list): List of drug identifiers to analyze for interactions.\n\n    Returns:\n        interactions (list): List of interactions with drug1, drug2, severity, description, and management.\n        interaction_count (int): Total number of interactions identified.\n        highest_severity (str): Most severe interaction level detected.\n    \"\"\"\n    try:\n        if not drugs or not isinstance(drugs, list):\n            raise ValueError(\"Drugs must be a non-empty list\")\n        return api.check_drug_interactions(drugs)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_by_condition(condition: str) -> dict:\n    \"\"\"\n    Discover medications used to treat specific medical conditions.\n\n    Args:\n        condition (str): Medical condition or disease name to search for treatments.\n\n    Returns:\n        drugs (list): List of pharmaceutical products with drugbank_id, name, indication_type, and efficacy.\n    \"\"\"\n    try:\n        if not condition or not isinstance(condition, str):\n            raise ValueError(\"Condition must be a non-empty string\")\n        return api.search_by_condition(condition)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_drug_by_barcode(barcode: str) -> dict:\n    \"\"\"\n    Identify pharmaceutical products using commercial product barcodes.\n\n    Args:\n        barcode (str): UPC or EAN barcode digits from product packaging.\n\n    Returns:\n        drugbank_id (str): DrugBank identifier.\n        product_name (str): Commercial product name.\n        manufacturer (str): Manufacturer name.\n        active_ingredients (list): Active compounds.\n        dosage_strength (str): Dosage strength.\n        packaging (str): Packaging description.\n        approved (bool): Regulatory approval status.\n    \"\"\"\n    try:\n        if not barcode or not isinstance(barcode, str):\n            raise ValueError(\"Barcode must be a non-empty string\")\n        if barcode not in api.products:\n            raise ValueError(f\"Product with barcode {barcode} not found\")\n        return api.get_drug_by_barcode(barcode)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n```\n",
+      "timestamp": "2026-03-05T18:37:34.289534",
+      "revision_number": 1
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with one drug, one product, and no interactions",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "drugs": {
+          "DB12345": {
+            "drugbank_id": "DB12345",
+            "name": "Aspirin",
+            "description": "Nonsteroidal anti-inflammatory drug",
+            "synonyms": [
+              "Acetylsalicylic acid"
+            ],
+            "categories": [
+              "Analgesics",
+              "Antipyretics"
+            ],
+            "atc_codes": [
+              "N02BA01"
+            ],
+            "mechanism_of_action": "Inhibits cyclooxygenase enzymes",
+            "pharmacodynamics": "Reduces inflammation and pain",
+            "absorption": "Rapidly absorbed from gastrointestinal tract",
+            "metabolism": "Hepatic metabolism",
+            "indications": [
+              "Pain relief",
+              "Fever reduction"
+            ],
+            "contraindications": [
+              "Bleeding disorders"
+            ],
+            "dosage_forms": [
+              "Tablet",
+              "Capsule"
+            ],
+            "side_effects": [
+              "Gastric irritation",
+              "Bleeding"
+            ],
+            "pregnancy_category": "C"
+          }
+        },
+        "interactions": [],
+        "products": {
+          "12345678": {
+            "barcode": "12345678",
+            "drugbank_id": "DB12345",
+            "product_name": "Bayer Aspirin",
+            "manufacturer": "Bayer",
+            "active_ingredients": [
+              "Aspirin"
+            ],
+            "dosage_strength": "325 mg",
+            "packaging": "Bottle of 100 tablets",
+            "approved": true
+          }
+        },
+        "condition_index": {
+          "headache": [
+            "DB12345"
+          ],
+          "fever": [
+            "DB12345"
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Scenario with multiple drugs, interactions, and products",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "drugs": {
+          "DB54321": {
+            "drugbank_id": "DB54321",
+            "name": "Warfarin",
+            "description": "Anticoagulant medication",
+            "synonyms": [
+              "Coumadin"
+            ],
+            "categories": [
+              "Anticoagulants"
+            ],
+            "atc_codes": [
+              "B01AA03"
+            ],
+            "mechanism_of_action": "Inhibits vitamin K-dependent clotting factors",
+            "pharmacodynamics": "Prevents blood clot formation",
+            "absorption": "Well absorbed orally",
+            "metabolism": "Hepatic metabolism via CYP450",
+            "indications": [
+              "Atrial fibrillation",
+              "Deep vein thrombosis"
+            ],
+            "contraindications": [
+              "Active bleeding",
+              "Pregnancy"
+            ],
+            "dosage_forms": [
+              "Tablet"
+            ],
+            "side_effects": [
+              "Bleeding",
+              "Bruising"
+            ],
+            "pregnancy_category": "X"
+          },
+          "DB98765": {
+            "drugbank_id": "DB98765",
+            "name": "Ibuprofen",
+            "description": "NSAID for pain and inflammation",
+            "synonyms": [
+              "Advil",
+              "Motrin"
+            ],
+            "categories": [
+              "Analgesics",
+              "Antipyretics",
+              "Anti-inflammatory"
+            ],
+            "atc_codes": [
+              "M01AE01"
+            ],
+            "mechanism_of_action": "Inhibits COX-1 and COX-2 enzymes",
+            "pharmacodynamics": "Reduces prostaglandin synthesis",
+            "absorption": "Rapid oral absorption",
+            "metabolism": "Hepatic metabolism",
+            "indications": [
+              "Pain",
+              "Inflammation",
+              "Fever"
+            ],
+            "contraindications": [
+              "Active GI bleeding",
+              "Severe renal impairment"
+            ],
+            "dosage_forms": [
+              "Tablet",
+              "Capsule",
+              "Suspension"
+            ],
+            "side_effects": [
+              "GI upset",
+              "Dizziness"
+            ],
+            "pregnancy_category": "D"
+          },
+          "DB11111": {
+            "drugbank_id": "DB11111",
+            "name": "Metformin",
+            "description": "Antidiabetic medication",
+            "synonyms": [
+              "Glucophage"
+            ],
+            "categories": [
+              "Antidiabetic agents"
+            ],
+            "atc_codes": [
+              "A10BA02"
+            ],
+            "mechanism_of_action": "Decreases hepatic glucose production",
+            "pharmacodynamics": "Improves insulin sensitivity",
+            "absorption": "Incomplete oral absorption",
+            "metabolism": "Not metabolized, excreted unchanged",
+            "indications": [
+              "Type 2 diabetes mellitus"
+            ],
+            "contraindications": [
+              "Severe renal impairment",
+              "Metabolic acidosis"
+            ],
+            "dosage_forms": [
+              "Tablet",
+              "Extended-release tablet"
+            ],
+            "side_effects": [
+              "GI upset",
+              "Lactic acidosis"
+            ],
+            "pregnancy_category": "B"
+          }
+        },
+        "interactions": [
+          {
+            "drug1": "DB54321",
+            "drug2": "DB98765",
+            "severity": "major",
+            "description": "Increased risk of bleeding when combined",
+            "management": "Monitor INR closely, consider dose adjustment"
+          },
+          {
+            "drug1": "DB98765",
+            "drug2": "DB11111",
+            "severity": "minor",
+            "description": "Potential reduction in metformin efficacy",
+            "management": "Monitor blood glucose levels"
+          }
+        ],
+        "products": {
+          "87654321": {
+            "barcode": "87654321",
+            "drugbank_id": "DB54321",
+            "product_name": "Coumadin",
+            "manufacturer": "Bristol-Myers Squibb",
+            "active_ingredients": [
+              "Warfarin sodium"
+            ],
+            "dosage_strength": "5 mg",
+            "packaging": "Bottle of 100 tablets",
+            "approved": true
+          },
+          "11223344": {
+            "barcode": "11223344",
+            "drugbank_id": "DB98765",
+            "product_name": "Advil",
+            "manufacturer": "Pfizer",
+            "active_ingredients": [
+              "Ibuprofen"
+            ],
+            "dosage_strength": "200 mg",
+            "packaging": "Bottle of 50 tablets",
+            "approved": true
+          },
+          "55667788": {
+            "barcode": "55667788",
+            "drugbank_id": "DB11111",
+            "product_name": "Glucophage XR",
+            "manufacturer": "Merck",
+            "active_ingredients": [
+              "Metformin hydrochloride"
+            ],
+            "dosage_strength": "500 mg",
+            "packaging": "Bottle of 60 tablets",
+            "approved": true
+          }
+        },
+        "condition_index": {
+          "atrial fibrillation": [
+            "DB54321"
+          ],
+          "pain": [
+            "DB98765"
+          ],
+          "diabetes": [
+            "DB11111"
+          ],
+          "fever": [
+            "DB98765"
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Complex scenario with multiple drugs, extensive interactions, and comprehensive data",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "drugs": {
+          "DB22222": {
+            "drugbank_id": "DB22222",
+            "name": "Amoxicillin",
+            "description": "Broad-spectrum antibiotic",
+            "synonyms": [
+              "Amoxil",
+              "Trimox"
+            ],
+            "categories": [
+              "Antibiotics",
+              "Penicillins"
+            ],
+            "atc_codes": [
+              "J01CA04"
+            ],
+            "mechanism_of_action": "Inhibits bacterial cell wall synthesis",
+            "pharmacodynamics": "Bactericidal activity",
+            "absorption": "Well absorbed orally",
+            "metabolism": "Minimal hepatic metabolism",
+            "indications": [
+              "Bacterial infections",
+              "Otitis media",
+              "Sinusitis"
+            ],
+            "contraindications": [
+              "Penicillin allergy"
+            ],
+            "dosage_forms": [
+              "Capsule",
+              "Tablet",
+              "Suspension",
+              "Chewable tablet"
+            ],
+            "side_effects": [
+              "Diarrhea",
+              "Rash",
+              "Allergic reactions"
+            ],
+            "pregnancy_category": "B"
+          },
+          "DB33333": {
+            "drugbank_id": "DB33333",
+            "name": "Clarithromycin",
+            "description": "Macrolide antibiotic",
+            "synonyms": [
+              "Biaxin"
+            ],
+            "categories": [
+              "Antibiotics",
+              "Macrolides"
+            ],
+            "atc_codes": [
+              "J01FA09"
+            ],
+            "mechanism_of_action": "Inhibits bacterial protein synthesis",
+            "pharmacodynamics": "Bacteriostatic or bactericidal",
+            "absorption": "Stable in gastric acid",
+            "metabolism": "Hepatic metabolism",
+            "indications": [
+              "Respiratory tract infections",
+              "H. pylori eradication"
+            ],
+            "contraindications": [
+              "Concurrent pimozide use"
+            ],
+            "dosage_forms": [
+              "Tablet",
+              "Extended-release tablet",
+              "Suspension"
+            ],
+            "side_effects": [
+              "Taste disturbance",
+              "GI upset",
+              "QT prolongation"
+            ],
+            "pregnancy_category": "C"
+          },
+          "DB44444": {
+            "drugbank_id": "DB44444",
+            "name": "Omeprazole",
+            "description": "Proton pump inhibitor",
+            "synonyms": [
+              "Prilosec"
+            ],
+            "categories": [
+              "Gastrointestinal agents",
+              "Proton pump inhibitors"
+            ],
+            "atc_codes": [
+              "A02BC01"
+            ],
+            "mechanism_of_action": "Irreversibly inhibits H+/K+ ATPase",
+            "pharmacodynamics": "Reduces gastric acid secretion",
+            "absorption": "Rapid absorption from small intestine",
+            "metabolism": "Extensive hepatic metabolism",
+            "indications": [
+              "GERD",
+              "Peptic ulcer disease",
+              "H. pylori eradication"
+            ],
+            "contraindications": [
+              "Concurrent clopidogrel use"
+            ],
+            "dosage_forms": [
+              "Capsule",
+              "Tablet",
+              "Powder for suspension"
+            ],
+            "side_effects": [
+              "Headache",
+              "Diarrhea",
+              "Vitamin B12 deficiency"
+            ],
+            "pregnancy_category": "C"
+          },
+          "DB55555": {
+            "drugbank_id": "DB55555",
+            "name": "Digoxin",
+            "description": "Cardiac glycoside",
+            "synonyms": [
+              "Lanoxin"
+            ],
+            "categories": [
+              "Cardiac glycosides",
+              "Antiarrhythmics"
+            ],
+            "atc_codes": [
+              "C01AA05"
+            ],
+            "mechanism_of_action": "Inhibits Na+/K+ ATPase",
+            "pharmacodynamics": "Increases cardiac contractility",
+            "absorption": "Variable oral absorption",
+            "metabolism": "Minimal metabolism",
+            "indications": [
+              "Heart failure",
+              "Atrial fibrillation"
+            ],
+            "contraindications": [
+              "Ventricular fibrillation",
+              "Digitalis toxicity"
+            ],
+            "dosage_forms": [
+              "Tablet",
+              "Elixir",
+              "Injection"
+            ],
+            "side_effects": [
+              "Nausea",
+              "Arrhythmias",
+              "Visual disturbances"
+            ],
+            "pregnancy_category": "C"
+          },
+          "DB66666": {
+            "drugbank_id": "DB66666",
+            "name": "Furosemide",
+            "description": "Loop diuretic",
+            "synonyms": [
+              "Lasix"
+            ],
+            "categories": [
+              "Diuretics",
+              "Loop diuretics"
+            ],
+            "atc_codes": [
+              "C03CA01"
+            ],
+            "mechanism_of_action": "Inhibits Na-K-2Cl cotransporter",
+            "pharmacodynamics": "Increases urine output",
+            "absorption": "Variable oral bioavailability",
+            "metabolism": "Minimal hepatic metabolism",
+            "indications": [
+              "Edema",
+              "Hypertension",
+              "Heart failure"
+            ],
+            "contraindications": [
+              "Anuria",
+              "Severe electrolyte depletion"
+            ],
+            "dosage_forms": [
+              "Tablet",
+              "Injection",
+              "Oral solution"
+            ],
+            "side_effects": [
+              "Hypokalemia",
+              "Dehydration",
+              "Ototoxicity"
+            ],
+            "pregnancy_category": "C"
+          }
+        },
+        "interactions": [
+          {
+            "drug1": "DB22222",
+            "drug2": "DB33333",
+            "severity": "moderate",
+            "description": "Potential antagonism of antibiotic effect",
+            "management": "Monitor clinical response, consider alternative therapy"
+          },
+          {
+            "drug1": "DB33333",
+            "drug2": "DB44444",
+            "severity": "major",
+            "description": "Increased risk of clarithromycin toxicity",
+            "management": "Reduce clarithromycin dose, monitor for adverse effects"
+          },
+          {
+            "drug1": "DB55555",
+            "drug2": "DB66666",
+            "severity": "major",
+            "description": "Increased risk of digoxin toxicity due to hypokalemia",
+            "management": "Monitor digoxin levels and potassium, adjust doses"
+          },
+          {
+            "drug1": "DB44444",
+            "drug2": "DB55555",
+            "severity": "minor",
+            "description": "Reduced digoxin absorption",
+            "management": "Separate administration times"
+          }
+        ],
+        "products": {
+          "99887766": {
+            "barcode": "99887766",
+            "drugbank_id": "DB22222",
+            "product_name": "Amoxil",
+            "manufacturer": "GlaxoSmithKline",
+            "active_ingredients": [
+              "Amoxicillin trihydrate"
+            ],
+            "dosage_strength": "500 mg",
+            "packaging": "Bottle of 30 capsules",
+            "approved": true
+          },
+          "55443322": {
+            "barcode": "55443322",
+            "drugbank_id": "DB33333",
+            "product_name": "Biaxin XL",
+            "manufacturer": "Abbott",
+            "active_ingredients": [
+              "Clarithromycin"
+            ],
+            "dosage_strength": "500 mg",
+            "packaging": "Blister pack of 14 tablets",
+            "approved": true
+          },
+          "77889900": {
+            "barcode": "77889900",
+            "drugbank_id": "DB44444",
+            "product_name": "Prilosec OTC",
+            "manufacturer": "Procter & Gamble",
+            "active_ingredients": [
+              "Omeprazole magnesium"
+            ],
+            "dosage_strength": "20 mg",
+            "packaging": "Box of 42 tablets",
+            "approved": true
+          },
+          "33221100": {
+            "barcode": "33221100",
+            "drugbank_id": "DB55555",
+            "product_name": "Lanoxin",
+            "manufacturer": "GlaxoSmithKline",
+            "active_ingredients": [
+              "Digoxin"
+            ],
+            "dosage_strength": "0.25 mg",
+            "packaging": "Bottle of 100 tablets",
+            "approved": true
+          },
+          "66778899": {
+            "barcode": "66778899",
+            "drugbank_id": "DB66666",
+            "product_name": "Lasix",
+            "manufacturer": "Sanofi-Aventis",
+            "active_ingredients": [
+              "Furosemide"
+            ],
+            "dosage_strength": "40 mg",
+            "packaging": "Bottle of 100 tablets",
+            "approved": true
+          }
+        },
+        "condition_index": {
+          "bacterial infection": [
+            "DB22222",
+            "DB33333"
+          ],
+          "respiratory infection": [
+            "DB33333"
+          ],
+          "GERD": [
+            "DB44444"
+          ],
+          "heart failure": [
+            "DB55555",
+            "DB66666"
+          ],
+          "edema": [
+            "DB66666"
+          ],
+          "hypertension": [
+            "DB66666"
+          ],
+          "H. pylori": [
+            "DB33333",
+            "DB44444"
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Test invalid DrugBank ID format and interaction severity (should be rejected)",
+      "expected_behavior": "validation_error",
+      "scenario_data": {
+        "drugs": {
+          "DB1234": {
+            "drugbank_id": "DB1234",
+            "name": "Invalid Drug",
+            "description": "Drug with invalid ID format",
+            "synonyms": [],
+            "categories": [
+              "Test"
+            ],
+            "atc_codes": [],
+            "mechanism_of_action": "",
+            "pharmacodynamics": "",
+            "absorption": "",
+            "metabolism": "",
+            "indications": [],
+            "contraindications": [],
+            "dosage_forms": [],
+            "side_effects": [],
+            "pregnancy_category": ""
+          }
+        },
+        "interactions": [
+          {
+            "drug1": "DB1234",
+            "drug2": "DB54321",
+            "severity": "critical",
+            "description": "Invalid severity level",
+            "management": "Should fail validation"
+          }
+        ],
+        "products": {
+          "1234567": {
+            "barcode": "1234567",
+            "drugbank_id": "DB1234",
+            "product_name": "Invalid Product",
+            "manufacturer": "Test",
+            "active_ingredients": [
+              "Invalid"
+            ],
+            "dosage_strength": "0 mg",
+            "packaging": "Test",
+            "approved": false
+          }
+        },
+        "condition_index": {
+          "test": [
+            "DB1234"
+          ]
+        }
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 3,
+      "failed_scenarios": 1,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_drugs",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_drug_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "check_drug_interactions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_by_condition",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_drug_by_barcode",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "search_drugs",
+              "details": "Query must be a non-empty string",
+              "expected_vs_actual": "Expected validation error for empty query string",
+              "root_cause": "Tool correctly validates that query parameter must be non-empty",
+              "expected_error": true
+            },
+            {
+              "type": "Validation Error",
+              "location": "get_drug_details",
+              "details": "Drug INVALID_ID not found",
+              "expected_vs_actual": "Expected validation error for invalid drug ID",
+              "root_cause": "Tool correctly validates that drugbank_id must exist in the database",
+              "expected_error": true
+            },
+            {
+              "type": "Validation Error",
+              "location": "check_drug_interactions",
+              "details": "Drugs must be a non-empty list",
+              "expected_vs_actual": "Expected validation error for empty drugs list",
+              "root_cause": "Tool correctly validates that drugs list must be non-empty",
+              "expected_error": true
+            },
+            {
+              "type": "Validation Error",
+              "location": "search_by_condition",
+              "details": "Condition must be a non-empty string",
+              "expected_vs_actual": "Expected validation error for empty condition string",
+              "root_cause": "Tool correctly validates that condition parameter must be non-empty",
+              "expected_error": true
+            },
+            {
+              "type": "Validation Error",
+              "location": "get_drug_by_barcode",
+              "details": "Product with barcode INVALID_BARCODE not found",
+              "expected_vs_actual": "Expected validation error for invalid barcode",
+              "root_cause": "Tool correctly validates that barcode must exist in the products database",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_drugs",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_drug_details",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "check_drug_interactions",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "search_by_condition",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_drug_by_barcode",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Data Loading Issue",
+              "location": "load_scenario",
+              "details": "The scenario was loaded but only with minimal data (drug name and description). All other fields (synonyms, categories, atc_codes, interactions, products, condition_index) were not properly loaded or stored.",
+              "expected_vs_actual": "Expected: Complete scenario with 5 drugs, 4 interactions, 5 products, and condition index. Actual: Only 1 drug with name and description only.",
+              "root_cause": "The load_scenario function appears to have issues handling the full complex scenario data structure, possibly due to JSON parsing limitations or data validation issues.",
+              "expected_error": false
+            },
+            {
+              "type": "Data Consistency Issue",
+              "location": "save_scenario",
+              "details": "The saved scenario shows significant data loss compared to the original loaded scenario.",
+              "expected_vs_actual": "Expected: Complete scenario state matching what was loaded. Actual: Only partial drug data with empty arrays for most fields, no interactions, no products, no condition index.",
+              "root_cause": "The API state management is not preserving the full data structure during scenario loading.",
+              "expected_error": false
+            },
+            {
+              "type": "Missing Data Issue",
+              "location": "get_drug_by_barcode",
+              "details": "Products that should exist according to the scenario are not found in the API.",
+              "expected_vs_actual": "Expected: Product with barcode 99887766 should be found. Actual: Product not found error.",
+              "root_cause": "The products data from the scenario was not properly loaded into the API state.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": "Scenario loaded successfully but with incomplete data structure"
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_drugs",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_drug_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "check_drug_interactions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_by_condition",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_drug_by_barcode",
+                "passed": false,
+                "error": "Product with barcode 99887766 not found"
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": false,
+              "error": "Saved scenario is missing most of the original data"
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "Invalid severity level in interactions: critical. Must be one of: minor, moderate, major"
+            },
+            "tool_execution": [],
+            "save_scenario": {
+              "success": false,
+              "consistency_check": false,
+              "error": "Skipped due to load_scenario failure"
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_drugs",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_drug_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "check_drug_interactions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_by_condition",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_drug_by_barcode",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_drugs",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_drug_details",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "check_drug_interactions",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "search_by_condition",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_drug_by_barcode",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_drugs",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_drug_details",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "check_drug_interactions",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "search_by_condition",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_drug_by_barcode",
+                "passed": true,
+                "error": "Product with barcode 99887766 not found"
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "load_scenario",
+              "details": "4 validation errors for DrugBankScenario: drugs.DB1234.drugbank_id (String should match pattern '^DB\\d{5}$'), interactions.0.severity (String should match pattern '^(minor|moderate|major)$'), products.1234567.barcode (String should match pattern '^\\d{8,14}$'), products.1234567.drugbank_id (String should match pattern '^DB\\d{5}$')",
+              "expected_vs_actual": "Expected validation error due to invalid data format, actual behavior matched expectations",
+              "root_cause": "Scenario contains intentionally invalid data: drug IDs don't follow DB##### format, interaction severity is 'critical' instead of minor/moderate/major, barcode is too short (7 digits instead of 8-14)",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "4 validation errors for DrugBankScenario: drugs.DB1234.drugbank_id (String should match pattern '^DB\\d{5}$'), interactions.0.severity (String should match pattern '^(minor|moderate|major)$'), products.1234567.barcode (String should match pattern '^\\d{8,14}$'), products.1234567.drugbank_id (String should match pattern '^DB\\d{5}$')"
+            },
+            "tool_execution": [],
+            "save_scenario": {
+              "success": false,
+              "consistency_check": false,
+              "error": "Skipped due to load_scenario failure"
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_003"
+      ],
+      "aggregated_errors": {
+        "total_failed": 1,
+        "scenario_ids": [
+          "scenario_003"
+        ],
+        "error_categories": {
+          "critical": [],
+          "high": [],
+          "medium": [],
+          "low": [
+            {
+              "scenario_id": "scenario_003",
+              "type": "Data Loading Issue",
+              "location": "load_scenario",
+              "details": "The scenario was loaded but only with minimal data (drug name and description). All other fields (synonyms, categories, atc_codes, interactions, products, condition_index) were not properly loaded or stored.",
+              "root_cause": "The load_scenario function appears to have issues handling the full complex scenario data structure, possibly due to JSON parsing limitations or data validation issues.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "Data Consistency Issue",
+              "location": "save_scenario",
+              "details": "The saved scenario shows significant data loss compared to the original loaded scenario.",
+              "root_cause": "The API state management is not preserving the full data structure during scenario loading.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "Missing Data Issue",
+              "location": "get_drug_by_barcode",
+              "details": "Products that should exist according to the scenario are not found in the API.",
+              "root_cause": "The products data from the scenario was not properly loaded into the API state.",
+              "expected_error": false
+            }
+          ]
+        },
+        "error_patterns": [
+          {
+            "type": "Data Loading Issue",
+            "location": "load_scenario",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_003"
+            ]
+          },
+          {
+            "type": "Data Consistency Issue",
+            "location": "save_scenario",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_003"
+            ]
+          },
+          {
+            "type": "Missing Data Issue",
+            "location": "get_drug_by_barcode",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_003"
+            ]
+          }
+        ],
+        "severity_summary": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 3
+        }
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 4,
+        "failed_scenarios": 0,
+        "all_passed": true,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "search_drugs",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_drug_details",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "check_drug_interactions",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "search_by_condition",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_drug_by_barcode",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "simple",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": ""
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "search_drugs",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "get_drug_details",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "check_drug_interactions",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "search_by_condition",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "get_drug_by_barcode",
+                  "passed": true,
+                  "error": ""
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": ""
+              }
+            },
+            "complexity_level": "medium",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": ""
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "search_drugs",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "get_drug_details",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "check_drug_interactions",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "search_by_condition",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "get_drug_by_barcode",
+                  "passed": true,
+                  "error": "Product with barcode 99887766 not found"
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": ""
+              }
+            },
+            "complexity_level": "complex",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": true,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "load_scenario",
+                "details": "4 validation errors for DrugBankScenario: drugs.DB1234.drugbank_id (String should match pattern '^DB\\d{5}$'), interactions.0.severity (String should match pattern '^(minor|moderate|major)$'), products.1234567.barcode (String should match pattern '^\\d{8,14}$'), products.1234567.drugbank_id (String should match pattern '^DB\\d{5}$')",
+                "expected_vs_actual": "Expected validation error due to invalid data format, actual behavior matched expectations",
+                "root_cause": "Scenario contains intentionally invalid data: drug IDs don't follow DB##### format, interaction severity is 'critical' instead of minor/moderate/major, barcode is too short (7 digits instead of 8-14)",
+                "expected_error": true
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": false,
+                "error": "4 validation errors for DrugBankScenario: drugs.DB1234.drugbank_id (String should match pattern '^DB\\d{5}$'), interactions.0.severity (String should match pattern '^(minor|moderate|major)$'), products.1234567.barcode (String should match pattern '^\\d{8,14}$'), products.1234567.drugbank_id (String should match pattern '^DB\\d{5}$')"
+              },
+              "tool_execution": [],
+              "save_scenario": {
+                "success": false,
+                "consistency_check": false,
+                "error": "Skipped due to load_scenario failure"
+              }
+            },
+            "complexity_level": "boundary",
+            "execution_time": 0.0
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 1,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/DrugBank.py"
+  }
+}

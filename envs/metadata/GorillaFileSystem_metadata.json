@@ -1,0 +1,452 @@
+{
+  "class_name": "GorillaFileSystem",
+  "description": "A virtual file system server providing comprehensive file and directory operations including navigation, creation, reading, writing, searching, and manipulation of files and directories within a simulated file system environment.",
+  "tools": [
+    {
+      "name": "pwd",
+      "description": "Return the current working directory path in the virtual file system.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "current_working_directory": {
+            "type": "string",
+            "description": "The current working directory path in the virtual file system (e.g., \"/\" or \"/home/user\")."
+          }
+        }
+      }
+    },
+    {
+      "name": "ls",
+      "description": "List the contents of the current directory in the virtual file system.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "boolean",
+            "description": "If true, show hidden files and directories (those starting with '.'). Defaults to false."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "current_directory_content": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "A list of file and directory names in the current directory."
+          }
+        }
+      }
+    },
+    {
+      "name": "cd",
+      "description": "Change the current working directory to the specified folder. Only single-level navigation is supported (cannot use paths).",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "folder": {
+            "type": "string",
+            "description": "The name of the folder or directory to change to. Use \"..\" to go to parent directory. Only single folder names are supported, not full paths."
+          }
+        },
+        "required": [
+          "folder"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "mkdir",
+      "description": "Create a new directory in the current directory of the virtual file system.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "dir_name": {
+            "type": "string",
+            "description": "The name of the new directory to create in the current directory. Must not contain invalid characters (|/\\?%*:\"><)."
+          }
+        },
+        "required": [
+          "dir_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "touch",
+      "description": "Create a new empty file of any extension in the current directory of the virtual file system.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_name": {
+            "type": "string",
+            "description": "The name of the new file to create in the current directory. Must not contain invalid characters (|/\\?%*:\"><)."
+          }
+        },
+        "required": [
+          "file_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "echo",
+      "description": "Write content to a file at the current directory or display it in the terminal if no file name is provided.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "The text content to write to the file or display in the terminal."
+          },
+          "file_name": {
+            "type": "string",
+            "description": "Optional name of the file in the current directory to write the content to. If not provided, content is displayed in terminal."
+          }
+        },
+        "required": [
+          "content"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "cat",
+      "description": "Display the contents of a file of any extension from the current directory in the virtual file system.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_name": {
+            "type": "string",
+            "description": "The name of the file from the current directory to display. Must not contain invalid characters (|/\\?%*:\"><)."
+          }
+        },
+        "required": [
+          "file_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "file_content": {
+            "type": "string",
+            "description": "The complete content of the file."
+          }
+        }
+      }
+    },
+    {
+      "name": "find",
+      "description": "Find any files or directories under a specific path that contain the specified name pattern in their file or directory name.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The directory path to start the search from. Defaults to current directory ('.')."
+          },
+          "name": {
+            "type": "string",
+            "description": "Optional name pattern to search for. If provided, only files and directories containing this pattern in their name will be returned. If not provided, all items are returned."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "matches": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "A list of matching file and directory paths found during the recursive search."
+          }
+        }
+      }
+    },
+    {
+      "name": "wc",
+      "description": "Count the number of lines, words, or characters in a file from the current directory.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_name": {
+            "type": "string",
+            "description": "The name of the file in the current directory to perform word count operation on. Must not contain invalid characters (|/\\?%*:\"><)."
+          },
+          "mode": {
+            "type": "string",
+            "description": "Mode of operation: 'l' for counting lines, 'w' for counting words, 'c' for counting characters. Defaults to 'l'."
+          }
+        },
+        "required": [
+          "file_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "The count of lines, words, or characters in the file based on the specified mode."
+          },
+          "type": {
+            "type": "string",
+            "description": "The type of unit being counted: 'lines', 'words', or 'characters'."
+          }
+        }
+      }
+    },
+    {
+      "name": "sort",
+      "description": "Sort the contents of a file line by line in alphabetical order.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_name": {
+            "type": "string",
+            "description": "The name of the file in the current directory to sort. Must not contain invalid characters (|/\\?%*:\"><)."
+          }
+        },
+        "required": [
+          "file_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "sorted_content": {
+            "type": "string",
+            "description": "The sorted content of the file with lines arranged in alphabetical order."
+          }
+        }
+      }
+    },
+    {
+      "name": "grep",
+      "description": "Search for lines in a file that contain the specified pattern string.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_name": {
+            "type": "string",
+            "description": "The name of the file in the current directory to search. Must not contain invalid characters (|/\\?%*:\"><)."
+          },
+          "pattern": {
+            "type": "string",
+            "description": "The text pattern to search for within the file lines."
+          }
+        },
+        "required": [
+          "file_name",
+          "pattern"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "matching_lines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "A list of lines from the file that contain the specified pattern."
+          }
+        }
+      }
+    },
+    {
+      "name": "du",
+      "description": "Estimate the disk usage of the current directory and all its contents in the virtual file system.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "human_readable": {
+            "type": "boolean",
+            "description": "If true, returns the disk usage in human-readable format (e.g., '1.5 KB', '2.3 MB'). If false, returns size in bytes. Defaults to false."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "disk_usage": {
+            "type": "string",
+            "description": "The estimated disk usage of the directory and its contents, either in bytes or human-readable format depending on the human_readable parameter."
+          }
+        }
+      }
+    },
+    {
+      "name": "tail",
+      "description": "Display the last part of a file from the current directory, showing the specified number of lines from the end.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_name": {
+            "type": "string",
+            "description": "The name of the file in the current directory to display. Must not contain invalid characters (|/\\?%*:\"><)."
+          },
+          "lines": {
+            "type": "integer",
+            "description": "The number of lines to display from the end of the file. Defaults to 10."
+          }
+        },
+        "required": [
+          "file_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "last_lines": {
+            "type": "string",
+            "description": "The last N lines of the file, joined by newline characters."
+          }
+        }
+      }
+    },
+    {
+      "name": "diff",
+      "description": "Compare two files line by line at the current directory and return the differences between them.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_name1": {
+            "type": "string",
+            "description": "The name of the first file in the current directory to compare. Must not contain invalid characters (|/\\?%*:\"><)."
+          },
+          "file_name2": {
+            "type": "string",
+            "description": "The name of the second file in the current directory to compare. Must not contain invalid characters (|/\\?%*:\"><)."
+          }
+        },
+        "required": [
+          "file_name1",
+          "file_name2"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "diff_lines": {
+            "type": "string",
+            "description": "The differences between the two files, showing lines that differ with '-' prefix for file1 and '+' prefix for file2."
+          }
+        }
+      }
+    },
+    {
+      "name": "mv",
+      "description": "Move a file or directory from one location to another within the current directory. Paths are not allowed in destination, only file or folder names.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "The name of the source file or directory in the current directory to move."
+          },
+          "destination": {
+            "type": "string",
+            "description": "The destination name to move the file or directory to. If destination exists and is a directory, the source will be moved into it. Otherwise, source will be renamed to destination. Paths are not allowed, only file or folder names."
+          }
+        },
+        "required": [
+          "source",
+          "destination"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "rm",
+      "description": "Remove a file or directory from the current directory in the virtual file system.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_name": {
+            "type": "string",
+            "description": "The name of the file or directory in the current directory to remove."
+          }
+        },
+        "required": [
+          "file_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "rmdir",
+      "description": "Remove an empty directory from the current directory in the virtual file system.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "dir_name": {
+            "type": "string",
+            "description": "The name of the empty directory in the current directory to remove."
+          }
+        },
+        "required": [
+          "dir_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "cp",
+      "description": "Copy a file or directory from one location to another within the current directory. Paths are not allowed in destination, only file or folder names.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "The name of the source file or directory in the current directory to copy."
+          },
+          "destination": {
+            "type": "string",
+            "description": "The destination name to copy the file or directory to. If destination exists and is a directory, the source will be copied into it. Otherwise, source will be copied and renamed to destination. Paths are not allowed, only file or folder names."
+          }
+        },
+        "required": [
+          "source",
+          "destination"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}
+

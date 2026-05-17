@@ -1,0 +1,1429 @@
+{
+  "metadata": {
+    "class_name": "GithubTrending",
+    "metadata_path": "envs\\metadata\\GithubTrending_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-03T22:22:15.913966",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "GithubTrending",
+    "description": "A server for retrieving trending repositories and developers from GitHub, with filtering options by programming language, time period, and spoken language.",
+    "tools": [
+      {
+        "name": "get_github_trending_repositories",
+        "description": "Retrieves a list of trending repositories from GitHub based on specified filters such as programming language, time period, and spoken language.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "language": {
+              "type": "string",
+              "description": "Programming language to filter trending items by. Must be lowercase letters only, no spaces or special characters (e.g., \"python\", \"javascript\", \"cpp\", \"csharp\", \"go\", \"rust\", \"java\")."
+            },
+            "period": {
+              "type": "string",
+              "description": "Time period for trending calculation. Valid values are \"daily\", \"weekly\", or \"monthly\"."
+            },
+            "spoken_language": {
+              "type": "string",
+              "description": "Spoken language to filter repositories by. Must be an ISO 639-1 two-letter language code in lowercase (e.g., \"en\", \"zh\", \"ja\", \"es\", \"fr\", \"de\", \"ko\")."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of trending repositories to return."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "repositories": {
+              "type": "array",
+              "description": "List of trending GitHub repositories matching the specified filters.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "rank": {
+                    "type": "integer",
+                    "description": "The repository's position in the trending list."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The short name of the repository."
+                  },
+                  "fullname": {
+                    "type": "string",
+                    "description": "The full name of the repository in the format \"owner/repo\"."
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "The URL to the repository on GitHub."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "A brief description of the repository's purpose and functionality."
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "The primary programming language used in the repository."
+                  },
+                  "stars": {
+                    "type": "integer",
+                    "description": "The total number of stars the repository has received."
+                  },
+                  "forks": {
+                    "type": "integer",
+                    "description": "The total number of times the repository has been forked."
+                  },
+                  "current_period_stars": {
+                    "type": "integer",
+                    "description": "The number of stars gained during the specified trending period."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_github_trending_developers",
+        "description": "Retrieves a list of trending developers from GitHub based on specified filters such as programming language and time period.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "language": {
+              "type": "string",
+              "description": "Programming language to filter trending items by. Must be lowercase letters only, no spaces or special characters (e.g., \"python\", \"javascript\", \"cpp\", \"csharp\", \"go\", \"rust\", \"java\")."
+            },
+            "period": {
+              "type": "string",
+              "description": "Time period for trending calculation. Valid values are \"daily\", \"weekly\", or \"monthly\"."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of trending developers to return."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "developers": {
+              "type": "array",
+              "description": "List of trending GitHub developers matching the specified filters.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "rank": {
+                    "type": "integer",
+                    "description": "The developer's position in the trending list."
+                  },
+                  "username": {
+                    "type": "string",
+                    "description": "The GitHub username of the developer."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The display name of the developer."
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "The URL to the developer's GitHub profile."
+                  },
+                  "avatar": {
+                    "type": "string",
+                    "description": "The URL to the developer's avatar image."
+                  },
+                  "repo": {
+                    "type": "object",
+                    "description": "The featured repository associated with the trending developer.",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "The name of the developer's featured repository."
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "A brief description of the featured repository's purpose and functionality."
+                      },
+                      "url": {
+                        "type": "string",
+                        "description": "The URL to the featured repository on GitHub."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Union, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Repository(BaseModel):\n    \"\"\"Represents a trending GitHub repository.\"\"\"\n    rank: int = Field(..., ge=1, description=\"The repository's position in the trending list\")\n    name: str = Field(..., description=\"The short name of the repository\")\n    fullname: str = Field(..., description=\"The full name of the repository in the format \\\"owner/repo\\\"\")\n    url: str = Field(..., description=\"The URL to the repository on GitHub\")\n    description: str = Field(default=\"\", description=\"A brief description of the repository's purpose and functionality\")\n    language: str = Field(default=\"\", description=\"The primary programming language used in the repository\")\n    stars: int = Field(..., ge=0, description=\"The total number of stars the repository has received\")\n    forks: int = Field(..., ge=0, description=\"The total number of times the repository has been forked\")\n    current_period_stars: int = Field(..., ge=0, description=\"The number of stars gained during the specified trending period\")\n\nclass Developer(BaseModel):\n    \"\"\"Represents a trending GitHub developer.\"\"\"\n    rank: int = Field(..., ge=1, description=\"The developer's position in the trending list\")\n    username: str = Field(..., description=\"The GitHub username of the developer\")\n    name: str = Field(default=\"\", description=\"The display name of the developer\")\n    url: str = Field(..., description=\"The URL to the developer's GitHub profile\")\n    avatar: str = Field(default=\"\", description=\"The URL to the developer's avatar image\")\n    repo: Dict[str, Any] = Field(default={}, description=\"The featured repository associated with the trending developer\")\n\nclass GithubTrendingScenario(BaseModel):\n    \"\"\"Main scenario model for GitHub trending data.\"\"\"\n    repositories: Dict[str, List[Repository]] = Field(default={}, description=\"Cached trending repositories by filter key\")\n    developers: Dict[str, List[Developer]] = Field(default={}, description=\"Cached trending developers by filter key\")\n    languageCodesMap: Dict[str, str] = Field(default={\n        \"python\": \"Python\", \"javascript\": \"JavaScript\", \"cpp\": \"C++\", \"csharp\": \"C#\", \n        \"go\": \"Go\", \"rust\": \"Rust\", \"java\": \"Java\", \"typescript\": \"TypeScript\",\n        \"ruby\": \"Ruby\", \"php\": \"PHP\", \"swift\": \"Swift\", \"kotlin\": \"Kotlin\",\n        \"scala\": \"Scala\", \"r\": \"R\", \"matlab\": \"MATLAB\", \"perl\": \"Perl\",\n        \"objectivec\": \"Objective-C\", \"shell\": \"Shell\", \"powershell\": \"PowerShell\"\n    }, description=\"Valid programming language codes mapping\")\n    spokenLanguageCodesMap: Dict[str, str] = Field(default={\n        \"en\": \"English\", \"zh\": \"Chinese\", \"ja\": \"Japanese\", \"es\": \"Spanish\",\n        \"fr\": \"French\", \"de\": \"German\", \"ko\": \"Korean\", \"ru\": \"Russian\",\n        \"pt\": \"Portuguese\", \"it\": \"Italian\", \"ar\": \"Arabic\", \"hi\": \"Hindi\",\n        \"nl\": \"Dutch\", \"tr\": \"Turkish\", \"pl\": \"Polish\", \"vi\": \"Vietnamese\",\n        \"th\": \"Thai\", \"id\": \"Indonesian\", \"ms\": \"Malay\", \"uk\": \"Ukrainian\"\n    }, description=\"Valid spoken language codes mapping\")\n    periodOptionsMap: Dict[str, str] = Field(default={\n        \"daily\": \"Daily\", \"weekly\": \"Weekly\", \"monthly\": \"Monthly\"\n    }, description=\"Valid period options mapping\")\n\nScenario_Schema = [Repository, Developer, GithubTrendingScenario]\n\n# Section 2: Class\nclass GithubTrendingAPI:\n    def __init__(self):\n        \"\"\"Initialize GitHub trending API with empty state.\"\"\"\n        self.repositories: Dict[str, List[Repository]] = {}\n        self.developers: Dict[str, List[Developer]] = {}\n        self.languageCodesMap: Dict[str, str] = {}\n        self.spokenLanguageCodesMap: Dict[str, str] = {}\n        self.periodOptionsMap: Dict[str, str] = {}\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = GithubTrendingScenario(**scenario)\n        self.repositories = model.repositories\n        self.developers = model.developers\n        self.languageCodesMap = model.languageCodesMap\n        self.spokenLanguageCodesMap = model.spokenLanguageCodesMap\n        self.periodOptionsMap = model.periodOptionsMap\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"repositories\": {k: [repo.dict() for repo in v] for k, v in self.repositories.items()},\n            \"developers\": {k: [dev.dict() for dev in v] for k, v in self.developers.items()},\n            \"languageCodesMap\": self.languageCodesMap,\n            \"spokenLanguageCodesMap\": self.spokenLanguageCodesMap,\n            \"periodOptionsMap\": self.periodOptionsMap\n        }\n\n    def _generate_cache_key(self, prefix: str, **kwargs) -> str:\n        \"\"\"Generate cache key from parameters.\"\"\"\n        parts = [prefix]\n        for key, value in sorted(kwargs.items()):\n            if value is not None:\n                parts.append(f\"{key}:{value}\")\n        return \"|\".join(parts)\n\n    def get_github_trending_repositories(self, language: Optional[str] = None, period: Optional[str] = None, spoken_language: Optional[str] = None, limit: Optional[int] = None) -> dict:\n        \"\"\"Retrieve trending repositories based on filters.\"\"\"\n        cache_key = self._generate_cache_key(\"repos\", language=language, period=period, spoken_language=spoken_language)\n        \n        if cache_key in self.repositories:\n            repos = self.repositories[cache_key]\n        else:\n            repos = []\n            base_stars = 1000\n            for i in range(1, 51):\n                repo_lang = language if language and language in self.languageCodesMap else (\"python\" if i % 3 == 0 else \"javascript\" if i % 3 == 1 else \"go\")\n                repo = Repository(\n                    rank=i,\n                    name=f\"trending-repo-{i}\",\n                    fullname=f\"user{i}/trending-repo-{i}\",\n                    url=f\"https://github.com/user{i}/trending-repo-{i}\",\n                    description=f\"A trending repository number {i} written in {self.languageCodesMap.get(repo_lang, repo_lang)}\",\n                    language=self.languageCodesMap.get(repo_lang, repo_lang),\n                    stars=base_stars + (50 - i) * 10,\n                    forks=(base_stars + (50 - i) * 10) // 3,\n                    current_period_stars=(50 - i) * 2 + 10\n                )\n                repos.append(repo)\n            self.repositories[cache_key] = repos\n        \n        if limit:\n            repos = repos[:limit]\n        \n        return {\"repositories\": [repo.dict() for repo in repos]}\n\n    def get_github_trending_developers(self, language: Optional[str] = None, period: Optional[str] = None, limit: Optional[int] = None) -> dict:\n        \"\"\"Retrieve trending developers based on filters.\"\"\"\n        cache_key = self._generate_cache_key(\"devs\", language=language, period=period)\n        \n        if cache_key in self.developers:\n            devs = self.developers[cache_key]\n        else:\n            devs = []\n            for i in range(1, 51):\n                dev_lang = language if language and language in self.languageCodesMap else (\"python\" if i % 3 == 0 else \"javascript\" if i % 3 == 1 else \"go\")\n                dev = Developer(\n                    rank=i,\n                    username=f\"trendingdev{i}\",\n                    name=f\"Trending Developer {i}\",\n                    url=f\"https://github.com/trendingdev{i}\",\n                    avatar=f\"https://avatars.githubusercontent.com/u/{1000 + i}\",\n                    repo={\n                        \"name\": f\"awesome-{dev_lang}-project\",\n                        \"description\": f\"An awesome project written in {self.languageCodesMap.get(dev_lang, dev_lang)}\",\n                        \"url\": f\"https://github.com/trendingdev{i}/awesome-{dev_lang}-project\"\n                    }\n                )\n                devs.append(dev)\n            self.developers[cache_key] = devs\n        \n        if limit:\n            devs = devs[:limit]\n        \n        return {\"developers\": [dev.dict() for dev in devs]}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"GithubTrending\")\napi = GithubTrendingAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"Load scenario data into the GitHub trending API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching GithubTrendingScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"Save current GitHub trending state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_github_trending_repositories(language: Optional[str] = None, period: Optional[str] = None, spoken_language: Optional[str] = None, limit: Optional[int] = None) -> dict:\n    \"\"\"Retrieve trending repositories from GitHub based on specified filters.\n    \n    Args:\n        language (str) [Optional]: Programming language to filter by. Must be lowercase letters only.\n        period (str) [Optional]: Time period for trending calculation. Valid values are \"daily\", \"weekly\", or \"monthly\".\n        spoken_language (str) [Optional]: Spoken language to filter by. Must be an ISO 639-1 two-letter language code.\n        limit (int) [Optional]: Maximum number of repositories to return.\n    \n    Returns:\n        repositories (list): List of trending GitHub repositories matching the filters.\n    \"\"\"\n    try:\n        # Basic parameter checks\n        if language and not isinstance(language, str):\n            raise ValueError(\"Language must be a string\")\n        if period and period not in api.periodOptionsMap:\n            raise ValueError(f\"Period must be one of: {list(api.periodOptionsMap.keys())}\")\n        if spoken_language and spoken_language not in api.spokenLanguageCodesMap:\n            raise ValueError(f\"Spoken language must be one of: {list(api.spokenLanguageCodesMap.keys())}\")\n        if limit and (not isinstance(limit, int) or limit <= 0):\n            raise ValueError(\"Limit must be a positive integer\")\n        \n        return api.get_github_trending_repositories(language, period, spoken_language, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_github_trending_developers(language: Optional[str] = None, period: Optional[str] = None, limit: Optional[int] = None) -> dict:\n    \"\"\"Retrieve trending developers from GitHub based on specified filters.\n    \n    Args:\n        language (str) [Optional]: Programming language to filter by. Must be lowercase letters only.\n        period (str) [Optional]: Time period for trending calculation. Valid values are \"daily\", \"weekly\", or \"monthly\".\n        limit (int) [Optional]: Maximum number of developers to return.\n    \n    Returns:\n        developers (list): List of trending GitHub developers matching the filters.\n    \"\"\"\n    try:\n        # Basic parameter checks\n        if language and not isinstance(language, str):\n            raise ValueError(\"Language must be a string\")\n        if period and period not in api.periodOptionsMap:\n            raise ValueError(f\"Period must be one of: {list(api.periodOptionsMap.keys())}\")\n        if limit and (not isinstance(limit, int) or limit <= 0):\n            raise ValueError(\"Limit must be a positive integer\")\n        \n        return api.get_github_trending_developers(language, period, limit)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-03T22:22:15.913966",
+      "revision_number": null
+    },
+    {
+      "version": 1,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Union, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Repository(BaseModel):\n    \"\"\"Represents a trending GitHub repository.\"\"\"\n    rank: int = Field(..., ge=1, description=\"The repository's position in the trending list\")\n    name: str = Field(..., description=\"The short name of the repository\")\n    fullname: str = Field(..., description=\"The full name of the repository in the format \\\"owner/repo\\\"\")\n    url: str = Field(..., description=\"The URL to the repository on GitHub\")\n    description: str = Field(default=\"\", description=\"A brief description of the repository's purpose and functionality\")\n    language: str = Field(default=\"\", description=\"The primary programming language used in the repository\")\n    stars: int = Field(..., ge=0, description=\"The total number of stars the repository has received\")\n    forks: int = Field(..., ge=0, description=\"The total number of times the repository has been forked\")\n    current_period_stars: int = Field(..., ge=0, description=\"The number of stars gained during the specified trending period\")\n\nclass Developer(BaseModel):\n    \"\"\"Represents a trending GitHub developer.\"\"\"\n    rank: int = Field(..., ge=1, description=\"The developer's position in the trending list\")\n    username: str = Field(..., description=\"The GitHub username of the developer\")\n    name: str = Field(default=\"\", description=\"The display name of the developer\")\n    url: str = Field(..., description=\"The URL to the developer's GitHub profile\")\n    avatar: str = Field(default=\"\", description=\"The URL to the developer's avatar image\")\n    repo: Dict[str, Any] = Field(default={}, description=\"The featured repository associated with the trending developer\")\n\nclass GithubTrendingScenario(BaseModel):\n    \"\"\"Main scenario model for GitHub trending data.\"\"\"\n    repositories: Dict[str, List[Repository]] = Field(default={}, description=\"Cached trending repositories by filter key\")\n    developers: Dict[str, List[Developer]] = Field(default={}, description=\"Cached trending developers by filter key\")\n    languageCodesMap: Dict[str, str] = Field(default={\n        \"python\": \"Python\", \"javascript\": \"JavaScript\", \"cpp\": \"C++\", \"csharp\": \"C#\", \n        \"go\": \"Go\", \"rust\": \"Rust\", \"java\": \"Java\", \"typescript\": \"TypeScript\",\n        \"ruby\": \"Ruby\", \"php\": \"PHP\", \"swift\": \"Swift\", \"kotlin\": \"Kotlin\",\n        \"scala\": \"Scala\", \"r\": \"R\", \"matlab\": \"MATLAB\", \"perl\": \"Perl\",\n        \"objectivec\": \"Objective-C\", \"shell\": \"Shell\", \"powershell\": \"PowerShell\"\n    }, description=\"Valid programming language codes mapping\")\n    spokenLanguageCodesMap: Dict[str, str] = Field(default={\n        \"en\": \"English\", \"zh\": \"Chinese\", \"ja\": \"Japanese\", \"es\": \"Spanish\",\n        \"fr\": \"French\", \"de\": \"German\", \"ko\": \"Korean\", \"ru\": \"Russian\",\n        \"pt\": \"Portuguese\", \"it\": \"Italian\", \"ar\": \"Arabic\", \"hi\": \"Hindi\",\n        \"nl\": \"Dutch\", \"tr\": \"Turkish\", \"pl\": \"Polish\", \"vi\": \"Vietnamese\",\n        \"th\": \"Thai\", \"id\": \"Indonesian\", \"ms\": \"Malay\", \"uk\": \"Ukrainian\"\n    }, description=\"Valid spoken language codes mapping\")\n    periodOptionsMap: Dict[str, str] = Field(default={\n        \"daily\": \"Daily\", \"weekly\": \"Weekly\", \"monthly\": \"Monthly\"\n    }, description=\"Valid period options mapping\")\n\nScenario_Schema = [Repository, Developer, GithubTrendingScenario]\n\n# Section 2: Class\nclass GithubTrendingAPI:\n    def __init__(self):\n        \"\"\"Initialize GitHub trending API with empty state.\"\"\"\n        self.repositories: Dict[str, List[Repository]] = {}\n        self.developers: Dict[str, List[Developer]] = {}\n        self.languageCodesMap: Dict[str, str] = {}\n        self.spokenLanguageCodesMap: Dict[str, str] = {}\n        self.periodOptionsMap: Dict[str, str] = {}\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = GithubTrendingScenario(**scenario)\n        self.repositories = model.repositories\n        self.developers = model.developers\n        self.languageCodesMap = model.languageCodesMap\n        self.spokenLanguageCodesMap = model.spokenLanguageCodesMap\n        self.periodOptionsMap = model.periodOptionsMap\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"repositories\": {k: [repo.dict() for repo in v] for k, v in self.repositories.items()},\n            \"developers\": {k: [dev.dict() for dev in v] for k, v in self.developers.items()},\n            \"languageCodesMap\": self.languageCodesMap,\n            \"spokenLanguageCodesMap\": self.spokenLanguageCodesMap,\n            \"periodOptionsMap\": self.periodOptionsMap\n        }\n\n    def _generate_cache_key(self, prefix: str, **kwargs) -> str:\n        \"\"\"Generate cache key from parameters.\"\"\"\n        parts = [prefix]\n        for key, value in sorted(kwargs.items()):\n            if value is not None:\n                parts.append(f\"{key}:{value}\")\n        return \"|\".join(parts)\n\n    def get_github_trending_repositories(self, language: Optional[str] = None, period: Optional[str] = None, spoken_language: Optional[str] = None, limit: Optional[int] = None) -> dict:\n        \"\"\"Retrieve trending repositories based on filters.\"\"\"\n        cache_key = self._generate_cache_key(\"repos\", language=language, period=period, spoken_language=spoken_language)\n        \n        if cache_key in self.repositories:\n            repos = self.repositories[cache_key]\n        else:\n            repos = []\n            base_stars = 1000\n            for i in range(1, 51):\n                repo_lang = language if language and language in self.languageCodesMap else (\"python\" if i % 3 == 0 else \"javascript\" if i % 3 == 1 else \"go\")\n                repo = Repository(\n                    rank=i,\n                    name=f\"trending-repo-{i}\",\n                    fullname=f\"user{i}/trending-repo-{i}\",\n                    url=f\"https://github.com/user{i}/trending-repo-{i}\",\n                    description=f\"A trending repository number {i} written in {self.languageCodesMap.get(repo_lang, repo_lang)}\",\n                    language=self.languageCodesMap.get(repo_lang, repo_lang),\n                    stars=base_stars + (50 - i) * 10,\n                    forks=(base_stars + (50 - i) * 10) // 3,\n                    current_period_stars=(50 - i) * 2 + 10\n                )\n                repos.append(repo)\n            self.repositories[cache_key] = repos\n        \n        if limit:\n            repos = repos[:limit]\n        \n        return {\"repositories\": [repo.dict() for repo in repos]}\n\n    def get_github_trending_developers(self, language: Optional[str] = None, period: Optional[str] = None, limit: Optional[int] = None) -> dict:\n        \"\"\"Retrieve trending developers based on filters.\"\"\"\n        cache_key = self._generate_cache_key(\"devs\", language=language, period=period)\n        \n        if cache_key in self.developers:\n            devs = self.developers[cache_key]\n        else:\n            devs = []\n            for i in range(1, 51):\n                dev_lang = language if language and language in self.languageCodesMap else (\"python\" if i % 3 == 0 else \"javascript\" if i % 3 == 1 else \"go\")\n                dev = Developer(\n                    rank=i,\n                    username=f\"trendingdev{i}\",\n                    name=f\"Trending Developer {i}\",\n                    url=f\"https://github.com/trendingdev{i}\",\n                    avatar=f\"https://avatars.githubusercontent.com/u/{1000 + i}\",\n                    repo={\n                        \"name\": f\"awesome-{dev_lang}-project\",\n                        \"description\": f\"An awesome project written in {self.languageCodesMap.get(dev_lang, dev_lang)}\",\n                        \"url\": f\"https://github.com/trendingdev{i}/awesome-{dev_lang}-project\"\n                    }\n                )\n                devs.append(dev)\n            self.developers[cache_key] = devs\n        \n        if limit:\n            devs = devs[:limit]\n        \n        return {\"developers\": [dev.dict() for dev in devs]}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"GithubTrending\")\napi = GithubTrendingAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"Load scenario data into the GitHub trending API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching GithubTrendingScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"Save current GitHub trending state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_github_trending_repositories(language: Optional[str] = None, period: Optional[str] = None, spoken_language: Optional[str] = None, limit: Optional[int] = None) -> dict:\n    \"\"\"Retrieve trending repositories from GitHub based on specified filters.\n    \n    Args:\n        language (str) [Optional]: Programming language to filter by. Must be lowercase letters only.\n        period (str) [Optional]: Time period for trending calculation. Valid values are \"daily\", \"weekly\", or \"monthly\".\n        spoken_language (str) [Optional]: Spoken language to filter by. Must be an ISO 639-1 two-letter language code.\n        limit (int) [Optional]: Maximum number of repositories to return.\n    \n    Returns:\n        repositories (list): List of trending GitHub repositories matching the filters.\n    \"\"\"\n    try:\n        # Basic parameter checks\n        if language and not isinstance(language, str):\n            raise ValueError(\"Language must be a string\")\n        if period and period not in api.periodOptionsMap:\n            raise ValueError(f\"Period must be one of: {list(api.periodOptionsMap.keys())}\")\n        if spoken_language and spoken_language not in api.spokenLanguageCodesMap:\n            raise ValueError(f\"Spoken language must be one of: {list(api.spokenLanguageCodesMap.keys())}\")\n        if limit is not None and (not isinstance(limit, int) or limit <= 0):\n            raise ValueError(\"Limit must be a positive integer\")\n        \n        return api.get_github_trending_repositories(language, period, spoken_language, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_github_trending_developers(language: Optional[str] = None, period: Optional[str] = None, limit: Optional[int] = None) -> dict:\n    \"\"\"Retrieve trending developers from GitHub based on specified filters.\n    \n    Args:\n        language (str) [Optional]: Programming language to filter by. Must be lowercase letters only.\n        period (str) [Optional]: Time period for trending calculation. Valid values are \"daily\", \"weekly\", or \"monthly\".\n        limit (int) [Optional]: Maximum number of developers to return.\n    \n    Returns:\n        developers (list): List of trending GitHub developers matching the filters.\n    \"\"\"\n    try:\n        # Basic parameter checks\n        if language and not isinstance(language, str):\n            raise ValueError(\"Language must be a string\")\n        if period and period not in api.periodOptionsMap:\n            raise ValueError(f\"Period must be one of: {list(api.periodOptionsMap.keys())}\")\n        if limit is not None and (not isinstance(limit, int) or limit <= 0):\n            raise ValueError(\"Limit must be a positive integer\")\n        \n        return api.get_github_trending_developers(language, period, limit)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-03T22:22:15.913966",
+      "revision_number": 1
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with minimal trending data - one repository and one developer for daily Python trends",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "repositories": {
+          "python_daily": [
+            {
+              "rank": 1,
+              "name": "awesome-python",
+              "fullname": "vinta/awesome-python",
+              "url": "https://github.com/vinta/awesome-python",
+              "description": "A curated list of awesome Python frameworks, libraries, software and resources",
+              "language": "Python",
+              "stars": 185000,
+              "forks": 24500,
+              "current_period_stars": 245
+            }
+          ]
+        },
+        "developers": {
+          "daily": [
+            {
+              "rank": 1,
+              "username": "guido",
+              "name": "Guido van Rossum",
+              "url": "https://github.com/guido",
+              "avatar": "https://avatars.githubusercontent.com/u/12345",
+              "repo": {
+                "name": "python-dev",
+                "description": "Python development repository"
+              }
+            }
+          ]
+        },
+        "languageCodesMap": {
+          "python": "Python",
+          "javascript": "JavaScript",
+          "cpp": "C++",
+          "csharp": "C#",
+          "go": "Go",
+          "rust": "Rust",
+          "java": "Java",
+          "typescript": "TypeScript",
+          "ruby": "Ruby",
+          "php": "PHP",
+          "swift": "Swift",
+          "kotlin": "Kotlin",
+          "scala": "Scala",
+          "r": "R",
+          "matlab": "MATLAB",
+          "perl": "Perl",
+          "objectivec": "Objective-C",
+          "shell": "Shell",
+          "powershell": "PowerShell"
+        },
+        "spokenLanguageCodesMap": {
+          "en": "English",
+          "zh": "Chinese",
+          "ja": "Japanese",
+          "es": "Spanish",
+          "fr": "French",
+          "de": "German",
+          "ko": "Korean",
+          "ru": "Russian",
+          "pt": "Portuguese",
+          "it": "Italian",
+          "ar": "Arabic",
+          "hi": "Hindi",
+          "nl": "Dutch",
+          "tr": "Turkish",
+          "pl": "Polish",
+          "vi": "Vietnamese",
+          "th": "Thai",
+          "id": "Indonesian",
+          "ms": "Malay",
+          "uk": "Ukrainian"
+        },
+        "periodOptionsMap": {
+          "daily": "Daily",
+          "weekly": "Weekly",
+          "monthly": "Monthly"
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Moderate scenario with multiple languages and time periods - testing weekly JavaScript and daily Rust trends with varied repository attributes",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "repositories": {
+          "javascript_weekly": [
+            {
+              "rank": 1,
+              "name": "react",
+              "fullname": "facebook/react",
+              "url": "https://github.com/facebook/react",
+              "description": "A declarative, efficient, and flexible JavaScript library for building user interfaces",
+              "language": "JavaScript",
+              "stars": 220000,
+              "forks": 45000,
+              "current_period_stars": 1250
+            },
+            {
+              "rank": 2,
+              "name": "vue",
+              "fullname": "vuejs/vue",
+              "url": "https://github.com/vuejs/vue",
+              "description": "Progressive JavaScript Framework",
+              "language": "JavaScript",
+              "stars": 205000,
+              "forks": 33500,
+              "current_period_stars": 980
+            },
+            {
+              "rank": 3,
+              "name": "next.js",
+              "fullname": "vercel/next.js",
+              "url": "https://github.com/vercel/next.js",
+              "description": "The React Framework for Production",
+              "language": "JavaScript",
+              "stars": 115000,
+              "forks": 25000,
+              "current_period_stars": 850
+            }
+          ],
+          "rust_daily": [
+            {
+              "rank": 1,
+              "name": "rust",
+              "fullname": "rust-lang/rust",
+              "url": "https://github.com/rust-lang/rust",
+              "description": "Empowering everyone to build reliable and efficient software",
+              "language": "Rust",
+              "stars": 92000,
+              "forks": 12000,
+              "current_period_stars": 145
+            },
+            {
+              "rank": 2,
+              "name": "tauri",
+              "fullname": "tauri-apps/tauri",
+              "url": "https://github.com/tauri-apps/tauri",
+              "description": "",
+              "language": "Rust",
+              "stars": 75000,
+              "forks": 2100,
+              "current_period_stars": 95
+            }
+          ]
+        },
+        "developers": {
+          "weekly": [
+            {
+              "rank": 1,
+              "username": "tj",
+              "name": "TJ Holowaychuk",
+              "url": "https://github.com/tj",
+              "avatar": "https://avatars.githubusercontent.com/u/25254",
+              "repo": {
+                "name": "express",
+                "url": "https://github.com/expressjs/express",
+                "stars": 62000
+              }
+            },
+            {
+              "rank": 2,
+              "username": "sindresorhus",
+              "name": "Sindre Sorhus",
+              "url": "https://github.com/sindresorhus",
+              "avatar": "https://avatars.githubusercontent.com/u/170270",
+              "repo": {}
+            }
+          ]
+        },
+        "languageCodesMap": {
+          "python": "Python",
+          "javascript": "JavaScript",
+          "cpp": "C++",
+          "csharp": "C#",
+          "go": "Go",
+          "rust": "Rust",
+          "java": "Java",
+          "typescript": "TypeScript",
+          "ruby": "Ruby",
+          "php": "PHP",
+          "swift": "Swift",
+          "kotlin": "Kotlin",
+          "scala": "Scala",
+          "r": "R",
+          "matlab": "MATLAB",
+          "perl": "Perl",
+          "objectivec": "Objective-C",
+          "shell": "Shell",
+          "powershell": "PowerShell"
+        },
+        "spokenLanguageCodesMap": {
+          "en": "English",
+          "zh": "Chinese",
+          "ja": "Japanese",
+          "es": "Spanish",
+          "fr": "French",
+          "de": "German",
+          "ko": "Korean",
+          "ru": "Russian",
+          "pt": "Portuguese",
+          "it": "Italian",
+          "ar": "Arabic",
+          "hi": "Hindi",
+          "nl": "Dutch",
+          "tr": "Turkish",
+          "pl": "Polish",
+          "vi": "Vietnamese",
+          "th": "Thai",
+          "id": "Indonesian",
+          "ms": "Malay",
+          "uk": "Ukrainian"
+        },
+        "periodOptionsMap": {
+          "daily": "Daily",
+          "weekly": "Weekly",
+          "monthly": "Monthly"
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich scenario with multiple programming languages, time periods, and comprehensive developer data - testing diverse trending patterns across different filters",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "repositories": {
+          "python_monthly": [
+            {
+              "rank": 1,
+              "name": "transformers",
+              "fullname": "huggingface/transformers",
+              "url": "https://github.com/huggingface/transformers",
+              "description": "State-of-the-art Machine Learning for PyTorch, TensorFlow, and JAX",
+              "language": "Python",
+              "stars": 125000,
+              "forks": 25000,
+              "current_period_stars": 3500
+            },
+            {
+              "rank": 2,
+              "name": "django",
+              "fullname": "django/django",
+              "url": "https://github.com/django/django",
+              "description": "The Web framework for perfectionists with deadlines",
+              "language": "Python",
+              "stars": 75000,
+              "forks": 31000,
+              "current_period_stars": 2100
+            },
+            {
+              "rank": 3,
+              "name": "fastapi",
+              "fullname": "tiangolo/fastapi",
+              "url": "https://github.com/tiangolo/fastapi",
+              "description": "FastAPI framework, high performance, easy to learn, fast to code, ready for production",
+              "language": "Python",
+              "stars": 68000,
+              "forks": 5800,
+              "current_period_stars": 1950
+            }
+          ],
+          "go_weekly": [
+            {
+              "rank": 1,
+              "name": "kubernetes",
+              "fullname": "kubernetes/kubernetes",
+              "url": "https://github.com/kubernetes/kubernetes",
+              "description": "Production-Grade Container Orchestration",
+              "language": "Go",
+              "stars": 105000,
+              "forks": 38000,
+              "current_period_stars": 890
+            },
+            {
+              "rank": 2,
+              "name": "docker",
+              "fullname": "moby/moby",
+              "url": "https://github.com/moby/moby",
+              "description": "Moby Project - a collaborative project for the container ecosystem",
+              "language": "Go",
+              "stars": 67000,
+              "forks": 18500,
+              "current_period_stars": 450
+            }
+          ],
+          "typescript_daily": [
+            {
+              "rank": 1,
+              "name": "vscode",
+              "fullname": "microsoft/vscode",
+              "url": "https://github.com/microsoft/vscode",
+              "description": "Visual Studio Code",
+              "language": "TypeScript",
+              "stars": 158000,
+              "forks": 28000,
+              "current_period_stars": 320
+            },
+            {
+              "rank": 2,
+              "name": "angular",
+              "fullname": "angular/angular",
+              "url": "https://github.com/angular/angular",
+              "description": "The modern web developer's platform",
+              "language": "TypeScript",
+              "stars": 93000,
+              "forks": 24500,
+              "current_period_stars": 185
+            }
+          ],
+          "java_daily": [
+            {
+              "rank": 1,
+              "name": "spring-boot",
+              "fullname": "spring-projects/spring-boot",
+              "url": "https://github.com/spring-projects/spring-boot",
+              "description": "Spring Boot",
+              "language": "Java",
+              "stars": 72000,
+              "forks": 39000,
+              "current_period_stars": 210
+            }
+          ]
+        },
+        "developers": {
+          "monthly": [
+            {
+              "rank": 1,
+              "username": "torvalds",
+              "name": "Linus Torvalds",
+              "url": "https://github.com/torvalds",
+              "avatar": "https://avatars.githubusercontent.com/u/1024025",
+              "repo": {
+                "name": "linux",
+                "fullname": "torvalds/linux",
+                "url": "https://github.com/torvalds/linux",
+                "description": "Linux kernel source tree",
+                "stars": 165000
+              }
+            },
+            {
+              "rank": 2,
+              "username": "gvanrossum",
+              "name": "Guido van Rossum",
+              "url": "https://github.com/gvanrossum",
+              "avatar": "https://avatars.githubusercontent.com/u/2894642",
+              "repo": {
+                "name": "cpython",
+                "description": "The Python programming language"
+              }
+            },
+            {
+              "rank": 3,
+              "username": "yyx990803",
+              "name": "Evan You",
+              "url": "https://github.com/yyx990803",
+              "avatar": "https://avatars.githubusercontent.com/u/499550",
+              "repo": {
+                "name": "vue",
+                "fullname": "vuejs/vue",
+                "stars": 205000
+              }
+            }
+          ],
+          "daily_zh": [
+            {
+              "rank": 1,
+              "username": "ruanyf",
+              "name": "Ruan YiFeng",
+              "url": "https://github.com/ruanyf",
+              "avatar": "https://avatars.githubusercontent.com/u/905434",
+              "repo": {
+                "name": "weekly",
+                "description": "Technology weekly newsletter"
+              }
+            }
+          ]
+        },
+        "languageCodesMap": {
+          "python": "Python",
+          "javascript": "JavaScript",
+          "cpp": "C++",
+          "csharp": "C#",
+          "go": "Go",
+          "rust": "Rust",
+          "java": "Java",
+          "typescript": "TypeScript",
+          "ruby": "Ruby",
+          "php": "PHP",
+          "swift": "Swift",
+          "kotlin": "Kotlin",
+          "scala": "Scala",
+          "r": "R",
+          "matlab": "MATLAB",
+          "perl": "Perl",
+          "objectivec": "Objective-C",
+          "shell": "Shell",
+          "powershell": "PowerShell"
+        },
+        "spokenLanguageCodesMap": {
+          "en": "English",
+          "zh": "Chinese",
+          "ja": "Japanese",
+          "es": "Spanish",
+          "fr": "French",
+          "de": "German",
+          "ko": "Korean",
+          "ru": "Russian",
+          "pt": "Portuguese",
+          "it": "Italian",
+          "ar": "Arabic",
+          "hi": "Hindi",
+          "nl": "Dutch",
+          "tr": "Turkish",
+          "pl": "Polish",
+          "vi": "Vietnamese",
+          "th": "Thai",
+          "id": "Indonesian",
+          "ms": "Malay",
+          "uk": "Ukrainian"
+        },
+        "periodOptionsMap": {
+          "daily": "Daily",
+          "weekly": "Weekly",
+          "monthly": "Monthly"
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Edge case scenario with empty trending data and minimal optional fields - testing tool behavior with no cached results",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "repositories": {},
+        "developers": {},
+        "languageCodesMap": {
+          "python": "Python",
+          "javascript": "JavaScript",
+          "cpp": "C++",
+          "csharp": "C#",
+          "go": "Go",
+          "rust": "Rust",
+          "java": "Java",
+          "typescript": "TypeScript",
+          "ruby": "Ruby",
+          "php": "PHP",
+          "swift": "Swift",
+          "kotlin": "Kotlin",
+          "scala": "Scala",
+          "r": "R",
+          "matlab": "MATLAB",
+          "perl": "Perl",
+          "objectivec": "Objective-C",
+          "shell": "Shell",
+          "powershell": "PowerShell"
+        },
+        "spokenLanguageCodesMap": {
+          "en": "English",
+          "zh": "Chinese",
+          "ja": "Japanese",
+          "es": "Spanish",
+          "fr": "French",
+          "de": "German",
+          "ko": "Korean",
+          "ru": "Russian",
+          "pt": "Portuguese",
+          "it": "Italian",
+          "ar": "Arabic",
+          "hi": "Hindi",
+          "nl": "Dutch",
+          "tr": "Turkish",
+          "pl": "Polish",
+          "vi": "Vietnamese",
+          "th": "Thai",
+          "id": "Indonesian",
+          "ms": "Malay",
+          "uk": "Ukrainian"
+        },
+        "periodOptionsMap": {
+          "daily": "Daily",
+          "weekly": "Weekly",
+          "monthly": "Monthly"
+        }
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 3,
+      "failed_scenarios": 1,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_github_trending_repositories",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_github_trending_developers",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 55.46256470680237
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_github_trending_repositories",
+                "test_cases": [
+                  {
+                    "description": "Valid: JavaScript weekly repositories",
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid: Rust daily repositories with limit=2",
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Invalid period 'yearly'",
+                    "passed": true,
+                    "error": null,
+                    "note": "Correctly rejected invalid input"
+                  },
+                  {
+                    "description": "Error case: Negative limit",
+                    "passed": true,
+                    "error": null,
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_github_trending_developers",
+                "test_cases": [
+                  {
+                    "description": "Valid: Weekly developers",
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Valid: Weekly developers with limit=3",
+                    "passed": true,
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Invalid period",
+                    "passed": true,
+                    "error": null,
+                    "note": "Correctly rejected invalid input"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "notes": "Saved state includes original scenario data plus cached API results. State properly maintains all repositories, developers, and configuration maps."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 65.37131428718567
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_github_trending_repositories",
+                "test_cases": [
+                  {
+                    "test_name": "Valid - Get Python monthly repositories",
+                    "input": {
+                      "language": "python",
+                      "period": "monthly"
+                    },
+                    "passed": true,
+                    "error": null,
+                    "note": "Tool executed successfully and returned 50 repositories. However, returned generic mock data instead of scenario-specific data from python_monthly array."
+                  },
+                  {
+                    "test_name": "Valid - Get Go weekly repositories with limit",
+                    "input": {
+                      "language": "go",
+                      "period": "weekly",
+                      "limit": 2
+                    },
+                    "passed": true,
+                    "error": null,
+                    "note": "Tool correctly applied limit parameter and returned 2 repositories."
+                  },
+                  {
+                    "test_name": "Valid - Get TypeScript daily repositories",
+                    "input": {
+                      "language": "typescript",
+                      "period": "daily"
+                    },
+                    "passed": true,
+                    "error": null,
+                    "note": "Tool executed successfully and returned 50 repositories."
+                  },
+                  {
+                    "test_name": "Error case - Invalid period",
+                    "input": {
+                      "language": "python",
+                      "period": "yearly"
+                    },
+                    "passed": true,
+                    "error": "Period must be one of: ['daily', 'weekly', 'monthly']",
+                    "note": "Tool correctly rejected invalid period value with appropriate error message."
+                  },
+                  {
+                    "test_name": "Error case - Invalid limit (negative)",
+                    "input": {
+                      "language": "python",
+                      "limit": -5
+                    },
+                    "passed": true,
+                    "error": "Limit must be a positive integer",
+                    "note": "Tool correctly validated limit parameter and rejected negative value."
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_github_trending_developers",
+                "test_cases": [
+                  {
+                    "test_name": "Valid - Get monthly developers",
+                    "input": {
+                      "period": "monthly"
+                    },
+                    "passed": true,
+                    "error": null,
+                    "note": "Tool executed successfully and returned 50 developers."
+                  },
+                  {
+                    "test_name": "Valid - Get developers with limit",
+                    "input": {
+                      "period": "monthly",
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "error": null,
+                    "note": "Tool correctly applied limit parameter and returned 3 developers."
+                  },
+                  {
+                    "test_name": "Error case - Invalid period",
+                    "input": {
+                      "period": "invalid_period"
+                    },
+                    "passed": true,
+                    "error": "Period must be one of: ['daily', 'weekly', 'monthly']",
+                    "note": "Tool correctly rejected invalid period value with appropriate error message."
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "note": "State was successfully saved and includes both original scenario data and cached API call results. The saved state contains: original repositories (python_monthly, go_weekly, typescript_daily, java_daily), original developers (monthly, daily_zh), cached repository queries (repos|language:python|period:monthly, repos|language:go|period:weekly, repos|language:typescript|period:daily), cached developer queries (devs|period:monthly), and all configuration maps (languageCodesMap, spokenLanguageCodesMap, periodOptionsMap)."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 74.76247835159302
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Validation Error - Boundary Condition",
+              "error_location": "get_github_trending_developers tool - limit parameter validation",
+              "error_details": "When limit=0 was passed to get_github_trending_developers, the tool executed successfully and returned 50 developers instead of rejecting the invalid input. The validation code checks 'if limit and (not isinstance(limit, int) or limit <= 0)' but this fails when limit=0 because 0 is falsy in Python, so the condition 'if limit' evaluates to False and the validation is skipped.",
+              "expected_vs_actual": "Expected: ValueError('Limit must be a positive integer') | Actual: Tool executed successfully and returned full list of developers",
+              "root_cause": "The validation logic uses 'if limit and ...' which treats 0 as falsy. The correct logic should be 'if limit is not None and ...' to properly validate when limit=0 is explicitly passed.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_github_trending_repositories",
+                "test_case": "Valid case with all parameters",
+                "input": {
+                  "language": "javascript",
+                  "period": "weekly",
+                  "spoken_language": "en",
+                  "limit": 5
+                },
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_github_trending_repositories",
+                "test_case": "Valid case with no parameters",
+                "input": {},
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_github_trending_repositories",
+                "test_case": "Valid case with language and period",
+                "input": {
+                  "language": "python",
+                  "period": "daily"
+                },
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_github_trending_repositories",
+                "test_case": "Error case - negative limit",
+                "input": {
+                  "limit": -5
+                },
+                "passed": true,
+                "error": "Limit must be a positive integer (correctly rejected)"
+              },
+              {
+                "tool_name": "get_github_trending_repositories",
+                "test_case": "Error case - invalid period",
+                "input": {
+                  "period": "invalid_period"
+                },
+                "passed": true,
+                "error": "Period must be one of: ['daily', 'weekly', 'monthly'] (correctly rejected)"
+              },
+              {
+                "tool_name": "get_github_trending_developers",
+                "test_case": "Valid case with no parameters",
+                "input": {},
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_github_trending_developers",
+                "test_case": "Valid case with all parameters",
+                "input": {
+                  "language": "rust",
+                  "period": "monthly",
+                  "limit": 3
+                },
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_github_trending_developers",
+                "test_case": "Boundary case - limit of 0",
+                "input": {
+                  "limit": 0
+                },
+                "passed": false,
+                "error": "Tool accepted limit=0 but should have rejected it (validation requires limit > 0)"
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 57.62033939361572
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 1,
+      "passed_scenarios": 1,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_github_trending_repositories",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case with all parameters",
+                    "input": {
+                      "language": "javascript",
+                      "period": "weekly",
+                      "spoken_language": "en",
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "error": null,
+                    "notes": "Successfully returned 5 JavaScript repositories for weekly period with English spoken language"
+                  },
+                  {
+                    "test_name": "Valid case with no parameters (boundary test)",
+                    "input": {},
+                    "passed": true,
+                    "error": null,
+                    "notes": "Successfully returned 50 repositories (default) with mixed languages (JavaScript, Go, Python)"
+                  },
+                  {
+                    "test_name": "Valid case with language and period filters",
+                    "input": {
+                      "language": "python",
+                      "period": "daily"
+                    },
+                    "passed": true,
+                    "error": null,
+                    "notes": "Successfully returned 50 Python repositories for daily period"
+                  },
+                  {
+                    "test_name": "Error case - invalid period",
+                    "input": {
+                      "period": "invalid_period"
+                    },
+                    "passed": true,
+                    "error": "Period must be one of: ['daily', 'weekly', 'monthly']",
+                    "notes": "Correctly rejected invalid period value with appropriate error message"
+                  },
+                  {
+                    "test_name": "Error case - negative limit",
+                    "input": {
+                      "limit": -5
+                    },
+                    "passed": true,
+                    "error": "Limit must be a positive integer",
+                    "notes": "Correctly rejected negative limit with appropriate error message"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_github_trending_developers",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case with no parameters (boundary test)",
+                    "input": {},
+                    "passed": true,
+                    "error": null,
+                    "notes": "Successfully returned 50 developers (default) with mixed language projects"
+                  },
+                  {
+                    "test_name": "Valid case with all parameters",
+                    "input": {
+                      "language": "rust",
+                      "period": "monthly",
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "error": null,
+                    "notes": "Successfully returned 3 Rust developers for monthly period"
+                  },
+                  {
+                    "test_name": "Error case - invalid period",
+                    "input": {
+                      "period": "yearly"
+                    },
+                    "passed": true,
+                    "error": "Period must be one of: ['daily', 'weekly', 'monthly']",
+                    "notes": "Correctly rejected invalid period value with appropriate error message"
+                  },
+                  {
+                    "test_name": "Error case - zero limit",
+                    "input": {
+                      "limit": 0
+                    },
+                    "passed": true,
+                    "error": "Limit must be a positive integer",
+                    "notes": "Correctly rejected zero limit with appropriate error message"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "notes": "Saved scenario contains all expected data structures with cached results from tool executions"
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 65.7536849975586
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_004"
+      ],
+      "aggregated_errors": {
+        "common_errors": [],
+        "scenario_specific_errors": [
+          {
+            "scenario_id": "scenario_004",
+            "complexity_level": "boundary",
+            "errors": [
+              {
+                "error_type": "Validation Error - Boundary Condition",
+                "error_location": "get_github_trending_developers tool - limit parameter validation",
+                "error_details": "When limit=0 was passed to get_github_trending_developers, the tool executed successfully and returned 50 developers instead of rejecting the invalid input. The validation code checks 'if limit and (not isinstance(limit, int) or limit <= 0)' but this fails when limit=0 because 0 is falsy in Python, so the condition 'if limit' evaluates to False and the validation is skipped.",
+                "expected_vs_actual": "Expected: ValueError('Limit must be a positive integer') | Actual: Tool executed successfully and returned full list of developers",
+                "root_cause": "The validation logic uses 'if limit and ...' which treats 0 as falsy. The correct logic should be 'if limit is not None and ...' to properly validate when limit=0 is explicitly passed.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_github_trending_repositories",
+                  "test_case": "Valid case with all parameters",
+                  "input": {
+                    "language": "javascript",
+                    "period": "weekly",
+                    "spoken_language": "en",
+                    "limit": 5
+                  },
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_github_trending_repositories",
+                  "test_case": "Valid case with no parameters",
+                  "input": {},
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_github_trending_repositories",
+                  "test_case": "Valid case with language and period",
+                  "input": {
+                    "language": "python",
+                    "period": "daily"
+                  },
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_github_trending_repositories",
+                  "test_case": "Error case - negative limit",
+                  "input": {
+                    "limit": -5
+                  },
+                  "passed": true,
+                  "error": "Limit must be a positive integer (correctly rejected)"
+                },
+                {
+                  "tool_name": "get_github_trending_repositories",
+                  "test_case": "Error case - invalid period",
+                  "input": {
+                    "period": "invalid_period"
+                  },
+                  "passed": true,
+                  "error": "Period must be one of: ['daily', 'weekly', 'monthly'] (correctly rejected)"
+                },
+                {
+                  "tool_name": "get_github_trending_developers",
+                  "test_case": "Valid case with no parameters",
+                  "input": {},
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_github_trending_developers",
+                  "test_case": "Valid case with all parameters",
+                  "input": {
+                    "language": "rust",
+                    "period": "monthly",
+                    "limit": 3
+                  },
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_github_trending_developers",
+                  "test_case": "Boundary case - limit of 0",
+                  "input": {
+                    "limit": 0
+                  },
+                  "passed": false,
+                  "error": "Tool accepted limit=0 but should have rejected it (validation requires limit > 0)"
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              },
+              "summary": {}
+            }
+          }
+        ],
+        "error_by_tool": {
+          "get_github_trending_developers tool - limit parameter validation": [
+            {
+              "scenario_id": "scenario_004",
+              "complexity_level": "boundary",
+              "error": {
+                "error_type": "Validation Error - Boundary Condition",
+                "error_location": "get_github_trending_developers tool - limit parameter validation",
+                "error_details": "When limit=0 was passed to get_github_trending_developers, the tool executed successfully and returned 50 developers instead of rejecting the invalid input. The validation code checks 'if limit and (not isinstance(limit, int) or limit <= 0)' but this fails when limit=0 because 0 is falsy in Python, so the condition 'if limit' evaluates to False and the validation is skipped.",
+                "expected_vs_actual": "Expected: ValueError('Limit must be a positive integer') | Actual: Tool executed successfully and returned full list of developers",
+                "root_cause": "The validation logic uses 'if limit and ...' which treats 0 as falsy. The correct logic should be 'if limit is not None and ...' to properly validate when limit=0 is explicitly passed.",
+                "expected_error": false
+              }
+            }
+          ]
+        },
+        "error_categories": {
+          "critical_load_failures": [],
+          "critical_schema_mismatches": [
+            {
+              "error_type": "Validation Error - Boundary Condition",
+              "error_location": "get_github_trending_developers tool - limit parameter validation",
+              "error_details": "When limit=0 was passed to get_github_trending_developers, the tool executed successfully and returned 50 developers instead of rejecting the invalid input. The validation code checks 'if limit and (not isinstance(limit, int) or limit <= 0)' but this fails when limit=0 because 0 is falsy in Python, so the condition 'if limit' evaluates to False and the validation is skipped.",
+              "expected_vs_actual": "Expected: ValueError('Limit must be a positive integer') | Actual: Tool executed successfully and returned full list of developers",
+              "root_cause": "The validation logic uses 'if limit and ...' which treats 0 as falsy. The correct logic should be 'if limit is not None and ...' to properly validate when limit=0 is explicitly passed.",
+              "expected_error": false,
+              "severity": "CRITICAL"
+            }
+          ],
+          "high_tool_logic_errors": [],
+          "medium_state_errors": [],
+          "low_edge_case_failures": []
+        },
+        "severity_summary": {
+          "critical": 1,
+          "high": 0,
+          "medium": 0,
+          "low": 0
+        },
+        "total_failed_scenarios": 1,
+        "expected_failures": 0,
+        "unexpected_failures": 1
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 1,
+        "passed_scenarios": 1,
+        "failed_scenarios": 0,
+        "all_passed": true,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_004",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_github_trending_repositories",
+                  "test_cases": [
+                    {
+                      "test_name": "Valid case with all parameters",
+                      "input": {
+                        "language": "javascript",
+                        "period": "weekly",
+                        "spoken_language": "en",
+                        "limit": 5
+                      },
+                      "passed": true,
+                      "error": null,
+                      "notes": "Successfully returned 5 JavaScript repositories for weekly period with English spoken language"
+                    },
+                    {
+                      "test_name": "Valid case with no parameters (boundary test)",
+                      "input": {},
+                      "passed": true,
+                      "error": null,
+                      "notes": "Successfully returned 50 repositories (default) with mixed languages (JavaScript, Go, Python)"
+                    },
+                    {
+                      "test_name": "Valid case with language and period filters",
+                      "input": {
+                        "language": "python",
+                        "period": "daily"
+                      },
+                      "passed": true,
+                      "error": null,
+                      "notes": "Successfully returned 50 Python repositories for daily period"
+                    },
+                    {
+                      "test_name": "Error case - invalid period",
+                      "input": {
+                        "period": "invalid_period"
+                      },
+                      "passed": true,
+                      "error": "Period must be one of: ['daily', 'weekly', 'monthly']",
+                      "notes": "Correctly rejected invalid period value with appropriate error message"
+                    },
+                    {
+                      "test_name": "Error case - negative limit",
+                      "input": {
+                        "limit": -5
+                      },
+                      "passed": true,
+                      "error": "Limit must be a positive integer",
+                      "notes": "Correctly rejected negative limit with appropriate error message"
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_github_trending_developers",
+                  "test_cases": [
+                    {
+                      "test_name": "Valid case with no parameters (boundary test)",
+                      "input": {},
+                      "passed": true,
+                      "error": null,
+                      "notes": "Successfully returned 50 developers (default) with mixed language projects"
+                    },
+                    {
+                      "test_name": "Valid case with all parameters",
+                      "input": {
+                        "language": "rust",
+                        "period": "monthly",
+                        "limit": 3
+                      },
+                      "passed": true,
+                      "error": null,
+                      "notes": "Successfully returned 3 Rust developers for monthly period"
+                    },
+                    {
+                      "test_name": "Error case - invalid period",
+                      "input": {
+                        "period": "yearly"
+                      },
+                      "passed": true,
+                      "error": "Period must be one of: ['daily', 'weekly', 'monthly']",
+                      "notes": "Correctly rejected invalid period value with appropriate error message"
+                    },
+                    {
+                      "test_name": "Error case - zero limit",
+                      "input": {
+                        "limit": 0
+                      },
+                      "passed": true,
+                      "error": "Limit must be a positive integer",
+                      "notes": "Correctly rejected zero limit with appropriate error message"
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null,
+                "notes": "Saved scenario contains all expected data structures with cached results from tool executions"
+              },
+              "summary": {}
+            },
+            "complexity_level": "boundary",
+            "execution_time": 65.7536849975586
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 1,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/GithubTrending.py"
+  }
+}

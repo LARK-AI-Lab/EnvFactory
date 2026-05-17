@@ -1,0 +1,527 @@
+{
+  "class_name": "Didi",
+  "description": "A ride-hailing and map services server providing location-based services including route planning, POI search, geocoding, and taxi booking functionality.",
+  "tools": [
+    {
+      "name": "get_current_location",
+      "description": "Retrieve the current device location coordinates for use in map and ride-hailing operations.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "description": "The latitude coordinate of the location."
+              },
+              "longitude": {
+                "type": "number",
+                "description": "The longitude coordinate of the location."
+              }
+            },
+            "description": "Geographic coordinates of the location."
+          }
+        }
+      }
+    },
+    {
+      "name": "maps_direction",
+      "description": "Plan a route between origin and destination coordinates based on the specified travel mode.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "description": "Travel mode for route planning. Must be one of: 'bicycling', 'driving', 'transit', 'walking'."
+          },
+          "origin_location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "description": "The latitude coordinate of the location."
+              },
+              "longitude": {
+                "type": "number",
+                "description": "The longitude coordinate of the location."
+              }
+            },
+            "description": "Geographic coordinates of the origin location. Must be obtained from map-related tools."
+          },
+          "destination_location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "description": "The latitude coordinate of the location."
+              },
+              "longitude": {
+                "type": "number",
+                "description": "The longitude coordinate of the location."
+              }
+            },
+            "description": "Geographic coordinates of the destination location. Must be obtained from map-related tools."
+          },
+          "city": {
+            "type": "string",
+            "description": "City name for the route query. Required when mode is 'transit'."
+          }
+        },
+        "required": [
+          "mode",
+          "origin_location",
+          "destination_location"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "distance": {
+            "type": "integer",
+            "description": "Total route distance in meters."
+          },
+          "duration": {
+            "type": "integer",
+            "description": "Estimated travel duration in seconds."
+          },
+          "transfers": {
+            "type": "integer",
+            "description": "Number of transit transfers required. Only present when mode is 'transit'."
+          },
+          "route": {
+            "type": "array",
+            "description": "List of coordinate points forming the route path, or transit segments for public transportation."
+          }
+        }
+      }
+    },
+    {
+      "name": "maps_place_around",
+      "description": "Search for POI (Point of Interest) places around a specified location based on keywords.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "keywords": {
+            "type": "string",
+            "description": "Search keywords to filter POI results (e.g., 'restaurant', 'hotel', 'gas station')."
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "description": "The latitude coordinate of the location."
+              },
+              "longitude": {
+                "type": "number",
+                "description": "The longitude coordinate of the location."
+              }
+            },
+            "description": "Geographic coordinates of the center location for the search."
+          },
+          "max_distance": {
+            "type": "string",
+            "description": "Maximum search radius from the center location in meters."
+          }
+        },
+        "required": [
+          "keywords",
+          "location"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "places": {
+            "type": "array",
+            "description": "List of POI places matching the search criteria.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the POI place."
+                },
+                "address": {
+                  "type": "string",
+                  "description": "Full address of the POI place."
+                },
+                "location": {
+                  "type": "object",
+                  "properties": {
+                    "latitude": {
+                      "type": "number",
+                      "description": "The latitude coordinate of the location."
+                    },
+                    "longitude": {
+                      "type": "number",
+                      "description": "The longitude coordinate of the location."
+                    }
+                  },
+                  "description": "Geographic coordinates of the POI location."
+                },
+                "distance": {
+                  "type": "integer",
+                  "description": "Distance from the search center location in meters."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "maps_regeocode",
+      "description": "Convert longitude and latitude coordinates to human-readable address information (reverse geocoding).",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "description": "The latitude coordinate of the location."
+              },
+              "longitude": {
+                "type": "number",
+                "description": "The longitude coordinate of the location."
+              }
+            },
+            "description": "Geographic coordinates to convert to address information."
+          }
+        },
+        "required": [
+          "location"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string",
+            "description": "Full formatted address corresponding to the coordinates."
+          },
+          "province": {
+            "type": "string",
+            "description": "Province or state name."
+          },
+          "city": {
+            "type": "string",
+            "description": "City name."
+          },
+          "district": {
+            "type": "string",
+            "description": "District or county name."
+          },
+          "street": {
+            "type": "string",
+            "description": "Street name and number."
+          }
+        }
+      }
+    },
+    {
+      "name": "taxi_estimate",
+      "description": "Get available ride-hailing vehicle types and fare estimates for a trip between origin and destination.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "origin_location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "description": "The latitude coordinate of the location."
+              },
+              "longitude": {
+                "type": "number",
+                "description": "The longitude coordinate of the location."
+              }
+            },
+            "description": "Geographic coordinates of the origin location. Must be obtained from map-related tools, cannot be assumed."
+          },
+          "destination_location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "description": "The latitude coordinate of the location."
+              },
+              "longitude": {
+                "type": "number",
+                "description": "The longitude coordinate of the location."
+              }
+            },
+            "description": "Geographic coordinates of the destination location. Must be obtained from map-related tools, cannot be assumed."
+          }
+        },
+        "required": [
+          "origin_location",
+          "destination_location"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "estimate_trace_id": {
+            "type": "string",
+            "description": "Unique trace identifier for this estimate session. Required for creating an order."
+          },
+          "products": {
+            "type": "array",
+            "description": "List of available vehicle types with pricing information.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "product_category": {
+                  "type": "string",
+                  "description": "Vehicle category identifier used for order creation."
+                },
+                "price": {
+                  "type": "number",
+                  "description": "Estimated fare for this vehicle type."
+                },
+                "estimated_duration": {
+                  "type": "integer",
+                  "description": "Estimated trip duration in seconds."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "taxi_create_order",
+      "description": "Create a ride-hailing order directly via API without opening any application interface.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "estimate_trace_id": {
+            "type": "string",
+            "description": "Unique trace identifier obtained from the taxi_estimate results. Links the order to the fare estimate."
+          },
+          "product_category": {
+            "type": "string",
+            "description": "Vehicle category identifier from estimate results. Use comma-separated values for multiple categories without spaces."
+          },
+          "caller_car_phone": {
+            "type": "string",
+            "description": "Caller's phone number for driver contact. Pass if available."
+          }
+        },
+        "required": [
+          "estimate_trace_id",
+          "product_category"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "description": "Unique identifier for the created ride-hailing order."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the order (e.g., 'pending', 'accepted', 'arriving')."
+          },
+          "estimated_arrival": {
+            "type": "integer",
+            "description": "Estimated time for driver arrival in seconds."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Timestamp when the order was created in ISO 8601 format."
+          }
+        }
+      }
+    },
+    {
+      "name": "taxi_query_order",
+      "description": "Query ride-hailing order status and information including driver contact, license plate, and estimated arrival time.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "description": "Unique identifier for the ride-hailing order. If not provided, queries unfinished orders for the current account."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "description": "Unique identifier for the ride-hailing order."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the order (e.g., 'pending', 'accepted', 'arriving', 'in_progress', 'completed')."
+          },
+          "driver_name": {
+            "type": "string",
+            "description": "Name of the assigned driver."
+          },
+          "driver_phone": {
+            "type": "string",
+            "description": "Contact phone number of the assigned driver."
+          },
+          "license_plate": {
+            "type": "string",
+            "description": "License plate number of the driver's vehicle."
+          },
+          "estimated_arrival": {
+            "type": "integer",
+            "description": "Estimated time for driver arrival in seconds."
+          }
+        }
+      }
+    },
+    {
+      "name": "taxi_cancel_order",
+      "description": "Cancel an existing ride-hailing order.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "description": "Unique identifier for the ride-hailing order to cancel. Obtained from order creation or query results."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason for cancellation (e.g., '不需要了', '等待时间太长', '临时有事')."
+          }
+        },
+        "required": [
+          "order_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "description": "Unique identifier for the cancelled ride-hailing order."
+          },
+          "cancelled_at": {
+            "type": "string",
+            "description": "Timestamp when the order was cancelled in ISO 8601 format."
+          },
+          "refund_status": {
+            "type": "string",
+            "description": "Status of any refund processing for the cancelled order."
+          }
+        }
+      }
+    },
+    {
+      "name": "taxi_get_driver_location",
+      "description": "Get real-time driver location coordinates for an active ride-hailing order.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "description": "Unique identifier for the ride-hailing order to track driver location."
+          }
+        },
+        "required": [
+          "order_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "description": "Unique identifier for the ride-hailing order."
+          },
+          "driver_lat": {
+            "type": "string",
+            "description": "Current latitude coordinate of the driver's location."
+          },
+          "driver_lng": {
+            "type": "string",
+            "description": "Current longitude coordinate of the driver's location."
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "Timestamp of the last location update in ISO 8601 format."
+          }
+        }
+      }
+    },
+    {
+      "name": "taxi_generate_ride_app_link",
+      "description": "Generate a deep link to open the mobile app or mini-program with pre-filled origin, destination, and vehicle type.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "origin_location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "description": "The latitude coordinate of the location."
+              },
+              "longitude": {
+                "type": "number",
+                "description": "The longitude coordinate of the location."
+              }
+            },
+            "description": "Geographic coordinates of the origin location. Must be obtained from map-related tools."
+          },
+          "destination_location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "description": "The latitude coordinate of the location."
+              },
+              "longitude": {
+                "type": "number",
+                "description": "The longitude coordinate of the location."
+              }
+            },
+            "description": "Geographic coordinates of the destination location. Must be obtained from map-related tools."
+          },
+          "product_category": {
+            "type": "string",
+            "description": "Vehicle category identifier list from estimate results. Supports multiple categories as comma-separated values. Only pass when user explicitly specifies certain categories."
+          }
+        },
+        "required": [
+          "origin_location",
+          "destination_location"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "deep_link": {
+            "type": "string",
+            "description": "Generated deep link URL to open the ride-hailing app or mini-program."
+          },
+          "from_location": {
+            "type": "string",
+            "description": "Origin location coordinates embedded in the link in format: latitude,longitude."
+          },
+          "to_location": {
+            "type": "string",
+            "description": "Destination location coordinates embedded in the link in format: latitude,longitude."
+          }
+        }
+      }
+    }
+  ]
+}

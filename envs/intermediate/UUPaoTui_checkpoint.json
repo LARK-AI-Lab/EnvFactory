@@ -1,0 +1,1998 @@
+{
+  "metadata": {
+    "class_name": "UUPaoTui",
+    "metadata_path": "envs\\metadata\\UUPaoTui_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-04T01:38:01.690905",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "UUPaoTui",
+    "description": "UU跑腿同城即时配送与预约配送服务平台，提供价格预估、下单、订单查询与取消等全流程接口。",
+    "tools": [
+      {
+        "name": "estimate_price",
+        "description": "根据起止地址计算配送价格并获取下单所需的 priceToken。",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "fromAddress": {
+              "type": "string",
+              "description": "起点地址，用于计算配送距离与费用。"
+            },
+            "toAddress": {
+              "type": "string",
+              "description": "终点地址，用于计算配送距离与费用。"
+            },
+            "adCode": {
+              "type": "string",
+              "description": "6 位行政区划代码（GB/T 2260），如“110100”代表北京市，用于定位配送区域。"
+            },
+            "sendType": {
+              "type": "string",
+              "enum": [
+                "instant",
+                "scheduled"
+              ],
+              "description": "配送类型：instant（即时配送）或 scheduled（预约配送）。"
+            }
+          },
+          "required": [
+            "fromAddress",
+            "toAddress",
+            "adCode",
+            "sendType"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "priceToken": {
+              "type": "string",
+              "description": "下单所需的临时价格凭证，有效期短，仅用于 create_order 接口。"
+            },
+            "needPayMoney": {
+              "type": "number",
+              "description": "预估需支付的配送费用，单位：元。"
+            }
+          }
+        }
+      },
+      {
+        "name": "create_order",
+        "description": "使用价格预估返回的 priceToken 创建正式配送订单。",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "priceToken": {
+              "type": "string",
+              "description": "来自 estimate_price 接口的临时价格凭证，用于确认费用并生成订单。"
+            },
+            "receiverPhone": {
+              "type": "string",
+              "description": "收件人手机号码，用于配送联系。"
+            },
+            "senderPhone": {
+              "type": "string",
+              "description": "寄件人手机号码，用于配送联系。"
+            }
+          },
+          "required": [
+            "priceToken",
+            "receiverPhone",
+            "senderPhone"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "orderCode": {
+              "type": "string",
+              "description": "UU 平台唯一订单编号，后续查询、取消等操作均依赖此字段。"
+            }
+          }
+        }
+      },
+      {
+        "name": "list_orders",
+        "description": "获取当前账户下全部订单列表，用于快速查看订单编号与状态。",
+        "input_schema": {
+          "type": "object",
+          "properties": {}
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "order_list": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "orderCode": {
+                    "type": "string",
+                    "description": "UU 平台唯一订单编号。"
+                  },
+                  "fromAddress": {
+                    "type": "string",
+                    "description": "订单起点地址。"
+                  },
+                  "toAddress": {
+                    "type": "string",
+                    "description": "订单终点地址。"
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "订单当前状态，如“待接单”“配送中”“已完成”等。"
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "description": "订单创建时间，ISO 8601 格式。"
+                  }
+                }
+              },
+              "description": "当前账户下的订单摘要列表。"
+            }
+          }
+        }
+      },
+      {
+        "name": "query_order",
+        "description": "根据订单编号查询订单详情与实时状态。",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "orderCode": {
+              "type": "string",
+              "description": "UU 平台唯一订单编号，用于定位具体订单。"
+            }
+          },
+          "required": [
+            "orderCode"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "orderCode": {
+              "type": "string",
+              "description": "UU 平台唯一订单编号。"
+            },
+            "fromAddress": {
+              "type": "string",
+              "description": "订单起点地址。"
+            },
+            "toAddress": {
+              "type": "string",
+              "description": "订单终点地址。"
+            },
+            "distance": {
+              "type": "number",
+              "description": "起点到终点的直线/导航距离，单位：公里。"
+            },
+            "state": {
+              "type": "string",
+              "description": "订单当前状态，如“待接单”“配送中”“已完成”等。"
+            }
+          }
+        }
+      },
+      {
+        "name": "cancel_order",
+        "description": "取消指定订单并返回可能产生的扣费金额。",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "orderCode": {
+              "type": "string",
+              "description": "UU 平台唯一订单编号，用于定位需取消的订单。"
+            },
+            "reason": {
+              "type": "string",
+              "description": "用户填写的取消原因，用于平台记录与客服查看。"
+            }
+          },
+          "required": [
+            "orderCode",
+            "reason"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "orderCode": {
+              "type": "string",
+              "description": "被取消的订单编号，与请求一致。"
+            },
+            "deductFee": {
+              "type": "integer",
+              "description": "因取消订单而扣除的费用，单位：分；0 表示无扣费。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\nimport uuid\nimport time\n\n# Section 1: Schema\nclass PriceEstimate(BaseModel):\n    \"\"\"Represents a price estimate response.\"\"\"\n    priceToken: str = Field(..., description=\"Temporary price token for order creation\")\n    needPayMoney: float = Field(..., ge=0, description=\"Estimated delivery fee in CNY\")\n\nclass Order(BaseModel):\n    \"\"\"Represents a delivery order.\"\"\"\n    orderCode: str = Field(..., description=\"UU platform unique order code\")\n    fromAddress: str = Field(..., description=\"Pickup address\")\n    toAddress: str = Field(..., description=\"Delivery address\")\n    state: str = Field(..., description=\"Order status\")\n    createdAt: str = Field(..., description=\"Order creation time in ISO 8601 format\")\n    receiverPhone: str = Field(..., pattern=r\"^1[3-9]\\d{9}$\", description=\"Receiver phone number\")\n    senderPhone: str = Field(..., pattern=r\"^1[3-9]\\d{9}$\", description=\"Sender phone number\")\n    distance: float = Field(..., ge=0, description=\"Distance in kilometers\")\n    sendType: str = Field(..., description=\"Delivery type: instant or scheduled\")\n    adCode: str = Field(..., pattern=r\"^\\d{6}$\", description=\"6-digit administrative division code\")\n\nclass CancelResult(BaseModel):\n    \"\"\"Represents order cancellation result.\"\"\"\n    orderCode: str = Field(..., description=\"Cancelled order code\")\n    deductFee: int = Field(..., ge=0, description=\"Deduction fee in cents\")\n\nclass UUPaoTuiScenario(BaseModel):\n    \"\"\"Main scenario model for UU跑腿 delivery service.\"\"\"\n    orders: Dict[str, Order] = Field(default={}, description=\"All orders keyed by orderCode\")\n    priceTokens: Dict[str, dict] = Field(default={}, description=\"Active price tokens mapping\")\n    baseRatesMap: Dict[str, float] = Field(default={\n        \"instant\": 8.0, \"scheduled\": 6.0, \"per_km\": 2.5, \"per_min\": 0.5\n    }, description=\"Base delivery rates\")\n    cityMultipliersMap: Dict[str, float] = Field(default={\n        \"110100\": 1.2, \"310100\": 1.3, \"440100\": 1.1, \"440300\": 1.1, \"330100\": 1.0,\n        \"320100\": 1.0, \"420100\": 0.9, \"510100\": 0.9, \"500100\": 1.0, \"120100\": 1.0,\n        \"210100\": 0.8, \"230100\": 0.8, \"610100\": 0.8, \"620100\": 0.8, \"630100\": 0.8,\n        \"640100\": 0.8, \"650100\": 0.8, \"710100\": 1.0, \"810100\": 1.0, \"820100\": 1.0\n    }, description=\"City price multipliers by adCode\")\n    orderStates: List[str] = Field(default=[\n        \"待接单\", \"配送中\", \"已完成\", \"已取消\", \"异常订单\"\n    ], description=\"Possible order states\")\n\nScenario_Schema = [PriceEstimate, Order, CancelResult, UUPaoTuiScenario]\n\n# Section 2: Class\nclass UUPaoTuiAPI:\n    def __init__(self):\n        \"\"\"Initialize UU跑腿 API with empty state.\"\"\"\n        self.orders: Dict[str, Order] = {}\n        self.priceTokens: Dict[str, dict] = {}\n        self.baseRatesMap: Dict[str, float] = {}\n        self.cityMultipliersMap: Dict[str, float] = {}\n        self.orderStates: List[str] = []\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = UUPaoTuiScenario(**scenario)\n        self.orders = model.orders\n        self.priceTokens = model.priceTokens\n        self.baseRatesMap = model.baseRatesMap\n        self.cityMultipliersMap = model.cityMultipliersMap\n        self.orderStates = model.orderStates\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"orders\": {code: order.dict() for code, order in self.orders.items()},\n            \"priceTokens\": self.priceTokens,\n            \"baseRatesMap\": self.baseRatesMap,\n            \"cityMultipliersMap\": self.cityMultipliersMap,\n            \"orderStates\": self.orderStates\n        }\n\n    def _calculate_distance(self, from_addr: str, to_addr: str) -> float:\n        \"\"\"Calculate distance between addresses (simplified).\"\"\"\n        # Simple hash-based distance calculation for demo\n        combined = f\"{from_addr}|{to_addr}\"\n        return round((hash(combined) % 50) + 1, 1)\n\n    def _get_multiplier(self, adCode: str) -> float:\n        \"\"\"Get city price multiplier.\"\"\"\n        return self.cityMultipliersMap.get(adCode, 1.0)\n\n    def estimate_price(self, fromAddress: str, toAddress: str, adCode: str, sendType: str) -> dict:\n        \"\"\"Estimate delivery price and generate price token.\"\"\"\n        distance = self._calculate_distance(fromAddress, toAddress)\n        multiplier = self._get_multiplier(adCode)\n        \n        base_fee = self.baseRatesMap.get(sendType, 8.0)\n        distance_fee = distance * self.baseRatesMap.get(\"per_km\", 2.5)\n        total_fee = round((base_fee + distance_fee) * multiplier, 2)\n        \n        price_token = str(uuid.uuid4())\n        \n        # Store token info for later order creation\n        self.priceTokens[price_token] = {\n            \"fromAddress\": fromAddress,\n            \"toAddress\": toAddress,\n            \"adCode\": adCode,\n            \"sendType\": sendType,\n            \"distance\": distance,\n            \"needPayMoney\": total_fee,\n            \"timestamp\": time.time()\n        }\n        \n        return {\"priceToken\": price_token, \"needPayMoney\": total_fee}\n\n    def create_order(self, priceToken: str, receiverPhone: str, senderPhone: str) -> dict:\n        \"\"\"Create order using price token.\"\"\"\n        if priceToken not in self.priceTokens:\n            raise ValueError(\"Invalid or expired price token\")\n        \n        token_info = self.priceTokens[priceToken]\n        order_code = f\"UU{int(time.time())}{hash(priceToken) % 10000:04d}\"\n        \n        order = Order(\n            orderCode=order_code,\n            fromAddress=token_info[\"fromAddress\"],\n            toAddress=token_info[\"toAddress\"],\n            state=self.orderStates[0],  # 待接单\n            createdAt=time.strftime(\"%Y-%m-%dT%H:%M:%S\", time.localtime()),\n            receiverPhone=receiverPhone,\n            senderPhone=senderPhone,\n            distance=token_info[\"distance\"],\n            sendType=token_info[\"sendType\"],\n            adCode=token_info[\"adCode\"]\n        )\n        \n        self.orders[order_code] = order\n        del self.priceTokens[priceToken]  # Consume token\n        \n        return {\"orderCode\": order_code}\n\n    def list_orders(self) -> dict:\n        \"\"\"List all orders.\"\"\"\n        order_list = []\n        for order in self.orders.values():\n            order_list.append({\n                \"orderCode\": order.orderCode,\n                \"fromAddress\": order.fromAddress,\n                \"toAddress\": order.toAddress,\n                \"state\": order.state,\n                \"createdAt\": order.createdAt\n            })\n        return {\"order_list\": order_list}\n\n    def query_order(self, orderCode: str) -> dict:\n        \"\"\"Query order details.\"\"\"\n        if orderCode not in self.orders:\n            raise ValueError(f\"Order {orderCode} not found\")\n        \n        order = self.orders[orderCode]\n        return {\n            \"orderCode\": order.orderCode,\n            \"fromAddress\": order.fromAddress,\n            \"toAddress\": order.toAddress,\n            \"distance\": order.distance,\n            \"state\": order.state\n        }\n\n    def cancel_order(self, orderCode: str, reason: str) -> dict:\n        \"\"\"Cancel order and return deduction fee.\"\"\"\n        if orderCode not in self.orders:\n            raise ValueError(f\"Order {orderCode} not found\")\n        \n        order = self.orders[orderCode]\n        \n        # Simple deduction logic: 10% if not completed\n        deduct_fee = 0\n        if order.state not in [\"已完成\", \"已取消\"]:\n            deduct_fee = int(self.baseRatesMap.get(\"instant\", 8.0) * 10)\n        \n        order.state = \"已取消\"\n        return {\"orderCode\": orderCode, \"deductFee\": deduct_fee}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"UUPaoTui\")\napi = UUPaoTuiAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"Load scenario data into the UU跑腿 API.\"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"Save current UU跑腿 state as scenario dictionary.\"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef estimate_price(fromAddress: str, toAddress: str, adCode: str, sendType: str) -> dict:\n    \"\"\"Estimate delivery price and generate price token.\n    \n    Args:\n        fromAddress (str): Pickup address for distance calculation.\n        toAddress (str): Delivery address for distance calculation.\n        adCode (str): 6-digit administrative division code.\n        sendType (str): Delivery type: instant or scheduled.\n    \n    Returns:\n        priceToken (str): Temporary price token for order creation.\n        needPayMoney (float): Estimated delivery fee in CNY.\n    \"\"\"\n    try:\n        if not fromAddress or not isinstance(fromAddress, str):\n            raise ValueError(\"fromAddress must be a non-empty string\")\n        if not toAddress or not isinstance(toAddress, str):\n            raise ValueError(\"toAddress must be a non-empty string\")\n        if not adCode or not isinstance(adCode, str):\n            raise ValueError(\"adCode must be a non-empty string\")\n        if sendType not in [\"instant\", \"scheduled\"]:\n            raise ValueError(\"sendType must be 'instant' or 'scheduled'\")\n        return api.estimate_price(fromAddress, toAddress, adCode, sendType)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef create_order(priceToken: str, receiverPhone: str, senderPhone: str) -> dict:\n    \"\"\"Create order using price token.\n    \n    Args:\n        priceToken (str): Price token from estimate_price.\n        receiverPhone (str): Receiver phone number.\n        senderPhone (str): Sender phone number.\n    \n    Returns:\n        orderCode (str): UU platform unique order code.\n    \"\"\"\n    try:\n        if not priceToken or not isinstance(priceToken, str):\n            raise ValueError(\"priceToken must be a non-empty string\")\n        return api.create_order(priceToken, receiverPhone, senderPhone)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef list_orders() -> dict:\n    \"\"\"List all orders for current account.\n    \n    Returns:\n        order_list (list): Array of order summaries.\n    \"\"\"\n    try:\n        return api.list_orders()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef query_order(orderCode: str) -> dict:\n    \"\"\"Query order details by order code.\n    \n    Args:\n        orderCode (str): UU platform unique order code.\n    \n    Returns:\n        orderCode (str): Order code.\n        fromAddress (str): Pickup address.\n        toAddress (str): Delivery address.\n        distance (float): Distance in kilometers.\n        state (str): Current order status.\n    \"\"\"\n    try:\n        if not orderCode or not isinstance(orderCode, str):\n            raise ValueError(\"orderCode must be a non-empty string\")\n        return api.query_order(orderCode)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef cancel_order(orderCode: str, reason: str) -> dict:\n    \"\"\"Cancel order and return deduction fee.\n    \n    Args:\n        orderCode (str): UU platform unique order code.\n        reason (str): Cancellation reason.\n    \n    Returns:\n        orderCode (str): Cancelled order code.\n        deductFee (int): Deduction fee in cents.\n    \"\"\"\n    try:\n        if not orderCode or not isinstance(orderCode, str):\n            raise ValueError(\"orderCode must be a non-empty string\")\n        if not reason or not isinstance(reason, str):\n            raise ValueError(\"reason must be a non-empty string\")\n        return api.cancel_order(orderCode, reason)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-04T01:38:01.690905",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with one completed instant delivery order in Beijing",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "orders": {
+          "UU202401150001": {
+            "orderCode": "UU202401150001",
+            "fromAddress": "北京市朝阳区三里屯SOHO",
+            "toAddress": "北京市朝阳区国贸CBD",
+            "state": "已完成",
+            "createdAt": "2024-01-15T10:30:00+08:00",
+            "receiverPhone": "13800138001",
+            "senderPhone": "13900139001",
+            "distance": 5.2,
+            "sendType": "instant",
+            "adCode": "110100"
+          }
+        },
+        "priceTokens": {
+          "token_abc123": {
+            "fromAddress": "北京市朝阳区三里屯SOHO",
+            "toAddress": "北京市朝阳区国贸CBD",
+            "distance": 5.2,
+            "sendType": "instant",
+            "adCode": "110100",
+            "estimatedPrice": 23.4,
+            "expiresAt": "2024-01-15T10:45:00+08:00"
+          }
+        },
+        "baseRatesMap": {
+          "instant": 8.0,
+          "scheduled": 6.0,
+          "per_km": 2.5,
+          "per_min": 0.5
+        },
+        "cityMultipliersMap": {
+          "110100": 1.2,
+          "310100": 1.3,
+          "440100": 1.1
+        },
+        "orderStates": [
+          "待接单",
+          "配送中",
+          "已完成",
+          "已取消",
+          "异常订单"
+        ]
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple orders across different cities with various states and delivery types",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "orders": {
+          "UU202401150010": {
+            "orderCode": "UU202401150010",
+            "fromAddress": "上海市浦东新区陆家嘴金融中心",
+            "toAddress": "上海市黄浦区南京东路步行街",
+            "state": "配送中",
+            "createdAt": "2024-01-15T14:20:00+08:00",
+            "receiverPhone": "13800138002",
+            "senderPhone": "13900139002",
+            "distance": 8.5,
+            "sendType": "instant",
+            "adCode": "310100"
+          },
+          "UU202401150011": {
+            "orderCode": "UU202401150011",
+            "fromAddress": "广州市天河区珠江新城",
+            "toAddress": "广州市越秀区北京路",
+            "state": "待接单",
+            "createdAt": "2024-01-15T15:00:00+08:00",
+            "receiverPhone": "13800138003",
+            "senderPhone": "13900139003",
+            "distance": 12.3,
+            "sendType": "scheduled",
+            "adCode": "440100"
+          },
+          "UU202401150012": {
+            "orderCode": "UU202401150012",
+            "fromAddress": "深圳市南山区科技园",
+            "toAddress": "深圳市福田区华强北",
+            "state": "已完成",
+            "createdAt": "2024-01-15T09:30:00+08:00",
+            "receiverPhone": "13800138004",
+            "senderPhone": "13900139004",
+            "distance": 6.8,
+            "sendType": "instant",
+            "adCode": "440300"
+          },
+          "UU202401150013": {
+            "orderCode": "UU202401150013",
+            "fromAddress": "杭州市西湖区文三路",
+            "toAddress": "杭州市滨江区网商路",
+            "state": "已取消",
+            "createdAt": "2024-01-15T11:00:00+08:00",
+            "receiverPhone": "13800138005",
+            "senderPhone": "13900139005",
+            "distance": 0.0,
+            "sendType": "instant",
+            "adCode": "330100"
+          }
+        },
+        "priceTokens": {
+          "token_xyz789": {
+            "fromAddress": "成都市武侯区天府大道",
+            "toAddress": "成都市锦江区春熙路",
+            "distance": 7.2,
+            "sendType": "instant",
+            "adCode": "510100",
+            "estimatedPrice": 24.3,
+            "expiresAt": "2024-01-15T16:00:00+08:00"
+          },
+          "token_def456": {
+            "fromAddress": "武汉市江汉区中山大道",
+            "toAddress": "武汉市武昌区楚河汉街",
+            "distance": 10.5,
+            "sendType": "scheduled",
+            "adCode": "420100",
+            "estimatedPrice": 29.7,
+            "expiresAt": "2024-01-15T16:30:00+08:00"
+          }
+        },
+        "baseRatesMap": {
+          "instant": 8.0,
+          "scheduled": 6.0,
+          "per_km": 2.5,
+          "per_min": 0.5
+        },
+        "cityMultipliersMap": {
+          "110100": 1.2,
+          "310100": 1.3,
+          "440100": 1.1,
+          "440300": 1.1,
+          "330100": 1.0,
+          "510100": 0.9,
+          "420100": 0.9
+        },
+        "orderStates": [
+          "待接单",
+          "配送中",
+          "已完成",
+          "已取消",
+          "异常订单"
+        ]
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Comprehensive scenario with orders in multiple cities, various states, edge case distances, and multiple active price tokens",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "orders": {
+          "UU202401150020": {
+            "orderCode": "UU202401150020",
+            "fromAddress": "北京市海淀区中关村大街1号",
+            "toAddress": "北京市东城区王府井大街138号",
+            "state": "配送中",
+            "createdAt": "2024-01-15T08:00:00+08:00",
+            "receiverPhone": "13512345678",
+            "senderPhone": "13612345678",
+            "distance": 15.7,
+            "sendType": "instant",
+            "adCode": "110100"
+          },
+          "UU202401150021": {
+            "orderCode": "UU202401150021",
+            "fromAddress": "上海市静安区南京西路1266号",
+            "toAddress": "上海市徐汇区衡山路8号",
+            "state": "已完成",
+            "createdAt": "2024-01-15T07:30:00+08:00",
+            "receiverPhone": "13712345678",
+            "senderPhone": "13812345678",
+            "distance": 4.2,
+            "sendType": "scheduled",
+            "adCode": "310100"
+          },
+          "UU202401150022": {
+            "orderCode": "UU202401150022",
+            "fromAddress": "天津市和平区南京路189号",
+            "toAddress": "天津市河西区友谊路35号",
+            "state": "待接单",
+            "createdAt": "2024-01-15T16:45:00+08:00",
+            "receiverPhone": "13912345678",
+            "senderPhone": "15012345678",
+            "distance": 9.1,
+            "sendType": "instant",
+            "adCode": "120100"
+          },
+          "UU202401150023": {
+            "orderCode": "UU202401150023",
+            "fromAddress": "重庆市渝中区解放碑步行街",
+            "toAddress": "重庆市江北区观音桥步行街",
+            "state": "配送中",
+            "createdAt": "2024-01-15T13:20:00+08:00",
+            "receiverPhone": "15112345678",
+            "senderPhone": "15212345678",
+            "distance": 7.8,
+            "sendType": "instant",
+            "adCode": "500100"
+          },
+          "UU202401150024": {
+            "orderCode": "UU202401150024",
+            "fromAddress": "南京市玄武区中山路1号",
+            "toAddress": "南京市秦淮区夫子庙",
+            "state": "异常订单",
+            "createdAt": "2024-01-15T12:00:00+08:00",
+            "receiverPhone": "15312345678",
+            "senderPhone": "15412345678",
+            "distance": 3.5,
+            "sendType": "scheduled",
+            "adCode": "320100"
+          },
+          "UU202401150025": {
+            "orderCode": "UU202401150025",
+            "fromAddress": "西安市雁塔区小寨东路",
+            "toAddress": "西安市碑林区钟楼",
+            "state": "已完成",
+            "createdAt": "2024-01-15T10:15:00+08:00",
+            "receiverPhone": "15512345678",
+            "senderPhone": "15612345678",
+            "distance": 5.9,
+            "sendType": "instant",
+            "adCode": "610100"
+          },
+          "UU202401150026": {
+            "orderCode": "UU202401150026",
+            "fromAddress": "沈阳市沈河区中街路",
+            "toAddress": "沈阳市和平区太原街",
+            "state": "已取消",
+            "createdAt": "2024-01-15T09:00:00+08:00",
+            "receiverPhone": "15712345678",
+            "senderPhone": "15812345678",
+            "distance": 0.0,
+            "sendType": "instant",
+            "adCode": "210100"
+          }
+        },
+        "priceTokens": {
+          "token_aaa111": {
+            "fromAddress": "哈尔滨市道里区中央大街",
+            "toAddress": "哈尔滨市南岗区果戈里大街",
+            "distance": 6.3,
+            "sendType": "instant",
+            "adCode": "230100",
+            "estimatedPrice": 18.5,
+            "expiresAt": "2024-01-15T17:00:00+08:00"
+          },
+          "token_bbb222": {
+            "fromAddress": "兰州市城关区东方红广场",
+            "toAddress": "兰州市七里河区西站",
+            "distance": 11.2,
+            "sendType": "scheduled",
+            "adCode": "620100",
+            "estimatedPrice": 26.8,
+            "expiresAt": "2024-01-15T17:15:00+08:00"
+          },
+          "token_ccc333": {
+            "fromAddress": "乌鲁木齐市天山区人民广场",
+            "toAddress": "乌鲁木齐市沙依巴克区友好商场",
+            "distance": 8.7,
+            "sendType": "instant",
+            "adCode": "650100",
+            "estimatedPrice": 23.9,
+            "expiresAt": "2024-01-15T17:30:00+08:00"
+          }
+        },
+        "baseRatesMap": {
+          "instant": 8.0,
+          "scheduled": 6.0,
+          "per_km": 2.5,
+          "per_min": 0.5
+        },
+        "cityMultipliersMap": {
+          "110100": 1.2,
+          "310100": 1.3,
+          "440100": 1.1,
+          "440300": 1.1,
+          "330100": 1.0,
+          "320100": 1.0,
+          "420100": 0.9,
+          "510100": 0.9,
+          "500100": 1.0,
+          "120100": 1.0,
+          "210100": 0.8,
+          "230100": 0.8,
+          "610100": 0.8,
+          "620100": 0.8,
+          "630100": 0.8,
+          "640100": 0.8,
+          "650100": 0.8
+        },
+        "orderStates": [
+          "待接单",
+          "配送中",
+          "已完成",
+          "已取消",
+          "异常订单"
+        ]
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Boundary test with invalid phone numbers containing special characters (should be rejected)",
+      "expected_behavior": "validation_error",
+      "scenario_data": {
+        "orders": {
+          "UU202401150030": {
+            "orderCode": "UU202401150030",
+            "fromAddress": "北京市朝阳区建国门外大街1号",
+            "toAddress": "北京市西城区金融街35号",
+            "state": "待接单",
+            "createdAt": "2024-01-15T18:00:00+08:00",
+            "receiverPhone": "138-0013-8000",
+            "senderPhone": "139-0013-9000",
+            "distance": 8.5,
+            "sendType": "instant",
+            "adCode": "110100"
+          }
+        },
+        "priceTokens": {},
+        "baseRatesMap": {
+          "instant": 8.0,
+          "scheduled": 6.0,
+          "per_km": 2.5,
+          "per_min": 0.5
+        },
+        "cityMultipliersMap": {
+          "110100": 1.2
+        },
+        "orderStates": [
+          "待接单",
+          "配送中",
+          "已完成",
+          "已取消",
+          "异常订单"
+        ]
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "query_order",
+                "test_cases": [
+                  {
+                    "case_name": "Valid case - Query existing order",
+                    "input": {
+                      "orderCode": "UU202401150001"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU202401150001",
+                      "fromAddress": "北京市朝阳区三里屯SOHO",
+                      "toAddress": "北京市朝阳区国贸CBD",
+                      "distance": 5.2,
+                      "state": "已完成"
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Error case - Query non-existent order",
+                    "input": {
+                      "orderCode": "NONEXISTENT_ORDER"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Order NONEXISTENT_ORDER not found",
+                    "note": "Expected error - validation working correctly"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_orders",
+                "test_cases": [
+                  {
+                    "case_name": "Valid case - List all orders",
+                    "input": {},
+                    "passed": true,
+                    "output": {
+                      "order_list": [
+                        {
+                          "orderCode": "UU202401150001",
+                          "fromAddress": "北京市朝阳区三里屯SOHO",
+                          "toAddress": "北京市朝阳区国贸CBD",
+                          "state": "已完成",
+                          "createdAt": "2024-01-15T10:30:00+08:00"
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_price",
+                "test_cases": [
+                  {
+                    "case_name": "Valid case - Instant delivery in Beijing",
+                    "input": {
+                      "fromAddress": "北京市海淀区中关村",
+                      "toAddress": "北京市朝阳区望京",
+                      "adCode": "110100",
+                      "sendType": "instant"
+                    },
+                    "passed": true,
+                    "output": {
+                      "priceToken": "58084669-5d16-4af5-b785-283b705b44aa",
+                      "needPayMoney": 63.6
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Valid case - Scheduled delivery in Shanghai",
+                    "input": {
+                      "fromAddress": "上海市浦东新区陆家嘴",
+                      "toAddress": "上海市黄浦区外滩",
+                      "adCode": "310100",
+                      "sendType": "scheduled"
+                    },
+                    "passed": true,
+                    "output": {
+                      "priceToken": "d8b0e646-a8f0-4756-a1be-0be93be65e96",
+                      "needPayMoney": 85.8
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Error case - Empty fromAddress",
+                    "input": {
+                      "fromAddress": "",
+                      "toAddress": "北京市朝阳区望京",
+                      "adCode": "110100",
+                      "sendType": "instant"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "fromAddress must be a non-empty string",
+                    "note": "Expected error - validation working correctly"
+                  },
+                  {
+                    "case_name": "Error case - Invalid sendType",
+                    "input": {
+                      "fromAddress": "北京市海淀区中关村",
+                      "toAddress": "北京市朝阳区望京",
+                      "adCode": "110100",
+                      "sendType": "invalid_type"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "sendType must be 'instant' or 'scheduled'",
+                    "note": "Expected error - validation working correctly"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_order",
+                "test_cases": [
+                  {
+                    "case_name": "Valid case - Create order with new price token",
+                    "input": {
+                      "priceToken": "58084669-5d16-4af5-b785-283b705b44aa",
+                      "receiverPhone": "13800138002",
+                      "senderPhone": "13900139002"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU17674618104934"
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Valid case - Create order with existing price token",
+                    "input": {
+                      "priceToken": "token_abc123",
+                      "receiverPhone": "13800138003",
+                      "senderPhone": "13900139003"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU17674618226908"
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Error case - Empty priceToken",
+                    "input": {
+                      "priceToken": "",
+                      "receiverPhone": "13800138004",
+                      "senderPhone": "13900139004"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "priceToken must be a non-empty string",
+                    "note": "Expected error - validation working correctly"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_order",
+                "test_cases": [
+                  {
+                    "case_name": "Valid case - Cancel newly created order",
+                    "input": {
+                      "orderCode": "UU17674618104934",
+                      "reason": "测试取消订单"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU17674618104934",
+                      "deductFee": 80
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": {
+                "original_orders_count": 1,
+                "saved_orders_count": 3,
+                "new_orders_created": 2,
+                "original_price_tokens_count": 1,
+                "saved_price_tokens_count": 1,
+                "price_token_consumed": 1,
+                "state_modifications": [
+                  "Order UU17674618104934 created and cancelled",
+                  "Order UU17674618226908 created with state '待接单'",
+                  "Price token 'token_abc123' consumed during order creation",
+                  "New price token 'd8b0e646-a8f0-4756-a1be-0be93be65e96' generated"
+                ],
+                "consistency_notes": "State correctly reflects all operations: 2 new orders created, 1 cancelled, 1 price token consumed, 1 new price token generated"
+              }
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 71.88647222518921
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "estimate_price",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Valid instant delivery",
+                    "input": {
+                      "fromAddress": "北京市朝阳区国贸",
+                      "toAddress": "北京市海淀区中关村",
+                      "adCode": "110100",
+                      "sendType": "instant"
+                    },
+                    "result": "Success - Generated price token with estimated price 150.6 CNY"
+                  },
+                  {
+                    "case": "Valid scheduled delivery",
+                    "input": {
+                      "fromAddress": "上海市浦东新区",
+                      "toAddress": "上海市徐汇区",
+                      "adCode": "310100",
+                      "sendType": "scheduled"
+                    },
+                    "result": "Success - Generated price token with estimated price 89.05 CNY"
+                  },
+                  {
+                    "case": "Invalid sendType",
+                    "input": {
+                      "fromAddress": "广州市天河区",
+                      "toAddress": "广州市越秀区",
+                      "adCode": "440100",
+                      "sendType": "express"
+                    },
+                    "result": "Expected validation error caught - sendType must be 'instant' or 'scheduled'"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "create_order",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Valid order with existing price token",
+                    "input": {
+                      "priceToken": "token_xyz789",
+                      "receiverPhone": "13800138888",
+                      "senderPhone": "13900139999"
+                    },
+                    "result": "Success - Created order UU17674618191879"
+                  },
+                  {
+                    "case": "Valid order with newly generated price token",
+                    "input": {
+                      "priceToken": "117bff60-e4e1-44e1-b893-d575a9ae92cd",
+                      "receiverPhone": "13700137000",
+                      "senderPhone": "13600136000"
+                    },
+                    "result": "Success - Created order UU17674618230466"
+                  },
+                  {
+                    "case": "Invalid empty priceToken",
+                    "input": {
+                      "priceToken": "",
+                      "receiverPhone": "13800138888",
+                      "senderPhone": "13900139999"
+                    },
+                    "result": "Expected validation error caught - priceToken must be a non-empty string"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "list_orders",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "List all orders",
+                    "input": {},
+                    "result": "Success - Retrieved 6 orders (4 original + 2 newly created)"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "query_order",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Query existing order",
+                    "input": {
+                      "orderCode": "UU202401150010"
+                    },
+                    "result": "Success - Retrieved order details with state '配送中'"
+                  },
+                  {
+                    "case": "Query newly created order",
+                    "input": {
+                      "orderCode": "UU17674618191879"
+                    },
+                    "result": "Success - Retrieved order details with state '待接单'"
+                  },
+                  {
+                    "case": "Invalid empty orderCode",
+                    "input": {
+                      "orderCode": ""
+                    },
+                    "result": "Expected validation error caught - orderCode must be a non-empty string"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "cancel_order",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Cancel existing order",
+                    "input": {
+                      "orderCode": "UU202401150011",
+                      "reason": "地址填写错误"
+                    },
+                    "result": "Success - Cancelled order with deduction fee 80 cents"
+                  },
+                  {
+                    "case": "Cancel newly created order",
+                    "input": {
+                      "orderCode": "UU17674618191879",
+                      "reason": "不需要了"
+                    },
+                    "result": "Success - Cancelled order with deduction fee 80 cents"
+                  },
+                  {
+                    "case": "Invalid empty reason",
+                    "input": {
+                      "orderCode": "UU202401150010",
+                      "reason": ""
+                    },
+                    "result": "Expected validation error caught - reason must be a non-empty string"
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "details": {
+                "orders_count": 6,
+                "original_orders_preserved": 4,
+                "new_orders_created": 2,
+                "state_changes": [
+                  "UU202401150011: 待接单 → 已取消",
+                  "UU17674618191879: 待接单 → 已取消"
+                ],
+                "price_tokens_consumed": [
+                  "token_xyz789"
+                ],
+                "price_tokens_added": [
+                  "eab19067-05d7-41ea-8f76-0e4eb964b22f"
+                ],
+                "price_tokens_remaining": 2,
+                "configuration_preserved": true
+              },
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 86.53933000564575
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_orders",
+                "test_cases": [
+                  {
+                    "test_name": "List all orders",
+                    "input": {},
+                    "passed": true,
+                    "output": "Successfully retrieved 7 orders",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_price",
+                "test_cases": [
+                  {
+                    "test_name": "Valid instant delivery - Guangzhou",
+                    "input": {
+                      "fromAddress": "广州市天河区天河路208号",
+                      "toAddress": "广州市越秀区北京路1号",
+                      "adCode": "440100",
+                      "sendType": "instant"
+                    },
+                    "passed": true,
+                    "output": {
+                      "priceToken": "d0ecb579-ad01-40a1-83de-92bbe23faf23",
+                      "needPayMoney": 116.05
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid scheduled delivery - Hangzhou",
+                    "input": {
+                      "fromAddress": "杭州市西湖区文三路",
+                      "toAddress": "杭州市拱墅区武林广场",
+                      "adCode": "330100",
+                      "sendType": "scheduled"
+                    },
+                    "passed": true,
+                    "output": {
+                      "priceToken": "7af17045-85d4-4144-ae2a-1d36baa7a6a4",
+                      "needPayMoney": 68.5
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Invalid empty fromAddress",
+                    "input": {
+                      "fromAddress": "",
+                      "toAddress": "测试地址",
+                      "adCode": "440100",
+                      "sendType": "instant"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "fromAddress must be a non-empty string",
+                    "expected_error": true
+                  },
+                  {
+                    "test_name": "Invalid sendType",
+                    "input": {
+                      "fromAddress": "测试地址",
+                      "toAddress": "测试地址2",
+                      "adCode": "440100",
+                      "sendType": "invalid_type"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "sendType must be 'instant' or 'scheduled'",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "query_order",
+                "test_cases": [
+                  {
+                    "test_name": "Query existing order - UU202401150025",
+                    "input": {
+                      "orderCode": "UU202401150025"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU202401150025",
+                      "fromAddress": "西安市雁塔区小寨东路",
+                      "toAddress": "西安市碑林区钟楼",
+                      "distance": 5.9,
+                      "state": "已完成"
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Query existing order - UU202401150020",
+                    "input": {
+                      "orderCode": "UU202401150020"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU202401150020",
+                      "fromAddress": "北京市海淀区中关村大街1号",
+                      "toAddress": "北京市东城区王府井大街138号",
+                      "distance": 15.7,
+                      "state": "配送中"
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Query non-existent order",
+                    "input": {
+                      "orderCode": "INVALID_ORDER"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Order INVALID_ORDER not found",
+                    "expected_error": true
+                  },
+                  {
+                    "test_name": "Query with empty orderCode",
+                    "input": {
+                      "orderCode": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "orderCode must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_order",
+                "test_cases": [
+                  {
+                    "test_name": "Create order with valid token - token_aaa111",
+                    "input": {
+                      "priceToken": "token_aaa111",
+                      "receiverPhone": "13900000001",
+                      "senderPhone": "13900000002"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU17674618205912"
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Create order with valid token - token_bbb222",
+                    "input": {
+                      "priceToken": "token_bbb222",
+                      "receiverPhone": "13900000003",
+                      "senderPhone": "13900000004"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU17674618245218"
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Create order with invalid token",
+                    "input": {
+                      "priceToken": "invalid_token",
+                      "receiverPhone": "13900000005",
+                      "senderPhone": "13900000006"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Invalid or expired price token",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_order",
+                "test_cases": [
+                  {
+                    "test_name": "Cancel pending order - UU202401150022",
+                    "input": {
+                      "orderCode": "UU202401150022",
+                      "reason": "客户要求取消"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU202401150022",
+                      "deductFee": 80
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Cancel in-delivery order - UU202401150023",
+                    "input": {
+                      "orderCode": "UU202401150023",
+                      "reason": "地址填写错误"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU202401150023",
+                      "deductFee": 80
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Cancel already cancelled order - UU202401150026",
+                    "input": {
+                      "orderCode": "UU202401150026",
+                      "reason": "重复取消测试"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU202401150026",
+                      "deductFee": 0
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Cancel non-existent order",
+                    "input": {
+                      "orderCode": "INVALID_ORDER_CODE",
+                      "reason": "测试无效订单"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Order INVALID_ORDER_CODE not found",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "changes_detected": {
+                "new_orders_created": 2,
+                "orders_cancelled": 2,
+                "price_tokens_consumed": 2,
+                "price_tokens_generated": 2,
+                "details": [
+                  "Order UU202401150022 state changed from '待接单' to '已取消'",
+                  "Order UU202401150023 state changed from '配送中' to '已取消'",
+                  "New order UU17674618205912 created from token_aaa111",
+                  "New order UU17674618245218 created from token_bbb222",
+                  "Price tokens token_aaa111 and token_bbb222 consumed",
+                  "New price tokens generated from estimate_price calls"
+                ]
+              }
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 86.97856664657593
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "error_type": "Expected Validation Error",
+              "error_location": "load_scenario",
+              "error_details": "Phone number validation failed: receiverPhone='138-0013-8000' and senderPhone='139-0013-9000' contain dashes and don't match the required pattern '^1[3-9]\\d{9}$'",
+              "expected_vs_actual": "Expected: Validation error due to invalid phone format. Actual: Validation error occurred as expected - phone numbers must be 11 consecutive digits without dashes",
+              "root_cause": "The scenario intentionally contains invalid phone numbers with dashes (138-0013-8000, 139-0013-9000) to test boundary validation. The Pydantic schema correctly enforces the pattern requiring 11 consecutive digits starting with 1[3-9].",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "2 validation errors for UUPaoTuiScenario\norders.UU202401150030.receiverPhone\n  String should match pattern '^1[3-9]\\d{9}$' [type=string_pattern_mismatch, input_value='138-0013-8000', input_type=str]\norders.UU202401150030.senderPhone\n  String should match pattern '^1[3-9]\\d{9}$' [type=string_pattern_mismatch, input_value='139-0013-9000', input_type=str]"
+            },
+            "tool_executions": [],
+            "save_scenario": {
+              "success": false,
+              "consistency_check": false,
+              "error": "Skipped due to expected load_scenario validation failure"
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 16.874807596206665
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "query_order",
+                "test_cases": [
+                  {
+                    "case_name": "Valid case - Query existing order",
+                    "input": {
+                      "orderCode": "UU202401150001"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU202401150001",
+                      "fromAddress": "北京市朝阳区三里屯SOHO",
+                      "toAddress": "北京市朝阳区国贸CBD",
+                      "distance": 5.2,
+                      "state": "已完成"
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Error case - Query non-existent order",
+                    "input": {
+                      "orderCode": "NONEXISTENT_ORDER"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Order NONEXISTENT_ORDER not found",
+                    "note": "Expected error - validation working correctly"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_orders",
+                "test_cases": [
+                  {
+                    "case_name": "Valid case - List all orders",
+                    "input": {},
+                    "passed": true,
+                    "output": {
+                      "order_list": [
+                        {
+                          "orderCode": "UU202401150001",
+                          "fromAddress": "北京市朝阳区三里屯SOHO",
+                          "toAddress": "北京市朝阳区国贸CBD",
+                          "state": "已完成",
+                          "createdAt": "2024-01-15T10:30:00+08:00"
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_price",
+                "test_cases": [
+                  {
+                    "case_name": "Valid case - Instant delivery in Beijing",
+                    "input": {
+                      "fromAddress": "北京市海淀区中关村",
+                      "toAddress": "北京市朝阳区望京",
+                      "adCode": "110100",
+                      "sendType": "instant"
+                    },
+                    "passed": true,
+                    "output": {
+                      "priceToken": "58084669-5d16-4af5-b785-283b705b44aa",
+                      "needPayMoney": 63.6
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Valid case - Scheduled delivery in Shanghai",
+                    "input": {
+                      "fromAddress": "上海市浦东新区陆家嘴",
+                      "toAddress": "上海市黄浦区外滩",
+                      "adCode": "310100",
+                      "sendType": "scheduled"
+                    },
+                    "passed": true,
+                    "output": {
+                      "priceToken": "d8b0e646-a8f0-4756-a1be-0be93be65e96",
+                      "needPayMoney": 85.8
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Error case - Empty fromAddress",
+                    "input": {
+                      "fromAddress": "",
+                      "toAddress": "北京市朝阳区望京",
+                      "adCode": "110100",
+                      "sendType": "instant"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "fromAddress must be a non-empty string",
+                    "note": "Expected error - validation working correctly"
+                  },
+                  {
+                    "case_name": "Error case - Invalid sendType",
+                    "input": {
+                      "fromAddress": "北京市海淀区中关村",
+                      "toAddress": "北京市朝阳区望京",
+                      "adCode": "110100",
+                      "sendType": "invalid_type"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "sendType must be 'instant' or 'scheduled'",
+                    "note": "Expected error - validation working correctly"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_order",
+                "test_cases": [
+                  {
+                    "case_name": "Valid case - Create order with new price token",
+                    "input": {
+                      "priceToken": "58084669-5d16-4af5-b785-283b705b44aa",
+                      "receiverPhone": "13800138002",
+                      "senderPhone": "13900139002"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU17674618104934"
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Valid case - Create order with existing price token",
+                    "input": {
+                      "priceToken": "token_abc123",
+                      "receiverPhone": "13800138003",
+                      "senderPhone": "13900139003"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU17674618226908"
+                    },
+                    "error": null
+                  },
+                  {
+                    "case_name": "Error case - Empty priceToken",
+                    "input": {
+                      "priceToken": "",
+                      "receiverPhone": "13800138004",
+                      "senderPhone": "13900139004"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "priceToken must be a non-empty string",
+                    "note": "Expected error - validation working correctly"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_order",
+                "test_cases": [
+                  {
+                    "case_name": "Valid case - Cancel newly created order",
+                    "input": {
+                      "orderCode": "UU17674618104934",
+                      "reason": "测试取消订单"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU17674618104934",
+                      "deductFee": 80
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": {
+                "original_orders_count": 1,
+                "saved_orders_count": 3,
+                "new_orders_created": 2,
+                "original_price_tokens_count": 1,
+                "saved_price_tokens_count": 1,
+                "price_token_consumed": 1,
+                "state_modifications": [
+                  "Order UU17674618104934 created and cancelled",
+                  "Order UU17674618226908 created with state '待接单'",
+                  "Price token 'token_abc123' consumed during order creation",
+                  "New price token 'd8b0e646-a8f0-4756-a1be-0be93be65e96' generated"
+                ],
+                "consistency_notes": "State correctly reflects all operations: 2 new orders created, 1 cancelled, 1 price token consumed, 1 new price token generated"
+              }
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 71.88647222518921
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "estimate_price",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Valid instant delivery",
+                    "input": {
+                      "fromAddress": "北京市朝阳区国贸",
+                      "toAddress": "北京市海淀区中关村",
+                      "adCode": "110100",
+                      "sendType": "instant"
+                    },
+                    "result": "Success - Generated price token with estimated price 150.6 CNY"
+                  },
+                  {
+                    "case": "Valid scheduled delivery",
+                    "input": {
+                      "fromAddress": "上海市浦东新区",
+                      "toAddress": "上海市徐汇区",
+                      "adCode": "310100",
+                      "sendType": "scheduled"
+                    },
+                    "result": "Success - Generated price token with estimated price 89.05 CNY"
+                  },
+                  {
+                    "case": "Invalid sendType",
+                    "input": {
+                      "fromAddress": "广州市天河区",
+                      "toAddress": "广州市越秀区",
+                      "adCode": "440100",
+                      "sendType": "express"
+                    },
+                    "result": "Expected validation error caught - sendType must be 'instant' or 'scheduled'"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "create_order",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Valid order with existing price token",
+                    "input": {
+                      "priceToken": "token_xyz789",
+                      "receiverPhone": "13800138888",
+                      "senderPhone": "13900139999"
+                    },
+                    "result": "Success - Created order UU17674618191879"
+                  },
+                  {
+                    "case": "Valid order with newly generated price token",
+                    "input": {
+                      "priceToken": "117bff60-e4e1-44e1-b893-d575a9ae92cd",
+                      "receiverPhone": "13700137000",
+                      "senderPhone": "13600136000"
+                    },
+                    "result": "Success - Created order UU17674618230466"
+                  },
+                  {
+                    "case": "Invalid empty priceToken",
+                    "input": {
+                      "priceToken": "",
+                      "receiverPhone": "13800138888",
+                      "senderPhone": "13900139999"
+                    },
+                    "result": "Expected validation error caught - priceToken must be a non-empty string"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "list_orders",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "List all orders",
+                    "input": {},
+                    "result": "Success - Retrieved 6 orders (4 original + 2 newly created)"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "query_order",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Query existing order",
+                    "input": {
+                      "orderCode": "UU202401150010"
+                    },
+                    "result": "Success - Retrieved order details with state '配送中'"
+                  },
+                  {
+                    "case": "Query newly created order",
+                    "input": {
+                      "orderCode": "UU17674618191879"
+                    },
+                    "result": "Success - Retrieved order details with state '待接单'"
+                  },
+                  {
+                    "case": "Invalid empty orderCode",
+                    "input": {
+                      "orderCode": ""
+                    },
+                    "result": "Expected validation error caught - orderCode must be a non-empty string"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "cancel_order",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "case": "Cancel existing order",
+                    "input": {
+                      "orderCode": "UU202401150011",
+                      "reason": "地址填写错误"
+                    },
+                    "result": "Success - Cancelled order with deduction fee 80 cents"
+                  },
+                  {
+                    "case": "Cancel newly created order",
+                    "input": {
+                      "orderCode": "UU17674618191879",
+                      "reason": "不需要了"
+                    },
+                    "result": "Success - Cancelled order with deduction fee 80 cents"
+                  },
+                  {
+                    "case": "Invalid empty reason",
+                    "input": {
+                      "orderCode": "UU202401150010",
+                      "reason": ""
+                    },
+                    "result": "Expected validation error caught - reason must be a non-empty string"
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "details": {
+                "orders_count": 6,
+                "original_orders_preserved": 4,
+                "new_orders_created": 2,
+                "state_changes": [
+                  "UU202401150011: 待接单 → 已取消",
+                  "UU17674618191879: 待接单 → 已取消"
+                ],
+                "price_tokens_consumed": [
+                  "token_xyz789"
+                ],
+                "price_tokens_added": [
+                  "eab19067-05d7-41ea-8f76-0e4eb964b22f"
+                ],
+                "price_tokens_remaining": 2,
+                "configuration_preserved": true
+              },
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 86.53933000564575
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_orders",
+                "test_cases": [
+                  {
+                    "test_name": "List all orders",
+                    "input": {},
+                    "passed": true,
+                    "output": "Successfully retrieved 7 orders",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "estimate_price",
+                "test_cases": [
+                  {
+                    "test_name": "Valid instant delivery - Guangzhou",
+                    "input": {
+                      "fromAddress": "广州市天河区天河路208号",
+                      "toAddress": "广州市越秀区北京路1号",
+                      "adCode": "440100",
+                      "sendType": "instant"
+                    },
+                    "passed": true,
+                    "output": {
+                      "priceToken": "d0ecb579-ad01-40a1-83de-92bbe23faf23",
+                      "needPayMoney": 116.05
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid scheduled delivery - Hangzhou",
+                    "input": {
+                      "fromAddress": "杭州市西湖区文三路",
+                      "toAddress": "杭州市拱墅区武林广场",
+                      "adCode": "330100",
+                      "sendType": "scheduled"
+                    },
+                    "passed": true,
+                    "output": {
+                      "priceToken": "7af17045-85d4-4144-ae2a-1d36baa7a6a4",
+                      "needPayMoney": 68.5
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Invalid empty fromAddress",
+                    "input": {
+                      "fromAddress": "",
+                      "toAddress": "测试地址",
+                      "adCode": "440100",
+                      "sendType": "instant"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "fromAddress must be a non-empty string",
+                    "expected_error": true
+                  },
+                  {
+                    "test_name": "Invalid sendType",
+                    "input": {
+                      "fromAddress": "测试地址",
+                      "toAddress": "测试地址2",
+                      "adCode": "440100",
+                      "sendType": "invalid_type"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "sendType must be 'instant' or 'scheduled'",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "query_order",
+                "test_cases": [
+                  {
+                    "test_name": "Query existing order - UU202401150025",
+                    "input": {
+                      "orderCode": "UU202401150025"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU202401150025",
+                      "fromAddress": "西安市雁塔区小寨东路",
+                      "toAddress": "西安市碑林区钟楼",
+                      "distance": 5.9,
+                      "state": "已完成"
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Query existing order - UU202401150020",
+                    "input": {
+                      "orderCode": "UU202401150020"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU202401150020",
+                      "fromAddress": "北京市海淀区中关村大街1号",
+                      "toAddress": "北京市东城区王府井大街138号",
+                      "distance": 15.7,
+                      "state": "配送中"
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Query non-existent order",
+                    "input": {
+                      "orderCode": "INVALID_ORDER"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Order INVALID_ORDER not found",
+                    "expected_error": true
+                  },
+                  {
+                    "test_name": "Query with empty orderCode",
+                    "input": {
+                      "orderCode": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "orderCode must be a non-empty string",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_order",
+                "test_cases": [
+                  {
+                    "test_name": "Create order with valid token - token_aaa111",
+                    "input": {
+                      "priceToken": "token_aaa111",
+                      "receiverPhone": "13900000001",
+                      "senderPhone": "13900000002"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU17674618205912"
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Create order with valid token - token_bbb222",
+                    "input": {
+                      "priceToken": "token_bbb222",
+                      "receiverPhone": "13900000003",
+                      "senderPhone": "13900000004"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU17674618245218"
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Create order with invalid token",
+                    "input": {
+                      "priceToken": "invalid_token",
+                      "receiverPhone": "13900000005",
+                      "senderPhone": "13900000006"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Invalid or expired price token",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_order",
+                "test_cases": [
+                  {
+                    "test_name": "Cancel pending order - UU202401150022",
+                    "input": {
+                      "orderCode": "UU202401150022",
+                      "reason": "客户要求取消"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU202401150022",
+                      "deductFee": 80
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Cancel in-delivery order - UU202401150023",
+                    "input": {
+                      "orderCode": "UU202401150023",
+                      "reason": "地址填写错误"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU202401150023",
+                      "deductFee": 80
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Cancel already cancelled order - UU202401150026",
+                    "input": {
+                      "orderCode": "UU202401150026",
+                      "reason": "重复取消测试"
+                    },
+                    "passed": true,
+                    "output": {
+                      "orderCode": "UU202401150026",
+                      "deductFee": 0
+                    },
+                    "error": null
+                  },
+                  {
+                    "test_name": "Cancel non-existent order",
+                    "input": {
+                      "orderCode": "INVALID_ORDER_CODE",
+                      "reason": "测试无效订单"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Order INVALID_ORDER_CODE not found",
+                    "expected_error": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "changes_detected": {
+                "new_orders_created": 2,
+                "orders_cancelled": 2,
+                "price_tokens_consumed": 2,
+                "price_tokens_generated": 2,
+                "details": [
+                  "Order UU202401150022 state changed from '待接单' to '已取消'",
+                  "Order UU202401150023 state changed from '配送中' to '已取消'",
+                  "New order UU17674618205912 created from token_aaa111",
+                  "New order UU17674618245218 created from token_bbb222",
+                  "Price tokens token_aaa111 and token_bbb222 consumed",
+                  "New price tokens generated from estimate_price calls"
+                ]
+              }
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 86.97856664657593
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "error_type": "Expected Validation Error",
+              "error_location": "load_scenario",
+              "error_details": "Phone number validation failed: receiverPhone='138-0013-8000' and senderPhone='139-0013-9000' contain dashes and don't match the required pattern '^1[3-9]\\d{9}$'",
+              "expected_vs_actual": "Expected: Validation error due to invalid phone format. Actual: Validation error occurred as expected - phone numbers must be 11 consecutive digits without dashes",
+              "root_cause": "The scenario intentionally contains invalid phone numbers with dashes (138-0013-8000, 139-0013-9000) to test boundary validation. The Pydantic schema correctly enforces the pattern requiring 11 consecutive digits starting with 1[3-9].",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "2 validation errors for UUPaoTuiScenario\norders.UU202401150030.receiverPhone\n  String should match pattern '^1[3-9]\\d{9}$' [type=string_pattern_mismatch, input_value='138-0013-8000', input_type=str]\norders.UU202401150030.senderPhone\n  String should match pattern '^1[3-9]\\d{9}$' [type=string_pattern_mismatch, input_value='139-0013-9000', input_type=str]"
+            },
+            "tool_executions": [],
+            "save_scenario": {
+              "success": false,
+              "consistency_check": false,
+              "error": "Skipped due to expected load_scenario validation failure"
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 16.874807596206665
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/UUPaoTui.py"
+  }
+}

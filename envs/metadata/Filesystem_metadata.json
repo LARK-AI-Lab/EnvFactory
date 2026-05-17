@@ -1,0 +1,452 @@
+{
+  "class_name": "Filesystem",
+  "description": "A file system server providing comprehensive operations for reading, writing, editing, and managing files and directories, including metadata retrieval and recursive search capabilities.",
+  "tools": [
+    {
+      "name": "read_text_file",
+      "description": "Read the complete contents of a text file, with optional line filtering to retrieve only the first or last N lines.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The absolute or relative file path to the text file to read."
+          },
+          "head": {
+            "type": "integer",
+            "description": "Optional number of lines to read from the beginning of the file."
+          },
+          "tail": {
+            "type": "integer",
+            "description": "Optional number of lines to read from the end of the file."
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "file_content": {
+            "type": "string",
+            "description": "The contents of the file decoded as UTF-8 text."
+          }
+        }
+      }
+    },
+    {
+      "name": "read_media_file",
+      "description": "Read a binary media file (image or audio) and return its contents as base64-encoded data with MIME type information.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The absolute or relative file path to the media file to read."
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "string",
+            "description": "The base64-encoded binary content of the media file."
+          },
+          "mime_type": {
+            "type": "string",
+            "description": "The MIME type of the media file (e.g., 'image/png', 'audio/mp3')."
+          }
+        }
+      }
+    },
+    {
+      "name": "read_multiple_files",
+      "description": "Read multiple files simultaneously and return their contents or any errors encountered for each file.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "A list of absolute or relative file paths to read."
+          }
+        },
+        "required": [
+          "paths"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "The file path that was read."
+                },
+                "content": {
+                  "type": "string",
+                  "description": "The contents of the file if successfully read."
+                },
+                "error": {
+                  "type": "string",
+                  "description": "Error message if the file could not be read."
+                }
+              }
+            },
+            "description": "A list of results for each requested file, containing either content or an error message."
+          }
+        }
+      }
+    },
+    {
+      "name": "write_file",
+      "description": "Create a new file or overwrite an existing file with the specified content.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The absolute or relative file path where the content will be written."
+          },
+          "content": {
+            "type": "string",
+            "description": "The text content to write to the file."
+          }
+        },
+        "required": [
+          "path",
+          "content"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The file path where the content was written."
+          },
+          "success": {
+            "type": "string",
+            "description": "A message indicating the write operation completed successfully."
+          }
+        }
+      }
+    },
+    {
+      "name": "edit_file",
+      "description": "Make selective edits to a file using advanced pattern matching, with support for dry-run previews before applying changes.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The absolute or relative file path to the file to edit."
+          },
+          "oldText": {
+            "type": "string",
+            "description": "Optional text pattern to search for within the file (can be a substring)."
+          },
+          "newText": {
+            "type": "string",
+            "description": "Optional replacement text to substitute for matched occurrences."
+          },
+          "dryRun": {
+            "type": "boolean",
+            "description": "If true, preview the changes without applying them to the file. Defaults to false."
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "diff": {
+            "type": "string",
+            "description": "A unified diff showing the changes made or to be made to the file."
+          },
+          "matches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line_number": {
+                  "type": "integer",
+                  "description": "The line number where the match was found."
+                },
+                "context": {
+                  "type": "string",
+                  "description": "The surrounding context of the matched text."
+                }
+              }
+            },
+            "description": "A list of matches found, including line numbers and surrounding context."
+          },
+          "applied": {
+            "type": "boolean",
+            "description": "Indicates whether the changes were actually applied to the file."
+          }
+        }
+      }
+    },
+    {
+      "name": "create_directory",
+      "description": "Create a new directory at the specified path, or ensure the directory already exists.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The absolute or relative path of the directory to create."
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The path of the directory that was created or already existed."
+          },
+          "created": {
+            "type": "boolean",
+            "description": "True if a new directory was created, false if it already existed."
+          }
+        }
+      }
+    },
+    {
+      "name": "list_directory",
+      "description": "List the contents of a directory, returning each entry with its name, type, and size.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The absolute or relative path of the directory to list."
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The name of the file or directory entry."
+                },
+                "type": {
+                  "type": "string",
+                  "description": "The type of entry: 'FILE' for files or 'DIR' for directories."
+                },
+                "size": {
+                  "type": "integer",
+                  "description": "The size of the entry in bytes."
+                }
+              }
+            },
+            "description": "A list of directory entries with their names, types, and sizes."
+          }
+        }
+      }
+    },
+    {
+      "name": "move_file",
+      "description": "Move or rename a file or directory from a source path to a destination path.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "The absolute or relative path of the source file or directory to move."
+          },
+          "destination": {
+            "type": "string",
+            "description": "The absolute or relative path of the destination location."
+          }
+        },
+        "required": [
+          "source",
+          "destination"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "The original path of the moved file or directory."
+          },
+          "destination": {
+            "type": "string",
+            "description": "The new path of the moved file or directory."
+          },
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the move operation completed successfully."
+          }
+        }
+      }
+    },
+    {
+      "name": "search_files",
+      "description": "Recursively search for files and directories matching a glob pattern, with optional exclusion patterns.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The absolute or relative path of the starting directory for the search."
+          },
+          "pattern": {
+            "type": "string",
+            "description": "A glob-style pattern to match file and directory names (e.g., '*.txt', '**/*.py')."
+          },
+          "excludePatterns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional list of glob-style patterns to exclude from search results."
+          }
+        },
+        "required": [
+          "path",
+          "pattern"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "matches": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "A list of full paths to files and directories matching the search pattern."
+          }
+        }
+      }
+    },
+    {
+      "name": "directory_tree",
+      "description": "Generate a recursive JSON tree structure representing the contents of a directory and all its subdirectories.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The absolute or relative path of the starting directory for the tree."
+          },
+          "excludePatterns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional list of glob-style patterns to exclude from the tree structure."
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "tree": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The name of the file or directory."
+                },
+                "type": {
+                  "type": "string",
+                  "description": "The type of entry: 'file' or 'directory'."
+                },
+                "children": {
+                  "type": "array",
+                  "description": "Nested entries for directories; present only for directory type entries."
+                }
+              }
+            },
+            "description": "A hierarchical tree structure representing the directory contents."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_file_info",
+      "description": "Retrieve detailed metadata about a file or directory, including size, timestamps, and permissions.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The absolute or relative path of the file or directory to inspect."
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The path of the inspected file or directory."
+          },
+          "type": {
+            "type": "string",
+            "description": "The type of entry: 'file' or 'directory'."
+          },
+          "size": {
+            "type": "integer",
+            "description": "The size of the file in bytes, or total size for directories."
+          },
+          "created_time": {
+            "type": "string",
+            "description": "The creation timestamp of the file or directory in ISO 8601 format."
+          },
+          "modified_time": {
+            "type": "string",
+            "description": "The last modification timestamp in ISO 8601 format."
+          },
+          "access_time": {
+            "type": "string",
+            "description": "The last access timestamp in ISO 8601 format."
+          },
+          "permissions": {
+            "type": "string",
+            "description": "The file system permissions in symbolic notation (e.g., 'rwxr-xr-x')."
+          }
+        }
+      }
+    }
+  ]
+}

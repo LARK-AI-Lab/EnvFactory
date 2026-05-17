@@ -1,0 +1,288 @@
+{
+  "class_name": "AdobePDFServices",
+  "description": "Comprehensive PDF manipulation service providing HTML-to-PDF conversion, format export, OCR text extraction, document merging, and password protection capabilities.",
+  "tools": [
+    {
+      "name": "create_pdf_from_html",
+      "description": "Generate a PDF document from HTML content with configurable page dimensions.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "html_content": {
+            "type": "string",
+            "description": "The HTML content string to be rendered and converted into a PDF document."
+          },
+          "output_filename": {
+            "type": "string",
+            "description": "Optional custom filename for the generated output document. If omitted, a system-generated name is assigned."
+          },
+          "page_size": {
+            "type": "string",
+            "description": "The page size specification for the output PDF. Supported values: A4, Letter, Legal.",
+            "enum": [
+              "A4",
+              "Letter",
+              "Legal"
+            ]
+          }
+        },
+        "required": [
+          "html_content"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "pdf_url": {
+            "type": "string",
+            "description": "The presigned URL for downloading the generated PDF document."
+          },
+          "page_count": {
+            "type": "integer",
+            "description": "The total number of pages in the generated PDF document."
+          },
+          "file_size": {
+            "type": "integer",
+            "description": "The size of the generated PDF file in bytes."
+          }
+        },
+        "required": [
+          "pdf_url",
+          "page_count",
+          "file_size"
+        ]
+      }
+    },
+    {
+      "name": "export_pdf_to_format",
+      "description": "Export a PDF document to alternative formats including Microsoft Office formats (Word, Excel, PowerPoint) or image files (JPEG, PNG).",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "pdf_url": {
+            "type": "string",
+            "description": "The URL of the source PDF document to be converted to another format."
+          },
+          "target_format": {
+            "type": "string",
+            "description": "The target export format. Supported formats: docx (Word), xlsx (Excel), pptx (PowerPoint), jpeg, png.",
+            "enum": [
+              "docx",
+              "xlsx",
+              "pptx",
+              "jpeg",
+              "png"
+            ]
+          },
+          "output_filename": {
+            "type": "string",
+            "description": "Optional custom filename for the generated output document. If omitted, a system-generated name is assigned."
+          }
+        },
+        "required": [
+          "pdf_url",
+          "target_format"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "export_url": {
+            "type": "string",
+            "description": "The presigned URL for downloading the exported file in the target format."
+          },
+          "format": {
+            "type": "string",
+            "description": "The format of the exported file, matching the requested target_format."
+          },
+          "page_count": {
+            "type": "integer",
+            "description": "The total number of pages in the exported document."
+          }
+        },
+        "required": [
+          "export_url",
+          "format",
+          "page_count"
+        ]
+      }
+    },
+    {
+      "name": "ocr_pdf",
+      "description": "Perform optical character recognition on a PDF to extract text or create a searchable PDF document.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "pdf_url": {
+            "type": "string",
+            "description": "The URL of the source PDF document to be processed with OCR."
+          },
+          "language": {
+            "type": "string",
+            "description": "The language code of the document content for optimized OCR accuracy. Defaults to en-US (English, United States)."
+          },
+          "output_type": {
+            "type": "string",
+            "description": "The desired OCR output type. 'searchable_pdf' creates a PDF with embedded text layer; 'text_extraction' extracts raw text content.",
+            "enum": [
+              "searchable_pdf",
+              "text_extraction"
+            ]
+          }
+        },
+        "required": [
+          "pdf_url"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "output_url": {
+            "type": "string",
+            "description": "The presigned URL for downloading the processed file (searchable PDF or text file depending on output_type)."
+          },
+          "extracted_text": {
+            "type": "string",
+            "description": "The raw extracted text content from the PDF. Only present when output_type is set to 'text_extraction'."
+          },
+          "confidence_score": {
+            "type": "number",
+            "description": "The OCR accuracy confidence score ranging from 0 to 100, indicating the reliability of text recognition."
+          }
+        },
+        "required": [
+          "output_url",
+          "confidence_score"
+        ]
+      }
+    },
+    {
+      "name": "combine_pdfs",
+      "description": "Merge multiple PDF documents into a single consolidated PDF file.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "pdf_urls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "An ordered list of URLs pointing to the PDF documents to be merged. Documents are combined in the order provided."
+          },
+          "output_filename": {
+            "type": "string",
+            "description": "Optional custom filename for the generated output document. If omitted, a system-generated name is assigned."
+          }
+        },
+        "required": [
+          "pdf_urls"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "combined_pdf_url": {
+            "type": "string",
+            "description": "The presigned URL for downloading the merged PDF document."
+          },
+          "total_pages": {
+            "type": "integer",
+            "description": "The total number of pages across all combined source documents."
+          },
+          "source_count": {
+            "type": "integer",
+            "description": "The number of source PDF documents that were merged."
+          }
+        },
+        "required": [
+          "combined_pdf_url",
+          "total_pages",
+          "source_count"
+        ]
+      }
+    },
+    {
+      "name": "protect_pdf",
+      "description": "Apply password protection and configurable permission restrictions to secure a PDF document.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "pdf_url": {
+            "type": "string",
+            "description": "The URL of the source PDF document to be password protected."
+          },
+          "password": {
+            "type": "string",
+            "description": "The password string used to encrypt and restrict access to the PDF document."
+          },
+          "permissions": {
+            "type": "object",
+            "properties": {
+              "printing": {
+                "type": "boolean",
+                "description": "Allow or deny printing of the PDF document."
+              },
+              "copying": {
+                "type": "boolean",
+                "description": "Allow or deny copying text and content from the PDF document."
+              },
+              "editing": {
+                "type": "boolean",
+                "description": "Allow or deny editing and modification of the PDF content."
+              },
+              "commenting": {
+                "type": "boolean",
+                "description": "Allow or deny adding annotations and comments to the PDF document."
+              }
+            },
+            "description": "Optional permission settings defining user restrictions for the protected PDF. If omitted, default restrictive permissions apply."
+          }
+        },
+        "required": [
+          "pdf_url",
+          "password"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "protected_pdf_url": {
+            "type": "string",
+            "description": "The presigned URL for downloading the password-protected PDF document."
+          },
+          "encryption_level": {
+            "type": "string",
+            "description": "The encryption standard applied to the PDF (e.g., AES-256)."
+          },
+          "permissions_applied": {
+            "type": "object",
+            "properties": {
+              "printing": {
+                "type": "boolean",
+                "description": "Indicates whether printing is permitted on the protected document."
+              },
+              "copying": {
+                "type": "boolean",
+                "description": "Indicates whether copying content is permitted on the protected document."
+              },
+              "editing": {
+                "type": "boolean",
+                "description": "Indicates whether editing content is permitted on the protected document."
+              },
+              "commenting": {
+                "type": "boolean",
+                "description": "Indicates whether adding comments is permitted on the protected document."
+              }
+            },
+            "description": "The complete set of permission restrictions that have been applied to the protected document."
+          }
+        },
+        "required": [
+          "protected_pdf_url",
+          "encryption_level",
+          "permissions_applied"
+        ]
+      }
+    }
+  ]
+}

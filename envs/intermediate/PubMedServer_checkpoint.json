@@ -1,0 +1,1711 @@
+{
+  "metadata": {
+    "class_name": "PubMedServer",
+    "metadata_path": "envs/metadata/PubMedServer_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-04-17T10:02:56.291581",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "PubMedServer",
+    "description": "A comprehensive MCP server for querying and retrieving biomedical literature metadata from the PubMed database.",
+    "tools": [
+      {
+        "name": "search_pubmed_key_words",
+        "description": "Search PubMed articles by free-text keywords and optionally sort the results.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "key_words": {
+              "type": "string",
+              "description": "Keyword query string used to search PubMed article titles, abstracts, and MeSH terms."
+            },
+            "max_results": {
+              "type": "integer",
+              "description": "Maximum number of articles to return (default 10).",
+              "default": 10
+            },
+            "sort": {
+              "type": "string",
+              "description": "Sort mode: \"relevance\", \"pub_date\", or \"journal\" (optional).",
+              "enum": [
+                "relevance",
+                "pub_date",
+                "journal"
+              ]
+            }
+          },
+          "required": [
+            "key_words"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "The original keyword query string submitted to PubMed."
+            },
+            "count": {
+              "type": "integer",
+              "description": "Total number of matching articles found in PubMed."
+            },
+            "articles": {
+              "type": "array",
+              "description": "List of matching articles with basic bibliographic metadata.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "pmid": {
+                    "type": "string",
+                    "description": "The unique PubMed identifier (PMID) of the article."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Title of the PubMed article."
+                  },
+                  "authors": {
+                    "type": "array",
+                    "description": "List of author names associated with the article.",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "journal": {
+                    "type": "string",
+                    "description": "Name or abbreviation of the journal in which the article was published."
+                  },
+                  "pub_date": {
+                    "type": "string",
+                    "description": "Publication date in YYYY-MM-DD or YYYY-MM format."
+                  },
+                  "abstract": {
+                    "type": "string",
+                    "description": "Abstract text summarizing the article content."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_pubmed_article",
+        "description": "Retrieve detailed metadata, abstract, and identifiers for a single PubMed article by its PMID.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "pmid": {
+              "type": "string",
+              "description": "The unique PubMed identifier (PMID) of the article to retrieve."
+            }
+          },
+          "required": [
+            "pmid"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "pmid": {
+              "type": "string",
+              "description": "The unique PubMed identifier (PMID) of the article."
+            },
+            "title": {
+              "type": "string",
+              "description": "Title of the PubMed article."
+            },
+            "authors": {
+              "type": "array",
+              "description": "List of author names associated with the article.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "journal": {
+              "type": "string",
+              "description": "Name or abbreviation of the journal in which the article was published."
+            },
+            "publication_types": {
+              "type": "array",
+              "description": "MeSH publication types assigned to the article (e.g., Journal Article, Review).",
+              "items": {
+                "type": "string"
+              }
+            },
+            "mesh_terms": {
+              "type": "array",
+              "description": "Medical Subject Headings (MeSH) terms indexing the article content.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "abstract": {
+              "type": "string",
+              "description": "Abstract text summarizing the article content."
+            },
+            "doi": {
+              "type": "string",
+              "description": "Digital Object Identifier (DOI) for the article when available."
+            }
+          }
+        }
+      },
+      {
+        "name": "fetch_pubmed_articles",
+        "description": "Batch retrieve multiple PubMed articles by their PMIDs in a single call.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "pmids": {
+              "type": "array",
+              "description": "List of PubMed identifiers (PMIDs) to retrieve.",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "pmids"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "articles": {
+              "type": "array",
+              "description": "List of successfully retrieved article objects containing metadata and abstracts.",
+              "items": {
+                "type": "object"
+              }
+            },
+            "missing_pmids": {
+              "type": "array",
+              "description": "List of PMIDs that could not be found in PubMed.",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "search_pubmed_by_author",
+        "description": "Search PubMed for articles authored by a specific researcher.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "author": {
+              "type": "string",
+              "description": "Author name query (last name, first initial, or full name)."
+            },
+            "max_results": {
+              "type": "integer",
+              "description": "Maximum number of articles to return (default 10).",
+              "default": 10
+            }
+          },
+          "required": [
+            "author"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "author": {
+              "type": "string",
+              "description": "The author name query string used for the search."
+            },
+            "articles": {
+              "type": "array",
+              "description": "List of articles attributed to the specified author.",
+              "items": {
+                "type": "object"
+              }
+            },
+            "count": {
+              "type": "integer",
+              "description": "Total number of articles found for the author."
+            }
+          }
+        }
+      },
+      {
+        "name": "search_pubmed_by_journal",
+        "description": "Search PubMed for articles published in a specific journal, optionally filtered by year.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "journal": {
+              "type": "string",
+              "description": "Journal title or standard abbreviation to search."
+            },
+            "year": {
+              "type": "integer",
+              "description": "Optional publication year filter (e.g., 2023)."
+            },
+            "max_results": {
+              "type": "integer",
+              "description": "Maximum number of articles to return (default 10).",
+              "default": 10
+            }
+          },
+          "required": [
+            "journal"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "journal": {
+              "type": "string",
+              "description": "The journal title or abbreviation used for the search."
+            },
+            "year": {
+              "type": "integer",
+              "description": "The publication year filter applied, if any."
+            },
+            "articles": {
+              "type": "array",
+              "description": "List of articles published in the specified journal (and year).",
+              "items": {
+                "type": "object"
+              }
+            },
+            "count": {
+              "type": "integer",
+              "description": "Total number of articles found for the journal (and year)."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\n\nclass Article(BaseModel):\n    \"\"\"Represents a PubMed article.\"\"\"\n    pmid: str = Field(..., description=\"Unique PubMed identifier\")\n    title: str = Field(default=\"\", description=\"Article title\")\n    authors: List[str] = Field(default=[], description=\"List of author names\")\n    journal: str = Field(default=\"\", description=\"Journal name or abbreviation\")\n    pub_date: str = Field(default=\"\", description=\"Publication date\")\n    abstract: str = Field(default=\"\", description=\"Abstract text\")\n    publication_types: List[str] = Field(default=[], description=\"MeSH publication types\")\n    mesh_terms: List[str] = Field(default=[], description=\"MeSH terms\")\n    doi: str = Field(default=\"\", description=\"Digital Object Identifier\")\n\nclass PubMedScenario(BaseModel):\n    \"\"\"Main scenario model for PubMed server state.\"\"\"\n    articles: Dict[str, Any] = Field(default={}, description=\"Stored articles keyed by PMID\")\n    search_results: Dict[str, Any] = Field(default={}, description=\"Cached search results keyed by query\")\n    author_results: Dict[str, Any] = Field(default={}, description=\"Cached author search results\")\n    journal_results: Dict[str, Any] = Field(default={}, description=\"Cached journal search results\")\n    current_time: str = Field(default=\"2026-04-17T01:46:12\", description=\"Current timestamp in ISO 8601 format\")\n\nScenario_Schema = [Article, PubMedScenario]\n\n\n# Section 2: Class\n\nclass PubMedAPI:\n    def __init__(self):\n        \"\"\"Initialize PubMed API with empty state.\"\"\"\n        self.articles: Dict[str, Any] = {}\n        self.search_results: Dict[str, Any] = {}\n        self.author_results: Dict[str, Any] = {}\n        self.journal_results: Dict[str, Any] = {}\n        self.current_time: str = \"\"\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = PubMedScenario(**scenario)\n        self.articles = model.articles\n        self.search_results = model.search_results\n        self.author_results = model.author_results\n        self.journal_results = model.journal_results\n        self.current_time = model.current_time\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"articles\": self.articles,\n            \"search_results\": self.search_results,\n            \"author_results\": self.author_results,\n            \"journal_results\": self.journal_results,\n            \"current_time\": self.current_time,\n        }\n\n    def search_pubmed_key_words(self, key_words: str, max_results: int = 10, sort: Optional[str] = None) -> dict:\n        \"\"\"Search PubMed articles by keywords and return matching results.\"\"\"\n        key = f\"{key_words}|{max_results}|{sort}\"\n        if key in self.search_results:\n            return self.search_results[key]\n\n        # Filter stored articles by keyword match in title/abstract\n        matches = []\n        kw_lower = key_words.lower()\n        for pmid, art in self.articles.items():\n            title = art.get(\"title\", \"\").lower()\n            abstract = art.get(\"abstract\", \"\").lower()\n            mesh = \" \".join(art.get(\"mesh_terms\", [])).lower()\n            if kw_lower in title or kw_lower in abstract or kw_lower in mesh:\n                matches.append(art)\n\n        if sort == \"pub_date\":\n            matches.sort(key=lambda a: a.get(\"pub_date\", \"\"), reverse=True)\n        elif sort == \"journal\":\n            matches.sort(key=lambda a: a.get(\"journal\", \"\"))\n\n        matches = matches[:max_results]\n        result = {\"query\": key_words, \"count\": len(matches), \"articles\": matches}\n        self.search_results[key] = result\n        return result\n\n    def get_pubmed_article(self, pmid: str) -> dict:\n        \"\"\"Retrieve detailed metadata for a single PubMed article by PMID.\"\"\"\n        return self.articles[pmid]\n\n    def fetch_pubmed_articles(self, pmids: List[str]) -> dict:\n        \"\"\"Batch retrieve multiple PubMed articles by their PMIDs.\"\"\"\n        found = []\n        missing = []\n        for pmid in pmids:\n            if pmid in self.articles:\n                found.append(self.articles[pmid])\n            else:\n                missing.append(pmid)\n        return {\"articles\": found, \"missing_pmids\": missing}\n\n    def search_pubmed_by_author(self, author: str, max_results: int = 10) -> dict:\n        \"\"\"Search PubMed for articles by a specific author.\"\"\"\n        key = f\"{author}|{max_results}\"\n        if key in self.author_results:\n            return self.author_results[key]\n\n        author_lower = author.lower()\n        matches = []\n        for pmid, art in self.articles.items():\n            for a in art.get(\"authors\", []):\n                if author_lower in a.lower():\n                    matches.append(art)\n                    break\n\n        matches = matches[:max_results]\n        result = {\"author\": author, \"articles\": matches, \"count\": len(matches)}\n        self.author_results[key] = result\n        return result\n\n    def search_pubmed_by_journal(self, journal: str, year: Optional[int] = None, max_results: int = 10) -> dict:\n        \"\"\"Search PubMed for articles published in a specific journal, optionally filtered by year.\"\"\"\n        key = f\"{journal}|{year}|{max_results}\"\n        if key in self.journal_results:\n            return self.journal_results[key]\n\n        journal_lower = journal.lower()\n        matches = []\n        for pmid, art in self.articles.items():\n            if journal_lower in art.get(\"journal\", \"\").lower():\n                if year is None or art.get(\"pub_date\", \"\").startswith(str(year)):\n                    matches.append(art)\n\n        matches = matches[:max_results]\n        result = {\"journal\": journal, \"year\": year, \"articles\": matches, \"count\": len(matches)}\n        self.journal_results[key] = result\n        return result\n\n\n# Section 3: MCP Tools\n\nmcp = FastMCP(name=\"PubMedServer\")\napi = PubMedAPI()\n\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the PubMed API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching PubMedScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current PubMed state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef search_pubmed_key_words(key_words: str, max_results: int = 10, sort: Optional[str] = None) -> dict:\n    \"\"\"\n    Search PubMed articles by free-text keywords and optionally sort the results.\n\n    Args:\n        key_words (str): Keyword query string used to search PubMed article titles, abstracts, and MeSH terms.\n        max_results (int): Maximum number of articles to return (default 10). [Optional]\n        sort (str): Sort mode: \"relevance\", \"pub_date\", or \"journal\". [Optional]\n\n    Returns:\n        query (str): The original keyword query string submitted to PubMed.\n        count (int): Total number of matching articles found.\n        articles (list): List of matching articles with basic bibliographic metadata.\n    \"\"\"\n    try:\n        if not key_words or not isinstance(key_words, str):\n            raise ValueError(\"key_words must be a non-empty string\")\n        if sort is not None and sort not in (\"relevance\", \"pub_date\", \"journal\"):\n            raise ValueError(\"sort must be one of: relevance, pub_date, journal\")\n        return api.search_pubmed_key_words(key_words, max_results, sort)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef get_pubmed_article(pmid: str) -> dict:\n    \"\"\"\n    Retrieve detailed metadata, abstract, and identifiers for a single PubMed article by its PMID.\n\n    Args:\n        pmid (str): The unique PubMed identifier (PMID) of the article to retrieve.\n\n    Returns:\n        pmid (str): The unique PubMed identifier.\n        title (str): Title of the article.\n        authors (list): List of author names.\n        journal (str): Journal name or abbreviation.\n        publication_types (list): MeSH publication types.\n        mesh_terms (list): MeSH terms indexing the article.\n        abstract (str): Abstract text.\n        doi (str): Digital Object Identifier.\n    \"\"\"\n    try:\n        if not pmid or not isinstance(pmid, str):\n            raise ValueError(\"pmid must be a non-empty string\")\n        if pmid not in api.articles:\n            raise ValueError(f\"Article with PMID {pmid} not found\")\n        return api.get_pubmed_article(pmid)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef fetch_pubmed_articles(pmids: List[str]) -> dict:\n    \"\"\"\n    Batch retrieve multiple PubMed articles by their PMIDs in a single call.\n\n    Args:\n        pmids (list): List of PubMed identifiers (PMIDs) to retrieve.\n\n    Returns:\n        articles (list): List of successfully retrieved article objects.\n        missing_pmids (list): List of PMIDs that could not be found.\n    \"\"\"\n    try:\n        if not pmids or not isinstance(pmids, list):\n            raise ValueError(\"pmids must be a non-empty list\")\n        return api.fetch_pubmed_articles(pmids)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef search_pubmed_by_author(author: str, max_results: int = 10) -> dict:\n    \"\"\"\n    Search PubMed for articles authored by a specific researcher.\n\n    Args:\n        author (str): Author name query (last name, first initial, or full name).\n        max_results (int): Maximum number of articles to return (default 10). [Optional]\n\n    Returns:\n        author (str): The author name query string used for the search.\n        articles (list): List of articles attributed to the specified author.\n        count (int): Total number of articles found for the author.\n    \"\"\"\n    try:\n        if not author or not isinstance(author, str):\n            raise ValueError(\"author must be a non-empty string\")\n        return api.search_pubmed_by_author(author, max_results)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef search_pubmed_by_journal(journal: str, year: Optional[int] = None, max_results: int = 10) -> dict:\n    \"\"\"\n    Search PubMed for articles published in a specific journal, optionally filtered by year.\n\n    Args:\n        journal (str): Journal title or standard abbreviation to search.\n        year (int): Optional publication year filter (e.g., 2023). [Optional]\n        max_results (int): Maximum number of articles to return (default 10). [Optional]\n\n    Returns:\n        journal (str): The journal title or abbreviation used for the search.\n        year (int): The publication year filter applied, if any.\n        articles (list): List of articles published in the specified journal.\n        count (int): Total number of articles found.\n    \"\"\"\n    try:\n        if not journal or not isinstance(journal, str):\n            raise ValueError(\"journal must be a non-empty string\")\n        return api.search_pubmed_by_journal(journal, year, max_results)\n    except Exception as e:\n        raise e\n\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-04-17T10:02:56.291621",
+      "revision_number": null
+    },
+    {
+      "version": 1,
+      "code": "\n\n```python\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\n\nclass Article(BaseModel):\n    \"\"\"Represents a PubMed article.\"\"\"\n    pmid: str = Field(..., description=\"Unique PubMed identifier\")\n    title: str = Field(default=\"\", description=\"Article title\")\n    authors: List[str] = Field(default=[], description=\"List of author names\")\n    journal: str = Field(default=\"\", description=\"Journal name or abbreviation\")\n    pub_date: str = Field(default=\"\", description=\"Publication date\")\n    abstract: str = Field(default=\"\", description=\"Abstract text\")\n    publication_types: List[str] = Field(default=[], description=\"MeSH publication types\")\n    mesh_terms: List[str] = Field(default=[], description=\"MeSH terms\")\n    doi: str = Field(default=\"\", description=\"Digital Object Identifier\")\n\nclass PubMedScenario(BaseModel):\n    \"\"\"Main scenario model for PubMed server state.\"\"\"\n    articles: Dict[str, Any] = Field(default_factory=dict, description=\"Stored articles keyed by PMID\")\n    search_results: Dict[str, Any] = Field(default_factory=dict, description=\"Cached search results keyed by query\")\n    author_results: Dict[str, Any] = Field(default_factory=dict, description=\"Cached author search results\")\n    journal_results: Dict[str, Any] = Field(default_factory=dict, description=\"Cached journal search results\")\n    current_time: str = Field(default=\"2026-04-17T01:46:12\", description=\"Current timestamp in ISO 8601 format\")\n\nScenario_Schema = [Article, PubMedScenario]\n\n\n# Section 2: Class\n\nclass PubMedAPI:\n    def __init__(self):\n        \"\"\"Initialize PubMed API with empty state.\"\"\"\n        self.articles: Dict[str, Any] = {}\n        self.search_results: Dict[str, Any] = {}\n        self.author_results: Dict[str, Any] = {}\n        self.journal_results: Dict[str, Any] = {}\n        self.current_time: str = \"\"\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance, fully replacing all state.\"\"\"\n        model = PubMedScenario(**scenario)\n        # Fully replace state to avoid cross-scenario pollution\n        self.articles = dict(model.articles)\n        self.search_results = dict(model.search_results)\n        self.author_results = dict(model.author_results)\n        self.journal_results = dict(model.journal_results)\n        self.current_time = model.current_time\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"articles\": self.articles,\n            \"search_results\": self.search_results,\n            \"author_results\": self.author_results,\n            \"journal_results\": self.journal_results,\n            \"current_time\": self.current_time,\n        }\n\n    def search_pubmed_key_words(self, key_words: str, max_results: int = 10, sort: Optional[str] = None) -> dict:\n        \"\"\"Search PubMed articles by keywords and return matching results.\"\"\"\n        key = f\"{key_words}|{max_results}|{sort}\"\n        if key in self.search_results:\n            return self.search_results[key]\n\n        kw_lower = key_words.lower()\n        matches = []\n        for pmid, art in self.articles.items():\n            title = art.get(\"title\", \"\").lower()\n            abstract = art.get(\"abstract\", \"\").lower()\n            mesh = \" \".join(art.get(\"mesh_terms\", [])).lower()\n            if kw_lower in title or kw_lower in abstract or kw_lower in mesh:\n                matches.append(art)\n\n        if sort == \"pub_date\":\n            matches.sort(key=lambda a: a.get(\"pub_date\", \"\"), reverse=True)\n        elif sort == \"journal\":\n            matches.sort(key=lambda a: a.get(\"journal\", \"\"))\n\n        matches = matches[:max_results]\n        result = {\"query\": key_words, \"count\": len(matches), \"articles\": matches}\n        self.search_results[key] = result\n        return result\n\n    def get_pubmed_article(self, pmid: str) -> dict:\n        \"\"\"Retrieve detailed metadata for a single PubMed article by PMID.\"\"\"\n        return self.articles[pmid]\n\n    def fetch_pubmed_articles(self, pmids: List[str]) -> dict:\n        \"\"\"Batch retrieve multiple PubMed articles by their PMIDs.\"\"\"\n        found = []\n        missing = []\n        for pmid in pmids:\n            if pmid in self.articles:\n                found.append(self.articles[pmid])\n            else:\n                missing.append(pmid)\n        return {\"articles\": found, \"missing_pmids\": missing}\n\n    def search_pubmed_by_author(self, author: str, max_results: int = 10) -> dict:\n        \"\"\"Search PubMed for articles by a specific author.\"\"\"\n        key = f\"{author}|{max_results}\"\n        if key in self.author_results:\n            return self.author_results[key]\n\n        author_lower = author.lower()\n        matches = []\n        for pmid, art in self.articles.items():\n            for a in art.get(\"authors\", []):\n                if author_lower in a.lower():\n                    matches.append(art)\n                    break\n\n        matches = matches[:max_results]\n        result = {\"author\": author, \"articles\": matches, \"count\": len(matches)}\n        self.author_results[key] = result\n        return result\n\n    def search_pubmed_by_journal(self, journal: str, year: Optional[int] = None, max_results: int = 10) -> dict:\n        \"\"\"Search PubMed for articles published in a specific journal, optionally filtered by year.\"\"\"\n        key = f\"{journal}|{year}|{max_results}\"\n        if key in self.journal_results:\n            return self.journal_results[key]\n\n        journal_lower = journal.lower()\n        matches = []\n        for pmid, art in self.articles.items():\n            if journal_lower in art.get(\"journal\", \"\").lower():\n                if year is None or art.get(\"pub_date\", \"\").startswith(str(year)):\n                    matches.append(art)\n\n        matches = matches[:max_results]\n        result = {\"journal\": journal, \"year\": year, \"articles\": matches, \"count\": len(matches)}\n        self.journal_results[key] = result\n        return result\n\n\n# Section 3: MCP Tools\n\nmcp = FastMCP(name=\"PubMedServer\")\napi = PubMedAPI()\n\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the PubMed API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching PubMedScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current PubMed state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef search_pubmed_key_words(key_words: str, max_results: int = 10, sort: Optional[str] = None) -> dict:\n    \"\"\"\n    Search PubMed articles by free-text keywords and optionally sort the results.\n\n    Args:\n        key_words (str): Keyword query string used to search PubMed article titles, abstracts, and MeSH terms.\n        max_results (int): Maximum number of articles to return (default 10). [Optional]\n        sort (str): Sort mode: \"relevance\", \"pub_date\", or \"journal\". [Optional]\n\n    Returns:\n        query (str): The original keyword query string submitted to PubMed.\n        count (int): Total number of matching articles found.\n        articles (list): List of matching articles with basic bibliographic metadata.\n    \"\"\"\n    try:\n        if not key_words or not isinstance(key_words, str):\n            raise ValueError(\"key_words must be a non-empty string\")\n        if sort is not None and sort not in (\"relevance\", \"pub_date\", \"journal\"):\n            raise ValueError(\"sort must be one of: relevance, pub_date, journal\")\n        return api.search_pubmed_key_words(key_words, max_results, sort)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef get_pubmed_article(pmid: str) -> dict:\n    \"\"\"\n    Retrieve detailed metadata, abstract, and identifiers for a single PubMed article by its PMID.\n\n    Args:\n        pmid (str): The unique PubMed identifier (PMID) of the article to retrieve.\n\n    Returns:\n        pmid (str): The unique PubMed identifier.\n        title (str): Title of the article.\n        authors (list): List of author names.\n        journal (str): Journal name or abbreviation.\n        publication_types (list): MeSH publication types.\n        mesh_terms (list): MeSH terms indexing the article.\n        abstract (str): Abstract text.\n        doi (str): Digital Object Identifier.\n    \"\"\"\n    try:\n        if not pmid or not isinstance(pmid, str):\n            raise ValueError(\"pmid must be a non-empty string\")\n        if pmid not in api.articles:\n            raise ValueError(f\"Article with PMID {pmid} not found\")\n        return api.get_pubmed_article(pmid)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef fetch_pubmed_articles(pmids: List[str]) -> dict:\n    \"\"\"\n    Batch retrieve multiple PubMed articles by their PMIDs in a single call.\n\n    Args:\n        pmids (list): List of PubMed identifiers (PMIDs) to retrieve.\n\n    Returns:\n        articles (list): List of successfully retrieved article objects.\n        missing_pmids (list): List of PMIDs that could not be found.\n    \"\"\"\n    try:\n        if not pmids or not isinstance(pmids, list):\n            raise ValueError(\"pmids must be a non-empty list\")\n        return api.fetch_pubmed_articles(pmids)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef search_pubmed_by_author(author: str, max_results: int = 10) -> dict:\n    \"\"\"\n    Search PubMed for articles authored by a specific researcher.\n\n    Args:\n        author (str): Author name query (last name, first initial, or full name).\n        max_results (int): Maximum number of articles to return (default 10). [Optional]\n\n    Returns:\n        author (str): The author name query string used for the search.\n        articles (list): List of articles attributed to the specified author.\n        count (int): Total number of articles found for the author.\n    \"\"\"\n    try:\n        if not author or not isinstance(author, str):\n            raise ValueError(\"author must be a non-empty string\")\n        return api.search_pubmed_by_author(author, max_results)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef search_pubmed_by_journal(journal: str, year: Optional[int] = None, max_results: int = 10) -> dict:\n    \"\"\"\n    Search PubMed for articles published in a specific journal, optionally filtered by year.\n\n    Args:\n        journal (str): Journal title or standard abbreviation to search.\n        year (int): Optional publication year filter (e.g., 2023). [Optional]\n        max_results (int): Maximum number of articles to return (default 10). [Optional]\n\n    Returns:\n        journal (str): The journal title or abbreviation used for the search.\n        year (int): The publication year filter applied, if any.\n        articles (list): List of articles published in the specified journal.\n        count (int): Total number of articles found.\n    \"\"\"\n    try:\n        if not journal or not isinstance(journal, str):\n            raise ValueError(\"journal must be a non-empty string\")\n        return api.search_pubmed_by_journal(journal, year, max_results)\n    except Exception as e:\n        raise e\n\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n```\n\n",
+      "timestamp": "2026-04-17T10:02:56.291629",
+      "revision_number": 1
+    },
+    {
+      "version": 2,
+      "code": "\n\n```python\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\n\nclass Article(BaseModel):\n    \"\"\"Represents a PubMed article.\"\"\"\n    pmid: str = Field(..., description=\"Unique PubMed identifier\")\n    title: str = Field(default=\"\", description=\"Article title\")\n    authors: List[str] = Field(default=[], description=\"List of author names\")\n    journal: str = Field(default=\"\", description=\"Journal name or abbreviation\")\n    pub_date: str = Field(default=\"\", description=\"Publication date\")\n    abstract: str = Field(default=\"\", description=\"Abstract text\")\n    publication_types: List[str] = Field(default=[], description=\"MeSH publication types\")\n    mesh_terms: List[str] = Field(default=[], description=\"MeSH terms\")\n    doi: str = Field(default=\"\", description=\"Digital Object Identifier\")\n\nclass PubMedScenario(BaseModel):\n    \"\"\"Main scenario model for PubMed server state.\"\"\"\n    articles: Dict[str, Any] = Field(default_factory=dict, description=\"Stored articles keyed by PMID\")\n    search_results: Dict[str, Any] = Field(default_factory=dict, description=\"Cached search results keyed by query\")\n    author_results: Dict[str, Any] = Field(default_factory=dict, description=\"Cached author search results\")\n    journal_results: Dict[str, Any] = Field(default_factory=dict, description=\"Cached journal search results\")\n    current_time: str = Field(default=\"2026-04-17T01:46:12\", description=\"Current timestamp in ISO 8601 format\")\n\nScenario_Schema = [Article, PubMedScenario]\n\n\n# Section 2: Class\n\nclass PubMedAPI:\n    def __init__(self):\n        self.articles: Dict[str, Any] = {}\n        self.search_results: Dict[str, Any] = {}\n        self.author_results: Dict[str, Any] = {}\n        self.journal_results: Dict[str, Any] = {}\n        self.current_time: str = \"\"\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance, fully replacing all state.\"\"\"\n        # Validate via Pydantic but read raw values directly from input dict\n        # to avoid any silent field transformation or filtering by Pydantic\n        PubMedScenario(**scenario)  # validate only\n        self.articles = dict(scenario.get(\"articles\") or {})\n        self.search_results = dict(scenario.get(\"search_results\") or {})\n        self.author_results = dict(scenario.get(\"author_results\") or {})\n        self.journal_results = dict(scenario.get(\"journal_results\") or {})\n        self.current_time = scenario.get(\"current_time\", \"2026-04-17T01:46:12\")\n\n    def save_scenario(self) -> dict:\n        return {\n            \"articles\": self.articles,\n            \"search_results\": self.search_results,\n            \"author_results\": self.author_results,\n            \"journal_results\": self.journal_results,\n            \"current_time\": self.current_time,\n        }\n\n    def search_pubmed_key_words(self, key_words: str, max_results: int = 10, sort: Optional[str] = None) -> dict:\n        key = f\"{key_words}|{max_results}|{sort}\"\n        if key in self.search_results:\n            return self.search_results[key]\n\n        kw_lower = key_words.lower()\n        matches = []\n        for pmid, art in self.articles.items():\n            title = art.get(\"title\", \"\").lower()\n            abstract = art.get(\"abstract\", \"\").lower()\n            mesh = \" \".join(art.get(\"mesh_terms\", [])).lower()\n            if kw_lower in title or kw_lower in abstract or kw_lower in mesh:\n                matches.append(art)\n\n        if sort == \"pub_date\":\n            matches.sort(key=lambda a: a.get(\"pub_date\", \"\"), reverse=True)\n        elif sort == \"journal\":\n            matches.sort(key=lambda a: a.get(\"journal\", \"\"))\n\n        matches = matches[:max_results]\n        result = {\"query\": key_words, \"count\": len(matches), \"articles\": matches}\n        self.search_results[key] = result\n        return result\n\n    def get_pubmed_article(self, pmid: str) -> dict:\n        return self.articles[pmid]\n\n    def fetch_pubmed_articles(self, pmids: List[str]) -> dict:\n        found = []\n        missing = []\n        for pmid in pmids:\n            if pmid in self.articles:\n                found.append(self.articles[pmid])\n            else:\n                missing.append(pmid)\n        return {\"articles\": found, \"missing_pmids\": missing}\n\n    def search_pubmed_by_author(self, author: str, max_results: int = 10) -> dict:\n        key = f\"{author}|{max_results}\"\n        if key in self.author_results:\n            return self.author_results[key]\n\n        author_lower = author.lower()\n        matches = []\n        for pmid, art in self.articles.items():\n            for a in art.get(\"authors\", []):\n                if author_lower in a.lower():\n                    matches.append(art)\n                    break\n\n        matches = matches[:max_results]\n        result = {\"author\": author, \"articles\": matches, \"count\": len(matches)}\n        self.author_results[key] = result\n        return result\n\n    def search_pubmed_by_journal(self, journal: str, year: Optional[int] = None, max_results: int = 10) -> dict:\n        key = f\"{journal}|{year}|{max_results}\"\n        if key in self.journal_results:\n            return self.journal_results[key]\n\n        journal_lower = journal.lower()\n        matches = []\n        for pmid, art in self.articles.items():\n            if journal_lower in art.get(\"journal\", \"\").lower():\n                if year is None or art.get(\"pub_date\", \"\").startswith(str(year)):\n                    matches.append(art)\n\n        matches = matches[:max_results]\n        result = {\"journal\": journal, \"year\": year, \"articles\": matches, \"count\": len(matches)}\n        self.journal_results[key] = result\n        return result\n\n\n# Section 3: MCP Tools\n\nmcp = FastMCP(name=\"PubMedServer\")\napi = PubMedAPI()\n\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the PubMed API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching PubMedScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current PubMed state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef search_pubmed_key_words(key_words: str, max_results: int = 10, sort: Optional[str] = None) -> dict:\n    \"\"\"\n    Search PubMed articles by free-text keywords and optionally sort the results.\n\n    Args:\n        key_words (str): Keyword query string used to search PubMed article titles, abstracts, and MeSH terms.\n        max_results (int): Maximum number of articles to return (default 10). [Optional]\n        sort (str): Sort mode: \"relevance\", \"pub_date\", or \"journal\". [Optional]\n\n    Returns:\n        query (str): The original keyword query string submitted to PubMed.\n        count (int): Total number of matching articles found.\n        articles (list): List of matching articles with basic bibliographic metadata.\n    \"\"\"\n    try:\n        if not key_words or not isinstance(key_words, str):\n            raise ValueError(\"key_words must be a non-empty string\")\n        if sort is not None and sort not in (\"relevance\", \"pub_date\", \"journal\"):\n            raise ValueError(\"sort must be one of: relevance, pub_date, journal\")\n        return api.search_pubmed_key_words(key_words, max_results, sort)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef get_pubmed_article(pmid: str) -> dict:\n    \"\"\"\n    Retrieve detailed metadata, abstract, and identifiers for a single PubMed article by its PMID.\n\n    Args:\n        pmid (str): The unique PubMed identifier (PMID) of the article to retrieve.\n\n    Returns:\n        pmid (str): The unique PubMed identifier.\n        title (str): Title of the article.\n        authors (list): List of author names.\n        journal (str): Journal name or abbreviation.\n        publication_types (list): MeSH publication types.\n        mesh_terms (list): MeSH terms indexing the article.\n        abstract (str): Abstract text.\n        doi (str): Digital Object Identifier.\n    \"\"\"\n    try:\n        if not pmid or not isinstance(pmid, str):\n            raise ValueError(\"pmid must be a non-empty string\")\n        if pmid not in api.articles:\n            raise ValueError(f\"Article with PMID {pmid} not found\")\n        return api.get_pubmed_article(pmid)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef fetch_pubmed_articles(pmids: List[str]) -> dict:\n    \"\"\"\n    Batch retrieve multiple PubMed articles by their PMIDs in a single call.\n\n    Args:\n        pmids (list): List of PubMed identifiers (PMIDs) to retrieve.\n\n    Returns:\n        articles (list): List of successfully retrieved article objects.\n        missing_pmids (list): List of PMIDs that could not be found.\n    \"\"\"\n    try:\n        if not pmids or not isinstance(pmids, list):\n            raise ValueError(\"pmids must be a non-empty list\")\n        return api.fetch_pubmed_articles(pmids)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef search_pubmed_by_author(author: str, max_results: int = 10) -> dict:\n    \"\"\"\n    Search PubMed for articles authored by a specific researcher.\n\n    Args:\n        author (str): Author name query (last name, first initial, or full name).\n        max_results (int): Maximum number of articles to return (default 10). [Optional]\n\n    Returns:\n        author (str): The author name query string used for the search.\n        articles (list): List of articles attributed to the specified author.\n        count (int): Total number of articles found for the author.\n    \"\"\"\n    try:\n        if not author or not isinstance(author, str):\n            raise ValueError(\"author must be a non-empty string\")\n        return api.search_pubmed_by_author(author, max_results)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef search_pubmed_by_journal(journal: str, year: Optional[int] = None, max_results: int = 10) -> dict:\n    \"\"\"\n    Search PubMed for articles published in a specific journal, optionally filtered by year.\n\n    Args:\n        journal (str): Journal title or standard abbreviation to search.\n        year (int): Optional publication year filter (e.g., 2023). [Optional]\n        max_results (int): Maximum number of articles to return (default 10). [Optional]\n\n    Returns:\n        journal (str): The journal title or abbreviation used for the search.\n        year (int): The publication year filter applied, if any.\n        articles (list): List of articles published in the specified journal.\n        count (int): Total number of articles found.\n    \"\"\"\n    try:\n        if not journal or not isinstance(journal, str):\n            raise ValueError(\"journal must be a non-empty string\")\n        return api.search_pubmed_by_journal(journal, year, max_results)\n    except Exception as e:\n        raise e\n\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n```\n\n",
+      "timestamp": "2026-04-17T10:02:56.291633",
+      "revision_number": 2
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Single article with basic fields, one search result cached",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "articles": {
+          "12345678": {
+            "pmid": "12345678",
+            "title": "Effects of aspirin on cardiovascular disease",
+            "authors": [
+              "Smith J",
+              "Doe A"
+            ],
+            "journal": "JAMA",
+            "pub_date": "2024-01",
+            "abstract": "This study examines the effects of aspirin on cardiovascular outcomes.",
+            "publication_types": [
+              "Journal Article"
+            ],
+            "mesh_terms": [
+              "Aspirin",
+              "Cardiovascular Diseases"
+            ],
+            "doi": "10.1001/jama.2024.0001"
+          }
+        },
+        "search_results": {
+          "aspirin cardiovascular": [
+            "12345678"
+          ]
+        },
+        "author_results": {},
+        "journal_results": {},
+        "current_time": "2026-04-17T01:46:12"
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple articles across different medical topics with author and journal caches populated",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "articles": {
+          "11111111": {
+            "pmid": "11111111",
+            "title": "CRISPR-Cas9 gene editing in cancer therapy",
+            "authors": [
+              "Zhang W",
+              "Li M",
+              "Chen X"
+            ],
+            "journal": "Nature Medicine",
+            "pub_date": "2025-03",
+            "abstract": "A review of CRISPR-Cas9 applications in targeted cancer treatment.",
+            "publication_types": [
+              "Review",
+              "Journal Article"
+            ],
+            "mesh_terms": [
+              "CRISPR-Cas Systems",
+              "Neoplasms",
+              "Gene Editing"
+            ],
+            "doi": "10.1038/nm.2025.0301"
+          },
+          "22222222": {
+            "pmid": "22222222",
+            "title": "Machine learning for early Alzheimer's detection",
+            "authors": [
+              "Patel R",
+              "Nguyen T"
+            ],
+            "journal": "Lancet Neurology",
+            "pub_date": "2025-06",
+            "abstract": "Machine learning models trained on MRI data to detect early Alzheimer's disease.",
+            "publication_types": [
+              "Journal Article"
+            ],
+            "mesh_terms": [
+              "Alzheimer Disease",
+              "Machine Learning",
+              "Magnetic Resonance Imaging"
+            ],
+            "doi": "10.1016/lancetneurol.2025.06.001"
+          },
+          "33333333": {
+            "pmid": "33333333",
+            "title": "COVID-19 long-term pulmonary effects",
+            "authors": [
+              "Brown K"
+            ],
+            "journal": "NEJM",
+            "pub_date": "2024-11",
+            "abstract": "Longitudinal study of pulmonary function in post-COVID patients.",
+            "publication_types": [
+              "Clinical Trial",
+              "Journal Article"
+            ],
+            "mesh_terms": [
+              "COVID-19",
+              "Lung Diseases",
+              "Post-Acute COVID-19 Syndrome"
+            ],
+            "doi": "10.1056/nejm.2024.1101"
+          }
+        },
+        "search_results": {
+          "CRISPR cancer": [
+            "11111111"
+          ],
+          "Alzheimer machine learning": [
+            "22222222"
+          ],
+          "COVID-19 pulmonary": [
+            "33333333"
+          ]
+        },
+        "author_results": {
+          "Zhang W": [
+            "11111111"
+          ],
+          "Patel R": [
+            "22222222"
+          ]
+        },
+        "journal_results": {
+          "Nature Medicine": [
+            "11111111"
+          ],
+          "NEJM": [
+            "33333333"
+          ]
+        },
+        "current_time": "2026-04-17T01:46:12"
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich dataset with articles spanning multiple fields, overlapping authors, multiple cached query types, and articles with empty optional fields",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "articles": {
+          "44444444": {
+            "pmid": "44444444",
+            "title": "Gut microbiome and type 2 diabetes",
+            "authors": [
+              "Kim S",
+              "Park J",
+              "Lee H"
+            ],
+            "journal": "Cell Metabolism",
+            "pub_date": "2025-01",
+            "abstract": "Analysis of gut microbiome composition in type 2 diabetes patients versus healthy controls.",
+            "publication_types": [
+              "Journal Article"
+            ],
+            "mesh_terms": [
+              "Gastrointestinal Microbiome",
+              "Diabetes Mellitus, Type 2"
+            ],
+            "doi": "10.1016/j.cmet.2025.01.002"
+          },
+          "55555555": {
+            "pmid": "55555555",
+            "title": "Immunotherapy resistance mechanisms in melanoma",
+            "authors": [
+              "Kim S",
+              "Torres A",
+              "Yamada K"
+            ],
+            "journal": "Cancer Cell",
+            "pub_date": "2025-02",
+            "abstract": "Investigation of molecular mechanisms underlying immunotherapy resistance in advanced melanoma.",
+            "publication_types": [
+              "Journal Article",
+              "Research Support"
+            ],
+            "mesh_terms": [
+              "Melanoma",
+              "Immunotherapy",
+              "Drug Resistance, Neoplasm"
+            ],
+            "doi": "10.1016/j.ccell.2025.02.005"
+          },
+          "66666666": {
+            "pmid": "66666666",
+            "title": "Neonatal microbiome development",
+            "authors": [
+              "Yamada K",
+              "Osei B"
+            ],
+            "journal": "Pediatrics",
+            "pub_date": "2024-09",
+            "abstract": "",
+            "publication_types": [
+              "Journal Article"
+            ],
+            "mesh_terms": [
+              "Infant, Newborn",
+              "Gastrointestinal Microbiome"
+            ],
+            "doi": ""
+          },
+          "77777777": {
+            "pmid": "77777777",
+            "title": "Wearable sensors for continuous glucose monitoring",
+            "authors": [
+              "Osei B",
+              "Mensah C"
+            ],
+            "journal": "Diabetes Care",
+            "pub_date": "2025-04",
+            "abstract": "Clinical evaluation of novel wearable sensors for real-time glucose tracking.",
+            "publication_types": [
+              "Clinical Trial",
+              "Journal Article"
+            ],
+            "mesh_terms": [
+              "Blood Glucose Self-Monitoring",
+              "Wearable Electronic Devices",
+              "Diabetes Mellitus"
+            ],
+            "doi": "10.2337/dc25-0044"
+          },
+          "88888888": {
+            "pmid": "88888888",
+            "title": "Telomere length and aging biomarkers",
+            "authors": [
+              "Torres A"
+            ],
+            "journal": "Aging Cell",
+            "pub_date": "2023-12",
+            "abstract": "Systematic review of telomere length as a biomarker for biological aging.",
+            "publication_types": [
+              "Review"
+            ],
+            "mesh_terms": [
+              "Telomere",
+              "Aging",
+              "Biomarkers"
+            ],
+            "doi": "10.1111/acel.2023.0015"
+          }
+        },
+        "search_results": {
+          "gut microbiome diabetes": [
+            "44444444"
+          ],
+          "microbiome": [
+            "44444444",
+            "66666666"
+          ],
+          "immunotherapy melanoma": [
+            "55555555"
+          ],
+          "glucose monitoring wearable": [
+            "77777777"
+          ],
+          "aging telomere": [
+            "88888888"
+          ],
+          "diabetes": [
+            "44444444",
+            "77777777"
+          ]
+        },
+        "author_results": {
+          "Kim S": [
+            "44444444",
+            "55555555"
+          ],
+          "Yamada K": [
+            "55555555",
+            "66666666"
+          ],
+          "Osei B": [
+            "66666666",
+            "77777777"
+          ],
+          "Torres A": [
+            "55555555",
+            "88888888"
+          ]
+        },
+        "journal_results": {
+          "Cell Metabolism": [
+            "44444444"
+          ],
+          "Cancer Cell": [
+            "55555555"
+          ],
+          "Diabetes Care": [
+            "77777777"
+          ],
+          "Aging Cell": [
+            "88888888"
+          ]
+        },
+        "current_time": "2026-04-17T01:46:12"
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty scenario with no articles or cached results — tests tool behavior on empty state",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "articles": {},
+        "search_results": {},
+        "author_results": {},
+        "journal_results": {},
+        "current_time": "2026-04-17T01:46:12"
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 1,
+      "failed_scenarios": 3,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": false,
+          "errors": [
+            {
+              "type": "State Inconsistency",
+              "location": "save_scenario / API state management",
+              "details": "The scenario was reported as 'Successfully loaded scenario' but the saved state is completely different from the loaded data. Loaded article PMID 12345678 not found in saved state. Saved state contains different search_results keys ('cancer immunotherapy', 'diabetes') than the loaded scenario ('aspirin cardiovascular').",
+              "expected_vs_actual": "Expected saved state to contain: articles with PMID 12345678, search_results with 'aspirin cardiovascular' key. Actual saved state contains: empty articles dict {}, search_results with 'cancer immunotherapy|5|relevance', 'diabetes|1|None', and additional journal_results for 'Nature|2023|10' that were not in the original scenario.",
+              "root_cause": "The PubMedAPI.load_scenario() method likely does not properly persist the scenario data to the internal state, OR the api instance is being shared across different sessions causing state pollution. The tool wrapper reports success but the underlying API implementation fails to actually store the data.",
+              "expected_error": false
+            },
+            {
+              "type": "Data Retrieval Failure",
+              "location": "get_pubmed_article / fetch_pubmed_articles",
+              "details": "Article with PMID 12345678 that was loaded in the scenario cannot be retrieved by get_pubmed_article (returns 'Article not found') and fetch_pubmed_articles returns it as a 'missing_pmid'.",
+              "expected_vs_actual": "Expected: get_pubmed_article('12345678') should return the full article data. Actual: Returns error 'Article with PMID 12345678 not found'.",
+              "root_cause": "Same root cause as state inconsistency - the load_scenario function reports success but does not actually populate the api.articles dictionary, causing all data retrieval tools to fail to find the loaded data.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_pubmed_key_words",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_pubmed_article",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "fetch_pubmed_articles",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_pubmed_by_author",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_pubmed_by_journal",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": false,
+              "error": "State inconsistency detected - saved state does not match loaded scenario"
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "type": "State Inconsistency / Data Loss",
+              "location": "load_scenario -> api.load_scenario()",
+              "details": "load_scenario reports success but articles are not stored in API internal state. save_scenario shows 'articles': {} instead of the 3 loaded articles.",
+              "expected_vs_actual": "Expected: articles dict with 3 entries (PMIDs 11111111, 22222222, 33333333). Actual: empty articles dict {}",
+              "root_cause": "The PubMedAPI.load_scenario() method validates the scenario structure but fails to properly assign the articles to api.articles. The scenario data is accepted but the internal state is not updated, causing all subsequent tool calls to fail.",
+              "expected_error": false
+            },
+            {
+              "type": "Tool Logic Error",
+              "location": "search_pubmed_key_words, get_pubmed_article, fetch_pubmed_articles, search_pubmed_by_author, search_pubmed_by_journal",
+              "details": "All tools return empty results because the internal articles storage is empty. This is a downstream effect of the load_scenario issue.",
+              "expected_vs_actual": "Expected: Tools should find and return articles that exist in the scenario. Actual: All tools return no results or 'not found' errors.",
+              "root_cause": "Secondary failure caused by load_scenario not properly populating api.articles. The tools work correctly but have no data to operate on.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_pubmed_key_words",
+                "passed": false,
+                "error": "All search queries return 0 results despite matching articles being in the scenario. Example: 'CRISPR cancer' should return article 11111111 but returns count: 0, articles: []"
+              },
+              {
+                "tool_name": "get_pubmed_article",
+                "passed": false,
+                "error": "All PMIDs (11111111, 22222222, 33333333) return 'not found' error despite being loaded in scenario"
+              },
+              {
+                "tool_name": "fetch_pubmed_articles",
+                "passed": false,
+                "error": "All PMIDs returned as missing, no articles retrieved despite valid PMIDs in scenario"
+              },
+              {
+                "tool_name": "search_pubmed_by_author",
+                "passed": false,
+                "error": "All author searches (Zhang W, Patel R, Brown K) return 0 results despite articles existing for these authors"
+              },
+              {
+                "tool_name": "search_pubmed_by_journal",
+                "passed": false,
+                "error": "All journal searches (Nature Medicine, NEJM, Lancet Neurology) return 0 results despite articles existing in these journals"
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": false,
+              "error": "Articles dictionary is empty in saved state, expected 3 articles (11111111, 22222222, 33333333)"
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "type": "State Inconsistency / Data Loading Failure",
+              "location": "PubMedAPI.load_scenario() method (underlying API implementation)",
+              "details": "load_scenario tool returned 'Successfully loaded scenario' but save_scenario reveals articles dictionary is empty. All subsequent tool calls fail because the scenario data was never actually stored in the API's internal state.",
+              "expected_vs_actual": "Expected: articles dict to contain 5 articles (PMIDs 44444444, 55555555, 66666666, 77777777, 88888888). Actual: articles dict is empty {}.",
+              "root_cause": "The PubMedAPI.load_scenario() method has a bug where it doesn't properly populate the self.articles dictionary from the scenario data, even though the MCP wrapper catches no exception and returns success. The scenario contains properly formatted article data, but the API implementation fails to store it in memory.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_pubmed_key_words",
+                "passed": false,
+                "error": "Search returned 0 results for all queries. Expected articles for 'gut microbiome diabetes' (PMID 44444444), 'microbiome' (PMIDs 44444444, 66666666), and 'diabetes' (PMIDs 44444444, 77777777)."
+              },
+              {
+                "tool_name": "get_pubmed_article",
+                "passed": false,
+                "error": "All PMID lookups failed with 'Article not found' error for PMIDs: 44444444, 88888888, 66666666."
+              },
+              {
+                "tool_name": "fetch_pubmed_articles",
+                "passed": false,
+                "error": "All PMIDs returned as missing: [\"44444444\", \"55555555\", \"77777777\"] and [\"12345678\", \"44444444\"]."
+              },
+              {
+                "tool_name": "search_pubmed_by_author",
+                "passed": false,
+                "error": "Author searches returned 0 results. Expected articles for 'Kim S' (PMIDs 44444444, 55555555) and 'Yamada K' (PMIDs 55555555, 66666666)."
+              },
+              {
+                "tool_name": "search_pubmed_by_journal",
+                "passed": false,
+                "error": "Journal searches returned 0 results. Expected articles for 'Cell Metabolism', 'Cancer Cell', and 'Diabetes Care'."
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": false,
+              "error": "Articles dictionary is empty ({}), confirming scenario data was not actually loaded despite success message. Expected 5 articles with PMIDs 44444444, 55555555, 66666666, 77777777, 88888888."
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_pubmed_key_words",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_pubmed_by_author",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_pubmed_by_journal",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_pubmed_article",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "fetch_pubmed_articles",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 1,
+      "failed_scenarios": 3,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": false,
+          "errors": [
+            {
+              "type": "State inconsistency",
+              "location": "get_pubmed_article / api.articles",
+              "details": "The scenario was loaded successfully with article PMID 12345678, but get_pubmed_article returned 'Article with PMID 12345678 not found'. The save_scenario output shows 'articles': {} - an empty dictionary.",
+              "expected_vs_actual": "Expected: Article PMID 12345678 should be accessible after loading. Actual: api.articles is empty, article not found.",
+              "root_cause": "The load_scenario method may not be properly populating api.articles. The scenario data is accepted but not stored in the internal articles dictionary that get_pubmed_article and fetch_pubmed_articles depend on.",
+              "expected_error": false
+            },
+            {
+              "type": "State inconsistency",
+              "location": "save_scenario / api.save_scenario",
+              "details": "The saved scenario shows articles: {}, but the original scenario had articles with PMID 12345678. Additionally, the search_results contain cached queries from other scenarios (CRISPR cancer, Alzheimer machine learning, etc.) that weren't part of the original scenario.",
+              "expected_vs_actual": "Expected: Saved scenario should contain the loaded article and the search_results should match the original scenario. Actual: Articles dict is empty, and search_results contains extraneous cached data.",
+              "root_cause": "The api.load_scenario method is not properly storing scenario data in api.articles. The search_results caching persists across scenario loads, indicating state is not being reset properly.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_pubmed_key_words",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_pubmed_article",
+                "passed": false,
+                "error": "Article with PMID 12345678 not found - article loaded in scenario is not accessible"
+              },
+              {
+                "tool_name": "fetch_pubmed_articles",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_pubmed_by_author",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_pubmed_by_journal",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": false,
+              "error": "State inconsistency: Loaded articles were not preserved - articles dict is empty in saved state"
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_pubmed_key_words",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_pubmed_article",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "fetch_pubmed_articles",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_pubmed_by_author",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_pubmed_by_journal",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_001",
+        "scenario_002",
+        "scenario_003"
+      ],
+      "aggregated_errors": {
+        "total_failed": 3,
+        "scenario_ids": [
+          "scenario_001",
+          "scenario_002",
+          "scenario_003"
+        ],
+        "error_categories": {
+          "critical": [],
+          "high": [],
+          "medium": [],
+          "low": [
+            {
+              "scenario_id": "scenario_001",
+              "type": "State Inconsistency",
+              "location": "save_scenario / API state management",
+              "details": "The scenario was reported as 'Successfully loaded scenario' but the saved state is completely different from the loaded data. Loaded article PMID 12345678 not found in saved state. Saved state contains different search_results keys ('cancer immunotherapy', 'diabetes') than the loaded scenario ('aspirin cardiovascular').",
+              "root_cause": "The PubMedAPI.load_scenario() method likely does not properly persist the scenario data to the internal state, OR the api instance is being shared across different sessions causing state pollution. The tool wrapper reports success but the underlying API implementation fails to actually store the data.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_001",
+              "type": "Data Retrieval Failure",
+              "location": "get_pubmed_article / fetch_pubmed_articles",
+              "details": "Article with PMID 12345678 that was loaded in the scenario cannot be retrieved by get_pubmed_article (returns 'Article not found') and fetch_pubmed_articles returns it as a 'missing_pmid'.",
+              "root_cause": "Same root cause as state inconsistency - the load_scenario function reports success but does not actually populate the api.articles dictionary, causing all data retrieval tools to fail to find the loaded data.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_002",
+              "type": "State Inconsistency / Data Loss",
+              "location": "load_scenario -> api.load_scenario()",
+              "details": "load_scenario reports success but articles are not stored in API internal state. save_scenario shows 'articles': {} instead of the 3 loaded articles.",
+              "root_cause": "The PubMedAPI.load_scenario() method validates the scenario structure but fails to properly assign the articles to api.articles. The scenario data is accepted but the internal state is not updated, causing all subsequent tool calls to fail.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_002",
+              "type": "Tool Logic Error",
+              "location": "search_pubmed_key_words, get_pubmed_article, fetch_pubmed_articles, search_pubmed_by_author, search_pubmed_by_journal",
+              "details": "All tools return empty results because the internal articles storage is empty. This is a downstream effect of the load_scenario issue.",
+              "root_cause": "Secondary failure caused by load_scenario not properly populating api.articles. The tools work correctly but have no data to operate on.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "State Inconsistency / Data Loading Failure",
+              "location": "PubMedAPI.load_scenario() method (underlying API implementation)",
+              "details": "load_scenario tool returned 'Successfully loaded scenario' but save_scenario reveals articles dictionary is empty. All subsequent tool calls fail because the scenario data was never actually stored in the API's internal state.",
+              "root_cause": "The PubMedAPI.load_scenario() method has a bug where it doesn't properly populate the self.articles dictionary from the scenario data, even though the MCP wrapper catches no exception and returns success. The scenario contains properly formatted article data, but the API implementation fails to store it in memory.",
+              "expected_error": false
+            }
+          ]
+        },
+        "error_patterns": [
+          {
+            "type": "State Inconsistency",
+            "location": "save_scenario / API state management",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_001"
+            ]
+          },
+          {
+            "type": "Data Retrieval Failure",
+            "location": "get_pubmed_article / fetch_pubmed_articles",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_001"
+            ]
+          },
+          {
+            "type": "State Inconsistency / Data Loss",
+            "location": "load_scenario -> api.load_scenario()",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_002"
+            ]
+          },
+          {
+            "type": "Tool Logic Error",
+            "location": "search_pubmed_key_words, get_pubmed_article, fetch_pubmed_articles, search_pubmed_by_author, search_pubmed_by_journal",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_002"
+            ]
+          },
+          {
+            "type": "State Inconsistency / Data Loading Failure",
+            "location": "PubMedAPI.load_scenario() method (underlying API implementation)",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_003"
+            ]
+          }
+        ],
+        "severity_summary": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 5
+        }
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 1,
+        "failed_scenarios": 3,
+        "all_passed": false,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": false,
+            "errors": [
+              {
+                "type": "State inconsistency",
+                "location": "load_scenario -> api.load_scenario()",
+                "details": "load_scenario reported success but articles not accessible via get_pubmed_article or search functions",
+                "expected_vs_actual": "Expected: Article 12345678 available in api.articles dict. Actual: api.articles is empty, searches return no results",
+                "root_cause": "The PubMedAPI.load_scenario() method likely does not properly populate the internal articles dictionary or build search indexes. The scenario data structure may not match what the API expects, or the load_scenario implementation is incomplete.",
+                "expected_error": false
+              },
+              {
+                "type": "Data persistence failure",
+                "location": "save_scenario",
+                "details": "Saved scenario shows empty articles dict, losing all data from loaded scenario",
+                "expected_vs_actual": "Expected: articles dict containing PMID 12345678 article. Actual: articles: {}",
+                "root_cause": "Since load_scenario didn't properly populate the internal state, save_scenario returns empty/default state",
+                "expected_error": false
+              },
+              {
+                "type": "Search index failure",
+                "location": "search_pubmed_key_words, search_pubmed_by_author, search_pubmed_by_journal",
+                "details": "All search functions return 0 results regardless of query",
+                "expected_vs_actual": "Expected: Search for 'aspirin cardiovascular' should return 1 article (PMID 12345678). Actual: 0 results",
+                "root_cause": "Search indexes not built from loaded scenario data, possibly because articles dict is empty or search logic doesn't check loaded scenario properly",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "search_pubmed_key_words",
+                  "passed": false,
+                  "error": "Search for 'aspirin cardiovascular' returned 0 results, but scenario has search_results mapping for this query to PMID 12345678"
+                },
+                {
+                  "tool_name": "get_pubmed_article",
+                  "passed": false,
+                  "error": "Article with PMID 12345678 not found, despite being in loaded scenario"
+                },
+                {
+                  "tool_name": "fetch_pubmed_articles",
+                  "passed": false,
+                  "error": "All PMIDs marked as missing, including PMID 12345678 that was in loaded scenario"
+                },
+                {
+                  "tool_name": "search_pubmed_by_author",
+                  "passed": false,
+                  "error": "Search for 'Smith J' returned 0 results, but scenario has article authored by Smith J"
+                },
+                {
+                  "tool_name": "search_pubmed_by_journal",
+                  "passed": false,
+                  "error": "Search for 'JAMA' returned 0 results, but scenario has article published in JAMA"
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": false,
+                "error": "Saved articles is empty {}, but original scenario had article 12345678"
+              }
+            },
+            "complexity_level": "simple",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": false,
+            "errors": [
+              {
+                "type": "State Loading Failure",
+                "location": "load_scenario / PubMedAPI.load_scenario",
+                "details": "Scenario loaded with message 'Successfully loaded scenario', but articles are not accessible. get_pubmed_article fails for all PMIDs (11111111, 22222222, 33333333) with 'Article with PMID X not found' error. save_scenario confirms articles dict is empty.",
+                "expected_vs_actual": "Expected: After loading scenario, api.articles should contain 3 articles keyed by PMID. Actual: api.articles is empty, articles cannot be retrieved by any method.",
+                "root_cause": "The load_scenario method in PubMedAPI likely accepts the scenario dictionary but fails to properly populate the internal api.articles storage. There appears to be a disconnect between the scenario loading mechanism and the actual data storage used by other methods.",
+                "expected_error": false
+              },
+              {
+                "type": "Search Functionality Failure",
+                "location": "search_pubmed_key_words, search_pubmed_by_author, search_pubmed_by_journal",
+                "details": "All search methods execute without error but return empty results (count: 0, articles: []) for queries that should match scenario data. For example, 'CRISPR cancer' should match article 11111111 but returns no results.",
+                "expected_vs_actual": "Expected: Search methods should query the loaded scenario data and return matching articles. Actual: All searches return empty results, suggesting they cannot access the loaded scenario data.",
+                "root_cause": "The search methods appear to operate on an empty or uninitialized data store. Since load_scenario doesn't properly populate api.articles, the search methods have no data to query. The search_results, author_results, and journal_results from the scenario also appear to be ignored.",
+                "expected_error": false
+              },
+              {
+                "type": "State Persistence Failure",
+                "location": "save_scenario",
+                "details": "save_scenario returns a scenario with empty articles dict and unrelated search/author/journal results that appear to be from a different context (gut microbiome, diabetes, Kim S, Yamada K, Cell Metabolism, Diabetes Care).",
+                "expected_vs_actual": "Expected: save_scenario should return the original 3 articles plus any query results from this session. Actual: Returns empty articles and data that appears to be from a default or previously used scenario.",
+                "root_cause": "The API instance may be using default/initialized data rather than the loaded scenario data. The load_scenario method either doesn't properly replace the internal state or the save_scenario method is reading from a different data source.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "search_pubmed_key_words",
+                  "passed": false,
+                  "error": "Search returns 0 results despite scenario containing matching articles. Keyword searches for 'CRISPR cancer' and 'Alzheimer' returned empty arrays even though articles with these terms exist in the scenario."
+                },
+                {
+                  "tool_name": "get_pubmed_article",
+                  "passed": false,
+                  "error": "All PMIDs returned 'not found' error. Articles 11111111, 22222222, and 33333333 were loaded in scenario but cannot be retrieved."
+                },
+                {
+                  "tool_name": "fetch_pubmed_articles",
+                  "passed": false,
+                  "error": "All PMIDs marked as missing. Expected to find articles 11111111 and 22222222 but both were reported as missing."
+                },
+                {
+                  "tool_name": "search_pubmed_by_author",
+                  "passed": false,
+                  "error": "Author searches return 0 results. Searches for 'Zhang W' and 'Patel R' returned empty arrays despite these authors being present in the scenario."
+                },
+                {
+                  "tool_name": "search_pubmed_by_journal",
+                  "passed": false,
+                  "error": "Journal searches return 0 results. Searches for 'Nature Medicine' and 'NEJM' returned empty arrays despite articles from these journals existing in the scenario."
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": false,
+                "error": "Saved scenario shows 'articles': {} (empty) but original scenario contained 3 articles. Search results, author results, and journal results from scenario were not preserved."
+              }
+            },
+            "complexity_level": "medium",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": false,
+            "errors": [
+              {
+                "type": "State Loading Failure",
+                "location": "PubMedServer-load_scenario -> api.load_scenario()",
+                "details": "The load_scenario tool returned 'Successfully loaded scenario' but the save_scenario reveals that the articles dictionary is empty {}. The scenario contained 5 articles (PMIDs: 44444444, 55555555, 66666666, 77777777, 88888888) but none were loaded.",
+                "expected_vs_actual": "Expected: articles dict with 5 entries. Actual: empty articles dict {}. Expected: search_results, author_results, journal_results populated with scenario data. Actual: only empty results or results from new searches.",
+                "root_cause": "The PubMedAPI.load_scenario() method likely has a bug where it either: (1) doesn't properly assign the scenario articles to self.articles, (2) validates but doesn't persist the data, (3) has a schema mismatch that causes silent failure, or (4) clears state after loading. The 'Successfully loaded scenario' message is returned before verifying the data was actually stored.",
+                "expected_error": false
+              },
+              {
+                "type": "Silent Data Loss",
+                "location": "PubMedAPI.load_scenario() implementation",
+                "details": "All scenario data (articles, search_results, author_results, journal_results, current_time) appears to be either not loaded or immediately lost. The save_scenario output shows that current_time was loaded correctly (2026-04-17T01:46:12), suggesting partial loading occurred.",
+                "expected_vs_actual": "Expected complete scenario state restoration. Actual: only current_time preserved, all other data lost.",
+                "root_cause": "There may be a validation check in load_scenario that silently rejects article data without raising an exception. Possible causes: PMID format validation rejecting string keys, required field validation failing on article with empty abstract/doi (PMID 66666666), or improper dictionary iteration during loading.",
+                "expected_error": false
+              },
+              {
+                "type": "Cascading Tool Failures",
+                "location": "All tool functions",
+                "details": "Because the scenario data was not loaded, all tool operations that depend on the articles, search_results, author_results, or journal_results dictionaries failed to return expected results.",
+                "expected_vs_actual": "Expected tools to return data from loaded scenario. Actual: all tools returned empty results or 'not found' errors.",
+                "root_cause": "Root cause is the load_scenario failure. The tools themselves appear to be working correctly (they properly check for article existence and return empty results when data is missing), but they cannot function without properly loaded data.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": false,
+                "error": "CRITICAL: Scenario reported successful load but data was not actually loaded into the API state. The articles dictionary is empty after loading."
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "search_pubmed_key_words",
+                  "passed": false,
+                  "error": "Returned 0 results for all queries ('gut microbiome diabetes', 'microbiome', 'diabetes') when 1, 2, and 2 results were expected respectively based on scenario data."
+                },
+                {
+                  "tool_name": "get_pubmed_article",
+                  "passed": false,
+                  "error": "Article with PMID 44444444 not found (also failed for 66666666, 88888888). All PMIDs from scenario should exist."
+                },
+                {
+                  "tool_name": "fetch_pubmed_articles",
+                  "passed": false,
+                  "error": "All PMIDs reported as missing: ['44444444', '55555555', '77777777'] and ['44444444', '99999999', '88888888']. Expected to find articles for valid PMIDs from scenario."
+                },
+                {
+                  "tool_name": "search_pubmed_by_author",
+                  "passed": false,
+                  "error": "Author searches for 'Kim S' and 'Yamada K' returned 0 results. Expected 2 articles for Kim S (PMIDs 44444444, 55555555) and 2 articles for Yamada K (PMIDs 55555555, 66666666)."
+                },
+                {
+                  "tool_name": "search_pubmed_by_journal",
+                  "passed": false,
+                  "error": "Journal searches returned 0 results. Expected 1 article for 'Cell Metabolism' (PMID 44444444) and 1 article for 'Diabetes Care' year 2025 (PMID 77777777)."
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": false,
+                "error": "State inconsistency detected: Expected 5 articles but found 0. Expected search_results with 6 queries but found 3 (from previous searches only). Expected author_results with 4 authors but found 4 with empty results. Expected journal_results with 4 journals but found 4 with empty results. The scenario data was not properly loaded."
+              }
+            },
+            "complexity_level": "complex",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "search_pubmed_key_words",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_pubmed_article",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "fetch_pubmed_articles",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "search_pubmed_by_author",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "search_pubmed_by_journal",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "boundary",
+            "execution_time": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "revision_number": 2,
+      "failed_scenario_ids": [
+        "scenario_001",
+        "scenario_002",
+        "scenario_003"
+      ],
+      "aggregated_errors": {
+        "total_failed": 3,
+        "scenario_ids": [
+          "scenario_001",
+          "scenario_002",
+          "scenario_003"
+        ],
+        "error_categories": {
+          "critical": [],
+          "high": [],
+          "medium": [],
+          "low": [
+            {
+              "scenario_id": "scenario_001",
+              "type": "State inconsistency",
+              "location": "load_scenario -> api.load_scenario()",
+              "details": "load_scenario reported success but articles not accessible via get_pubmed_article or search functions",
+              "root_cause": "The PubMedAPI.load_scenario() method likely does not properly populate the internal articles dictionary or build search indexes. The scenario data structure may not match what the API expects, or the load_scenario implementation is incomplete.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_001",
+              "type": "Data persistence failure",
+              "location": "save_scenario",
+              "details": "Saved scenario shows empty articles dict, losing all data from loaded scenario",
+              "root_cause": "Since load_scenario didn't properly populate the internal state, save_scenario returns empty/default state",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_001",
+              "type": "Search index failure",
+              "location": "search_pubmed_key_words, search_pubmed_by_author, search_pubmed_by_journal",
+              "details": "All search functions return 0 results regardless of query",
+              "root_cause": "Search indexes not built from loaded scenario data, possibly because articles dict is empty or search logic doesn't check loaded scenario properly",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_002",
+              "type": "State Loading Failure",
+              "location": "load_scenario / PubMedAPI.load_scenario",
+              "details": "Scenario loaded with message 'Successfully loaded scenario', but articles are not accessible. get_pubmed_article fails for all PMIDs (11111111, 22222222, 33333333) with 'Article with PMID X not found' error. save_scenario confirms articles dict is empty.",
+              "root_cause": "The load_scenario method in PubMedAPI likely accepts the scenario dictionary but fails to properly populate the internal api.articles storage. There appears to be a disconnect between the scenario loading mechanism and the actual data storage used by other methods.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_002",
+              "type": "Search Functionality Failure",
+              "location": "search_pubmed_key_words, search_pubmed_by_author, search_pubmed_by_journal",
+              "details": "All search methods execute without error but return empty results (count: 0, articles: []) for queries that should match scenario data. For example, 'CRISPR cancer' should match article 11111111 but returns no results.",
+              "root_cause": "The search methods appear to operate on an empty or uninitialized data store. Since load_scenario doesn't properly populate api.articles, the search methods have no data to query. The search_results, author_results, and journal_results from the scenario also appear to be ignored.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_002",
+              "type": "State Persistence Failure",
+              "location": "save_scenario",
+              "details": "save_scenario returns a scenario with empty articles dict and unrelated search/author/journal results that appear to be from a different context (gut microbiome, diabetes, Kim S, Yamada K, Cell Metabolism, Diabetes Care).",
+              "root_cause": "The API instance may be using default/initialized data rather than the loaded scenario data. The load_scenario method either doesn't properly replace the internal state or the save_scenario method is reading from a different data source.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "State Loading Failure",
+              "location": "PubMedServer-load_scenario -> api.load_scenario()",
+              "details": "The load_scenario tool returned 'Successfully loaded scenario' but the save_scenario reveals that the articles dictionary is empty {}. The scenario contained 5 articles (PMIDs: 44444444, 55555555, 66666666, 77777777, 88888888) but none were loaded.",
+              "root_cause": "The PubMedAPI.load_scenario() method likely has a bug where it either: (1) doesn't properly assign the scenario articles to self.articles, (2) validates but doesn't persist the data, (3) has a schema mismatch that causes silent failure, or (4) clears state after loading. The 'Successfully loaded scenario' message is returned before verifying the data was actually stored.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "Silent Data Loss",
+              "location": "PubMedAPI.load_scenario() implementation",
+              "details": "All scenario data (articles, search_results, author_results, journal_results, current_time) appears to be either not loaded or immediately lost. The save_scenario output shows that current_time was loaded correctly (2026-04-17T01:46:12), suggesting partial loading occurred.",
+              "root_cause": "There may be a validation check in load_scenario that silently rejects article data without raising an exception. Possible causes: PMID format validation rejecting string keys, required field validation failing on article with empty abstract/doi (PMID 66666666), or improper dictionary iteration during loading.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "Cascading Tool Failures",
+              "location": "All tool functions",
+              "details": "Because the scenario data was not loaded, all tool operations that depend on the articles, search_results, author_results, or journal_results dictionaries failed to return expected results.",
+              "root_cause": "Root cause is the load_scenario failure. The tools themselves appear to be working correctly (they properly check for article existence and return empty results when data is missing), but they cannot function without properly loaded data.",
+              "expected_error": false
+            }
+          ]
+        },
+        "error_patterns": [
+          {
+            "type": "State inconsistency",
+            "location": "load_scenario -> api.load_scenario()",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_001"
+            ]
+          },
+          {
+            "type": "Data persistence failure",
+            "location": "save_scenario",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_001"
+            ]
+          },
+          {
+            "type": "Search index failure",
+            "location": "search_pubmed_key_words, search_pubmed_by_author, search_pubmed_by_journal",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_001"
+            ]
+          },
+          {
+            "type": "State Loading Failure",
+            "location": "load_scenario / PubMedAPI.load_scenario",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_002"
+            ]
+          },
+          {
+            "type": "Search Functionality Failure",
+            "location": "search_pubmed_key_words, search_pubmed_by_author, search_pubmed_by_journal",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_002"
+            ]
+          },
+          {
+            "type": "State Persistence Failure",
+            "location": "save_scenario",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_002"
+            ]
+          },
+          {
+            "type": "State Loading Failure",
+            "location": "PubMedServer-load_scenario -> api.load_scenario()",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_003"
+            ]
+          },
+          {
+            "type": "Silent Data Loss",
+            "location": "PubMedAPI.load_scenario() implementation",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_003"
+            ]
+          },
+          {
+            "type": "Cascading Tool Failures",
+            "location": "All tool functions",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_003"
+            ]
+          }
+        ],
+        "severity_summary": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 9
+        }
+      },
+      "revised_code_version": 2,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 1,
+        "failed_scenarios": 3,
+        "all_passed": false,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": false,
+            "errors": [
+              {
+                "type": "State inconsistency",
+                "location": "get_pubmed_article / api.articles",
+                "details": "The scenario was loaded successfully with article PMID 12345678, but get_pubmed_article returned 'Article with PMID 12345678 not found'. The save_scenario output shows 'articles': {} - an empty dictionary.",
+                "expected_vs_actual": "Expected: Article PMID 12345678 should be accessible after loading. Actual: api.articles is empty, article not found.",
+                "root_cause": "The load_scenario method may not be properly populating api.articles. The scenario data is accepted but not stored in the internal articles dictionary that get_pubmed_article and fetch_pubmed_articles depend on.",
+                "expected_error": false
+              },
+              {
+                "type": "State inconsistency",
+                "location": "save_scenario / api.save_scenario",
+                "details": "The saved scenario shows articles: {}, but the original scenario had articles with PMID 12345678. Additionally, the search_results contain cached queries from other scenarios (CRISPR cancer, Alzheimer machine learning, etc.) that weren't part of the original scenario.",
+                "expected_vs_actual": "Expected: Saved scenario should contain the loaded article and the search_results should match the original scenario. Actual: Articles dict is empty, and search_results contains extraneous cached data.",
+                "root_cause": "The api.load_scenario method is not properly storing scenario data in api.articles. The search_results caching persists across scenario loads, indicating state is not being reset properly.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "search_pubmed_key_words",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_pubmed_article",
+                  "passed": false,
+                  "error": "Article with PMID 12345678 not found - article loaded in scenario is not accessible"
+                },
+                {
+                  "tool_name": "fetch_pubmed_articles",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "search_pubmed_by_author",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "search_pubmed_by_journal",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": false,
+                "error": "State inconsistency: Loaded articles were not preserved - articles dict is empty in saved state"
+              }
+            },
+            "complexity_level": "simple",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "medium",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "complex",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "search_pubmed_key_words",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_pubmed_article",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "fetch_pubmed_articles",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "search_pubmed_by_author",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "search_pubmed_by_journal",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "boundary",
+            "execution_time": 0.0
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 2,
+    "total_time": 0.0,
+    "success": false,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/PubMedServer.py"
+  }
+}

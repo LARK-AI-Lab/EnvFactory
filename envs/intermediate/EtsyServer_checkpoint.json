@@ -1,0 +1,1899 @@
+{
+  "metadata": {
+    "class_name": "EtsyServer",
+    "metadata_path": "envs\\metadata\\EtsyServer_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-03-05T19:48:06.843115",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "EtsyServer",
+    "description": "MCP server for interacting with the Etsy marketplace API, enabling search, listing management, shop operations, and order retrieval.",
+    "tools": [
+      {
+        "name": "search_listings",
+        "description": "Searches for active listings on the Etsy marketplace using keywords and optional filters for category and price range.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "keywords": {
+              "type": "string",
+              "description": "Search keywords or query terms to match against listing titles, tags, and descriptions."
+            },
+            "category": {
+              "type": "string",
+              "description": "Category slug to filter results to a specific Etsy category (e.g., 'jewelry', 'vintage')."
+            },
+            "min_price": {
+              "type": "number",
+              "description": "Minimum price threshold to filter listings by item cost."
+            },
+            "max_price": {
+              "type": "number",
+              "description": "Maximum price threshold to filter listings by item cost."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of search results to return (default: 10, maximum: 100).",
+              "default": 10
+            }
+          },
+          "required": [
+            "keywords"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "integer",
+              "description": "The total number of listings matching the search criteria."
+            },
+            "results": {
+              "type": "array",
+              "description": "Array of listing objects matching the search query.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "listing_id": {
+                    "type": "integer",
+                    "description": "The unique identifier of the Etsy listing."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The display title of the listing."
+                  },
+                  "price": {
+                    "type": "object",
+                    "description": "The monetary price information for the listing.",
+                    "properties": {
+                      "amount": {
+                        "type": "number",
+                        "description": "The numeric price value."
+                      },
+                      "currency": {
+                        "type": "string",
+                        "description": "The three-letter ISO currency code (e.g., USD, EUR)."
+                      }
+                    }
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "description": "The available stock quantity for the item."
+                  },
+                  "shop_name": {
+                    "type": "string",
+                    "description": "The name of the Etsy shop offering the listing."
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "The direct URL to view the listing on Etsy."
+                  },
+                  "images": {
+                    "type": "array",
+                    "description": "Array of image URLs for the listing.",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_listing_details",
+        "description": "Retrieves comprehensive details for a specific Etsy listing including description, materials, tags, shop information, and high-resolution images.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "listing_id": {
+              "type": "integer",
+              "description": "The unique identifier of the Etsy listing to retrieve."
+            }
+          },
+          "required": [
+            "listing_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "listing_id": {
+              "type": "integer",
+              "description": "The unique identifier of the Etsy listing."
+            },
+            "title": {
+              "type": "string",
+              "description": "The display title of the listing."
+            },
+            "description": {
+              "type": "string",
+              "description": "The detailed HTML or text description of the item."
+            },
+            "price": {
+              "type": "object",
+              "description": "The monetary price information including divisor for formatting.",
+              "properties": {
+                "amount": {
+                  "type": "number",
+                  "description": "The raw numeric price value before divisor application."
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "The three-letter ISO currency code (e.g., USD, EUR)."
+                },
+                "divisor": {
+                  "type": "integer",
+                  "description": "The divisor to convert the raw amount into the display price."
+                }
+              }
+            },
+            "quantity": {
+              "type": "integer",
+              "description": "The available stock quantity for the item."
+            },
+            "shop": {
+              "type": "object",
+              "description": "Information about the shop selling the item.",
+              "properties": {
+                "shop_id": {
+                  "type": "integer",
+                  "description": "The unique identifier of the Etsy shop."
+                },
+                "shop_name": {
+                  "type": "string",
+                  "description": "The display name of the shop."
+                },
+                "url": {
+                  "type": "string",
+                  "description": "The URL to the shop's Etsy page."
+                },
+                "rating": {
+                  "type": "number",
+                  "description": "The average customer rating score for the shop."
+                }
+              }
+            },
+            "images": {
+              "type": "array",
+              "description": "Array of image objects with dimension metadata.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "The URL to the full-resolution image."
+                  },
+                  "full_height": {
+                    "type": "integer",
+                    "description": "The height of the image in pixels."
+                  },
+                  "full_width": {
+                    "type": "integer",
+                    "description": "The width of the image in pixels."
+                  }
+                }
+              }
+            },
+            "tags": {
+              "type": "array",
+              "description": "Array of search tags associated with the listing.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "materials": {
+              "type": "array",
+              "description": "Array of materials used to create the item.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "shipping_profile": {
+              "type": "object",
+              "description": "Shipping configuration and cost details for the listing."
+            }
+          }
+        }
+      },
+      {
+        "name": "create_listing",
+        "description": "Creates a new product listing within a specified Etsy shop. Requires OAuth authentication with appropriate write permissions.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "shop_id": {
+              "type": "integer",
+              "description": "The unique identifier of the Etsy shop where the listing will be created."
+            },
+            "title": {
+              "type": "string",
+              "description": "The listing title (maximum 140 characters)."
+            },
+            "description": {
+              "type": "string",
+              "description": "The detailed item description supporting HTML formatting."
+            },
+            "price": {
+              "type": "number",
+              "description": "The item price in the shop's default currency."
+            },
+            "quantity": {
+              "type": "integer",
+              "description": "The available quantity for sale."
+            },
+            "taxonomy_id": {
+              "type": "integer",
+              "description": "The Etsy taxonomy/category classification ID for proper categorization."
+            },
+            "who_made": {
+              "type": "string",
+              "description": "Indicates who manufactured the item (e.g., 'i_did', 'collective', 'someone_else').",
+              "default": "i_did"
+            }
+          },
+          "required": [
+            "shop_id",
+            "title",
+            "description",
+            "price",
+            "quantity",
+            "taxonomy_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "listing_id": {
+              "type": "integer",
+              "description": "The unique identifier of the newly created Etsy listing."
+            },
+            "title": {
+              "type": "string",
+              "description": "The title of the created listing."
+            },
+            "state": {
+              "type": "string",
+              "description": "The current state of the listing (e.g., 'draft', 'active', 'inactive')."
+            },
+            "creation_tsz": {
+              "type": "number",
+              "description": "Unix timestamp indicating when the listing was created."
+            },
+            "url": {
+              "type": "string",
+              "description": "The URL to view the newly created listing."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_shop_listings",
+        "description": "Retrieves all listings for a specific Etsy shop with optional filtering by listing status.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "shop_id": {
+              "type": "integer",
+              "description": "The unique identifier of the Etsy shop."
+            },
+            "status": {
+              "type": "string",
+              "description": "Filter listings by current state (active, inactive, expired, sold_out, draft).",
+              "default": "active"
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of listings to return per page (default: 25, maximum: 100).",
+              "default": 25
+            }
+          },
+          "required": [
+            "shop_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "integer",
+              "description": "The total number of listings returned for the shop."
+            },
+            "results": {
+              "type": "array",
+              "description": "Array of listing summary objects for the shop.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "listing_id": {
+                    "type": "integer",
+                    "description": "The unique identifier of the Etsy listing."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The display title of the listing."
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "The current state of the listing (e.g., 'active', 'inactive')."
+                  },
+                  "price": {
+                    "type": "object",
+                    "description": "The monetary price information for the listing.",
+                    "properties": {
+                      "amount": {
+                        "type": "number",
+                        "description": "The numeric price value."
+                      },
+                      "currency": {
+                        "type": "string",
+                        "description": "The three-letter ISO currency code (e.g., USD, EUR)."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_receipts",
+        "description": "Retrieves order receipts (sales transactions) for a seller's shop, optionally filtered by creation date range.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "shop_id": {
+              "type": "integer",
+              "description": "The unique identifier of the Etsy shop."
+            },
+            "min_created": {
+              "type": "integer",
+              "description": "Minimum creation timestamp (Unix epoch seconds) to filter orders from a specific start date."
+            },
+            "max_created": {
+              "type": "integer",
+              "description": "Maximum creation timestamp (Unix epoch seconds) to filter orders up to a specific end date."
+            }
+          },
+          "required": [
+            "shop_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "integer",
+              "description": "The total number of receipts matching the query criteria."
+            },
+            "results": {
+              "type": "array",
+              "description": "Array of order receipt objects representing completed sales.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "receipt_id": {
+                    "type": "integer",
+                    "description": "The unique identifier of the order receipt."
+                  },
+                  "buyer_email": {
+                    "type": "string",
+                    "description": "The email address of the buyer."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The full name of the buyer."
+                  },
+                  "grandtotal": {
+                    "type": "object",
+                    "description": "The total monetary amount charged for the order including shipping and taxes.",
+                    "properties": {
+                      "amount": {
+                        "type": "number",
+                        "description": "The numeric total value."
+                      },
+                      "currency": {
+                        "type": "string",
+                        "description": "The three-letter ISO currency code (e.g., USD, EUR)."
+                      }
+                    }
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "The current fulfillment status of the order (e.g., 'paid', 'shipped', 'canceled')."
+                  },
+                  "created_tsz": {
+                    "type": "number",
+                    "description": "Unix timestamp when the order was created."
+                  },
+                  "transactions": {
+                    "type": "array",
+                    "description": "Array of individual transaction objects comprising the order.",
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Price(BaseModel):\n    \"\"\"Price information for a listing.\"\"\"\n    amount: float = Field(..., ge=0, description=\"Numeric price value\")\n    currency: str = Field(..., pattern=r\"^[A-Z]{3}$\", description=\"Three-letter ISO currency code\")\n\nclass PriceWithDivisor(BaseModel):\n    \"\"\"Price information with divisor for formatting.\"\"\"\n    amount: float = Field(..., ge=0, description=\"Raw numeric price value\")\n    currency: str = Field(..., pattern=r\"^[A-Z]{3}$\", description=\"Three-letter ISO currency code\")\n    divisor: int = Field(..., gt=0, description=\"Divisor to convert raw amount\")\n\nclass SearchListing(BaseModel):\n    \"\"\"Search result listing.\"\"\"\n    listing_id: int = Field(..., ge=0, description=\"Unique listing identifier\")\n    title: str = Field(..., description=\"Listing title\")\n    price: Price = Field(..., description=\"Price information\")\n    quantity: int = Field(..., ge=0, description=\"Available stock quantity\")\n    shop_name: str = Field(..., description=\"Shop name\")\n    url: str = Field(..., description=\"Listing URL\")\n    images: List[str] = Field(default=[], description=\"Image URLs\")\n\nclass Shop(BaseModel):\n    \"\"\"Shop information.\"\"\"\n    shop_id: int = Field(..., ge=0, description=\"Unique shop identifier\")\n    shop_name: str = Field(..., description=\"Shop name\")\n    url: str = Field(..., description=\"Shop URL\")\n    rating: float = Field(..., ge=0, le=5, description=\"Average rating\")\n\nclass Image(BaseModel):\n    \"\"\"Image with dimensions.\"\"\"\n    url: str = Field(..., description=\"Image URL\")\n    full_height: int = Field(..., gt=0, description=\"Image height in pixels\")\n    full_width: int = Field(..., gt=0, description=\"Image width in pixels\")\n\nclass ListingDetails(BaseModel):\n    \"\"\"Detailed listing information.\"\"\"\n    listing_id: int = Field(..., ge=0, description=\"Unique listing identifier\")\n    title: str = Field(..., description=\"Listing title\")\n    description: str = Field(..., description=\"Item description\")\n    price: PriceWithDivisor = Field(..., description=\"Price information\")\n    quantity: int = Field(..., ge=0, description=\"Available stock quantity\")\n    shop: Shop = Field(..., description=\"Shop information\")\n    images: List[Image] = Field(default=[], description=\"Image objects\")\n    tags: List[str] = Field(default=[], description=\"Search tags\")\n    materials: List[str] = Field(default=[], description=\"Materials used\")\n    shipping_profile: Dict[str, Any] = Field(default={}, description=\"Shipping configuration\")\n\nclass CreatedListing(BaseModel):\n    \"\"\"Newly created listing.\"\"\"\n    listing_id: int = Field(..., ge=0, description=\"Unique listing identifier\")\n    title: str = Field(..., description=\"Listing title\")\n    state: str = Field(..., description=\"Listing state\")\n    creation_tsz: float = Field(..., ge=0, description=\"Creation timestamp\")\n    url: str = Field(..., description=\"Listing URL\")\n\nclass ShopListing(BaseModel):\n    \"\"\"Shop listing summary.\"\"\"\n    listing_id: int = Field(..., ge=0, description=\"Unique listing identifier\")\n    title: str = Field(..., description=\"Listing title\")\n    state: str = Field(..., description=\"Listing state\")\n    price: Price = Field(..., description=\"Price information\")\n\nclass Receipt(BaseModel):\n    \"\"\"Order receipt.\"\"\"\n    receipt_id: int = Field(..., ge=0, description=\"Unique receipt identifier\")\n    buyer_email: str = Field(..., description=\"Buyer email\")\n    name: str = Field(..., description=\"Buyer name\")\n    grandtotal: Price = Field(..., description=\"Total amount\")\n    status: str = Field(..., description=\"Fulfillment status\")\n    created_tsz: float = Field(..., ge=0, description=\"Creation timestamp\")\n    transactions: List[Dict[str, Any]] = Field(default=[], description=\"Transaction objects\")\n\nclass EtsyScenario(BaseModel):\n    \"\"\"Main scenario model for Etsy marketplace.\"\"\"\n    listings: Dict[int, ListingDetails] = Field(default={}, description=\"All listings by ID\")\n    shops: Dict[int, Shop] = Field(default={}, description=\"All shops by ID\")\n    receipts: Dict[int, Receipt] = Field(default={}, description=\"All receipts by ID\")\n    shop_listings: Dict[int, List[int]] = Field(default={}, description=\"Shop ID to listing IDs mapping\")\n\nScenario_Schema = [Price, PriceWithDivisor, SearchListing, Shop, Image, ListingDetails, CreatedListing, ShopListing, Receipt, EtsyScenario]\n\n# Section 2: Class\nclass EtsyServer:\n    def __init__(self):\n        \"\"\"Initialize Etsy server with empty state.\"\"\"\n        self.listings: Dict[int, ListingDetails] = {}\n        self.shops: Dict[int, Shop] = {}\n        self.receipts: Dict[int, Receipt] = {}\n        self.shop_listings: Dict[int, List[int]] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the server instance.\"\"\"\n        model = EtsyScenario(**scenario)\n        self.listings = model.listings\n        self.shops = model.shops\n        self.receipts = model.receipts\n        self.shop_listings = model.shop_listings\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"listings\": {lid: listing.model_dump() for lid, listing in self.listings.items()},\n            \"shops\": {sid: shop.model_dump() for sid, shop in self.shops.items()},\n            \"receipts\": {rid: receipt.model_dump() for rid, receipt in self.receipts.items()},\n            \"shop_listings\": self.shop_listings\n        }\n\n    def search_listings(self, keywords: str, category: Optional[str], min_price: Optional[float], max_price: Optional[float], limit: int) -> dict:\n        \"\"\"Search for active listings using keywords and filters.\"\"\"\n        results = []\n        for listing in self.listings.values():\n            if keywords.lower() not in listing.title.lower() and keywords.lower() not in listing.description.lower() and not any(keywords.lower() in tag.lower() for tag in listing.tags):\n                continue\n            if category and category.lower() not in listing.tags:\n                continue\n            price_val = listing.price.amount / listing.price.divisor\n            if min_price is not None and price_val < min_price:\n                continue\n            if max_price is not None and price_val > max_price:\n                continue\n            results.append({\n                \"listing_id\": listing.listing_id,\n                \"title\": listing.title,\n                \"price\": {\"amount\": price_val, \"currency\": listing.price.currency},\n                \"quantity\": listing.quantity,\n                \"shop_name\": listing.shop.shop_name,\n                \"url\": listing.url,\n                \"images\": [img.url for img in listing.images]\n            })\n            if len(results) >= limit:\n                break\n        return {\"count\": len(results), \"results\": results}\n\n    def get_listing_details(self, listing_id: int) -> dict:\n        \"\"\"Retrieve comprehensive details for a specific listing.\"\"\"\n        listing = self.listings[listing_id]\n        return listing.model_dump()\n\n    def create_listing(self, shop_id: int, title: str, description: str, price: float, quantity: int, taxonomy_id: int, who_made: str) -> dict:\n        \"\"\"Create a new product listing within a shop.\"\"\"\n        listing_id = max(self.listings.keys(), default=0) + 1\n        shop = self.shops[shop_id]\n        new_listing = ListingDetails(\n            listing_id=listing_id,\n            title=title,\n            description=description,\n            price=PriceWithDivisor(amount=price * 100, currency=\"USD\", divisor=100),\n            quantity=quantity,\n            shop=shop,\n            images=[],\n            tags=[],\n            materials=[],\n            shipping_profile={}\n        )\n        self.listings[listing_id] = new_listing\n        if shop_id not in self.shop_listings:\n            self.shop_listings[shop_id] = []\n        self.shop_listings[shop_id].append(listing_id)\n        return {\n            \"listing_id\": listing_id,\n            \"title\": title,\n            \"state\": \"active\",\n            \"creation_tsz\": 1709640834.0,\n            \"url\": f\"https://www.etsy.com/listing/{listing_id}\"\n        }\n\n    def get_shop_listings(self, shop_id: int, status: str, limit: int) -> dict:\n        \"\"\"Retrieve all listings for a specific shop.\"\"\"\n        listing_ids = self.shop_listings.get(shop_id, [])\n        results = []\n        for lid in listing_ids[:limit]:\n            if lid in self.listings:\n                listing = self.listings[lid]\n                price_val = listing.price.amount / listing.price.divisor\n                results.append({\n                    \"listing_id\": listing.listing_id,\n                    \"title\": listing.title,\n                    \"state\": status,\n                    \"price\": {\"amount\": price_val, \"currency\": listing.price.currency}\n                })\n        return {\"count\": len(results), \"results\": results}\n\n    def get_receipts(self, shop_id: int, min_created: Optional[int], max_created: Optional[int]) -> dict:\n        \"\"\"Retrieve order receipts for a seller's shop.\"\"\"\n        results = []\n        for receipt in self.receipts.values():\n            if min_created is not None and receipt.created_tsz < min_created:\n                continue\n            if max_created is not None and receipt.created_tsz > max_created:\n                continue\n            results.append(receipt.model_dump())\n        return {\"count\": len(results), \"results\": results}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"EtsyServer\")\nserver = EtsyServer()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Etsy server.\n\n    Args:\n        scenario (dict): Scenario dictionary matching EtsyScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        server.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Etsy server state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return server.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_listings(keywords: str, category: Optional[str] = None, min_price: Optional[float] = None, max_price: Optional[float] = None, limit: int = 10) -> dict:\n    \"\"\"\n    Search for active listings on the Etsy marketplace.\n\n    Args:\n        keywords (str): Search keywords to match against listing titles, tags, and descriptions.\n        category (str) [Optional]: Category slug to filter results.\n        min_price (float) [Optional]: Minimum price threshold.\n        max_price (float) [Optional]: Maximum price threshold.\n        limit (int): Maximum number of results to return (default: 10, maximum: 100).\n\n    Returns:\n        count (int): Total number of listings matching criteria.\n        results (list): Array of listing objects.\n    \"\"\"\n    try:\n        if not keywords or not isinstance(keywords, str):\n            raise ValueError(\"Keywords must be a non-empty string\")\n        if limit < 1 or limit > 100:\n            raise ValueError(\"Limit must be between 1 and 100\")\n        return server.search_listings(keywords, category, min_price, max_price, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_listing_details(listing_id: int) -> dict:\n    \"\"\"\n    Retrieve comprehensive details for a specific Etsy listing.\n\n    Args:\n        listing_id (int): Unique identifier of the Etsy listing.\n\n    Returns:\n        listing_id (int): Unique listing identifier.\n        title (str): Listing title.\n        description (str): Item description.\n        price (dict): Price information with divisor.\n        quantity (int): Available stock quantity.\n        shop (dict): Shop information.\n        images (list): Image objects with dimensions.\n        tags (list): Search tags.\n        materials (list): Materials used.\n        shipping_profile (dict): Shipping configuration.\n    \"\"\"\n    try:\n        if listing_id not in server.listings:\n            raise ValueError(f\"Listing {listing_id} not found\")\n        return server.get_listing_details(listing_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef create_listing(shop_id: int, title: str, description: str, price: float, quantity: int, taxonomy_id: int, who_made: str = \"i_did\") -> dict:\n    \"\"\"\n    Create a new product listing within a specified Etsy shop.\n\n    Args:\n        shop_id (int): Unique identifier of the Etsy shop.\n        title (str): Listing title (maximum 140 characters).\n        description (str): Detailed item description.\n        price (float): Item price in shop's default currency.\n        quantity (int): Available quantity for sale.\n        taxonomy_id (int): Etsy taxonomy/category classification ID.\n        who_made (str) [Optional]: Who manufactured the item (default: 'i_did').\n\n    Returns:\n        listing_id (int): Unique identifier of newly created listing.\n        title (str): Title of created listing.\n        state (str): Current state of listing.\n        creation_tsz (float): Unix timestamp of creation.\n        url (str): URL to view the listing.\n    \"\"\"\n    try:\n        if shop_id not in server.shops:\n            raise ValueError(f\"Shop {shop_id} not found\")\n        if not title or not isinstance(title, str):\n            raise ValueError(\"Title must be a non-empty string\")\n        if not description or not isinstance(description, str):\n            raise ValueError(\"Description must be a non-empty string\")\n        result = server.create_listing(shop_id, title, description, price, quantity, taxonomy_id, who_made)\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_shop_listings(shop_id: int, status: str = \"active\", limit: int = 25) -> dict:\n    \"\"\"\n    Retrieve all listings for a specific Etsy shop.\n\n    Args:\n        shop_id (int): Unique identifier of the Etsy shop.\n        status (str) [Optional]: Filter by listing state (default: 'active').\n        limit (int) [Optional]: Maximum number of listings per page (default: 25, maximum: 100).\n\n    Returns:\n        count (int): Total number of listings returned.\n        results (list): Array of listing summary objects.\n    \"\"\"\n    try:\n        if shop_id not in server.shops:\n            raise ValueError(f\"Shop {shop_id} not found\")\n        if limit < 1 or limit > 100:\n            raise ValueError(\"Limit must be between 1 and 100\")\n        return server.get_shop_listings(shop_id, status, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_receipts(shop_id: int, min_created: Optional[int] = None, max_created: Optional[int] = None) -> dict:\n    \"\"\"\n    Retrieve order receipts for a seller's shop.\n\n    Args:\n        shop_id (int): Unique identifier of the Etsy shop.\n        min_created (int) [Optional]: Minimum creation timestamp (Unix epoch seconds).\n        max_created (int) [Optional]: Maximum creation timestamp (Unix epoch seconds).\n\n    Returns:\n        count (int): Total number of receipts matching criteria.\n        results (list): Array of order receipt objects.\n    \"\"\"\n    try:\n        if shop_id not in server.shops:\n            raise ValueError(f\"Shop {shop_id} not found\")\n        return server.get_receipts(shop_id, min_created, max_created)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-03-05T19:48:06.843115",
+      "revision_number": null
+    },
+    {
+      "version": 1,
+      "code": "\n```python\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Price(BaseModel):\n    \"\"\"Price information for a listing.\"\"\"\n    amount: float = Field(..., ge=0, description=\"Numeric price value\")\n    currency: str = Field(..., pattern=r\"^[A-Z]{3}$\", description=\"Three-letter ISO currency code\")\n\nclass PriceWithDivisor(BaseModel):\n    \"\"\"Price information with divisor for formatting.\"\"\"\n    amount: float = Field(..., ge=0, description=\"Raw numeric price value\")\n    currency: str = Field(..., pattern=r\"^[A-Z]{3}$\", description=\"Three-letter ISO currency code\")\n    divisor: int = Field(..., gt=0, description=\"Divisor to convert raw amount\")\n\nclass SearchListing(BaseModel):\n    \"\"\"Search result listing.\"\"\"\n    listing_id: int = Field(..., ge=0, description=\"Unique listing identifier\")\n    title: str = Field(..., description=\"Listing title\")\n    price: Price = Field(..., description=\"Price information\")\n    quantity: int = Field(..., ge=0, description=\"Available stock quantity\")\n    shop_name: str = Field(..., description=\"Shop name\")\n    url: str = Field(..., description=\"Listing URL\")\n    images: List[str] = Field(default=[], description=\"Image URLs\")\n\nclass Shop(BaseModel):\n    \"\"\"Shop information.\"\"\"\n    shop_id: int = Field(..., ge=0, description=\"Unique shop identifier\")\n    shop_name: str = Field(..., description=\"Shop name\")\n    url: str = Field(..., description=\"Shop URL\")\n    rating: float = Field(..., ge=0, le=5, description=\"Average rating\")\n\nclass Image(BaseModel):\n    \"\"\"Image with dimensions.\"\"\"\n    url: str = Field(..., description=\"Image URL\")\n    full_height: int = Field(..., gt=0, description=\"Image height in pixels\")\n    full_width: int = Field(..., gt=0, description=\"Image width in pixels\")\n\nclass ListingDetails(BaseModel):\n    \"\"\"Detailed listing information.\"\"\"\n    listing_id: int = Field(..., ge=0, description=\"Unique listing identifier\")\n    title: str = Field(..., description=\"Listing title\")\n    description: str = Field(..., description=\"Item description\")\n    price: PriceWithDivisor = Field(..., description=\"Price information\")\n    quantity: int = Field(..., ge=0, description=\"Available stock quantity\")\n    shop: Shop = Field(..., description=\"Shop information\")\n    images: List[Image] = Field(default=[], description=\"Image objects\")\n    tags: List[str] = Field(default=[], description=\"Search tags\")\n    materials: List[str] = Field(default=[], description=\"Materials used\")\n    shipping_profile: Dict[str, Any] = Field(default={}, description=\"Shipping configuration\")\n\nclass CreatedListing(BaseModel):\n    \"\"\"Newly created listing.\"\"\"\n    listing_id: int = Field(..., ge=0, description=\"Unique listing identifier\")\n    title: str = Field(..., description=\"Listing title\")\n    state: str = Field(..., description=\"Listing state\")\n    creation_tsz: float = Field(..., ge=0, description=\"Creation timestamp\")\n    url: str = Field(..., description=\"Listing URL\")\n\nclass ShopListing(BaseModel):\n    \"\"\"Shop listing summary.\"\"\"\n    listing_id: int = Field(..., ge=0, description=\"Unique listing identifier\")\n    title: str = Field(..., description=\"Listing title\")\n    state: str = Field(..., description=\"Listing state\")\n    price: Price = Field(..., description=\"Price information\")\n\nclass Receipt(BaseModel):\n    \"\"\"Order receipt.\"\"\"\n    receipt_id: int = Field(..., ge=0, description=\"Unique receipt identifier\")\n    buyer_email: str = Field(..., description=\"Buyer email\")\n    name: str = Field(..., description=\"Buyer name\")\n    grandtotal: Price = Field(..., description=\"Total amount\")\n    status: str = Field(..., description=\"Fulfillment status\")\n    created_tsz: float = Field(..., ge=0, description=\"Creation timestamp\")\n    transactions: List[Dict[str, Any]] = Field(default=[], description=\"Transaction objects\")\n\nclass EtsyScenario(BaseModel):\n    \"\"\"Main scenario model for Etsy marketplace.\"\"\"\n    listings: Dict[int, ListingDetails] = Field(default={}, description=\"All listings by ID\")\n    shops: Dict[int, Shop] = Field(default={}, description=\"All shops by ID\")\n    receipts: Dict[int, Receipt] = Field(default={}, description=\"All receipts by ID\")\n    shop_listings: Dict[int, List[int]] = Field(default={}, description=\"Shop ID to listing IDs mapping\")\n\nScenario_Schema = [Price, PriceWithDivisor, SearchListing, Shop, Image, ListingDetails, CreatedListing, ShopListing, Receipt, EtsyScenario]\n\n# Section 2: Class\nclass EtsyServer:\n    def __init__(self):\n        \"\"\"Initialize Etsy server with empty state.\"\"\"\n        self.listings: Dict[int, ListingDetails] = {}\n        self.shops: Dict[int, Shop] = {}\n        self.receipts: Dict[int, Receipt] = {}\n        self.shop_listings: Dict[int, List[int]] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the server instance.\"\"\"\n        model = EtsyScenario(**scenario)\n        self.listings = model.listings\n        self.shops = model.shops\n        self.receipts = model.receipts\n        self.shop_listings = model.shop_listings\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"listings\": {lid: listing.model_dump() for lid, listing in self.listings.items()},\n            \"shops\": {sid: shop.model_dump() for sid, shop in self.shops.items()},\n            \"receipts\": {rid: receipt.model_dump() for rid, receipt in self.receipts.items()},\n            \"shop_listings\": self.shop_listings\n        }\n\n    def search_listings(self, keywords: str, category: Optional[str], min_price: Optional[float], max_price: Optional[float], limit: int) -> dict:\n        \"\"\"Search for active listings using keywords and filters.\"\"\"\n        results = []\n        for listing in self.listings.values():\n            if keywords.lower() not in listing.title.lower() and keywords.lower() not in listing.description.lower() and not any(keywords.lower() in tag.lower() for tag in listing.tags):\n                continue\n            if category and category.lower() not in listing.tags:\n                continue\n            price_val = listing.price.amount / listing.price.divisor\n            if min_price is not None and price_val < min_price:\n                continue\n            if max_price is not None and price_val > max_price:\n                continue\n            results.append({\n                \"listing_id\": listing.listing_id,\n                \"title\": listing.title,\n                \"price\": {\"amount\": price_val, \"currency\": listing.price.currency},\n                \"quantity\": listing.quantity,\n                \"shop_name\": listing.shop.shop_name,\n                \"url\": f\"https://www.etsy.com/listing/{listing.listing_id}\",\n                \"images\": [img.url for img in listing.images]\n            })\n            if len(results) >= limit:\n                break\n        return {\"count\": len(results), \"results\": results}\n\n    def get_listing_details(self, listing_id: int) -> dict:\n        \"\"\"Retrieve comprehensive details for a specific listing.\"\"\"\n        listing = self.listings[listing_id]\n        return listing.model_dump()\n\n    def create_listing(self, shop_id: int, title: str, description: str, price: float, quantity: int, taxonomy_id: int, who_made: str) -> dict:\n        \"\"\"Create a new product listing within a shop.\"\"\"\n        listing_id = max(self.listings.keys(), default=0) + 1\n        shop = self.shops[shop_id]\n        new_listing = ListingDetails(\n            listing_id=listing_id,\n            title=title,\n            description=description,\n            price=PriceWithDivisor(amount=price * 100, currency=\"USD\", divisor=100),\n            quantity=quantity,\n            shop=shop,\n            images=[],\n            tags=[],\n            materials=[],\n            shipping_profile={}\n        )\n        self.listings[listing_id] = new_listing\n        if shop_id not in self.shop_listings:\n            self.shop_listings[shop_id] = []\n        self.shop_listings[shop_id].append(listing_id)\n        return {\n            \"listing_id\": listing_id,\n            \"title\": title,\n            \"state\": \"active\",\n            \"creation_tsz\": 1709640834.0,\n            \"url\": f\"https://www.etsy.com/listing/{listing_id}\"\n        }\n\n    def get_shop_listings(self, shop_id: int, status: str, limit: int) -> dict:\n        \"\"\"Retrieve all listings for a specific shop.\"\"\"\n        listing_ids = self.shop_listings.get(shop_id, [])\n        results = []\n        for lid in listing_ids[:limit]:\n            if lid in self.listings:\n                listing = self.listings[lid]\n                price_val = listing.price.amount / listing.price.divisor\n                results.append({\n                    \"listing_id\": listing.listing_id,\n                    \"title\": listing.title,\n                    \"state\": status,\n                    \"price\": {\"amount\": price_val, \"currency\": listing.price.currency}\n                })\n        return {\"count\": len(results), \"results\": results}\n\n    def get_receipts(self, shop_id: int, min_created: Optional[int], max_created: Optional[int]) -> dict:\n        \"\"\"Retrieve order receipts for a seller's shop.\"\"\"\n        results = []\n        for receipt in self.receipts.values():\n            if min_created is not None and receipt.created_tsz < min_created:\n                continue\n            if max_created is not None and receipt.created_tsz > max_created:\n                continue\n            results.append(receipt.model_dump())\n        return {\"count\": len(results), \"results\": results}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"EtsyServer\")\nserver = EtsyServer()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Etsy server.\n\n    Args:\n        scenario (dict): Scenario dictionary matching EtsyScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        server.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Etsy server state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return server.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_listings(keywords: str, category: Optional[str] = None, min_price: Optional[float] = None, max_price: Optional[float] = None, limit: int = 10) -> dict:\n    \"\"\"\n    Search for active listings on the Etsy marketplace.\n\n    Args:\n        keywords (str): Search keywords to match against listing titles, tags, and descriptions.\n        category (str) [Optional]: Category slug to filter results.\n        min_price (float) [Optional]: Minimum price threshold.\n        max_price (float) [Optional]: Maximum price threshold.\n        limit (int): Maximum number of results to return (default: 10, maximum: 100).\n\n    Returns:\n        count (int): Total number of listings matching criteria.\n        results (list): Array of listing objects.\n    \"\"\"\n    try:\n        if not keywords or not isinstance(keywords, str):\n            raise ValueError(\"Keywords must be a non-empty string\")\n        if limit < 1 or limit > 100:\n            raise ValueError(\"Limit must be between 1 and 100\")\n        return server.search_listings(keywords, category, min_price, max_price, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_listing_details(listing_id: int) -> dict:\n    \"\"\"\n    Retrieve comprehensive details for a specific Etsy listing.\n\n    Args:\n        listing_id (int): Unique identifier of the Etsy listing.\n\n    Returns:\n        listing_id (int): Unique listing identifier.\n        title (str): Listing title.\n        description (str): Item description.\n        price (dict): Price information with divisor.\n        quantity (int): Available stock quantity.\n        shop (dict): Shop information.\n        images (list): Image objects with dimensions.\n        tags (list): Search tags.\n        materials (list): Materials used.\n        shipping_profile (dict): Shipping configuration.\n    \"\"\"\n    try:\n        if listing_id not in server.listings:\n            raise ValueError(f\"Listing {listing_id} not found\")\n        return server.get_listing_details(listing_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef create_listing(shop_id: int, title: str, description: str, price: float, quantity: int, taxonomy_id: int, who_made: str = \"i_did\") -> dict:\n    \"\"\"\n    Create a new product listing within a specified Etsy shop.\n\n    Args:\n        shop_id (int): Unique identifier of the Etsy shop.\n        title (str): Listing title (maximum 140 characters).\n        description (str): Detailed item description.\n        price (float): Item price in shop's default currency.\n        quantity (int): Available quantity for sale.\n        taxonomy_id (int): Etsy taxonomy/category classification ID.\n        who_made (str) [Optional]: Who manufactured the item (default: 'i_did').\n\n    Returns:\n        listing_id (int): Unique identifier of newly created listing.\n        title (str): Title of created listing.\n        state (str): Current state of listing.\n        creation_tsz (float): Unix timestamp of creation.\n        url (str): URL to view the listing.\n    \"\"\"\n    try:\n        if shop_id not in server.shops:\n            raise ValueError(f\"Shop {shop_id} not found\")\n        if not title or not isinstance(title, str):\n            raise ValueError(\"Title must be a non-empty string\")\n        if not description or not isinstance(description, str):\n            raise ValueError(\"Description must be a non-empty string\")\n        result = server.create_listing(shop_id, title, description, price, quantity, taxonomy_id, who_made)\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_shop_listings(shop_id: int, status: str = \"active\", limit: int = 25) -> dict:\n    \"\"\"\n    Retrieve all listings for a specific Etsy shop.\n\n    Args:\n        shop_id (int): Unique identifier of the Etsy shop.\n        status (str) [Optional]: Filter by listing state (default: 'active').\n        limit (int) [Optional]: Maximum number of listings per page (default: 25, maximum: 100).\n\n    Returns:\n        count (int): Total number of listings returned.\n        results (list): Array of listing summary objects.\n    \"\"\"\n    try:\n        if shop_id not in server.shops:\n            raise ValueError(f\"Shop {shop_id} not found\")\n        if limit < 1 or limit > 100:\n            raise ValueError(\"Limit must be between 1 and 100\")\n        return server.get_shop_listings(shop_id, status, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_receipts(shop_id: int, min_created: Optional[int] = None, max_created: Optional[int] = None) -> dict:\n    \"\"\"\n    Retrieve order receipts for a seller's shop.\n\n    Args:\n        shop_id (int): Unique identifier of the Etsy shop.\n        min_created (int) [Optional]: Minimum creation timestamp (Unix epoch seconds).\n        max_created (int) [Optional]: Maximum creation timestamp (Unix epoch seconds).\n\n    Returns:\n        count (int): Total number of receipts matching criteria.\n        results (list): Array of order receipt objects.\n    \"\"\"\n    try:\n        if shop_id not in server.shops:\n            raise ValueError(f\"Shop {shop_id} not found\")\n        return server.get_receipts(shop_id, min_created, max_created)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n```\n",
+      "timestamp": "2026-03-05T19:48:06.843115",
+      "revision_number": 2
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Single shop with one active listing - tests basic search and retrieval",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "listings": {
+          "1001": {
+            "listing_id": 1001,
+            "title": "Handmade Ceramic Mug",
+            "description": "Beautiful handcrafted ceramic mug with blue glaze",
+            "price": {
+              "amount": 2500,
+              "currency": "USD",
+              "divisor": 100
+            },
+            "quantity": 10,
+            "shop": {
+              "shop_id": 5001,
+              "shop_name": "CeramicStudio",
+              "url": "https://etsy.com/shop/ceramicstudio",
+              "rating": 4.8
+            },
+            "images": [
+              {
+                "url": "https://etsy.com/images/mug1.jpg",
+                "full_height": 800,
+                "full_width": 600
+              }
+            ],
+            "tags": [
+              "ceramic",
+              "mug",
+              "handmade"
+            ],
+            "materials": [
+              "clay",
+              "glaze"
+            ],
+            "shipping_profile": {}
+          }
+        },
+        "shops": {
+          "5001": {
+            "shop_id": 5001,
+            "shop_name": "CeramicStudio",
+            "url": "https://etsy.com/shop/ceramicstudio",
+            "rating": 4.8
+          }
+        },
+        "receipts": {},
+        "shop_listings": {
+          "5001": [
+            1001
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple shops with varied listings and one completed order - tests search, shop management, and order processing",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "listings": {
+          "1001": {
+            "listing_id": 1001,
+            "title": "Vintage Leather Wallet",
+            "description": "Genuine leather wallet with card slots",
+            "price": {
+              "amount": 4500,
+              "currency": "USD",
+              "divisor": 100
+            },
+            "quantity": 5,
+            "shop": {
+              "shop_id": 5001,
+              "shop_name": "LeatherCraft",
+              "url": "https://etsy.com/shop/leathercraft",
+              "rating": 4.9
+            },
+            "images": [],
+            "tags": [
+              "leather",
+              "wallet",
+              "vintage"
+            ],
+            "materials": [
+              "leather"
+            ],
+            "shipping_profile": {
+              "domestic": "5-7 days"
+            }
+          },
+          "1002": {
+            "listing_id": 1002,
+            "title": "Silver Ring",
+            "description": "Sterling silver ring with gemstone",
+            "price": {
+              "amount": 8900,
+              "currency": "USD",
+              "divisor": 100
+            },
+            "quantity": 0,
+            "shop": {
+              "shop_id": 5002,
+              "shop_name": "JewelryBox",
+              "url": "https://etsy.com/shop/jewelrybox",
+              "rating": 5.0
+            },
+            "images": [
+              {
+                "url": "https://etsy.com/images/ring1.jpg",
+                "full_height": 1000,
+                "full_width": 1000
+              }
+            ],
+            "tags": [
+              "silver",
+              "ring",
+              "jewelry"
+            ],
+            "materials": [
+              "sterling silver",
+              "gemstone"
+            ],
+            "shipping_profile": {}
+          },
+          "1003": {
+            "listing_id": 1003,
+            "title": "Knitted Scarf",
+            "description": "Warm wool scarf in blue",
+            "price": {
+              "amount": 3200,
+              "currency": "EUR",
+              "divisor": 100
+            },
+            "quantity": 15,
+            "shop": {
+              "shop_id": 5002,
+              "shop_name": "JewelryBox",
+              "url": "https://etsy.com/shop/jewelrybox",
+              "rating": 5.0
+            },
+            "images": [],
+            "tags": [
+              "knitted",
+              "scarf",
+              "wool"
+            ],
+            "materials": [
+              "wool"
+            ],
+            "shipping_profile": {}
+          }
+        },
+        "shops": {
+          "5001": {
+            "shop_id": 5001,
+            "shop_name": "LeatherCraft",
+            "url": "https://etsy.com/shop/leathercraft",
+            "rating": 4.9
+          },
+          "5002": {
+            "shop_id": 5002,
+            "shop_name": "JewelryBox",
+            "url": "https://etsy.com/shop/jewelrybox",
+            "rating": 5.0
+          }
+        },
+        "receipts": {
+          "9001": {
+            "receipt_id": 9001,
+            "buyer_email": "buyer@example.com",
+            "name": "John Doe",
+            "grandtotal": {
+              "amount": 45.0,
+              "currency": "USD"
+            },
+            "status": "completed",
+            "created_tsz": 1709640000.0,
+            "transactions": [
+              {
+                "listing_id": 1001,
+                "quantity": 1,
+                "price": 45.0
+              }
+            ]
+          }
+        },
+        "shop_listings": {
+          "5001": [
+            1001
+          ],
+          "5002": [
+            1002,
+            1003
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Multiple shops with diverse listings, multiple orders, and varied currencies - tests full marketplace functionality",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "listings": {
+          "1001": {
+            "listing_id": 1001,
+            "title": "Handwoven Basket",
+            "description": "Natural fiber basket for storage",
+            "price": {
+              "amount": 5500,
+              "currency": "USD",
+              "divisor": 100
+            },
+            "quantity": 8,
+            "shop": {
+              "shop_id": 5001,
+              "shop_name": "WovenWonders",
+              "url": "https://etsy.com/shop/wovenwonders",
+              "rating": 4.7
+            },
+            "images": [
+              {
+                "url": "https://etsy.com/images/basket1.jpg",
+                "full_height": 600,
+                "full_width": 800
+              },
+              {
+                "url": "https://etsy.com/images/basket2.jpg",
+                "full_height": 600,
+                "full_width": 800
+              }
+            ],
+            "tags": [
+              "basket",
+              "handwoven",
+              "storage"
+            ],
+            "materials": [
+              "natural fiber",
+              "rattan"
+            ],
+            "shipping_profile": {
+              "weight": "2kg"
+            }
+          },
+          "1002": {
+            "listing_id": 1002,
+            "title": "Watercolor Painting",
+            "description": "Original landscape watercolor on paper",
+            "price": {
+              "amount": 15000,
+              "currency": "GBP",
+              "divisor": 100
+            },
+            "quantity": 1,
+            "shop": {
+              "shop_id": 5002,
+              "shop_name": "ArtGallery",
+              "url": "https://etsy.com/shop/artgallery",
+              "rating": 4.95
+            },
+            "images": [
+              {
+                "url": "https://etsy.com/images/painting1.jpg",
+                "full_height": 1200,
+                "full_width": 900
+              }
+            ],
+            "tags": [
+              "watercolor",
+              "painting",
+              "art",
+              "landscape"
+            ],
+            "materials": [
+              "watercolor",
+              "paper"
+            ],
+            "shipping_profile": {
+              "fragile": true
+            }
+          },
+          "1003": {
+            "listing_id": 1003,
+            "title": "Wooden Toy Car",
+            "description": "Handcrafted wooden toy for children",
+            "price": {
+              "amount": 2800,
+              "currency": "USD",
+              "divisor": 100
+            },
+            "quantity": 20,
+            "shop": {
+              "shop_id": 5003,
+              "shop_name": "ToyMakers",
+              "url": "https://etsy.com/shop/toymakers",
+              "rating": 4.85
+            },
+            "images": [],
+            "tags": [
+              "toy",
+              "wooden",
+              "children"
+            ],
+            "materials": [
+              "wood",
+              "non-toxic paint"
+            ],
+            "shipping_profile": {}
+          },
+          "1004": {
+            "listing_id": 1004,
+            "title": "Embroidered Pillow",
+            "description": "Cotton pillow with floral embroidery",
+            "price": {
+              "amount": 3900,
+              "currency": "EUR",
+              "divisor": 100
+            },
+            "quantity": 12,
+            "shop": {
+              "shop_id": 5003,
+              "shop_name": "ToyMakers",
+              "url": "https://etsy.com/shop/toymakers",
+              "rating": 4.85
+            },
+            "images": [
+              {
+                "url": "https://etsy.com/images/pillow1.jpg",
+                "full_height": 500,
+                "full_width": 500
+              }
+            ],
+            "tags": [
+              "pillow",
+              "embroidered",
+              "home decor"
+            ],
+            "materials": [
+              "cotton",
+              "thread"
+            ],
+            "shipping_profile": {}
+          }
+        },
+        "shops": {
+          "5001": {
+            "shop_id": 5001,
+            "shop_name": "WovenWonders",
+            "url": "https://etsy.com/shop/wovenwonders",
+            "rating": 4.7
+          },
+          "5002": {
+            "shop_id": 5002,
+            "shop_name": "ArtGallery",
+            "url": "https://etsy.com/shop/artgallery",
+            "rating": 4.95
+          },
+          "5003": {
+            "shop_id": 5003,
+            "shop_name": "ToyMakers",
+            "url": "https://etsy.com/shop/toymakers",
+            "rating": 4.85
+          }
+        },
+        "receipts": {
+          "9001": {
+            "receipt_id": 9001,
+            "buyer_email": "alice@example.com",
+            "name": "Alice Smith",
+            "grandtotal": {
+              "amount": 55.0,
+              "currency": "USD"
+            },
+            "status": "shipped",
+            "created_tsz": 1709550000.0,
+            "transactions": [
+              {
+                "listing_id": 1001,
+                "quantity": 1
+              }
+            ]
+          },
+          "9002": {
+            "receipt_id": 9002,
+            "buyer_email": "bob@example.com",
+            "name": "Bob Johnson",
+            "grandtotal": {
+              "amount": 150.0,
+              "currency": "GBP"
+            },
+            "status": "completed",
+            "created_tsz": 1709600000.0,
+            "transactions": [
+              {
+                "listing_id": 1002,
+                "quantity": 1
+              }
+            ]
+          }
+        },
+        "shop_listings": {
+          "5001": [
+            1001
+          ],
+          "5002": [
+            1002
+          ],
+          "5003": [
+            1003,
+            1004
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty marketplace - tests handling of no data",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "listings": {},
+        "shops": {},
+        "receipts": {},
+        "shop_listings": {}
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 1,
+      "failed_scenarios": 3,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Tool execution error",
+              "location": "search_listings",
+              "details": "'ListingDetails' object has no attribute 'url'",
+              "expected_vs_actual": "Expected search_listings to return filtered results, but got AttributeError",
+              "root_cause": "The search_listings implementation is trying to access a 'url' attribute on ListingDetails objects that doesn't exist. This suggests the internal server implementation has a bug where it's treating ListingDetails as if it has an URL field when it doesn't.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_listings",
+                "passed": false,
+                "error": "Error executing tool search_listings: 'ListingDetails' object has no attribute 'url'"
+              },
+              {
+                "tool_name": "get_listing_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_listing",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_shop_listings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_receipts",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Tool execution error",
+              "location": "search_listings",
+              "details": "'ListingDetails' object has no attribute 'url'",
+              "expected_vs_actual": "Expected search_listings to return results but got AttributeError",
+              "root_cause": "The search_listings implementation is trying to access a 'url' attribute on ListingDetails objects that doesn't exist. This suggests the server implementation has a bug where it's expecting a URL field that's not present in the listing data structure.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_listings",
+                "passed": false,
+                "error": "Error executing tool search_listings: 'ListingDetails' object has no attribute 'url'"
+              },
+              {
+                "tool_name": "get_listing_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_listing",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_shop_listings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_receipts",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Tool execution error",
+              "location": "search_listings",
+              "details": "'ListingDetails' object has no attribute 'url'",
+              "expected_vs_actual": "Expected search_listings to return matching listings, but got AttributeError",
+              "root_cause": "The search_listings method is trying to access a 'url' attribute on ListingDetails objects that doesn't exist. This suggests the internal implementation references a field that wasn't properly defined in the ListingDetails model.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_listings",
+                "passed": false,
+                "error": "Error executing tool search_listings: 'ListingDetails' object has no attribute 'url'"
+              },
+              {
+                "tool_name": "get_listing_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_listing",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_shop_listings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_receipts",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_listings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_listing_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_listing",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_shop_listings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_receipts",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 1,
+      "failed_scenarios": 3,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Tool execution error",
+              "location": "search_listings",
+              "details": "'ListingDetails' object has no attribute 'url'",
+              "expected_vs_actual": "Expected search_listings to return results matching keywords, but it failed with attribute error",
+              "root_cause": "The search_listings tool is trying to access a 'url' attribute on ListingDetails objects that doesn't exist. This suggests the server implementation has a bug where it's expecting a different data structure than what's actually stored.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_listings",
+                "passed": false,
+                "error": "Error executing tool search_listings: 'ListingDetails' object has no attribute 'url'"
+              },
+              {
+                "tool_name": "get_listing_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_listing",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_shop_listings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_receipts",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Tool execution error",
+              "location": "search_listings",
+              "details": "AttributeError: 'ListingDetails' object has no attribute 'url'",
+              "expected_vs_actual": "Expected search_listings to return filtered results, but it failed with an attribute error",
+              "root_cause": "The search_listings implementation is trying to access a 'url' attribute on ListingDetails objects that doesn't exist. This suggests the server implementation has a bug where it's expecting a different data structure than what's actually stored.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_listings",
+                "passed": false,
+                "error": "Error executing tool search_listings: 'ListingDetails' object has no attribute 'url'"
+              },
+              {
+                "tool_name": "get_listing_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_listing",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_shop_listings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_receipts",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Tool execution error",
+              "location": "search_listings",
+              "details": "'ListingDetails' object has no attribute 'url'",
+              "expected_vs_actual": "Expected search to work with valid keywords, but got AttributeError",
+              "root_cause": "The search_listings implementation is trying to access a 'url' attribute on ListingDetails objects that doesn't exist in the data structure",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_listings",
+                "passed": false,
+                "error": "Error executing tool search_listings: 'ListingDetails' object has no attribute 'url'"
+              },
+              {
+                "tool_name": "get_listing_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_listing",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_shop_listings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_receipts",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_listings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_listing_details",
+                "passed": true,
+                "error": "Listing 123 not found"
+              },
+              {
+                "tool_name": "create_listing",
+                "passed": true,
+                "error": "Shop 1 not found"
+              },
+              {
+                "tool_name": "get_shop_listings",
+                "passed": true,
+                "error": "Shop 1 not found"
+              },
+              {
+                "tool_name": "get_receipts",
+                "passed": true,
+                "error": "Shop 1 not found"
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_001",
+        "scenario_002",
+        "scenario_003"
+      ],
+      "aggregated_errors": {
+        "total_failed": 3,
+        "scenario_ids": [
+          "scenario_001",
+          "scenario_002",
+          "scenario_003"
+        ],
+        "error_categories": {
+          "critical": [],
+          "high": [],
+          "medium": [],
+          "low": [
+            {
+              "scenario_id": "scenario_001",
+              "type": "Tool execution error",
+              "location": "search_listings",
+              "details": "'ListingDetails' object has no attribute 'url'",
+              "root_cause": "The search_listings implementation is trying to access a 'url' attribute on ListingDetails objects that doesn't exist. This suggests the internal server implementation has a bug where it's treating ListingDetails as if it has an URL field when it doesn't.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_002",
+              "type": "Tool execution error",
+              "location": "search_listings",
+              "details": "'ListingDetails' object has no attribute 'url'",
+              "root_cause": "The search_listings implementation is trying to access a 'url' attribute on ListingDetails objects that doesn't exist. This suggests the server implementation has a bug where it's expecting a URL field that's not present in the listing data structure.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "Tool execution error",
+              "location": "search_listings",
+              "details": "'ListingDetails' object has no attribute 'url'",
+              "root_cause": "The search_listings method is trying to access a 'url' attribute on ListingDetails objects that doesn't exist. This suggests the internal implementation references a field that wasn't properly defined in the ListingDetails model.",
+              "expected_error": false
+            }
+          ]
+        },
+        "error_patterns": [
+          {
+            "type": "Tool execution error",
+            "location": "search_listings",
+            "count": 3,
+            "scenario_ids": [
+              "scenario_001",
+              "scenario_002",
+              "scenario_003"
+            ]
+          }
+        ],
+        "severity_summary": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 3
+        }
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 1,
+        "failed_scenarios": 3,
+        "all_passed": false,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Tool execution error",
+                "location": "search_listings",
+                "details": "Error executing tool search_listings: 'ListingDetails' object has no attribute 'url'",
+                "expected_vs_actual": "Expected search_listings to return results for valid search queries, but it failed with attribute error",
+                "root_cause": "The search_listings implementation is trying to access a 'url' attribute on ListingDetails objects that doesn't exist. This suggests the server-side implementation has a bug where it's expecting a different data structure than what's actually stored.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "search_listings",
+                  "passed": false,
+                  "error": "Error executing tool search_listings: 'ListingDetails' object has no attribute 'url'"
+                },
+                {
+                  "tool_name": "get_listing_details",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "create_listing",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_shop_listings",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_receipts",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "simple",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Tool execution error",
+                "location": "search_listings",
+                "details": "'ListingDetails' object has no attribute 'url'",
+                "expected_vs_actual": "Expected search_listings to return search results, but it failed with an AttributeError",
+                "root_cause": "The search_listings method in the server implementation is trying to access a 'url' attribute on ListingDetails objects that doesn't exist. This suggests the ListingDetails class is missing the 'url' property or the search implementation is incorrectly referencing it.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "search_listings",
+                  "passed": false,
+                  "error": "Error executing tool search_listings: 'ListingDetails' object has no attribute 'url'"
+                },
+                {
+                  "tool_name": "get_listing_details",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "create_listing",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_shop_listings",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_receipts",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "medium",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Tool execution error",
+                "location": "search_listings",
+                "details": "Error executing tool search_listings: 'ListingDetails' object has no attribute 'url'",
+                "expected_vs_actual": "Expected search_listings to return search results, but got AttributeError about missing 'url' attribute on ListingDetails object",
+                "root_cause": "The search_listings implementation is trying to access a 'url' attribute on ListingDetails objects that doesn't exist. This suggests the internal server implementation has a bug where it's trying to access listing URLs incorrectly.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": ""
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "search_listings",
+                  "passed": false,
+                  "error": "Error executing tool search_listings: 'ListingDetails' object has no attribute 'url'"
+                },
+                {
+                  "tool_name": "get_listing_details",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "create_listing",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "get_shop_listings",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "get_receipts",
+                  "passed": true,
+                  "error": ""
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": ""
+              }
+            },
+            "complexity_level": "complex",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "search_listings",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_listing_details",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "create_listing",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_shop_listings",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_receipts",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "boundary",
+            "execution_time": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "revision_number": 2,
+      "failed_scenario_ids": [
+        "scenario_001",
+        "scenario_002",
+        "scenario_003"
+      ],
+      "aggregated_errors": {
+        "total_failed": 3,
+        "scenario_ids": [
+          "scenario_001",
+          "scenario_002",
+          "scenario_003"
+        ],
+        "error_categories": {
+          "critical": [],
+          "high": [],
+          "medium": [],
+          "low": [
+            {
+              "scenario_id": "scenario_001",
+              "type": "Tool execution error",
+              "location": "search_listings",
+              "details": "Error executing tool search_listings: 'ListingDetails' object has no attribute 'url'",
+              "root_cause": "The search_listings implementation is trying to access a 'url' attribute on ListingDetails objects that doesn't exist. This suggests the server-side implementation has a bug where it's expecting a different data structure than what's actually stored.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_002",
+              "type": "Tool execution error",
+              "location": "search_listings",
+              "details": "'ListingDetails' object has no attribute 'url'",
+              "root_cause": "The search_listings method in the server implementation is trying to access a 'url' attribute on ListingDetails objects that doesn't exist. This suggests the ListingDetails class is missing the 'url' property or the search implementation is incorrectly referencing it.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "Tool execution error",
+              "location": "search_listings",
+              "details": "Error executing tool search_listings: 'ListingDetails' object has no attribute 'url'",
+              "root_cause": "The search_listings implementation is trying to access a 'url' attribute on ListingDetails objects that doesn't exist. This suggests the internal server implementation has a bug where it's trying to access listing URLs incorrectly.",
+              "expected_error": false
+            }
+          ]
+        },
+        "error_patterns": [
+          {
+            "type": "Tool execution error",
+            "location": "search_listings",
+            "count": 3,
+            "scenario_ids": [
+              "scenario_001",
+              "scenario_002",
+              "scenario_003"
+            ]
+          }
+        ],
+        "severity_summary": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 3
+        }
+      },
+      "revised_code_version": 2,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 1,
+        "failed_scenarios": 3,
+        "all_passed": false,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Tool execution error",
+                "location": "search_listings",
+                "details": "'ListingDetails' object has no attribute 'url'",
+                "expected_vs_actual": "Expected search_listings to return results matching keywords, but it failed with attribute error",
+                "root_cause": "The search_listings tool is trying to access a 'url' attribute on ListingDetails objects that doesn't exist. This suggests the server implementation has a bug where it's expecting a different data structure than what's actually stored.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "search_listings",
+                  "passed": false,
+                  "error": "Error executing tool search_listings: 'ListingDetails' object has no attribute 'url'"
+                },
+                {
+                  "tool_name": "get_listing_details",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "create_listing",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_shop_listings",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_receipts",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "simple",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Tool execution error",
+                "location": "search_listings",
+                "details": "AttributeError: 'ListingDetails' object has no attribute 'url'",
+                "expected_vs_actual": "Expected search_listings to return filtered results, but it failed with an attribute error",
+                "root_cause": "The search_listings implementation is trying to access a 'url' attribute on ListingDetails objects that doesn't exist. This suggests the server implementation has a bug where it's expecting a different data structure than what's actually stored.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "search_listings",
+                  "passed": false,
+                  "error": "Error executing tool search_listings: 'ListingDetails' object has no attribute 'url'"
+                },
+                {
+                  "tool_name": "get_listing_details",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "create_listing",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_shop_listings",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_receipts",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "medium",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Tool execution error",
+                "location": "search_listings",
+                "details": "'ListingDetails' object has no attribute 'url'",
+                "expected_vs_actual": "Expected search to work with valid keywords, but got AttributeError",
+                "root_cause": "The search_listings implementation is trying to access a 'url' attribute on ListingDetails objects that doesn't exist in the data structure",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "search_listings",
+                  "passed": false,
+                  "error": "Error executing tool search_listings: 'ListingDetails' object has no attribute 'url'"
+                },
+                {
+                  "tool_name": "get_listing_details",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "create_listing",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_shop_listings",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_receipts",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "complex",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "search_listings",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_listing_details",
+                  "passed": true,
+                  "error": "Listing 123 not found"
+                },
+                {
+                  "tool_name": "create_listing",
+                  "passed": true,
+                  "error": "Shop 1 not found"
+                },
+                {
+                  "tool_name": "get_shop_listings",
+                  "passed": true,
+                  "error": "Shop 1 not found"
+                },
+                {
+                  "tool_name": "get_receipts",
+                  "passed": true,
+                  "error": "Shop 1 not found"
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "boundary",
+            "execution_time": 0.0
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 2,
+    "total_time": 0.0,
+    "success": false,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/EtsyServer.py"
+  }
+}

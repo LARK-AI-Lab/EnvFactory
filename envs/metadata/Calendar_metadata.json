@@ -1,0 +1,347 @@
+{
+  "class_name": "Calendar",
+  "description": "Provides tools to interact with calendar data, including listing calendars, searching events within time ranges, creating new events, updating existing events, and deleting events. Useful for building scheduling assistants, reminder systems, and calendar management applications.",
+  "tools": [
+    {
+      "name": "list_calendars",
+      "description": "Retrieves a list of all available calendars. Returns an array of calendar objects containing identifiers, names, descriptions, timezones, and primary status flags.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "calendar_id": {
+              "type": "string",
+              "description": "Unique identifier for the calendar, used to reference this calendar in subsequent API calls."
+            },
+            "calendar_name": {
+              "type": "string",
+              "description": "Display name of the calendar, providing a human-readable label for calendar selection."
+            },
+            "description": {
+              "type": "string",
+              "description": "Descriptive text explaining the purpose or contents of the calendar."
+            },
+            "timezone": {
+              "type": "string",
+              "description": "Default timezone associated with the calendar, specified as a timezone identifier string."
+            },
+            "is_primary": {
+              "type": "boolean",
+              "description": "Boolean flag indicating whether this is the user's primary or default calendar."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "list_events",
+      "description": "Retrieves a list of calendar events for a specified calendar and time range. Filters events based on optional date boundaries and result limits. Returns an array of event objects containing identifiers, summaries, start/end times, descriptions, locations, and calendar references.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "calendar_id": {
+            "type": "string",
+            "description": "The unique identifier of the calendar to query for events. If not provided, the system's default calendar is used."
+          },
+          "time_min": {
+            "type": "string",
+            "description": "The start time boundary for event filtering, expressed as an ISO 8601 timestamp. Only events occurring at or after this time are included in the results. Defaults to the current time if omitted."
+          },
+          "time_max": {
+            "type": "string",
+            "description": "The end time boundary for event filtering, expressed as an ISO 8601 timestamp. Only events occurring at or before this time are included. If omitted, no upper time limit is applied."
+          },
+          "max_results": {
+            "type": "integer",
+            "description": "Maximum number of events to return in the response, used to limit result set size and control pagination. If not specified, the server default limit applies."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "event_id": {
+              "type": "string",
+              "description": "Unique identifier of the event within its calendar."
+            },
+            "summary": {
+              "type": "string",
+              "description": "Title or brief description of the event, serving as the primary display name."
+            },
+            "start_time": {
+              "type": "string",
+              "description": "Scheduled start time of the event, expressed as an ISO 8601 timestamp."
+            },
+            "end_time": {
+              "type": "string",
+              "description": "Scheduled end time of the event, expressed as an ISO 8601 timestamp."
+            },
+            "description": {
+              "type": "string",
+              "description": "Detailed notes or description associated with the event."
+            },
+            "location": {
+              "type": "string",
+              "description": "Physical or virtual location where the event occurs."
+            },
+            "calendar_id": {
+              "type": "string",
+              "description": "Identifier of the calendar containing this event, linking the event to its parent calendar."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "search_events",
+      "description": "Searches calendar events by text query across event titles, descriptions, and locations. Optionally filters by calendar and time range. Returns an array of matching event objects.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The text search term used to match against event titles, descriptions, and locations. This is the primary filter for finding relevant events."
+          },
+          "calendar_id": {
+            "type": "string",
+            "description": "The unique identifier of the calendar to search within. If not provided, the search spans all available calendars."
+          },
+          "time_min": {
+            "type": "string",
+            "description": "The start time boundary for the search window, expressed as an ISO 8601 timestamp. Restricts results to events starting at or after this time."
+          },
+          "time_max": {
+            "type": "string",
+            "description": "The end time boundary for the search window, expressed as an ISO 8601 timestamp. Restricts results to events starting at or before this time."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "output_schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "event_id": {
+              "type": "string",
+              "description": "Unique identifier of the event within its calendar."
+            },
+            "summary": {
+              "type": "string",
+              "description": "Title or brief description of the event, serving as the primary display name."
+            },
+            "start_time": {
+              "type": "string",
+              "description": "Scheduled start time of the event, expressed as an ISO 8601 timestamp."
+            },
+            "end_time": {
+              "type": "string",
+              "description": "Scheduled end time of the event, expressed as an ISO 8601 timestamp."
+            },
+            "description": {
+              "type": "string",
+              "description": "Detailed notes or description associated with the event."
+            },
+            "location": {
+              "type": "string",
+              "description": "Physical or virtual location where the event occurs."
+            },
+            "calendar_id": {
+              "type": "string",
+              "description": "Identifier of the calendar containing this event, linking the event to its parent calendar."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "create_event",
+      "description": "Creates a new calendar event with specified timing and details. Returns the created event object including its assigned identifier and all configured properties.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "string",
+            "description": "The title or brief summary of the event, displayed as the main identifier in calendar views."
+          },
+          "start_time": {
+            "type": "string",
+            "description": "The scheduled start time of the event, expressed as an ISO 8601 timestamp. Defines when the event begins."
+          },
+          "end_time": {
+            "type": "string",
+            "description": "The scheduled end time of the event, expressed as an ISO 8601 timestamp. Defines when the event concludes."
+          },
+          "calendar_id": {
+            "type": "string",
+            "description": "The unique identifier of the calendar where the event will be created. If not specified, the event is added to the default calendar."
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description or notes about the event, providing additional context beyond the summary."
+          },
+          "location": {
+            "type": "string",
+            "description": "Physical or virtual location where the event takes place, such as an address, room name, or video conference link."
+          },
+          "attendees": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of attendee email addresses to invite to the event. Each email string represents one participant."
+          },
+          "timezone": {
+            "type": "string",
+            "description": "The timezone applied to the event timing, specified as a timezone identifier string. Defaults to UTC if not provided."
+          }
+        },
+        "required": [
+          "summary",
+          "start_time",
+          "end_time"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "description": "Unique identifier of the event within its calendar."
+          },
+          "summary": {
+            "type": "string",
+            "description": "Title or brief description of the created event."
+          },
+          "start_time": {
+            "type": "string",
+            "description": "Scheduled start time of the created event, expressed as an ISO 8601 timestamp."
+          },
+          "end_time": {
+            "type": "string",
+            "description": "Scheduled end time of the created event, expressed as an ISO 8601 timestamp."
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed notes or description associated with the created event."
+          },
+          "location": {
+            "type": "string",
+            "description": "Physical or virtual location where the created event occurs."
+          },
+          "calendar_id": {
+            "type": "string",
+            "description": "Identifier of the calendar containing the created event."
+          }
+        }
+      }
+    },
+    {
+      "name": "update_event",
+      "description": "Updates an existing calendar event by its identifier. Modifies specified fields while preserving unchanged properties. Returns the updated event object with current state.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "description": "Unique identifier of the event within its calendar."
+          },
+          "summary": {
+            "type": "string",
+            "description": "New title for the event, replacing the existing summary if provided."
+          },
+          "start_time": {
+            "type": "string",
+            "description": "New start time for the event, expressed as an ISO 8601 timestamp. Updates the event's scheduled beginning."
+          },
+          "end_time": {
+            "type": "string",
+            "description": "New end time for the event, expressed as an ISO 8601 timestamp. Updates the event's scheduled conclusion."
+          },
+          "description": {
+            "type": "string",
+            "description": "New description for the event, replacing existing detailed notes if provided."
+          },
+          "location": {
+            "type": "string",
+            "description": "New location for the event, updating the physical or virtual meeting place."
+          },
+          "attendees": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "New list of attendee email addresses, completely replacing the previous attendee list if provided."
+          }
+        },
+        "required": [
+          "event_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "description": "Unique identifier of the event within its calendar."
+          },
+          "summary": {
+            "type": "string",
+            "description": "Title or brief description of the updated event."
+          },
+          "start_time": {
+            "type": "string",
+            "description": "Scheduled start time of the updated event, expressed as an ISO 8601 timestamp."
+          },
+          "end_time": {
+            "type": "string",
+            "description": "Scheduled end time of the updated event, expressed as an ISO 8601 timestamp."
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed notes or description associated with the updated event."
+          },
+          "location": {
+            "type": "string",
+            "description": "Physical or virtual location where the updated event occurs."
+          },
+          "calendar_id": {
+            "type": "string",
+            "description": "Identifier of the calendar containing the updated event."
+          }
+        }
+      }
+    },
+    {
+      "name": "delete_event",
+      "description": "Deletes a calendar event by its identifier. Permanently removes the event from the calendar. This operation cannot be undone.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "description": "Unique identifier of the event within its calendar."
+          }
+        },
+        "required": [
+          "event_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}

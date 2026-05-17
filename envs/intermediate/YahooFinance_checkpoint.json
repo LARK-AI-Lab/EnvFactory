@@ -1,0 +1,4248 @@
+{
+  "metadata": {
+    "class_name": "YahooFinance",
+    "metadata_path": "envs\\metadata\\YahooFinance_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-03T18:17:05.062553",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "YahooFinance",
+    "description": "A financial data service providing real-time and historical stock prices, financial statements, dividends, earnings information, news, analyst recommendations, and options data from Yahoo Finance.",
+    "tools": [
+      {
+        "name": "get_current_stock_price",
+        "description": "Retrieve the current real-time market price (last traded price) for a given stock symbol.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+            }
+          },
+          "required": [
+            "symbol"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "current_price": {
+              "type": "string",
+              "description": "The current market price as a formatted string representing the most recent transaction price on the exchange (e.g., '150.25' for $150.25)."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_stock_price_by_date",
+        "description": "Retrieve the opening and closing stock prices for a given stock symbol on a specific trading date.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+            },
+            "date": {
+              "type": "string",
+              "description": "The trading date in YYYY-MM-DD format (e.g., '2024-01-15'). Must be a valid trading day, excluding weekends and market holidays."
+            }
+          },
+          "required": [
+            "symbol",
+            "date"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": "string",
+              "description": "The trading date in YYYY-MM-DD format for which price data is returned."
+            },
+            "open": {
+              "type": "number",
+              "description": "The opening price (first trade price of the day), indicating market sentiment at the start of trading."
+            },
+            "close": {
+              "type": "number",
+              "description": "The closing price (last trade price of the day), commonly used as a reference point for daily price movements."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_stock_price_date_range",
+        "description": "Retrieve historical daily closing prices for a given stock symbol over a specified date range.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+            },
+            "start_date": {
+              "type": "string",
+              "description": "The start date (inclusive) in YYYY-MM-DD format for the historical price range (e.g., '2024-01-01')."
+            },
+            "end_date": {
+              "type": "string",
+              "description": "The end date (inclusive) in YYYY-MM-DD format for the historical price range (e.g., '2024-12-31')."
+            }
+          },
+          "required": [
+            "symbol",
+            "start_date",
+            "end_date"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "closing_prices": {
+              "type": "object",
+              "description": "A dictionary mapping trading dates (YYYY-MM-DD) to closing prices. Only includes trading days, excluding weekends and market holidays.",
+              "additionalProperties": {
+                "type": "number",
+                "description": "The closing price for the given trading date."
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_historical_stock_prices",
+        "description": "Retrieve comprehensive historical OHLC (open, high, low, close) price data and volume for a given stock symbol with flexible period and interval options.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+            },
+            "period": {
+              "type": "string",
+              "description": "Time period for historical data. Options: '1d', '5d' (trading days), '1mo', '3mo', '6mo' (months), '1y', '2y', '5y', '10y' (years), 'ytd' (year to date), 'max' (maximum available). Default: '1mo'."
+            },
+            "interval": {
+              "type": "string",
+              "description": "Data sampling interval. Options: '1d' (daily), '5d' (every 5 days), '1wk' (weekly), '1mo' (monthly), '3mo' (quarterly). Default: '1d'."
+            }
+          },
+          "required": [
+            "symbol"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "price_history": {
+              "type": "array",
+              "description": "An array of historical price data objects for each time interval within the specified period.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "description": "The date of the price data point in YYYY-MM-DD format."
+                  },
+                  "open": {
+                    "type": "number",
+                    "description": "The opening price for the interval."
+                  },
+                  "high": {
+                    "type": "number",
+                    "description": "The highest price reached during the interval."
+                  },
+                  "low": {
+                    "type": "number",
+                    "description": "The lowest price reached during the interval."
+                  },
+                  "close": {
+                    "type": "number",
+                    "description": "The closing price for the interval."
+                  },
+                  "volume": {
+                    "type": "integer",
+                    "description": "The total number of shares traded during the interval."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_dividends",
+        "description": "Retrieve dividend payment history for a given stock symbol, optionally filtered by date range.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+            },
+            "start_date": {
+              "type": "string",
+              "description": "Start date (inclusive) in YYYY-MM-DD format for filtering dividend history. If omitted, returns all available historical dividends."
+            },
+            "end_date": {
+              "type": "string",
+              "description": "End date (inclusive) in YYYY-MM-DD format for filtering dividend history. If omitted, returns dividends up to the most recent payment."
+            }
+          },
+          "required": [
+            "symbol"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "dividends": {
+              "type": "object",
+              "description": "A dictionary mapping dividend payment dates (ex-dividend dates) to dividend amounts per share in the stock's currency.",
+              "additionalProperties": {
+                "type": "number",
+                "description": "The dividend amount per share paid on the given date."
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_income_statement",
+        "description": "Retrieve the income statement (profit and loss statement) for a given stock symbol, showing revenues, expenses, and profitability metrics.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+            },
+            "freq": {
+              "type": "string",
+              "description": "Reporting frequency for financial statements. Options: 'yearly' (annual fiscal year), 'quarterly' (Q1-Q4), 'trailing' (trailing twelve months/TTM). Default: 'yearly'."
+            }
+          },
+          "required": [
+            "symbol"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "income_statements": {
+              "type": "object",
+              "description": "Income statement data organized by reporting period, containing financial metrics such as totalRevenue, costOfRevenue, grossProfit, operatingIncome, netIncome, and earningsPerShare.",
+              "additionalProperties": {
+                "type": "object",
+                "description": "Financial metrics for a specific reporting period."
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_cashflow",
+        "description": "Retrieve the cash flow statement for a given stock symbol, showing cash movements through operating, investing, and financing activities.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+            },
+            "freq": {
+              "type": "string",
+              "description": "Reporting frequency for financial statements. Options: 'yearly' (annual fiscal year), 'quarterly' (Q1-Q4), 'trailing' (trailing twelve months/TTM). Default: 'yearly'."
+            }
+          },
+          "required": [
+            "symbol"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "cashflow_statements": {
+              "type": "object",
+              "description": "Cash flow statement data organized by reporting period, containing metrics such as operatingCashFlow, capitalExpenditure, freeCashFlow, and netBorrowings.",
+              "additionalProperties": {
+                "type": "object",
+                "description": "Cash flow metrics for a specific reporting period."
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_earning_dates",
+        "description": "Retrieve historical and upcoming earnings announcement dates for a given stock symbol, including actual and estimated EPS data.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of earnings dates to return, combining both past and upcoming dates. Default: 12."
+            }
+          },
+          "required": [
+            "symbol"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "earnings_dates": {
+              "type": "array",
+              "description": "An array of earnings announcement records including both historical results and future estimates.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "description": "The earnings announcement date in YYYY-MM-DD format."
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "The type of earnings report: 'quarterly' or 'annual'."
+                  },
+                  "actualEPS": {
+                    "type": "number",
+                    "description": "The actual reported earnings per share. Null for upcoming earnings dates."
+                  },
+                  "estimatedEPS": {
+                    "type": "number",
+                    "description": "The analyst consensus estimated earnings per share."
+                  },
+                  "surprise": {
+                    "type": "number",
+                    "description": "The difference between actual and estimated EPS. Null for upcoming earnings dates."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_news",
+        "description": "Retrieve news articles and press releases related to a given stock symbol, optionally filtered by date range.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+            },
+            "start_date": {
+              "type": "string",
+              "description": "Start date (inclusive) in YYYY-MM-DD format for filtering news articles. If omitted, returns the most recent news without a lower date bound."
+            },
+            "end_date": {
+              "type": "string",
+              "description": "End date (inclusive) in YYYY-MM-DD format for filtering news articles. If omitted, returns news up to the current date."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of news articles to return. Default: 50."
+            }
+          },
+          "required": [
+            "symbol"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "news_articles": {
+              "type": "array",
+              "description": "An array of news items sorted by relevance and recency.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "The headline of the news article."
+                  },
+                  "link": {
+                    "type": "string",
+                    "description": "The URL to the full news article."
+                  },
+                  "publisher": {
+                    "type": "string",
+                    "description": "The name of the news source or publisher."
+                  },
+                  "publishDate": {
+                    "type": "string",
+                    "description": "The publication date in YYYY-MM-DD format."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "A brief summary or excerpt of the news article content."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_recommendations",
+        "description": "Retrieve analyst recommendations and price targets for a given stock symbol from financial research firms and investment banks.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+            }
+          },
+          "required": [
+            "symbol"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "recommendations": {
+              "type": "array",
+              "description": "An array of analyst recommendation records from various financial institutions.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "firm": {
+                    "type": "string",
+                    "description": "The name of the financial research firm or investment bank issuing the recommendation."
+                  },
+                  "rating": {
+                    "type": "string",
+                    "description": "The analyst rating. Common values: 'Strong Buy', 'Buy', 'Hold', 'Underperform', 'Sell'."
+                  },
+                  "priceTarget": {
+                    "type": "number",
+                    "description": "The analyst's expected future stock price. May be null if no price target is provided."
+                  },
+                  "date": {
+                    "type": "string",
+                    "description": "The date the recommendation was issued in YYYY-MM-DD format."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_option_expiration_dates",
+        "description": "Retrieve all available options expiration dates for a given stock symbol, including weekly and monthly expirations.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+            }
+          },
+          "required": [
+            "symbol"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "expiration_dates": {
+              "type": "array",
+              "description": "An array of available options expiration dates in YYYY-MM-DD format, sorted chronologically. Includes both weekly and monthly expirations.",
+              "items": {
+                "type": "string",
+                "description": "An options expiration date in YYYY-MM-DD format."
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_option_chain",
+        "description": "Retrieve the complete options chain (all call and put options) for a specific expiration date, including strike prices, bid/ask prices, volume, open interest, and implied volatility.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "Stock symbol (ticker) in Yahoo Finance format (e.g., 'AAPL' for Apple Inc., 'GOOGL' for Alphabet Inc., 'MSFT' for Microsoft Corporation)."
+            },
+            "expiration_date": {
+              "type": "string",
+              "description": "Options expiration date in YYYY-MM-DD format. Must be a valid expiration date as returned by get_option_expiration_dates()."
+            }
+          },
+          "required": [
+            "symbol",
+            "expiration_date"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "underlyingPrice": {
+              "type": "number",
+              "description": "The current market price of the underlying stock."
+            },
+            "calls": {
+              "type": "array",
+              "description": "An array of call option contracts (right to buy the stock) at various strike prices.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "strike": {
+                    "type": "number",
+                    "description": "The strike price at which the option can be exercised."
+                  },
+                  "bid": {
+                    "type": "number",
+                    "description": "The highest price buyers are currently willing to pay for the option."
+                  },
+                  "ask": {
+                    "type": "number",
+                    "description": "The lowest price sellers are currently willing to accept for the option."
+                  },
+                  "volume": {
+                    "type": "integer",
+                    "description": "The number of option contracts traded during the current session."
+                  },
+                  "openInterest": {
+                    "type": "integer",
+                    "description": "The total number of outstanding option contracts that have not been settled."
+                  },
+                  "impliedVolatility": {
+                    "type": "number",
+                    "description": "The market's expectation of future price volatility, derived from the option's price."
+                  }
+                }
+              }
+            },
+            "puts": {
+              "type": "array",
+              "description": "An array of put option contracts (right to sell the stock) at various strike prices.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "strike": {
+                    "type": "number",
+                    "description": "The strike price at which the option can be exercised."
+                  },
+                  "bid": {
+                    "type": "number",
+                    "description": "The highest price buyers are currently willing to pay for the option."
+                  },
+                  "ask": {
+                    "type": "number",
+                    "description": "The lowest price sellers are currently willing to accept for the option."
+                  },
+                  "volume": {
+                    "type": "integer",
+                    "description": "The number of option contracts traded during the current session."
+                  },
+                  "openInterest": {
+                    "type": "integer",
+                    "description": "The total number of outstanding option contracts that have not been settled."
+                  },
+                  "impliedVolatility": {
+                    "type": "number",
+                    "description": "The market's expectation of future price volatility, derived from the option's price."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass StockPrice(BaseModel):\n    \"\"\"Represents current stock price data.\"\"\"\n    symbol: str = Field(..., description=\"Stock symbol\")\n    current_price: str = Field(..., description=\"Current market price as formatted string\")\n\nclass HistoricalPrice(BaseModel):\n    \"\"\"Represents historical OHLC price data.\"\"\"\n    date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Date in YYYY-MM-DD format\")\n    open: float = Field(..., description=\"Opening price\")\n    high: float = Field(..., description=\"Highest price\")\n    low: float = Field(..., description=\"Lowest price\")\n    close: float = Field(..., description=\"Closing price\")\n    volume: int = Field(..., ge=0, description=\"Trading volume\")\n\nclass DividendData(BaseModel):\n    \"\"\"Represents dividend payment data.\"\"\"\n    date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Ex-dividend date\")\n    amount: float = Field(..., ge=0, description=\"Dividend amount per share\")\n\nclass EarningsData(BaseModel):\n    \"\"\"Represents earnings announcement data.\"\"\"\n    date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Earnings date\")\n    type: str = Field(..., description=\"Earnings type: quarterly or annual\")\n    actualEPS: Optional[float] = Field(None, description=\"Actual earnings per share\")\n    estimatedEPS: Optional[float] = Field(None, description=\"Estimated earnings per share\")\n    surprise: Optional[float] = Field(None, description=\"Difference between actual and estimated EPS\")\n\nclass NewsArticle(BaseModel):\n    \"\"\"Represents a news article.\"\"\"\n    title: str = Field(..., description=\"News headline\")\n    link: str = Field(..., description=\"URL to full article\")\n    publisher: str = Field(..., description=\"News source name\")\n    publishDate: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Publication date\")\n    summary: str = Field(..., description=\"Article summary\")\n\nclass AnalystRecommendation(BaseModel):\n    \"\"\"Represents analyst recommendation data.\"\"\"\n    firm: str = Field(..., description=\"Financial research firm\")\n    rating: str = Field(..., description=\"Analyst rating\")\n    priceTarget: Optional[float] = Field(None, description=\"Price target\")\n    date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Recommendation date\")\n\nclass OptionContract(BaseModel):\n    \"\"\"Represents an options contract.\"\"\"\n    strike: float = Field(..., description=\"Strike price\")\n    bid: float = Field(..., description=\"Bid price\")\n    ask: float = Field(..., description=\"Ask price\")\n    volume: int = Field(..., ge=0, description=\"Trading volume\")\n    openInterest: int = Field(..., ge=0, description=\"Open interest\")\n    impliedVolatility: float = Field(..., description=\"Implied volatility\")\n\nclass YahooFinanceScenario(BaseModel):\n    \"\"\"Main scenario model for Yahoo Finance API.\"\"\"\n    stock_prices: Dict[str, StockPrice] = Field(default={}, description=\"Current stock prices\")\n    historical_prices: Dict[str, Dict[str, HistoricalPrice]] = Field(default={}, description=\"Historical price data by symbol\")\n    dividends: Dict[str, Dict[str, DividendData]] = Field(default={}, description=\"Dividend data by symbol\")\n    income_statements: Dict[str, Dict[str, Dict[str, Any]]] = Field(default={}, description=\"Income statement data by symbol\")\n    cashflow_statements: Dict[str, Dict[str, Dict[str, Any]]] = Field(default={}, description=\"Cash flow data by symbol\")\n    earnings_dates: Dict[str, List[EarningsData]] = Field(default={}, description=\"Earnings dates by symbol\")\n    news_articles: Dict[str, List[NewsArticle]] = Field(default={}, description=\"News articles by symbol\")\n    recommendations: Dict[str, List[AnalystRecommendation]] = Field(default={}, description=\"Analyst recommendations by symbol\")\n    option_expirations: Dict[str, List[str]] = Field(default={}, description=\"Option expiration dates by symbol\")\n    option_chains: Dict[str, Dict[str, Dict[str, List[OptionContract]]]] = Field(default={}, description=\"Option chains by symbol and expiration\")\n    market_data: Dict[str, Any] = Field(default={\n        \"market_hours\": {\"open\": \"09:30\", \"close\": \"16:00\"},\n        \"market_status\": \"open\",\n        \"reference_symbols\": [\"AAPL\", \"GOOGL\", \"MSFT\", \"TSLA\", \"AMZN\", \"META\", \"NVDA\", \"NFLX\", \"AMD\", \"INTC\"],\n        \"sectors\": {\n            \"Technology\": [\"AAPL\", \"MSFT\", \"GOOGL\", \"META\", \"NVDA\"],\n            \"Consumer Discretionary\": [\"AMZN\", \"TSLA\", \"NFLX\"],\n            \"Financials\": [\"JPM\", \"BAC\", \"WFC\"],\n            \"Healthcare\": [\"JNJ\", \"PFE\", \"UNH\"],\n            \"Energy\": [\"XOM\", \"CVX\", \"COP\"]\n        }\n    }, description=\"Market reference data\")\n\nScenario_Schema = [StockPrice, HistoricalPrice, DividendData, EarningsData, NewsArticle, AnalystRecommendation, OptionContract, YahooFinanceScenario]\n\n# Section 2: Class\nclass YahooFinanceAPI:\n    def __init__(self):\n        \"\"\"Initialize Yahoo Finance API with empty state.\"\"\"\n        self.stock_prices: Dict[str, StockPrice] = {}\n        self.historical_prices: Dict[str, Dict[str, HistoricalPrice]] = {}\n        self.dividends: Dict[str, Dict[str, DividendData]] = {}\n        self.income_statements: Dict[str, Dict[str, Dict[str, Any]]] = {}\n        self.cashflow_statements: Dict[str, Dict[str, Dict[str, Any]]] = {}\n        self.earnings_dates: Dict[str, List[EarningsData]] = {}\n        self.news_articles: Dict[str, List[NewsArticle]] = {}\n        self.recommendations: Dict[str, List[AnalystRecommendation]] = {}\n        self.option_expirations: Dict[str, List[str]] = {}\n        self.option_chains: Dict[str, Dict[str, Dict[str, List[OptionContract]]]] = {}\n        self.market_data: Dict[str, Any] = {}\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = YahooFinanceScenario(**scenario)\n        self.stock_prices = model.stock_prices\n        self.historical_prices = model.historical_prices\n        self.dividends = model.dividends\n        self.income_statements = model.income_statements\n        self.cashflow_statements = model.cashflow_statements\n        self.earnings_dates = model.earnings_dates\n        self.news_articles = model.news_articles\n        self.recommendations = model.recommendations\n        self.option_expirations = model.option_expirations\n        self.option_chains = model.option_chains\n        self.market_data = model.market_data\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"stock_prices\": {k: v.dict() for k, v in self.stock_prices.items()},\n            \"historical_prices\": {symbol: {date: price.dict() for date, price in data.items()} for symbol, data in self.historical_prices.items()},\n            \"dividends\": {symbol: {date: div.dict() for date, div in data.items()} for symbol, data in self.dividends.items()},\n            \"income_statements\": self.income_statements,\n            \"cashflow_statements\": self.cashflow_statements,\n            \"earnings_dates\": {symbol: [e.dict() for e in data] for symbol, data in self.earnings_dates.items()},\n            \"news_articles\": {symbol: [n.dict() for n in data] for symbol, data in self.news_articles.items()},\n            \"recommendations\": {symbol: [r.dict() for r in data] for symbol, data in self.recommendations.items()},\n            \"option_expirations\": self.option_expirations,\n            \"option_chains\": self.option_chains,\n            \"market_data\": self.market_data\n        }\n\n    def get_current_stock_price(self, symbol: str) -> dict:\n        \"\"\"Retrieve current stock price.\"\"\"\n        if symbol not in self.stock_prices:\n            raise ValueError(f\"Price data not found for symbol {symbol}\")\n        return {\"current_price\": self.stock_prices[symbol].current_price}\n\n    def get_stock_price_by_date(self, symbol: str, date: str) -> dict:\n        \"\"\"Retrieve stock price by date.\"\"\"\n        if symbol not in self.historical_prices or date not in self.historical_prices[symbol]:\n            raise ValueError(f\"Price data not found for {symbol} on {date}\")\n        price_data = self.historical_prices[symbol][date]\n        return {\n            \"date\": date,\n            \"open\": price_data.open,\n            \"close\": price_data.close\n        }\n\n    def get_stock_price_date_range(self, symbol: str, start_date: str, end_date: str) -> dict:\n        \"\"\"Retrieve stock prices for date range.\"\"\"\n        if symbol not in self.historical_prices:\n            raise ValueError(f\"Historical price data not found for symbol {symbol}\")\n        \n        closing_prices = {}\n        for date, price_data in self.historical_prices[symbol].items():\n            if start_date <= date <= end_date:\n                closing_prices[date] = price_data.close\n        \n        return {\"closing_prices\": closing_prices}\n\n    def get_historical_stock_prices(self, symbol: str, period: str = \"1mo\", interval: str = \"1d\") -> dict:\n        \"\"\"Retrieve historical OHLC stock prices.\"\"\"\n        if symbol not in self.historical_prices:\n            raise ValueError(f\"Historical price data not found for symbol {symbol}\")\n        \n        price_history = []\n        for date, price_data in sorted(self.historical_prices[symbol].items()):\n            price_history.append({\n                \"date\": date,\n                \"open\": price_data.open,\n                \"high\": price_data.high,\n                \"low\": price_data.low,\n                \"close\": price_data.close,\n                \"volume\": price_data.volume\n            })\n        \n        return {\"price_history\": price_history}\n\n    def get_dividends(self, symbol: str, start_date: Optional[str] = None, end_date: Optional[str] = None) -> dict:\n        \"\"\"Retrieve dividend payment history.\"\"\"\n        if symbol not in self.dividends:\n            return {\"dividends\": {}}\n        \n        dividends = {}\n        for date, div_data in self.dividends[symbol].items():\n            if (start_date is None or date >= start_date) and (end_date is None or date <= end_date):\n                dividends[date] = div_data.amount\n        \n        return {\"dividends\": dividends}\n\n    def get_income_statement(self, symbol: str, freq: str = \"yearly\") -> dict:\n        \"\"\"Retrieve income statement data.\"\"\"\n        if symbol not in self.income_statements:\n            raise ValueError(f\"Income statement data not found for symbol {symbol}\")\n        return {\"income_statements\": self.income_statements[symbol]}\n\n    def get_cashflow(self, symbol: str, freq: str = \"yearly\") -> dict:\n        \"\"\"Retrieve cash flow statement data.\"\"\"\n        if symbol not in self.cashflow_statements:\n            raise ValueError(f\"Cash flow statement data not found for symbol {symbol}\")\n        return {\"cashflow_statements\": self.cashflow_statements[symbol]}\n\n    def get_earning_dates(self, symbol: str, limit: int = 12) -> dict:\n        \"\"\"Retrieve earnings announcement dates.\"\"\"\n        if symbol not in self.earnings_dates:\n            raise ValueError(f\"Earnings data not found for symbol {symbol}\")\n        \n        earnings = self.earnings_dates[symbol][:limit]\n        return {\"earnings_dates\": [e.dict() for e in earnings]}\n\n    def get_news(self, symbol: str, start_date: Optional[str] = None, end_date: Optional[str] = None, limit: int = 50) -> dict:\n        \"\"\"Retrieve news articles.\"\"\"\n        if symbol not in self.news_articles:\n            return {\"news_articles\": []}\n        \n        articles = []\n        for article in self.news_articles[symbol]:\n            if (start_date is None or article.publishDate >= start_date) and (end_date is None or article.publishDate <= end_date):\n                articles.append(article.dict())\n                if len(articles) >= limit:\n                    break\n        \n        return {\"news_articles\": articles}\n\n    def get_recommendations(self, symbol: str) -> dict:\n        \"\"\"Retrieve analyst recommendations.\"\"\"\n        if symbol not in self.recommendations:\n            raise ValueError(f\"Recommendations data not found for symbol {symbol}\")\n        return {\"recommendations\": [r.dict() for r in self.recommendations[symbol]]}\n\n    def get_option_expiration_dates(self, symbol: str) -> dict:\n        \"\"\"Retrieve option expiration dates.\"\"\"\n        if symbol not in self.option_expirations:\n            raise ValueError(f\"Option expiration data not found for symbol {symbol}\")\n        return {\"expiration_dates\": self.option_expirations[symbol]}\n\n    def get_option_chain(self, symbol: str, expiration_date: str) -> dict:\n        \"\"\"Retrieve option chain data.\"\"\"\n        if symbol not in self.option_chains or expiration_date not in self.option_chains[symbol]:\n            raise ValueError(f\"Option chain data not found for {symbol} on {expiration_date}\")\n        \n        chain_data = self.option_chains[symbol][expiration_date]\n        return {\n            \"underlyingPrice\": chain_data.get(\"underlyingPrice\", 0),\n            \"calls\": [c.dict() for c in chain_data.get(\"calls\", [])],\n            \"puts\": [p.dict() for p in chain_data.get(\"puts\", [])]\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"YahooFinance\")\napi = YahooFinanceAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Yahoo Finance API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching YahooFinanceScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Yahoo Finance state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_current_stock_price(symbol: str) -> dict:\n    \"\"\"\n    Retrieve the current real-time market price for a given stock symbol.\n    \n    Args:\n        symbol (str): Stock symbol (ticker) in Yahoo Finance format.\n    \n    Returns:\n        current_price (str): Current market price as formatted string.\n    \"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        return api.get_current_stock_price(symbol)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_stock_price_by_date(symbol: str, date: str) -> dict:\n    \"\"\"\n    Retrieve opening and closing stock prices for a given symbol on a specific date.\n    \n    Args:\n        symbol (str): Stock symbol (ticker) in Yahoo Finance format.\n        date (str): Trading date in YYYY-MM-DD format.\n    \n    Returns:\n        date (str): Trading date.\n        open (float): Opening price.\n        close (float): Closing price.\n    \"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        if not date or not isinstance(date, str):\n            raise ValueError(\"Date must be a non-empty string\")\n        return api.get_stock_price_by_date(symbol, date)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_stock_price_date_range(symbol: str, start_date: str, end_date: str) -> dict:\n    \"\"\"\n    Retrieve historical daily closing prices for a given stock symbol over a date range.\n    \n    Args:\n        symbol (str): Stock symbol (ticker) in Yahoo Finance format.\n        start_date (str): Start date in YYYY-MM-DD format.\n        end_date (str): End date in YYYY-MM-DD format.\n    \n    Returns:\n        closing_prices (dict): Dictionary mapping dates to closing prices.\n    \"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        if not start_date or not isinstance(start_date, str):\n            raise ValueError(\"Start date must be a non-empty string\")\n        if not end_date or not isinstance(end_date, str):\n            raise ValueError(\"End date must be a non-empty string\")\n        return api.get_stock_price_date_range(symbol, start_date, end_date)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_historical_stock_prices(symbol: str, period: str = \"1mo\", interval: str = \"1d\") -> dict:\n    \"\"\"\n    Retrieve comprehensive historical OHLC price data and volume for a given stock symbol.\n    \n    Args:\n        symbol (str): Stock symbol (ticker) in Yahoo Finance format.\n        period (str): [Optional] Time period for historical data. Default: '1mo'.\n        interval (str): [Optional] Data sampling interval. Default: '1d'.\n    \n    Returns:\n        price_history (list): Array of historical price data objects.\n    \"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        return api.get_historical_stock_prices(symbol, period, interval)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_dividends(symbol: str, start_date: Optional[str] = None, end_date: Optional[str] = None) -> dict:\n    \"\"\"\n    Retrieve dividend payment history for a given stock symbol.\n    \n    Args:\n        symbol (str): Stock symbol (ticker) in Yahoo Finance format.\n        start_date (str): [Optional] Start date in YYYY-MM-DD format.\n        end_date (str): [Optional] End date in YYYY-MM-DD format.\n    \n    Returns:\n        dividends (dict): Dictionary mapping dividend dates to amounts.\n    \"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        return api.get_dividends(symbol, start_date, end_date)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_income_statement(symbol: str, freq: str = \"yearly\") -> dict:\n    \"\"\"\n    Retrieve the income statement for a given stock symbol.\n    \n    Args:\n        symbol (str): Stock symbol (ticker) in Yahoo Finance format.\n        freq (str): [Optional] Reporting frequency. Default: 'yearly'.\n    \n    Returns:\n        income_statements (dict): Income statement data organized by reporting period.\n    \"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        return api.get_income_statement(symbol, freq)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_cashflow(symbol: str, freq: str = \"yearly\") -> dict:\n    \"\"\"\n    Retrieve the cash flow statement for a given stock symbol.\n    \n    Args:\n        symbol (str): Stock symbol (ticker) in Yahoo Finance format.\n        freq (str): [Optional] Reporting frequency. Default: 'yearly'.\n    \n    Returns:\n        cashflow_statements (dict): Cash flow statement data organized by reporting period.\n    \"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        return api.get_cashflow(symbol, freq)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_earning_dates(symbol: str, limit: int = 12) -> dict:\n    \"\"\"\n    Retrieve historical and upcoming earnings announcement dates for a given stock symbol.\n    \n    Args:\n        symbol (str): Stock symbol (ticker) in Yahoo Finance format.\n        limit (int): [Optional] Maximum number of earnings dates. Default: 12.\n    \n    Returns:\n        earnings_dates (list): Array of earnings announcement records.\n    \"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        return api.get_earning_dates(symbol, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_news(symbol: str, start_date: Optional[str] = None, end_date: Optional[str] = None, limit: int = 50) -> dict:\n    \"\"\"\n    Retrieve news articles related to a given stock symbol.\n    \n    Args:\n        symbol (str): Stock symbol (ticker) in Yahoo Finance format.\n        start_date (str): [Optional] Start date in YYYY-MM-DD format.\n        end_date (str): [Optional] End date in YYYY-MM-DD format.\n        limit (int): [Optional] Maximum number of articles. Default: 50.\n    \n    Returns:\n        news_articles (list): Array of news items sorted by relevance.\n    \"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        return api.get_news(symbol, start_date, end_date, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_recommendations(symbol: str) -> dict:\n    \"\"\"\n    Retrieve analyst recommendations for a given stock symbol.\n    \n    Args:\n        symbol (str): Stock symbol (ticker) in Yahoo Finance format.\n    \n    Returns:\n        recommendations (list): Array of analyst recommendation records.\n    \"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        return api.get_recommendations(symbol)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_option_expiration_dates(symbol: str) -> dict:\n    \"\"\"\n    Retrieve all available options expiration dates for a given stock symbol.\n    \n    Args:\n        symbol (str): Stock symbol (ticker) in Yahoo Finance format.\n    \n    Returns:\n        expiration_dates (list): Array of available expiration dates.\n    \"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        return api.get_option_expiration_dates(symbol)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_option_chain(symbol: str, expiration_date: str) -> dict:\n    \"\"\"\n    Retrieve the complete options chain for a specific expiration date.\n    \n    Args:\n        symbol (str): Stock symbol (ticker) in Yahoo Finance format.\n        expiration_date (str): Options expiration date in YYYY-MM-DD format.\n    \n    Returns:\n        underlyingPrice (float): Current price of underlying stock.\n        calls (list): Array of call option contracts.\n        puts (list): Array of put option contracts.\n    \"\"\"\n    try:\n        if not symbol or not isinstance(symbol, str):\n            raise ValueError(\"Symbol must be a non-empty string\")\n        if not expiration_date or not isinstance(expiration_date, str):\n            raise ValueError(\"Expiration date must be a non-empty string\")\n        return api.get_option_chain(symbol, expiration_date)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-03T18:17:05.062553",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic stock price lookup for a single tech stock with minimal data",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "stock_prices": {
+          "AAPL": {
+            "symbol": "AAPL",
+            "current_price": "$175.43"
+          }
+        },
+        "historical_prices": {
+          "AAPL": {
+            "2024-01-15": {
+              "date": "2024-01-15",
+              "open": 174.5,
+              "high": 176.2,
+              "low": 173.8,
+              "close": 175.43,
+              "volume": 52000000
+            }
+          }
+        },
+        "dividends": {},
+        "income_statements": {},
+        "cashflow_statements": {},
+        "earnings_dates": {},
+        "news_articles": {},
+        "recommendations": {},
+        "option_expirations": {},
+        "option_chains": {},
+        "market_data": {
+          "market_hours": {
+            "open": "09:30",
+            "close": "16:00"
+          },
+          "market_status": "open",
+          "reference_symbols": [
+            "AAPL",
+            "GOOGL",
+            "MSFT",
+            "TSLA",
+            "AMZN",
+            "META",
+            "NVDA",
+            "NFLX",
+            "AMD",
+            "INTC"
+          ],
+          "sectors": {
+            "Technology": [
+              "AAPL",
+              "MSFT",
+              "GOOGL",
+              "META",
+              "NVDA"
+            ],
+            "Consumer Discretionary": [
+              "AMZN",
+              "TSLA",
+              "NFLX"
+            ],
+            "Financials": [
+              "JPM",
+              "BAC",
+              "WFC"
+            ],
+            "Healthcare": [
+              "JNJ",
+              "PFE",
+              "UNH"
+            ],
+            "Energy": [
+              "XOM",
+              "CVX",
+              "COP"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple stocks with historical data, dividends, and news articles for typical portfolio tracking",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "stock_prices": {
+          "AAPL": {
+            "symbol": "AAPL",
+            "current_price": "$175.43"
+          },
+          "MSFT": {
+            "symbol": "MSFT",
+            "current_price": "$378.91"
+          },
+          "TSLA": {
+            "symbol": "TSLA",
+            "current_price": "$248.50"
+          }
+        },
+        "historical_prices": {
+          "AAPL": {
+            "2024-01-15": {
+              "date": "2024-01-15",
+              "open": 174.5,
+              "high": 176.2,
+              "low": 173.8,
+              "close": 175.43,
+              "volume": 52000000
+            },
+            "2024-01-16": {
+              "date": "2024-01-16",
+              "open": 175.5,
+              "high": 177.0,
+              "low": 174.9,
+              "close": 176.3,
+              "volume": 48500000
+            }
+          },
+          "MSFT": {
+            "2024-01-15": {
+              "date": "2024-01-15",
+              "open": 377.2,
+              "high": 380.5,
+              "low": 376.8,
+              "close": 378.91,
+              "volume": 28000000
+            }
+          }
+        },
+        "dividends": {
+          "AAPL": {
+            "2024-02-09": {
+              "date": "2024-02-09",
+              "amount": 0.24
+            }
+          },
+          "MSFT": {
+            "2024-02-15": {
+              "date": "2024-02-15",
+              "amount": 0.75
+            }
+          }
+        },
+        "income_statements": {},
+        "cashflow_statements": {},
+        "earnings_dates": {
+          "AAPL": [
+            {
+              "date": "2024-02-01",
+              "type": "quarterly",
+              "actualEPS": 2.18,
+              "estimatedEPS": 2.1,
+              "surprise": 0.08
+            }
+          ]
+        },
+        "news_articles": {
+          "AAPL": [
+            {
+              "title": "Apple Reports Strong Q1 Earnings",
+              "link": "https://finance.yahoo.com/news/apple-earnings-q1",
+              "publisher": "Yahoo Finance",
+              "publishDate": "2024-02-01",
+              "summary": "Apple Inc. reported better-than-expected earnings for Q1 2024, driven by strong iPhone sales."
+            }
+          ],
+          "TSLA": [
+            {
+              "title": "Tesla Announces New Model Updates",
+              "link": "https://finance.yahoo.com/news/tesla-model-updates",
+              "publisher": "Reuters",
+              "publishDate": "2024-01-20",
+              "summary": "Tesla unveils significant updates to its Model 3 and Model Y lineup."
+            }
+          ]
+        },
+        "recommendations": {},
+        "option_expirations": {},
+        "option_chains": {},
+        "market_data": {
+          "market_hours": {
+            "open": "09:30",
+            "close": "16:00"
+          },
+          "market_status": "open",
+          "reference_symbols": [
+            "AAPL",
+            "GOOGL",
+            "MSFT",
+            "TSLA",
+            "AMZN",
+            "META",
+            "NVDA",
+            "NFLX",
+            "AMD",
+            "INTC"
+          ],
+          "sectors": {
+            "Technology": [
+              "AAPL",
+              "MSFT",
+              "GOOGL",
+              "META",
+              "NVDA"
+            ],
+            "Consumer Discretionary": [
+              "AMZN",
+              "TSLA",
+              "NFLX"
+            ],
+            "Financials": [
+              "JPM",
+              "BAC",
+              "WFC"
+            ],
+            "Healthcare": [
+              "JNJ",
+              "PFE",
+              "UNH"
+            ],
+            "Energy": [
+              "XOM",
+              "CVX",
+              "COP"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Comprehensive financial data including options chains, analyst recommendations, financial statements, and full market coverage",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "stock_prices": {
+          "AAPL": {
+            "symbol": "AAPL",
+            "current_price": "$175.43"
+          },
+          "GOOGL": {
+            "symbol": "GOOGL",
+            "current_price": "$142.87"
+          },
+          "NVDA": {
+            "symbol": "NVDA",
+            "current_price": "$495.22"
+          }
+        },
+        "historical_prices": {
+          "AAPL": {
+            "2024-01-10": {
+              "date": "2024-01-10",
+              "open": 172.3,
+              "high": 174.5,
+              "low": 171.8,
+              "close": 173.9,
+              "volume": 55000000
+            },
+            "2024-01-11": {
+              "date": "2024-01-11",
+              "open": 174.0,
+              "high": 175.8,
+              "low": 173.5,
+              "close": 175.2,
+              "volume": 51000000
+            }
+          },
+          "NVDA": {
+            "2024-01-10": {
+              "date": "2024-01-10",
+              "open": 490.0,
+              "high": 498.5,
+              "low": 488.2,
+              "close": 495.22,
+              "volume": 42000000
+            }
+          }
+        },
+        "dividends": {
+          "AAPL": {
+            "2024-02-09": {
+              "date": "2024-02-09",
+              "amount": 0.24
+            },
+            "2023-11-10": {
+              "date": "2023-11-10",
+              "amount": 0.24
+            }
+          }
+        },
+        "income_statements": {
+          "AAPL": {
+            "2023": {
+              "revenue": 383285000000,
+              "costOfRevenue": 214137000000,
+              "grossProfit": 169148000000,
+              "operatingIncome": 114301000000,
+              "netIncome": 96995000000
+            }
+          }
+        },
+        "cashflow_statements": {
+          "AAPL": {
+            "2023": {
+              "operatingCashFlow": 110543000000,
+              "investingCashFlow": -3705000000,
+              "financingCashFlow": -108488000000,
+              "freeCashFlow": 99584000000
+            }
+          }
+        },
+        "earnings_dates": {
+          "AAPL": [
+            {
+              "date": "2024-02-01",
+              "type": "quarterly",
+              "actualEPS": 2.18,
+              "estimatedEPS": 2.1,
+              "surprise": 0.08
+            },
+            {
+              "date": "2024-05-02",
+              "type": "quarterly",
+              "actualEPS": null,
+              "estimatedEPS": 1.42,
+              "surprise": null
+            }
+          ],
+          "NVDA": [
+            {
+              "date": "2024-02-21",
+              "type": "quarterly",
+              "actualEPS": 5.16,
+              "estimatedEPS": 4.64,
+              "surprise": 0.52
+            }
+          ]
+        },
+        "news_articles": {
+          "AAPL": [
+            {
+              "title": "Apple Reports Strong Q1 Earnings Beat",
+              "link": "https://finance.yahoo.com/news/apple-earnings-q1-2024",
+              "publisher": "Yahoo Finance",
+              "publishDate": "2024-02-01",
+              "summary": "Apple Inc. exceeded analyst expectations with Q1 earnings driven by robust iPhone 15 sales and services growth."
+            },
+            {
+              "title": "Apple Vision Pro Launch Exceeds Expectations",
+              "link": "https://finance.yahoo.com/news/apple-vision-pro-launch",
+              "publisher": "Bloomberg",
+              "publishDate": "2024-02-05",
+              "summary": "The new Vision Pro headset sees strong initial demand with pre-orders selling out quickly."
+            }
+          ],
+          "NVDA": [
+            {
+              "title": "NVIDIA AI Chip Demand Continues to Surge",
+              "link": "https://finance.yahoo.com/news/nvidia-ai-demand",
+              "publisher": "CNBC",
+              "publishDate": "2024-02-22",
+              "summary": "NVIDIA reports record quarterly revenue as AI data center demand shows no signs of slowing."
+            }
+          ]
+        },
+        "recommendations": {
+          "AAPL": [
+            {
+              "firm": "Morgan Stanley",
+              "rating": "Overweight",
+              "priceTarget": 220.0,
+              "date": "2024-02-05"
+            },
+            {
+              "firm": "Goldman Sachs",
+              "rating": "Buy",
+              "priceTarget": 210.0,
+              "date": "2024-02-03"
+            }
+          ],
+          "NVDA": [
+            {
+              "firm": "Bank of America",
+              "rating": "Buy",
+              "priceTarget": 600.0,
+              "date": "2024-02-23"
+            }
+          ]
+        },
+        "option_expirations": {
+          "AAPL": [
+            "2024-03-15",
+            "2024-04-19"
+          ],
+          "NVDA": [
+            "2024-03-15"
+          ]
+        },
+        "option_chains": {
+          "AAPL": {
+            "2024-03-15": {
+              "calls": [
+                {
+                  "strike": 175.0,
+                  "bid": 8.5,
+                  "ask": 8.7,
+                  "volume": 15420,
+                  "openInterest": 42350,
+                  "impliedVolatility": 0.28
+                },
+                {
+                  "strike": 180.0,
+                  "bid": 5.2,
+                  "ask": 5.4,
+                  "volume": 12800,
+                  "openInterest": 38900,
+                  "impliedVolatility": 0.3
+                }
+              ],
+              "puts": [
+                {
+                  "strike": 175.0,
+                  "bid": 7.8,
+                  "ask": 8.0,
+                  "volume": 9500,
+                  "openInterest": 28400,
+                  "impliedVolatility": 0.29
+                },
+                {
+                  "strike": 170.0,
+                  "bid": 4.9,
+                  "ask": 5.1,
+                  "volume": 8200,
+                  "openInterest": 25100,
+                  "impliedVolatility": 0.27
+                }
+              ]
+            }
+          },
+          "NVDA": {
+            "2024-03-15": {
+              "calls": [
+                {
+                  "strike": 500.0,
+                  "bid": 22.5,
+                  "ask": 23.2,
+                  "volume": 8900,
+                  "openInterest": 15600,
+                  "impliedVolatility": 0.45
+                }
+              ],
+              "puts": [
+                {
+                  "strike": 490.0,
+                  "bid": 18.3,
+                  "ask": 19.0,
+                  "volume": 6700,
+                  "openInterest": 12300,
+                  "impliedVolatility": 0.43
+                }
+              ]
+            }
+          }
+        },
+        "market_data": {
+          "market_hours": {
+            "open": "09:30",
+            "close": "16:00"
+          },
+          "market_status": "open",
+          "reference_symbols": [
+            "AAPL",
+            "GOOGL",
+            "MSFT",
+            "TSLA",
+            "AMZN",
+            "META",
+            "NVDA",
+            "NFLX",
+            "AMD",
+            "INTC"
+          ],
+          "sectors": {
+            "Technology": [
+              "AAPL",
+              "MSFT",
+              "GOOGL",
+              "META",
+              "NVDA"
+            ],
+            "Consumer Discretionary": [
+              "AMZN",
+              "TSLA",
+              "NFLX"
+            ],
+            "Financials": [
+              "JPM",
+              "BAC",
+              "WFC"
+            ],
+            "Healthcare": [
+              "JNJ",
+              "PFE",
+              "UNH"
+            ],
+            "Energy": [
+              "XOM",
+              "CVX",
+              "COP"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Edge cases including zero volume trades, market closed status, and empty optional fields",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "stock_prices": {
+          "AMD": {
+            "symbol": "AMD",
+            "current_price": "$0.01"
+          }
+        },
+        "historical_prices": {
+          "AMD": {
+            "2024-01-01": {
+              "date": "2024-01-01",
+              "open": 0.01,
+              "high": 0.01,
+              "low": 0.01,
+              "close": 0.01,
+              "volume": 0
+            }
+          }
+        },
+        "dividends": {},
+        "income_statements": {},
+        "cashflow_statements": {},
+        "earnings_dates": {
+          "AMD": [
+            {
+              "date": "2024-03-15",
+              "type": "quarterly",
+              "actualEPS": null,
+              "estimatedEPS": null,
+              "surprise": null
+            }
+          ]
+        },
+        "news_articles": {},
+        "recommendations": {
+          "AMD": [
+            {
+              "firm": "Unknown Research",
+              "rating": "Hold",
+              "priceTarget": null,
+              "date": "2024-01-05"
+            }
+          ]
+        },
+        "option_expirations": {},
+        "option_chains": {
+          "AMD": {
+            "2024-02-16": {
+              "calls": [
+                {
+                  "strike": 150.0,
+                  "bid": 0.01,
+                  "ask": 999999.99,
+                  "volume": 0,
+                  "openInterest": 0,
+                  "impliedVolatility": 0.0
+                }
+              ],
+              "puts": []
+            }
+          }
+        },
+        "market_data": {
+          "market_hours": {
+            "open": "09:30",
+            "close": "16:00"
+          },
+          "market_status": "closed",
+          "reference_symbols": [
+            "AAPL",
+            "GOOGL",
+            "MSFT",
+            "TSLA",
+            "AMZN",
+            "META",
+            "NVDA",
+            "NFLX",
+            "AMD",
+            "INTC"
+          ],
+          "sectors": {
+            "Technology": [
+              "AAPL",
+              "MSFT",
+              "GOOGL",
+              "META",
+              "NVDA"
+            ],
+            "Consumer Discretionary": [
+              "AMZN",
+              "TSLA",
+              "NFLX"
+            ],
+            "Financials": [
+              "JPM",
+              "BAC",
+              "WFC"
+            ],
+            "Healthcare": [
+              "JNJ",
+              "PFE",
+              "UNH"
+            ],
+            "Energy": [
+              "XOM",
+              "CVX",
+              "COP"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_current_stock_price",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get price for AAPL (exists in scenario)",
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "passed": true,
+                    "output": {
+                      "current_price": "$175.43"
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Get price for GOOGL (not in stock_prices)",
+                    "input": {
+                      "symbol": "GOOGL"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Price data not found for symbol GOOGL",
+                    "note": "Expected behavior - symbol exists in reference list but not in stock_prices data"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_price_by_date",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get AAPL price on 2024-01-15",
+                    "input": {
+                      "symbol": "AAPL",
+                      "date": "2024-01-15"
+                    },
+                    "passed": true,
+                    "output": {
+                      "date": "2024-01-15",
+                      "open": 174.5,
+                      "close": 175.43
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Get AAPL price on non-existent date",
+                    "input": {
+                      "symbol": "AAPL",
+                      "date": "2024-01-16"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Price data not found for AAPL on 2024-01-16",
+                    "note": "Expected behavior - date not in historical data"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_price_date_range",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get AAPL closing prices for single date range",
+                    "input": {
+                      "symbol": "AAPL",
+                      "start_date": "2024-01-15",
+                      "end_date": "2024-01-15"
+                    },
+                    "passed": true,
+                    "output": {
+                      "closing_prices": {
+                        "2024-01-15": 175.43
+                      }
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_historical_stock_prices",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get AAPL historical prices with default parameters",
+                    "input": {
+                      "symbol": "AAPL",
+                      "period": "1mo",
+                      "interval": "1d"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price_history": [
+                        {
+                          "date": "2024-01-15",
+                          "open": 174.5,
+                          "high": 176.2,
+                          "low": 173.8,
+                          "close": 175.43,
+                          "volume": 52000000
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_dividends",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get AAPL dividends (empty in scenario)",
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "passed": true,
+                    "output": {
+                      "dividends": {}
+                    },
+                    "error": null,
+                    "note": "Returns empty dict as expected for scenario with no dividend data"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_income_statement",
+                "test_cases": [
+                  {
+                    "description": "Error case: Get AAPL income statement (not in scenario)",
+                    "input": {
+                      "symbol": "AAPL",
+                      "freq": "yearly"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Income statement data not found for symbol AAPL",
+                    "note": "Expected behavior - income_statements is empty in scenario"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_cashflow",
+                "test_cases": [
+                  {
+                    "description": "Error case: Get AAPL cashflow (not in scenario)",
+                    "input": {
+                      "symbol": "AAPL",
+                      "freq": "yearly"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Cash flow statement data not found for symbol AAPL",
+                    "note": "Expected behavior - cashflow_statements is empty in scenario"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_earning_dates",
+                "test_cases": [
+                  {
+                    "description": "Error case: Get AAPL earnings dates (not in scenario)",
+                    "input": {
+                      "symbol": "AAPL",
+                      "limit": 12
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Earnings data not found for symbol AAPL",
+                    "note": "Expected behavior - earnings_dates is empty in scenario"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_news",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get AAPL news (empty in scenario)",
+                    "input": {
+                      "symbol": "AAPL",
+                      "limit": 50
+                    },
+                    "passed": true,
+                    "output": {
+                      "news_articles": []
+                    },
+                    "error": null,
+                    "note": "Returns empty array as expected for scenario with no news data"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_recommendations",
+                "test_cases": [
+                  {
+                    "description": "Error case: Get AAPL recommendations (not in scenario)",
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Recommendations data not found for symbol AAPL",
+                    "note": "Expected behavior - recommendations is empty in scenario"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_option_expiration_dates",
+                "test_cases": [
+                  {
+                    "description": "Error case: Get AAPL option expirations (not in scenario)",
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Option expiration data not found for symbol AAPL",
+                    "note": "Expected behavior - option_expirations is empty in scenario"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_option_chain",
+                "test_cases": [
+                  {
+                    "description": "Error case: Get AAPL option chain (not in scenario)",
+                    "input": {
+                      "symbol": "AAPL",
+                      "expiration_date": "2024-02-16"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Option chain data not found for AAPL on 2024-02-16",
+                    "note": "Expected behavior - option_chains is empty in scenario"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All state preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 65.15495014190674
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_current_stock_price",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "expected": "Current price for AAPL",
+                    "actual": {
+                      "current_price": "$175.43"
+                    },
+                    "passed": true
+                  },
+                  {
+                    "input": {
+                      "symbol": "MSFT"
+                    },
+                    "expected": "Current price for MSFT",
+                    "actual": {
+                      "current_price": "$378.91"
+                    },
+                    "passed": true
+                  },
+                  {
+                    "input": {
+                      "symbol": "TSLA"
+                    },
+                    "expected": "Current price for TSLA",
+                    "actual": {
+                      "current_price": "$248.50"
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_price_by_date",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "date": "2024-01-15"
+                    },
+                    "expected": "Price data for AAPL on 2024-01-15",
+                    "actual": {
+                      "date": "2024-01-15",
+                      "open": 174.5,
+                      "close": 175.43
+                    },
+                    "passed": true
+                  },
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "date": "2024-01-16"
+                    },
+                    "expected": "Price data for AAPL on 2024-01-16",
+                    "actual": {
+                      "date": "2024-01-16",
+                      "open": 175.5,
+                      "close": 176.3
+                    },
+                    "passed": true
+                  },
+                  {
+                    "input": {
+                      "symbol": "MSFT",
+                      "date": "2024-01-15"
+                    },
+                    "expected": "Price data for MSFT on 2024-01-15",
+                    "actual": {
+                      "date": "2024-01-15",
+                      "open": 377.2,
+                      "close": 378.91
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_price_date_range",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "start_date": "2024-01-15",
+                      "end_date": "2024-01-16"
+                    },
+                    "expected": "Closing prices for AAPL in date range",
+                    "actual": {
+                      "closing_prices": {
+                        "2024-01-15": 175.43,
+                        "2024-01-16": 176.3
+                      }
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_historical_stock_prices",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "period": "1mo",
+                      "interval": "1d"
+                    },
+                    "expected": "Historical OHLC data for AAPL",
+                    "actual": {
+                      "price_history": [
+                        {
+                          "date": "2024-01-15",
+                          "open": 174.5,
+                          "high": 176.2,
+                          "low": 173.8,
+                          "close": 175.43,
+                          "volume": 52000000
+                        },
+                        {
+                          "date": "2024-01-16",
+                          "open": 175.5,
+                          "high": 177.0,
+                          "low": 174.9,
+                          "close": 176.3,
+                          "volume": 48500000
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_dividends",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "expected": "Dividend data for AAPL",
+                    "actual": {
+                      "dividends": {
+                        "2024-02-09": 0.24
+                      }
+                    },
+                    "passed": true
+                  },
+                  {
+                    "input": {
+                      "symbol": "MSFT"
+                    },
+                    "expected": "Dividend data for MSFT",
+                    "actual": {
+                      "dividends": {
+                        "2024-02-15": 0.75
+                      }
+                    },
+                    "passed": true
+                  },
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "start_date": "2024-02-01",
+                      "end_date": "2024-02-28"
+                    },
+                    "expected": "Filtered dividend data for AAPL",
+                    "actual": {
+                      "dividends": {
+                        "2024-02-09": 0.24
+                      }
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_income_statement",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "freq": "yearly"
+                    },
+                    "expected": "Error - no income statement data in scenario",
+                    "actual": "Error executing tool get_income_statement: Income statement data not found for symbol AAPL",
+                    "passed": true,
+                    "note": "Expected failure - scenario has empty income_statements"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_cashflow",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "freq": "yearly"
+                    },
+                    "expected": "Error - no cashflow data in scenario",
+                    "actual": "Error executing tool get_cashflow: Cash flow statement data not found for symbol AAPL",
+                    "passed": true,
+                    "note": "Expected failure - scenario has empty cashflow_statements"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_earning_dates",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "limit": 12
+                    },
+                    "expected": "Earnings dates for AAPL",
+                    "actual": {
+                      "earnings_dates": [
+                        {
+                          "date": "2024-02-01",
+                          "type": "quarterly",
+                          "actualEPS": 2.18,
+                          "estimatedEPS": 2.1,
+                          "surprise": 0.08
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_news",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "limit": 50
+                    },
+                    "expected": "News articles for AAPL",
+                    "actual": {
+                      "news_articles": [
+                        {
+                          "title": "Apple Reports Strong Q1 Earnings",
+                          "link": "https://finance.yahoo.com/news/apple-earnings-q1",
+                          "publisher": "Yahoo Finance",
+                          "publishDate": "2024-02-01",
+                          "summary": "Apple Inc. reported better-than-expected earnings for Q1 2024, driven by strong iPhone sales."
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "input": {
+                      "symbol": "TSLA",
+                      "limit": 50
+                    },
+                    "expected": "News articles for TSLA",
+                    "actual": {
+                      "news_articles": [
+                        {
+                          "title": "Tesla Announces New Model Updates",
+                          "link": "https://finance.yahoo.com/news/tesla-model-updates",
+                          "publisher": "Reuters",
+                          "publishDate": "2024-01-20",
+                          "summary": "Tesla unveils significant updates to its Model 3 and Model Y lineup."
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_recommendations",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "expected": "Error - no recommendations data in scenario",
+                    "actual": "Error executing tool get_recommendations: Recommendations data not found for symbol AAPL",
+                    "passed": true,
+                    "note": "Expected failure - scenario has empty recommendations"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_option_expiration_dates",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "expected": "Error - no option expiration data in scenario",
+                    "actual": "Error executing tool get_option_expiration_dates: Option expiration data not found for symbol AAPL",
+                    "passed": true,
+                    "note": "Expected failure - scenario has empty option_expirations"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_option_chain",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "expiration_date": "2024-03-15"
+                    },
+                    "expected": "Error - no option chain data in scenario",
+                    "actual": "Error executing tool get_option_chain: Option chain data not found for AAPL on 2024-03-15",
+                    "passed": true,
+                    "note": "Expected failure - scenario has empty option_chains"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "note": "Saved scenario matches original scenario exactly - all data preserved correctly"
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 162.983065366745
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_current_stock_price",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "expected": "Current price for AAPL",
+                    "actual": {
+                      "current_price": "$175.43"
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "NVDA"
+                    },
+                    "expected": "Current price for NVDA",
+                    "actual": {
+                      "current_price": "$495.22"
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "TSLA"
+                    },
+                    "expected": "Error for non-existent symbol",
+                    "actual": "Error: Price data not found for symbol TSLA",
+                    "result": "PASS - Expected error"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_price_by_date",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "date": "2024-01-10"
+                    },
+                    "expected": "Historical price for AAPL on 2024-01-10",
+                    "actual": {
+                      "date": "2024-01-10",
+                      "open": 172.3,
+                      "close": 173.9
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "NVDA",
+                      "date": "2024-01-10"
+                    },
+                    "expected": "Historical price for NVDA on 2024-01-10",
+                    "actual": {
+                      "date": "2024-01-10",
+                      "open": 490.0,
+                      "close": 495.22
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "date": "2024-01-15"
+                    },
+                    "expected": "Error for non-existent date",
+                    "actual": "Error: Price data not found for AAPL on 2024-01-15",
+                    "result": "PASS - Expected error"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_price_date_range",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "start_date": "2024-01-10",
+                      "end_date": "2024-01-11"
+                    },
+                    "expected": "Closing prices for date range",
+                    "actual": {
+                      "closing_prices": {
+                        "2024-01-10": 173.9,
+                        "2024-01-11": 175.2
+                      }
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_historical_stock_prices",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "period": "1mo",
+                      "interval": "1d"
+                    },
+                    "expected": "Historical OHLC data for AAPL",
+                    "actual": {
+                      "price_history": [
+                        {
+                          "date": "2024-01-10",
+                          "open": 172.3,
+                          "high": 174.5,
+                          "low": 171.8,
+                          "close": 173.9,
+                          "volume": 55000000
+                        },
+                        {
+                          "date": "2024-01-11",
+                          "open": 174.0,
+                          "high": 175.8,
+                          "low": 173.5,
+                          "close": 175.2,
+                          "volume": 51000000
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "NVDA",
+                      "period": "1mo",
+                      "interval": "1d"
+                    },
+                    "expected": "Historical OHLC data for NVDA",
+                    "actual": {
+                      "price_history": [
+                        {
+                          "date": "2024-01-10",
+                          "open": 490.0,
+                          "high": 498.5,
+                          "low": 488.2,
+                          "close": 495.22,
+                          "volume": 42000000
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_dividends",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "expected": "All dividends for AAPL",
+                    "actual": {
+                      "dividends": {
+                        "2024-02-09": 0.24,
+                        "2023-11-10": 0.24
+                      }
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "start_date": "2024-01-01",
+                      "end_date": "2024-12-31"
+                    },
+                    "expected": "Filtered dividends for 2024",
+                    "actual": {
+                      "dividends": {
+                        "2024-02-09": 0.24
+                      }
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_income_statement",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "freq": "yearly"
+                    },
+                    "expected": "Income statement for AAPL",
+                    "actual": {
+                      "income_statements": {
+                        "2023": {
+                          "revenue": 383285000000,
+                          "costOfRevenue": 214137000000,
+                          "grossProfit": 169148000000,
+                          "operatingIncome": 114301000000,
+                          "netIncome": 96995000000
+                        }
+                      }
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_cashflow",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "freq": "yearly"
+                    },
+                    "expected": "Cashflow statement for AAPL",
+                    "actual": {
+                      "cashflow_statements": {
+                        "2023": {
+                          "operatingCashFlow": 110543000000,
+                          "investingCashFlow": -3705000000,
+                          "financingCashFlow": -108488000000,
+                          "freeCashFlow": 99584000000
+                        }
+                      }
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_earning_dates",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "limit": 12
+                    },
+                    "expected": "Earnings dates for AAPL",
+                    "actual": {
+                      "earnings_dates": [
+                        {
+                          "date": "2024-02-01",
+                          "type": "quarterly",
+                          "actualEPS": 2.18,
+                          "estimatedEPS": 2.1,
+                          "surprise": 0.08
+                        },
+                        {
+                          "date": "2024-05-02",
+                          "type": "quarterly",
+                          "actualEPS": null,
+                          "estimatedEPS": 1.42,
+                          "surprise": null
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "NVDA",
+                      "limit": 5
+                    },
+                    "expected": "Earnings dates for NVDA",
+                    "actual": {
+                      "earnings_dates": [
+                        {
+                          "date": "2024-02-21",
+                          "type": "quarterly",
+                          "actualEPS": 5.16,
+                          "estimatedEPS": 4.64,
+                          "surprise": 0.52
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_news",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "limit": 50
+                    },
+                    "expected": "News articles for AAPL",
+                    "actual": {
+                      "news_articles": [
+                        {
+                          "title": "Apple Reports Strong Q1 Earnings Beat",
+                          "link": "https://finance.yahoo.com/news/apple-earnings-q1-2024",
+                          "publisher": "Yahoo Finance",
+                          "publishDate": "2024-02-01",
+                          "summary": "Apple Inc. exceeded analyst expectations with Q1 earnings driven by robust iPhone 15 sales and services growth."
+                        },
+                        {
+                          "title": "Apple Vision Pro Launch Exceeds Expectations",
+                          "link": "https://finance.yahoo.com/news/apple-vision-pro-launch",
+                          "publisher": "Bloomberg",
+                          "publishDate": "2024-02-05",
+                          "summary": "The new Vision Pro headset sees strong initial demand with pre-orders selling out quickly."
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "NVDA",
+                      "start_date": "2024-02-01",
+                      "end_date": "2024-02-28",
+                      "limit": 10
+                    },
+                    "expected": "Filtered news articles for NVDA",
+                    "actual": {
+                      "news_articles": [
+                        {
+                          "title": "NVIDIA AI Chip Demand Continues to Surge",
+                          "link": "https://finance.yahoo.com/news/nvidia-ai-demand",
+                          "publisher": "CNBC",
+                          "publishDate": "2024-02-22",
+                          "summary": "NVIDIA reports record quarterly revenue as AI data center demand shows no signs of slowing."
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_recommendations",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "expected": "Analyst recommendations for AAPL",
+                    "actual": {
+                      "recommendations": [
+                        {
+                          "firm": "Morgan Stanley",
+                          "rating": "Overweight",
+                          "priceTarget": 220.0,
+                          "date": "2024-02-05"
+                        },
+                        {
+                          "firm": "Goldman Sachs",
+                          "rating": "Buy",
+                          "priceTarget": 210.0,
+                          "date": "2024-02-03"
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "NVDA"
+                    },
+                    "expected": "Analyst recommendations for NVDA",
+                    "actual": {
+                      "recommendations": [
+                        {
+                          "firm": "Bank of America",
+                          "rating": "Buy",
+                          "priceTarget": 600.0,
+                          "date": "2024-02-23"
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_option_expiration_dates",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "expected": "Option expiration dates for AAPL",
+                    "actual": {
+                      "expiration_dates": [
+                        "2024-03-15",
+                        "2024-04-19"
+                      ]
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "NVDA"
+                    },
+                    "expected": "Option expiration dates for NVDA",
+                    "actual": {
+                      "expiration_dates": [
+                        "2024-03-15"
+                      ]
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_option_chain",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "expiration_date": "2024-03-15"
+                    },
+                    "expected": "Option chain for AAPL expiring 2024-03-15",
+                    "actual": {
+                      "underlyingPrice": 0,
+                      "calls": [
+                        {
+                          "strike": 175.0,
+                          "bid": 8.5,
+                          "ask": 8.7,
+                          "volume": 15420,
+                          "openInterest": 42350,
+                          "impliedVolatility": 0.28
+                        },
+                        {
+                          "strike": 180.0,
+                          "bid": 5.2,
+                          "ask": 5.4,
+                          "volume": 12800,
+                          "openInterest": 38900,
+                          "impliedVolatility": 0.3
+                        }
+                      ],
+                      "puts": [
+                        {
+                          "strike": 175.0,
+                          "bid": 7.8,
+                          "ask": 8.0,
+                          "volume": 9500,
+                          "openInterest": 28400,
+                          "impliedVolatility": 0.29
+                        },
+                        {
+                          "strike": 170.0,
+                          "bid": 4.9,
+                          "ask": 5.1,
+                          "volume": 8200,
+                          "openInterest": 25100,
+                          "impliedVolatility": 0.27
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "NVDA",
+                      "expiration_date": "2024-03-15"
+                    },
+                    "expected": "Option chain for NVDA expiring 2024-03-15",
+                    "actual": {
+                      "underlyingPrice": 0,
+                      "calls": [
+                        {
+                          "strike": 500.0,
+                          "bid": 22.5,
+                          "ask": 23.2,
+                          "volume": 8900,
+                          "openInterest": 15600,
+                          "impliedVolatility": 0.45
+                        }
+                      ],
+                      "puts": [
+                        {
+                          "strike": 490.0,
+                          "bid": 18.3,
+                          "ask": 19.0,
+                          "volume": 6700,
+                          "openInterest": 12300,
+                          "impliedVolatility": 0.43
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario data exactly. All fields preserved correctly including stock_prices, historical_prices, dividends, income_statements, cashflow_statements, earnings_dates, news_articles, recommendations, option_expirations, option_chains, and market_data."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 135.4749550819397
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_current_stock_price",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get current price for AMD with boundary value $0.01",
+                    "input": {
+                      "symbol": "AMD"
+                    },
+                    "passed": true,
+                    "output": {
+                      "current_price": "$0.01"
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Symbol not in scenario data",
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Price data not found for symbol AAPL",
+                    "note": "Expected error - correctly handles missing data"
+                  },
+                  {
+                    "description": "Error case: Empty symbol string",
+                    "input": {
+                      "symbol": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Symbol must be a non-empty string",
+                    "note": "Expected error - validation working correctly"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_price_by_date",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get price for AMD on 2024-01-01 with boundary values",
+                    "input": {
+                      "symbol": "AMD",
+                      "date": "2024-01-01"
+                    },
+                    "passed": true,
+                    "output": {
+                      "date": "2024-01-01",
+                      "open": 0.01,
+                      "close": 0.01
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Date not in historical data",
+                    "input": {
+                      "symbol": "AMD",
+                      "date": "2024-12-31"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Price data not found for AMD on 2024-12-31",
+                    "note": "Expected error - correctly handles missing date"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_price_date_range",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Single day range with boundary values",
+                    "input": {
+                      "symbol": "AMD",
+                      "start_date": "2024-01-01",
+                      "end_date": "2024-01-01"
+                    },
+                    "passed": true,
+                    "output": {
+                      "closing_prices": {
+                        "2024-01-01": 0.01
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Boundary case: Invalid date range (end before start)",
+                    "input": {
+                      "symbol": "AMD",
+                      "start_date": "2024-01-01",
+                      "end_date": "2023-12-31"
+                    },
+                    "passed": true,
+                    "output": {
+                      "closing_prices": {}
+                    },
+                    "error": null,
+                    "note": "Returns empty dict for invalid range - acceptable behavior"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_historical_stock_prices",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get historical prices with boundary values",
+                    "input": {
+                      "symbol": "AMD",
+                      "period": "1mo",
+                      "interval": "1d"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price_history": [
+                        {
+                          "date": "2024-01-01",
+                          "open": 0.01,
+                          "high": 0.01,
+                          "low": 0.01,
+                          "close": 0.01,
+                          "volume": 0
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_dividends",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get dividends for AMD (empty in scenario)",
+                    "input": {
+                      "symbol": "AMD"
+                    },
+                    "passed": true,
+                    "output": {
+                      "dividends": {}
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_income_statement",
+                "test_cases": [
+                  {
+                    "description": "Error case: No income statement data in scenario",
+                    "input": {
+                      "symbol": "AMD",
+                      "freq": "yearly"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Income statement data not found for symbol AMD",
+                    "note": "Expected error - scenario has empty income_statements"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_cashflow",
+                "test_cases": [
+                  {
+                    "description": "Error case: No cashflow data in scenario",
+                    "input": {
+                      "symbol": "AMD",
+                      "freq": "yearly"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Cash flow statement data not found for symbol AMD",
+                    "note": "Expected error - scenario has empty cashflow_statements"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_earning_dates",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get earnings dates with null values",
+                    "input": {
+                      "symbol": "AMD",
+                      "limit": 12
+                    },
+                    "passed": true,
+                    "output": {
+                      "earnings_dates": [
+                        {
+                          "date": "2024-03-15",
+                          "type": "quarterly",
+                          "actualEPS": null,
+                          "estimatedEPS": null,
+                          "surprise": null
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_news",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get news for AMD (empty in scenario)",
+                    "input": {
+                      "symbol": "AMD",
+                      "limit": 50
+                    },
+                    "passed": true,
+                    "output": {
+                      "news_articles": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_recommendations",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get recommendations with null priceTarget",
+                    "input": {
+                      "symbol": "AMD"
+                    },
+                    "passed": true,
+                    "output": {
+                      "recommendations": [
+                        {
+                          "firm": "Unknown Research",
+                          "rating": "Hold",
+                          "priceTarget": null,
+                          "date": "2024-01-05"
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_option_expiration_dates",
+                "test_cases": [
+                  {
+                    "description": "Error case: No option expiration data in scenario",
+                    "input": {
+                      "symbol": "AMD"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Option expiration data not found for symbol AMD",
+                    "note": "Expected error - scenario has empty option_expirations"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_option_chain",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get option chain with extreme boundary values",
+                    "input": {
+                      "symbol": "AMD",
+                      "expiration_date": "2024-02-16"
+                    },
+                    "passed": true,
+                    "output": {
+                      "underlyingPrice": 0,
+                      "calls": [
+                        {
+                          "strike": 150.0,
+                          "bid": 0.01,
+                          "ask": 999999.99,
+                          "volume": 0,
+                          "openInterest": 0,
+                          "impliedVolatility": 0.0
+                        }
+                      ],
+                      "puts": []
+                    },
+                    "error": null,
+                    "note": "Successfully handles extreme boundary values: bid=0.01, ask=999999.99"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All boundary values preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 88.10024976730347
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_current_stock_price",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get price for AAPL (exists in scenario)",
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "passed": true,
+                    "output": {
+                      "current_price": "$175.43"
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Get price for GOOGL (not in stock_prices)",
+                    "input": {
+                      "symbol": "GOOGL"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Price data not found for symbol GOOGL",
+                    "note": "Expected behavior - symbol exists in reference list but not in stock_prices data"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_price_by_date",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get AAPL price on 2024-01-15",
+                    "input": {
+                      "symbol": "AAPL",
+                      "date": "2024-01-15"
+                    },
+                    "passed": true,
+                    "output": {
+                      "date": "2024-01-15",
+                      "open": 174.5,
+                      "close": 175.43
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Get AAPL price on non-existent date",
+                    "input": {
+                      "symbol": "AAPL",
+                      "date": "2024-01-16"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Price data not found for AAPL on 2024-01-16",
+                    "note": "Expected behavior - date not in historical data"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_price_date_range",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get AAPL closing prices for single date range",
+                    "input": {
+                      "symbol": "AAPL",
+                      "start_date": "2024-01-15",
+                      "end_date": "2024-01-15"
+                    },
+                    "passed": true,
+                    "output": {
+                      "closing_prices": {
+                        "2024-01-15": 175.43
+                      }
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_historical_stock_prices",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get AAPL historical prices with default parameters",
+                    "input": {
+                      "symbol": "AAPL",
+                      "period": "1mo",
+                      "interval": "1d"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price_history": [
+                        {
+                          "date": "2024-01-15",
+                          "open": 174.5,
+                          "high": 176.2,
+                          "low": 173.8,
+                          "close": 175.43,
+                          "volume": 52000000
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_dividends",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get AAPL dividends (empty in scenario)",
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "passed": true,
+                    "output": {
+                      "dividends": {}
+                    },
+                    "error": null,
+                    "note": "Returns empty dict as expected for scenario with no dividend data"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_income_statement",
+                "test_cases": [
+                  {
+                    "description": "Error case: Get AAPL income statement (not in scenario)",
+                    "input": {
+                      "symbol": "AAPL",
+                      "freq": "yearly"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Income statement data not found for symbol AAPL",
+                    "note": "Expected behavior - income_statements is empty in scenario"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_cashflow",
+                "test_cases": [
+                  {
+                    "description": "Error case: Get AAPL cashflow (not in scenario)",
+                    "input": {
+                      "symbol": "AAPL",
+                      "freq": "yearly"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Cash flow statement data not found for symbol AAPL",
+                    "note": "Expected behavior - cashflow_statements is empty in scenario"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_earning_dates",
+                "test_cases": [
+                  {
+                    "description": "Error case: Get AAPL earnings dates (not in scenario)",
+                    "input": {
+                      "symbol": "AAPL",
+                      "limit": 12
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Earnings data not found for symbol AAPL",
+                    "note": "Expected behavior - earnings_dates is empty in scenario"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_news",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get AAPL news (empty in scenario)",
+                    "input": {
+                      "symbol": "AAPL",
+                      "limit": 50
+                    },
+                    "passed": true,
+                    "output": {
+                      "news_articles": []
+                    },
+                    "error": null,
+                    "note": "Returns empty array as expected for scenario with no news data"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_recommendations",
+                "test_cases": [
+                  {
+                    "description": "Error case: Get AAPL recommendations (not in scenario)",
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Recommendations data not found for symbol AAPL",
+                    "note": "Expected behavior - recommendations is empty in scenario"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_option_expiration_dates",
+                "test_cases": [
+                  {
+                    "description": "Error case: Get AAPL option expirations (not in scenario)",
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Option expiration data not found for symbol AAPL",
+                    "note": "Expected behavior - option_expirations is empty in scenario"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_option_chain",
+                "test_cases": [
+                  {
+                    "description": "Error case: Get AAPL option chain (not in scenario)",
+                    "input": {
+                      "symbol": "AAPL",
+                      "expiration_date": "2024-02-16"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Option chain data not found for AAPL on 2024-02-16",
+                    "note": "Expected behavior - option_chains is empty in scenario"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All state preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 65.15495014190674
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_current_stock_price",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "expected": "Current price for AAPL",
+                    "actual": {
+                      "current_price": "$175.43"
+                    },
+                    "passed": true
+                  },
+                  {
+                    "input": {
+                      "symbol": "MSFT"
+                    },
+                    "expected": "Current price for MSFT",
+                    "actual": {
+                      "current_price": "$378.91"
+                    },
+                    "passed": true
+                  },
+                  {
+                    "input": {
+                      "symbol": "TSLA"
+                    },
+                    "expected": "Current price for TSLA",
+                    "actual": {
+                      "current_price": "$248.50"
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_price_by_date",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "date": "2024-01-15"
+                    },
+                    "expected": "Price data for AAPL on 2024-01-15",
+                    "actual": {
+                      "date": "2024-01-15",
+                      "open": 174.5,
+                      "close": 175.43
+                    },
+                    "passed": true
+                  },
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "date": "2024-01-16"
+                    },
+                    "expected": "Price data for AAPL on 2024-01-16",
+                    "actual": {
+                      "date": "2024-01-16",
+                      "open": 175.5,
+                      "close": 176.3
+                    },
+                    "passed": true
+                  },
+                  {
+                    "input": {
+                      "symbol": "MSFT",
+                      "date": "2024-01-15"
+                    },
+                    "expected": "Price data for MSFT on 2024-01-15",
+                    "actual": {
+                      "date": "2024-01-15",
+                      "open": 377.2,
+                      "close": 378.91
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_price_date_range",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "start_date": "2024-01-15",
+                      "end_date": "2024-01-16"
+                    },
+                    "expected": "Closing prices for AAPL in date range",
+                    "actual": {
+                      "closing_prices": {
+                        "2024-01-15": 175.43,
+                        "2024-01-16": 176.3
+                      }
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_historical_stock_prices",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "period": "1mo",
+                      "interval": "1d"
+                    },
+                    "expected": "Historical OHLC data for AAPL",
+                    "actual": {
+                      "price_history": [
+                        {
+                          "date": "2024-01-15",
+                          "open": 174.5,
+                          "high": 176.2,
+                          "low": 173.8,
+                          "close": 175.43,
+                          "volume": 52000000
+                        },
+                        {
+                          "date": "2024-01-16",
+                          "open": 175.5,
+                          "high": 177.0,
+                          "low": 174.9,
+                          "close": 176.3,
+                          "volume": 48500000
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_dividends",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "expected": "Dividend data for AAPL",
+                    "actual": {
+                      "dividends": {
+                        "2024-02-09": 0.24
+                      }
+                    },
+                    "passed": true
+                  },
+                  {
+                    "input": {
+                      "symbol": "MSFT"
+                    },
+                    "expected": "Dividend data for MSFT",
+                    "actual": {
+                      "dividends": {
+                        "2024-02-15": 0.75
+                      }
+                    },
+                    "passed": true
+                  },
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "start_date": "2024-02-01",
+                      "end_date": "2024-02-28"
+                    },
+                    "expected": "Filtered dividend data for AAPL",
+                    "actual": {
+                      "dividends": {
+                        "2024-02-09": 0.24
+                      }
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_income_statement",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "freq": "yearly"
+                    },
+                    "expected": "Error - no income statement data in scenario",
+                    "actual": "Error executing tool get_income_statement: Income statement data not found for symbol AAPL",
+                    "passed": true,
+                    "note": "Expected failure - scenario has empty income_statements"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_cashflow",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "freq": "yearly"
+                    },
+                    "expected": "Error - no cashflow data in scenario",
+                    "actual": "Error executing tool get_cashflow: Cash flow statement data not found for symbol AAPL",
+                    "passed": true,
+                    "note": "Expected failure - scenario has empty cashflow_statements"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_earning_dates",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "limit": 12
+                    },
+                    "expected": "Earnings dates for AAPL",
+                    "actual": {
+                      "earnings_dates": [
+                        {
+                          "date": "2024-02-01",
+                          "type": "quarterly",
+                          "actualEPS": 2.18,
+                          "estimatedEPS": 2.1,
+                          "surprise": 0.08
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_news",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "limit": 50
+                    },
+                    "expected": "News articles for AAPL",
+                    "actual": {
+                      "news_articles": [
+                        {
+                          "title": "Apple Reports Strong Q1 Earnings",
+                          "link": "https://finance.yahoo.com/news/apple-earnings-q1",
+                          "publisher": "Yahoo Finance",
+                          "publishDate": "2024-02-01",
+                          "summary": "Apple Inc. reported better-than-expected earnings for Q1 2024, driven by strong iPhone sales."
+                        }
+                      ]
+                    },
+                    "passed": true
+                  },
+                  {
+                    "input": {
+                      "symbol": "TSLA",
+                      "limit": 50
+                    },
+                    "expected": "News articles for TSLA",
+                    "actual": {
+                      "news_articles": [
+                        {
+                          "title": "Tesla Announces New Model Updates",
+                          "link": "https://finance.yahoo.com/news/tesla-model-updates",
+                          "publisher": "Reuters",
+                          "publishDate": "2024-01-20",
+                          "summary": "Tesla unveils significant updates to its Model 3 and Model Y lineup."
+                        }
+                      ]
+                    },
+                    "passed": true
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_recommendations",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "expected": "Error - no recommendations data in scenario",
+                    "actual": "Error executing tool get_recommendations: Recommendations data not found for symbol AAPL",
+                    "passed": true,
+                    "note": "Expected failure - scenario has empty recommendations"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_option_expiration_dates",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "expected": "Error - no option expiration data in scenario",
+                    "actual": "Error executing tool get_option_expiration_dates: Option expiration data not found for symbol AAPL",
+                    "passed": true,
+                    "note": "Expected failure - scenario has empty option_expirations"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_option_chain",
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "expiration_date": "2024-03-15"
+                    },
+                    "expected": "Error - no option chain data in scenario",
+                    "actual": "Error executing tool get_option_chain: Option chain data not found for AAPL on 2024-03-15",
+                    "passed": true,
+                    "note": "Expected failure - scenario has empty option_chains"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "note": "Saved scenario matches original scenario exactly - all data preserved correctly"
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 162.983065366745
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_current_stock_price",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "expected": "Current price for AAPL",
+                    "actual": {
+                      "current_price": "$175.43"
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "NVDA"
+                    },
+                    "expected": "Current price for NVDA",
+                    "actual": {
+                      "current_price": "$495.22"
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "TSLA"
+                    },
+                    "expected": "Error for non-existent symbol",
+                    "actual": "Error: Price data not found for symbol TSLA",
+                    "result": "PASS - Expected error"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_price_by_date",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "date": "2024-01-10"
+                    },
+                    "expected": "Historical price for AAPL on 2024-01-10",
+                    "actual": {
+                      "date": "2024-01-10",
+                      "open": 172.3,
+                      "close": 173.9
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "NVDA",
+                      "date": "2024-01-10"
+                    },
+                    "expected": "Historical price for NVDA on 2024-01-10",
+                    "actual": {
+                      "date": "2024-01-10",
+                      "open": 490.0,
+                      "close": 495.22
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "date": "2024-01-15"
+                    },
+                    "expected": "Error for non-existent date",
+                    "actual": "Error: Price data not found for AAPL on 2024-01-15",
+                    "result": "PASS - Expected error"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_price_date_range",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "start_date": "2024-01-10",
+                      "end_date": "2024-01-11"
+                    },
+                    "expected": "Closing prices for date range",
+                    "actual": {
+                      "closing_prices": {
+                        "2024-01-10": 173.9,
+                        "2024-01-11": 175.2
+                      }
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_historical_stock_prices",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "period": "1mo",
+                      "interval": "1d"
+                    },
+                    "expected": "Historical OHLC data for AAPL",
+                    "actual": {
+                      "price_history": [
+                        {
+                          "date": "2024-01-10",
+                          "open": 172.3,
+                          "high": 174.5,
+                          "low": 171.8,
+                          "close": 173.9,
+                          "volume": 55000000
+                        },
+                        {
+                          "date": "2024-01-11",
+                          "open": 174.0,
+                          "high": 175.8,
+                          "low": 173.5,
+                          "close": 175.2,
+                          "volume": 51000000
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "NVDA",
+                      "period": "1mo",
+                      "interval": "1d"
+                    },
+                    "expected": "Historical OHLC data for NVDA",
+                    "actual": {
+                      "price_history": [
+                        {
+                          "date": "2024-01-10",
+                          "open": 490.0,
+                          "high": 498.5,
+                          "low": 488.2,
+                          "close": 495.22,
+                          "volume": 42000000
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_dividends",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "expected": "All dividends for AAPL",
+                    "actual": {
+                      "dividends": {
+                        "2024-02-09": 0.24,
+                        "2023-11-10": 0.24
+                      }
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "start_date": "2024-01-01",
+                      "end_date": "2024-12-31"
+                    },
+                    "expected": "Filtered dividends for 2024",
+                    "actual": {
+                      "dividends": {
+                        "2024-02-09": 0.24
+                      }
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_income_statement",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "freq": "yearly"
+                    },
+                    "expected": "Income statement for AAPL",
+                    "actual": {
+                      "income_statements": {
+                        "2023": {
+                          "revenue": 383285000000,
+                          "costOfRevenue": 214137000000,
+                          "grossProfit": 169148000000,
+                          "operatingIncome": 114301000000,
+                          "netIncome": 96995000000
+                        }
+                      }
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_cashflow",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "freq": "yearly"
+                    },
+                    "expected": "Cashflow statement for AAPL",
+                    "actual": {
+                      "cashflow_statements": {
+                        "2023": {
+                          "operatingCashFlow": 110543000000,
+                          "investingCashFlow": -3705000000,
+                          "financingCashFlow": -108488000000,
+                          "freeCashFlow": 99584000000
+                        }
+                      }
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_earning_dates",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "limit": 12
+                    },
+                    "expected": "Earnings dates for AAPL",
+                    "actual": {
+                      "earnings_dates": [
+                        {
+                          "date": "2024-02-01",
+                          "type": "quarterly",
+                          "actualEPS": 2.18,
+                          "estimatedEPS": 2.1,
+                          "surprise": 0.08
+                        },
+                        {
+                          "date": "2024-05-02",
+                          "type": "quarterly",
+                          "actualEPS": null,
+                          "estimatedEPS": 1.42,
+                          "surprise": null
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "NVDA",
+                      "limit": 5
+                    },
+                    "expected": "Earnings dates for NVDA",
+                    "actual": {
+                      "earnings_dates": [
+                        {
+                          "date": "2024-02-21",
+                          "type": "quarterly",
+                          "actualEPS": 5.16,
+                          "estimatedEPS": 4.64,
+                          "surprise": 0.52
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_news",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "limit": 50
+                    },
+                    "expected": "News articles for AAPL",
+                    "actual": {
+                      "news_articles": [
+                        {
+                          "title": "Apple Reports Strong Q1 Earnings Beat",
+                          "link": "https://finance.yahoo.com/news/apple-earnings-q1-2024",
+                          "publisher": "Yahoo Finance",
+                          "publishDate": "2024-02-01",
+                          "summary": "Apple Inc. exceeded analyst expectations with Q1 earnings driven by robust iPhone 15 sales and services growth."
+                        },
+                        {
+                          "title": "Apple Vision Pro Launch Exceeds Expectations",
+                          "link": "https://finance.yahoo.com/news/apple-vision-pro-launch",
+                          "publisher": "Bloomberg",
+                          "publishDate": "2024-02-05",
+                          "summary": "The new Vision Pro headset sees strong initial demand with pre-orders selling out quickly."
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "NVDA",
+                      "start_date": "2024-02-01",
+                      "end_date": "2024-02-28",
+                      "limit": 10
+                    },
+                    "expected": "Filtered news articles for NVDA",
+                    "actual": {
+                      "news_articles": [
+                        {
+                          "title": "NVIDIA AI Chip Demand Continues to Surge",
+                          "link": "https://finance.yahoo.com/news/nvidia-ai-demand",
+                          "publisher": "CNBC",
+                          "publishDate": "2024-02-22",
+                          "summary": "NVIDIA reports record quarterly revenue as AI data center demand shows no signs of slowing."
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_recommendations",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "expected": "Analyst recommendations for AAPL",
+                    "actual": {
+                      "recommendations": [
+                        {
+                          "firm": "Morgan Stanley",
+                          "rating": "Overweight",
+                          "priceTarget": 220.0,
+                          "date": "2024-02-05"
+                        },
+                        {
+                          "firm": "Goldman Sachs",
+                          "rating": "Buy",
+                          "priceTarget": 210.0,
+                          "date": "2024-02-03"
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "NVDA"
+                    },
+                    "expected": "Analyst recommendations for NVDA",
+                    "actual": {
+                      "recommendations": [
+                        {
+                          "firm": "Bank of America",
+                          "rating": "Buy",
+                          "priceTarget": 600.0,
+                          "date": "2024-02-23"
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_option_expiration_dates",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "expected": "Option expiration dates for AAPL",
+                    "actual": {
+                      "expiration_dates": [
+                        "2024-03-15",
+                        "2024-04-19"
+                      ]
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "NVDA"
+                    },
+                    "expected": "Option expiration dates for NVDA",
+                    "actual": {
+                      "expiration_dates": [
+                        "2024-03-15"
+                      ]
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              },
+              {
+                "tool_name": "get_option_chain",
+                "passed": true,
+                "test_cases": [
+                  {
+                    "input": {
+                      "symbol": "AAPL",
+                      "expiration_date": "2024-03-15"
+                    },
+                    "expected": "Option chain for AAPL expiring 2024-03-15",
+                    "actual": {
+                      "underlyingPrice": 0,
+                      "calls": [
+                        {
+                          "strike": 175.0,
+                          "bid": 8.5,
+                          "ask": 8.7,
+                          "volume": 15420,
+                          "openInterest": 42350,
+                          "impliedVolatility": 0.28
+                        },
+                        {
+                          "strike": 180.0,
+                          "bid": 5.2,
+                          "ask": 5.4,
+                          "volume": 12800,
+                          "openInterest": 38900,
+                          "impliedVolatility": 0.3
+                        }
+                      ],
+                      "puts": [
+                        {
+                          "strike": 175.0,
+                          "bid": 7.8,
+                          "ask": 8.0,
+                          "volume": 9500,
+                          "openInterest": 28400,
+                          "impliedVolatility": 0.29
+                        },
+                        {
+                          "strike": 170.0,
+                          "bid": 4.9,
+                          "ask": 5.1,
+                          "volume": 8200,
+                          "openInterest": 25100,
+                          "impliedVolatility": 0.27
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  },
+                  {
+                    "input": {
+                      "symbol": "NVDA",
+                      "expiration_date": "2024-03-15"
+                    },
+                    "expected": "Option chain for NVDA expiring 2024-03-15",
+                    "actual": {
+                      "underlyingPrice": 0,
+                      "calls": [
+                        {
+                          "strike": 500.0,
+                          "bid": 22.5,
+                          "ask": 23.2,
+                          "volume": 8900,
+                          "openInterest": 15600,
+                          "impliedVolatility": 0.45
+                        }
+                      ],
+                      "puts": [
+                        {
+                          "strike": 490.0,
+                          "bid": 18.3,
+                          "ask": 19.0,
+                          "volume": 6700,
+                          "openInterest": 12300,
+                          "impliedVolatility": 0.43
+                        }
+                      ]
+                    },
+                    "result": "PASS"
+                  }
+                ],
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario data exactly. All fields preserved correctly including stock_prices, historical_prices, dividends, income_statements, cashflow_statements, earnings_dates, news_articles, recommendations, option_expirations, option_chains, and market_data."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 135.4749550819397
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_current_stock_price",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get current price for AMD with boundary value $0.01",
+                    "input": {
+                      "symbol": "AMD"
+                    },
+                    "passed": true,
+                    "output": {
+                      "current_price": "$0.01"
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Symbol not in scenario data",
+                    "input": {
+                      "symbol": "AAPL"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Price data not found for symbol AAPL",
+                    "note": "Expected error - correctly handles missing data"
+                  },
+                  {
+                    "description": "Error case: Empty symbol string",
+                    "input": {
+                      "symbol": ""
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Symbol must be a non-empty string",
+                    "note": "Expected error - validation working correctly"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_price_by_date",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get price for AMD on 2024-01-01 with boundary values",
+                    "input": {
+                      "symbol": "AMD",
+                      "date": "2024-01-01"
+                    },
+                    "passed": true,
+                    "output": {
+                      "date": "2024-01-01",
+                      "open": 0.01,
+                      "close": 0.01
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Error case: Date not in historical data",
+                    "input": {
+                      "symbol": "AMD",
+                      "date": "2024-12-31"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Price data not found for AMD on 2024-12-31",
+                    "note": "Expected error - correctly handles missing date"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stock_price_date_range",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Single day range with boundary values",
+                    "input": {
+                      "symbol": "AMD",
+                      "start_date": "2024-01-01",
+                      "end_date": "2024-01-01"
+                    },
+                    "passed": true,
+                    "output": {
+                      "closing_prices": {
+                        "2024-01-01": 0.01
+                      }
+                    },
+                    "error": null
+                  },
+                  {
+                    "description": "Boundary case: Invalid date range (end before start)",
+                    "input": {
+                      "symbol": "AMD",
+                      "start_date": "2024-01-01",
+                      "end_date": "2023-12-31"
+                    },
+                    "passed": true,
+                    "output": {
+                      "closing_prices": {}
+                    },
+                    "error": null,
+                    "note": "Returns empty dict for invalid range - acceptable behavior"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_historical_stock_prices",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get historical prices with boundary values",
+                    "input": {
+                      "symbol": "AMD",
+                      "period": "1mo",
+                      "interval": "1d"
+                    },
+                    "passed": true,
+                    "output": {
+                      "price_history": [
+                        {
+                          "date": "2024-01-01",
+                          "open": 0.01,
+                          "high": 0.01,
+                          "low": 0.01,
+                          "close": 0.01,
+                          "volume": 0
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_dividends",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get dividends for AMD (empty in scenario)",
+                    "input": {
+                      "symbol": "AMD"
+                    },
+                    "passed": true,
+                    "output": {
+                      "dividends": {}
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_income_statement",
+                "test_cases": [
+                  {
+                    "description": "Error case: No income statement data in scenario",
+                    "input": {
+                      "symbol": "AMD",
+                      "freq": "yearly"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Income statement data not found for symbol AMD",
+                    "note": "Expected error - scenario has empty income_statements"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_cashflow",
+                "test_cases": [
+                  {
+                    "description": "Error case: No cashflow data in scenario",
+                    "input": {
+                      "symbol": "AMD",
+                      "freq": "yearly"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Cash flow statement data not found for symbol AMD",
+                    "note": "Expected error - scenario has empty cashflow_statements"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_earning_dates",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get earnings dates with null values",
+                    "input": {
+                      "symbol": "AMD",
+                      "limit": 12
+                    },
+                    "passed": true,
+                    "output": {
+                      "earnings_dates": [
+                        {
+                          "date": "2024-03-15",
+                          "type": "quarterly",
+                          "actualEPS": null,
+                          "estimatedEPS": null,
+                          "surprise": null
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_news",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get news for AMD (empty in scenario)",
+                    "input": {
+                      "symbol": "AMD",
+                      "limit": 50
+                    },
+                    "passed": true,
+                    "output": {
+                      "news_articles": []
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_recommendations",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get recommendations with null priceTarget",
+                    "input": {
+                      "symbol": "AMD"
+                    },
+                    "passed": true,
+                    "output": {
+                      "recommendations": [
+                        {
+                          "firm": "Unknown Research",
+                          "rating": "Hold",
+                          "priceTarget": null,
+                          "date": "2024-01-05"
+                        }
+                      ]
+                    },
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_option_expiration_dates",
+                "test_cases": [
+                  {
+                    "description": "Error case: No option expiration data in scenario",
+                    "input": {
+                      "symbol": "AMD"
+                    },
+                    "passed": true,
+                    "output": null,
+                    "error": "Option expiration data not found for symbol AMD",
+                    "note": "Expected error - scenario has empty option_expirations"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_option_chain",
+                "test_cases": [
+                  {
+                    "description": "Valid case: Get option chain with extreme boundary values",
+                    "input": {
+                      "symbol": "AMD",
+                      "expiration_date": "2024-02-16"
+                    },
+                    "passed": true,
+                    "output": {
+                      "underlyingPrice": 0,
+                      "calls": [
+                        {
+                          "strike": 150.0,
+                          "bid": 0.01,
+                          "ask": 999999.99,
+                          "volume": 0,
+                          "openInterest": 0,
+                          "impliedVolatility": 0.0
+                        }
+                      ],
+                      "puts": []
+                    },
+                    "error": null,
+                    "note": "Successfully handles extreme boundary values: bid=0.01, ask=999999.99"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All boundary values preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 88.10024976730347
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/YahooFinance.py"
+  }
+}

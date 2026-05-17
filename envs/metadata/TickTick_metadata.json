@@ -1,0 +1,463 @@
+{
+  "class_name": "TickTick",
+  "description": "Task and project management server for TickTick, enabling OAuth2 authentication, project CRUD operations, and task management including creation, updates, completion, and deletion.",
+  "tools": [
+    {
+      "name": "ticktick_oauth2_authorization_step1",
+      "description": "Generate a TickTick OAuth2 authorization URL to redirect the user for obtaining an authorization code.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "description": "Space-separated permission scopes for the authorization request. Available scopes: 'tasks:read', 'tasks:write'."
+          },
+          "client_id": {
+            "type": "string",
+            "description": "The TickTick application's client ID obtained from the Developer Center."
+          },
+          "redirect_uri": {
+            "type": "string",
+            "description": "The exact redirect URI registered with the TickTick application for OAuth2 callback."
+          },
+          "state": {
+            "type": "string",
+            "description": "An opaque value used for CSRF protection and maintaining request state across the authorization flow."
+          }
+        },
+        "required": [
+          "scope",
+          "client_id",
+          "redirect_uri"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "authorization_url": {
+            "type": "string",
+            "description": "The fully constructed OAuth2 authorization URL to redirect the user for granting permissions."
+          }
+        }
+      }
+    },
+    {
+      "name": "ticktick_get_user_project",
+      "description": "Retrieve all projects belonging to the authenticated user.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "projects": {
+            "type": "array",
+            "description": "List of all projects owned by the authenticated user.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "project_id": {
+                  "type": "string",
+                  "description": "The unique identifier of the project."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The display name of the project."
+                },
+                "color": {
+                  "type": "string",
+                  "description": "The hex color code assigned to the project for visual identification."
+                },
+                "kind": {
+                  "type": "string",
+                  "description": "The type of the project, indicating whether it contains tasks or notes."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "ticktick_get_project_with_data",
+      "description": "Retrieve a specific project along with its associated tasks and columns.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The unique identifier of the project to retrieve data for."
+          }
+        },
+        "required": [
+          "project_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The unique identifier of the project."
+          },
+          "name": {
+            "type": "string",
+            "description": "The display name of the project."
+          },
+          "tasks": {
+            "type": "array",
+            "description": "List of tasks contained within the project."
+          },
+          "columns": {
+            "type": "array",
+            "description": "List of columns or sections defined within the project for task organization."
+          }
+        }
+      }
+    },
+    {
+      "name": "ticktick_create_project",
+      "description": "Create a new project in TickTick with specified configuration options.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The display name for the new project."
+          },
+          "kind": {
+            "type": "string",
+            "description": "The type of the project, such as 'TASK' or 'NOTE'."
+          },
+          "color": {
+            "type": "string",
+            "description": "The hex color code for the project (e.g., '#F18181') for visual identification."
+          },
+          "viewMode": {
+            "type": "string",
+            "description": "The view mode configuration for displaying the project."
+          },
+          "sortOrder": {
+            "type": "integer",
+            "description": "The numeric sort order value determining the project's position in lists."
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The unique identifier of the newly created project."
+          },
+          "name": {
+            "type": "string",
+            "description": "The display name of the project."
+          },
+          "color": {
+            "type": "string",
+            "description": "The hex color code assigned to the project for visual identification."
+          },
+          "kind": {
+            "type": "string",
+            "description": "The type of the project, indicating whether it contains tasks or notes."
+          }
+        }
+      }
+    },
+    {
+      "name": "ticktick_update_project",
+      "description": "Update an existing project's properties such as name, color, or view settings.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The unique identifier of the project to update."
+          },
+          "name": {
+            "type": "string",
+            "description": "The new display name for the project."
+          },
+          "kind": {
+            "type": "string",
+            "description": "The type of the project, either 'TASK' or 'NOTE'."
+          },
+          "color": {
+            "type": "string",
+            "description": "The hex color code for the project (e.g., '#F18181') for visual identification."
+          },
+          "viewMode": {
+            "type": "string",
+            "description": "The view mode configuration for displaying the project."
+          },
+          "sortOrder": {
+            "type": "integer",
+            "description": "The numeric sort order value determining the project's position in lists."
+          }
+        },
+        "required": [
+          "project_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The unique identifier of the updated project."
+          },
+          "name": {
+            "type": "string",
+            "description": "The display name of the project."
+          },
+          "color": {
+            "type": "string",
+            "description": "The hex color code assigned to the project for visual identification."
+          },
+          "kind": {
+            "type": "string",
+            "description": "The type of the project, indicating whether it contains tasks or notes."
+          }
+        }
+      }
+    },
+    {
+      "name": "ticktick_delete_project",
+      "description": "Permanently delete a specific project and all its associated data.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The unique identifier of the project to delete."
+          }
+        },
+        "required": [
+          "project_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The unique identifier of the deleted project."
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "Indicates whether the project was successfully deleted."
+          }
+        }
+      }
+    },
+    {
+      "name": "ticktick_create_task",
+      "description": "Create a new task in TickTick with specified title, project assignment, and optional details.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title or name of the task to create."
+          },
+          "project_id": {
+            "type": "string",
+            "description": "The unique identifier of the project to add the task to."
+          },
+          "notes": {
+            "type": "string",
+            "description": "The main content or notes associated with the task."
+          },
+          "description": {
+            "type": "string",
+            "description": "An extended description providing additional details about the task."
+          },
+          "due_date": {
+            "type": "string",
+            "description": "The due date and time for the task in ISO 8601 format (e.g., '2023-04-24T17:00:00+0000')."
+          },
+          "priority": {
+            "type": "integer",
+            "description": "The priority level of the task (0=None, 1=Low, 3=Medium, 5=High)."
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "description": "The unique identifier of the newly created task."
+          },
+          "title": {
+            "type": "string",
+            "description": "The title or name of the task."
+          },
+          "project_id": {
+            "type": "string",
+            "description": "The unique identifier of the project containing the task."
+          },
+          "dueDate": {
+            "type": "string",
+            "description": "The due date and time assigned to the task in ISO 8601 format."
+          },
+          "priority": {
+            "type": "integer",
+            "description": "The priority level of the task (0=None, 1=Low, 3=Medium, 5=High)."
+          }
+        }
+      }
+    },
+    {
+      "name": "ticktick_update_task",
+      "description": "Update an existing task's properties such as title, notes, due date, or priority.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "The unique identifier of the task to update."
+          },
+          "project_id": {
+            "type": "string",
+            "description": "The unique identifier of the project containing the task."
+          },
+          "title": {
+            "type": "string",
+            "description": "The new title or name for the task."
+          },
+          "notes": {
+            "type": "string",
+            "description": "The main content or notes associated with the task."
+          },
+          "description": {
+            "type": "string",
+            "description": "An extended description providing additional details about the task."
+          },
+          "due_date": {
+            "type": "string",
+            "description": "The due date and time for the task in ISO 8601 format (e.g., '2023-04-24T17:00:00+0000')."
+          },
+          "priority": {
+            "type": "integer",
+            "description": "The priority level of the task (0=None, 1=Low, 3=Medium, 5=High)."
+          }
+        },
+        "required": [
+          "task_id",
+          "project_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "description": "The unique identifier of the updated task."
+          },
+          "title": {
+            "type": "string",
+            "description": "The title or name of the task."
+          },
+          "project_id": {
+            "type": "string",
+            "description": "The unique identifier of the project containing the task."
+          },
+          "dueDate": {
+            "type": "string",
+            "description": "The due date and time assigned to the task in ISO 8601 format."
+          },
+          "priority": {
+            "type": "integer",
+            "description": "The priority level of the task (0=None, 1=Low, 3=Medium, 5=High)."
+          }
+        }
+      }
+    },
+    {
+      "name": "ticktick_complete_task",
+      "description": "Mark a specific task as complete within its project.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "The unique identifier of the task to mark as complete."
+          },
+          "project_id": {
+            "type": "string",
+            "description": "The unique identifier of the project containing the task."
+          }
+        },
+        "required": [
+          "task_id",
+          "project_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "The unique identifier of the completed task."
+          },
+          "project_id": {
+            "type": "string",
+            "description": "The unique identifier of the project containing the task."
+          },
+          "status": {
+            "type": "string",
+            "description": "The current completion status of the task after the operation."
+          }
+        }
+      }
+    },
+    {
+      "name": "ticktick_delete_task",
+      "description": "Permanently delete a specific task from a project.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "The unique identifier of the task to delete."
+          },
+          "project_id": {
+            "type": "string",
+            "description": "The unique identifier of the project containing the task to delete."
+          }
+        },
+        "required": [
+          "task_id",
+          "project_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "The unique identifier of the deleted task."
+          },
+          "project_id": {
+            "type": "string",
+            "description": "The unique identifier of the project that contained the deleted task."
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "Indicates whether the task was successfully deleted."
+          }
+        }
+      }
+    }
+  ]
+}

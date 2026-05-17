@@ -1,0 +1,1598 @@
+{
+  "metadata": {
+    "class_name": "TFTServer",
+    "metadata_path": "envs\\metadata\\TFTServer_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-03T23:17:15.424588",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "TFTServer",
+    "description": "Provides Teamfight Tactics (TFT) game data including champion builds, item combinations, meta decks, augments, and play style recommendations.",
+    "tools": [
+      {
+        "name": "tft_get_champion_item_build",
+        "description": "Retrieves recommended item builds for a specific TFT champion, including item priority and win rate statistics.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "champion_name": {
+              "type": "string",
+              "description": "The name of the TFT champion to get item build recommendations for."
+            }
+          },
+          "required": [
+            "champion_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "champion_name": {
+              "type": "string",
+              "description": "The name of the TFT champion for which the build is provided."
+            },
+            "items": {
+              "type": "array",
+              "description": "List of recommended items for the champion, ordered by effectiveness.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "item_name": {
+                    "type": "string",
+                    "description": "The name of the recommended TFT item."
+                  },
+                  "priority": {
+                    "type": "integer",
+                    "description": "The priority ranking of this item for the champion (lower is higher priority)."
+                  },
+                  "win_rate": {
+                    "type": "number",
+                    "description": "The win rate percentage when this item is equipped on the champion."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "tft_get_play_style",
+        "description": "Retrieves play style recommendations and strategies for different TFT gameplay approaches.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "style": {
+              "type": "string",
+              "description": "The play style name to get recommendations for (e.g., 'aggro', 'economy', 'reroll'). If omitted, returns default or general recommendations."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "style": {
+              "type": "string",
+              "description": "The name of the play style being described."
+            },
+            "description": {
+              "type": "string",
+              "description": "A detailed explanation of the play style and its core principles."
+            },
+            "recommendations": {
+              "type": "array",
+              "description": "List of strategic recommendations and tips for executing this play style effectively.",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "tft_list_augments",
+        "description": "Retrieves a list of TFT augments with their tier, description, and performance statistics.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "The maximum number of augments to return. If omitted, returns all available augments."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "augments": {
+              "type": "array",
+              "description": "List of TFT augments with their details and performance data.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name of the TFT augment."
+                  },
+                  "tier": {
+                    "type": "string",
+                    "description": "The tier classification of the augment (e.g., 'Silver', 'Gold', 'Prismatic')."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "The in-game description explaining the augment's effect."
+                  },
+                  "win_rate": {
+                    "type": "number",
+                    "description": "The win rate percentage when this augment is selected."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "tft_list_champions_for_item",
+        "description": "Retrieves champion recommendations for a specific TFT item, showing which champions benefit most from equipping it.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "item_name": {
+              "type": "string",
+              "description": "The name of the TFT item to find champion recommendations for."
+            }
+          },
+          "required": [
+            "item_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "champions": {
+              "type": "array",
+              "description": "List of champions recommended for the specified item, ranked by synergy.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "champion_name": {
+                    "type": "string",
+                    "description": "The name of the TFT champion recommended for this item."
+                  },
+                  "synergy_score": {
+                    "type": "number",
+                    "description": "A score indicating how well the item synergizes with the champion's kit and role."
+                  },
+                  "win_rate": {
+                    "type": "number",
+                    "description": "The win rate percentage when this champion uses the specified item."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "tft_list_item_combinations",
+        "description": "Retrieves TFT item combination recipes showing which base components combine to create completed items.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "The maximum number of item combinations to return. If omitted, returns all available combinations."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "combinations": {
+              "type": "array",
+              "description": "List of item combination recipes showing how to craft completed items.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "item1": {
+                    "type": "string",
+                    "description": "The name of the first base component item."
+                  },
+                  "item2": {
+                    "type": "string",
+                    "description": "The name of the second base component item."
+                  },
+                  "result": {
+                    "type": "string",
+                    "description": "The name of the completed item created from combining the two components."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "The in-game description of the resulting completed item's effect."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "tft_list_meta_decks",
+        "description": "Retrieves current meta deck compositions with their champions, traits, and performance statistics.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "tier": {
+              "type": "string",
+              "description": "Filter decks by tier classification (e.g., 'S', 'A', 'B'). If omitted, returns decks from all tiers."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "The maximum number of meta decks to return. If omitted, returns all available decks."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "decks": {
+              "type": "array",
+              "description": "List of current meta deck compositions with performance data.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The community name or identifier for this deck composition."
+                  },
+                  "champions": {
+                    "type": "array",
+                    "description": "List of TFT champion names that comprise this deck composition.",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "traits": {
+                    "type": "array",
+                    "description": "List of trait synergies activated by this deck composition.",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "win_rate": {
+                    "type": "number",
+                    "description": "The win rate percentage achieved by players using this deck composition."
+                  },
+                  "play_rate": {
+                    "type": "number",
+                    "description": "The percentage of games in which this deck composition is played."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass ItemBuild(BaseModel):\n    \"\"\"Represents an item build recommendation for a champion.\"\"\"\n    item_name: str = Field(..., description=\"The name of the recommended TFT item\")\n    priority: int = Field(..., ge=1, description=\"Priority ranking (lower is higher priority)\")\n    win_rate: float = Field(..., ge=0, le=100, description=\"Win rate percentage when equipped\")\n\nclass ChampionBuild(BaseModel):\n    \"\"\"Represents champion item build data.\"\"\"\n    champion_name: str = Field(..., description=\"The TFT champion name\")\n    items: List[ItemBuild] = Field(default=[], description=\"List of recommended items\")\n\nclass PlayStyle(BaseModel):\n    \"\"\"Represents a TFT play style.\"\"\"\n    style: str = Field(..., description=\"The play style name\")\n    description: str = Field(..., description=\"Detailed explanation of the play style\")\n    recommendations: List[str] = Field(default=[], description=\"Strategic recommendations and tips\")\n\nclass Augment(BaseModel):\n    \"\"\"Represents a TFT augment.\"\"\"\n    name: str = Field(..., description=\"The augment name\")\n    tier: str = Field(..., description=\"Tier classification (Silver, Gold, Prismatic)\")\n    description: str = Field(..., description=\"In-game description of the augment's effect\")\n    win_rate: float = Field(..., ge=0, le=100, description=\"Win rate percentage when selected\")\n\nclass ChampionItemSynergy(BaseModel):\n    \"\"\"Represents champion synergy with a specific item.\"\"\"\n    champion_name: str = Field(..., description=\"The TFT champion name\")\n    synergy_score: float = Field(..., ge=0, le=10, description=\"Synergy score indicating how well item fits\")\n    win_rate: float = Field(..., ge=0, le=100, description=\"Win rate percentage when champion uses item\")\n\nclass ItemCombination(BaseModel):\n    \"\"\"Represents an item combination recipe.\"\"\"\n    item1: str = Field(..., description=\"First base component item\")\n    item2: str = Field(..., description=\"Second base component item\")\n    result: str = Field(..., description=\"Completed item created from combining components\")\n    description: str = Field(..., description=\"Description of resulting item's effect\")\n\nclass MetaDeck(BaseModel):\n    \"\"\"Represents a meta deck composition.\"\"\"\n    name: str = Field(..., description=\"Community name or identifier for deck\")\n    champions: List[str] = Field(default=[], description=\"List of TFT champion names in deck\")\n    traits: List[str] = Field(default=[], description=\"List of trait synergies activated\")\n    win_rate: float = Field(..., ge=0, le=100, description=\"Win rate percentage achieved\")\n    play_rate: float = Field(..., ge=0, le=100, description=\"Percentage of games deck is played\")\n\nclass TFTScenario(BaseModel):\n    \"\"\"Main scenario model for TFT game data.\"\"\"\n    championBuildsMap: Dict[str, ChampionBuild] = Field(default_factory=lambda: {\n        \"Jinx\": ChampionBuild(\n            champion_name=\"Jinx\",\n            items=[\n                ItemBuild(item_name=\"Infinity Edge\", priority=1, win_rate=67.5),\n                ItemBuild(item_name=\"Last Whisper\", priority=2, win_rate=65.2),\n                ItemBuild(item_name=\"Giant Slayer\", priority=3, win_rate=63.8)\n            ]\n        ),\n        \"Yasuo\": ChampionBuild(\n            champion_name=\"Yasuo\",\n            items=[\n                ItemBuild(item_name=\"Bloodthirster\", priority=1, win_rate=69.1),\n                ItemBuild(item_name=\"Titan's Resolve\", priority=2, win_rate=66.7),\n                ItemBuild(item_name=\"Quicksilver\", priority=3, win_rate=64.3)\n            ]\n        ),\n        \"Ahri\": ChampionBuild(\n            champion_name=\"Ahri\",\n            items=[\n                ItemBuild(item_name=\"Jeweled Gauntlet\", priority=1, win_rate=68.9),\n                ItemBuild(item_name=\"Blue Buff\", priority=2, win_rate=67.4),\n                ItemBuild(item_name=\"Rabadon's Deathcap\", priority=3, win_rate=65.1)\n            ]\n        ),\n        \"Garen\": ChampionBuild(\n            champion_name=\"Garen\",\n            items=[\n                ItemBuild(item_name=\"Sunfire Cape\", priority=1, win_rate=64.2),\n                ItemBuild(item_name=\"Bramble Vest\", priority=2, win_rate=62.8),\n                ItemBuild(item_name=\"Dragon's Claw\", priority=3, win_rate=61.5)\n            ]\n        ),\n        \"Jhin\": ChampionBuild(\n            champion_name=\"Jhin\",\n            items=[\n                ItemBuild(item_name=\"Infinity Edge\", priority=1, win_rate=71.3),\n                ItemBuild(item_name=\"Last Whisper\", priority=2, win_rate=69.7),\n                ItemBuild(item_name=\"Giant Slayer\", priority=3, win_rate=68.2)\n            ]\n        )\n    }, description=\"Champion item builds mapping\")\n    \n    playStylesMap: Dict[str, PlayStyle] = Field(default_factory=lambda: {\n        \"aggro\": PlayStyle(\n            style=\"aggro\",\n            description=\"Aggressive early game strategy focused on winning streaks and maintaining board strength\",\n            recommendations=[\n                \"Roll early to upgrade 1 and 2 cost units\",\n                \"Prioritize strong early game items like Sunfire Cape\",\n                \"Maintain win streak by leveling aggressively\",\n                \"Spend gold to keep board strength high\"\n            ]\n        ),\n        \"economy\": PlayStyle(\n            style=\"economy\",\n            description=\"Gold-focused strategy building economy through loss streaks or interest optimization\",\n            recommendations=[\n                \"Build 50 gold quickly for maximum interest\",\n                \"Accept loss streaks early for better carousel priority\",\n                \"Only spend gold when it provides significant power spike\",\n                \"Transition to strong board at level 7-8\"\n            ]\n        ),\n        \"reroll\": PlayStyle(\n            style=\"reroll\",\n            description=\"Strategy focused on 3-starring low cost units by rolling at low levels\",\n            recommendations=[\n                \"Stay at level 4-5 to maximize 1-2 cost unit odds\",\n                \"Slow roll above 50 gold to maintain economy\",\n                \"Focus on 3-4 key units to 3-star\",\n                \"Build items that scale well with unit upgrades\"\n            ]\n        ),\n        \"fast8\": PlayStyle(\n            style=\"fast8\",\n            description=\"Rush to level 8 quickly to find 4 and 5 cost units\",\n            recommendations=[\n                \"Build economy early while maintaining health\",\n                \"Level to 6 at 3-2, 7 at 4-1, 8 at 4-5\",\n                \"Roll at level 8 for 4-5 cost carries\",\n                \"Use strong mid-game units to preserve health\"\n            ]\n        )\n    }, description=\"Play style recommendations mapping\")\n    \n    augmentsList: List[Augment] = Field(default_factory=lambda: [\n        Augment(name=\"Cybernetic Implants\", tier=\"Silver\", description=\"Your units with items gain 200 HP and 20% attack damage\", win_rate=58.5),\n        Augment(name=\"Titanic Strength\", tier=\"Silver\", description=\"Your units gain 15% of their maximum HP as attack damage\", win_rate=59.2),\n        Augment(name=\"Binary Airdrop\", tier=\"Gold\", description=\"Your champions equipped with exactly 2 items gain a random completed item\", win_rate=63.7),\n        Augment(name=\"Wise Spending\", tier=\"Gold\", description=\"Gain 2 experience points when you refresh the shop\", win_rate=62.1),\n        Augment(name=\"High End Shopping\", tier=\"Prismatic\", description=\"Champions in your shop appear as higher tier\", win_rate=71.4),\n        Augment(name=\"Level Up!\", tier=\"Prismatic\", description=\"When you buy experience points, gain an additional 3 points\", win_rate=69.8),\n        Augment(name=\"Windfall\", tier=\"Silver\", description=\"Gain 20 gold immediately\", win_rate=57.3),\n        Augment(name=\"Thrill of the Hunt\", tier=\"Silver\", description=\"Your units heal 400 HP on kill\", win_rate=60.1),\n        Augment(name=\"Portable Forge\", tier=\"Gold\", description=\"Gain an Ornn item component and 7 gold\", win_rate=64.5),\n        Augment(name=\"Sunfire Board\", tier=\"Gold\", description=\"At start of combat, enemies take true damage for 10 seconds\", win_rate=61.9)\n    ], description=\"List of available augments\")\n    \n    itemChampionSynergiesMap: Dict[str, List[ChampionItemSynergy]] = Field(default_factory=lambda: {\n        \"Infinity Edge\": [\n            ChampionItemSynergy(champion_name=\"Jhin\", synergy_score=9.5, win_rate=71.3),\n            ChampionItemSynergy(champion_name=\"Jinx\", synergy_score=8.8, win_rate=67.5),\n            ChampionItemSynergy(champion_name=\"Caitlyn\", synergy_score=8.2, win_rate=65.1),\n            ChampionItemSynergy(champion_name=\"Tristana\", synergy_score=7.9, win_rate=63.7),\n            ChampionItemSynergy(champion_name=\"Zeri\", synergy_score=7.5, win_rate=62.3)\n        ],\n        \"Blue Buff\": [\n            ChampionItemSynergy(champion_name=\"Ahri\", synergy_score=9.8, win_rate=68.9),\n            ChampionItemSynergy(champion_name=\"Lux\", synergy_score=9.1, win_rate=66.4),\n            ChampionItemSynergy(champion_name=\"Ziggs\", synergy_score=8.5, win_rate=64.8),\n            ChampionItemSynergy(champion_name=\"Malzahar\", synergy_score=8.0, win_rate=63.2),\n            ChampionItemSynergy(champion_name=\"Twisted Fate\", synergy_score=7.7, win_rate=61.9)\n        ],\n        \"Bloodthirster\": [\n            ChampionItemSynergy(champion_name=\"Yasuo\", synergy_score=9.3, win_rate=69.1),\n            ChampionItemSynergy(champion_name=\"Fiora\", synergy_score=8.7, win_rate=66.8),\n            ChampionItemSynergy(champion_name=\"Irelia\", synergy_score=8.4, win_rate=65.5),\n            ChampionItemSynergy(champion_name=\"Tryndamere\", synergy_score=8.1, win_rate=64.2),\n            ChampionItemSynergy(champion_name=\"Riven\", synergy_score=7.8, win_rate=62.9)\n        ]\n    }, description=\"Item champion synergies mapping\")\n    \n    itemCombinationsList: List[ItemCombination] = Field(default_factory=lambda: [\n        ItemCombination(item1=\"B.F. Sword\", item2=\"B.F. Sword\", result=\"Infinity Edge\", description=\"Grants 75% critical strike chance and 10% critical strike damage\"),\n        ItemCombination(item1=\"Tear of the Goddess\", item2=\"Tear of the Goddess\", result=\"Blue Buff\", description=\"After casting, set mana to 20. Gain 30 mana on takedown\"),\n        ItemCombination(item1=\"B.F. Sword\", item2=\"Negatron Cloak\", result=\"Bloodthirster\", description=\"Grant 40% omnivamp. Once per combat at 40% HP, gain 25% max HP shield\"),\n        ItemCombination(item1=\"Chain Vest\", item2=\"Giant's Belt\", result=\"Sunfire Cape\", description=\"Grant 150 bonus HP. Every 2 seconds, deal true damage to nearby enemies\"),\n        ItemCombination(item1=\"Recurve Bow\", item2=\"Chain Vest\", result=\"Titan's Resolve\", description=\"Grant 2% attack damage and 2% armor and magic resist, stacking up to 25 times\"),\n        ItemCombination(item1=\"Needlessly Large Rod\", item2=\"Sparring Gloves\", result=\"Jeweled Gauntlet\", description=\"Abilities can critically strike and gain 30% critical strike damage\"),\n        ItemCombination(item1=\"B.F. Sword\", item2=\"Recurve Bow\", result=\"Giant Slayer\", description=\"Deal 20% bonus damage. If target has more than 1600 HP, deal 60% bonus instead\"),\n        ItemCombination(item1=\"Chain Vest\", item2=\"Chain Vest\", result=\"Bramble Vest\", description=\"Neglect 50% bonus damage from all critical strikes. When struck, deal magic damage\"),\n        ItemCombination(item1=\"Negatron Cloak\", item2=\"Negatron Cloak\", result=\"Dragon's Claw\", description=\"Grant 30 bonus magic resist. Reduce incoming magic damage by 30%\"),\n        ItemCombination(item1=\"Needlessly Large Rod\", item2=\"Needlessly Large Rod\", result=\"Rabadon's Deathcap\", description=\"Grant 75 bonus ability power\")\n    ], description=\"List of item combination recipes\")\n    \n    metaDecksList: List[MetaDeck] = Field(default_factory=lambda: [\n        MetaDeck(\n            name=\"Syphoners\",\n            champions=[\"Nasus\", \"Renekton\", \"Rakan\", \"Xayah\", \"Zeri\", \"Sivir\", \"Aatrox\", \"Kayle\"],\n            traits=[\"Syphoner\", \"Shimmerscale\", \"Ragewing\", \"Swiftshot\", \"Guardian\"],\n            win_rate=24.3,\n            play_rate=18.7\n        ),\n        MetaDeck(\n            name=\"Mage Guild\",\n            champions=[\"Heimerdinger\", \"Ryvra\", \"Tulsi\", \"Lux\", \"Ziggs\", \"Sona\", \"Bard\", \"Lulu\"],\n            traits=[\"Mage\", \"Guild\", \"Evoker\", \"Caretaker\", \"Mystic\"],\n            win_rate=22.1,\n            play_rate=16.2\n        ),\n        MetaDeck(\n            name=\"Dragonmancer\",\n            champions=[\"Lee Sin\", \"Karma\", \"Volibear\", \"Yasuo\", \"Sett\", \"Shen\", \"Swain\", \"Shi Oh Yu\"],\n            traits=[\"Dragonmancer\", \"Legendary\", \"Mystic\", \"Guardian\", \"Bruiser\"],\n            win_rate=19.8,\n            play_rate=14.5\n        ),\n        MetaDeck(\n            name=\"Assassins\",\n            champions=[\"Pyke\", \"Qiyana\", \"Diana\", \"Talom\", \"Akali\", \"Katarina\", \"Kha'Zix\", \"Zed\"],\n            traits=[\"Assassin\", \"Whispers\", \"Scalescorn\", \"Thief\", \"Mystic\"],\n            win_rate=18.2,\n            play_rate=12.3\n        ),\n        MetaDeck(\n            name=\"Cavaliers\",\n            champions=[\"Sejuani\", \"Lillia\", \"Nunu\", \"Hecarim\", \"Rell\", \"Yone\", \"Braum\", \"Daeja\"],\n            traits=[\"Cavalier\", \"Mirage\", \"Guardian\", \"Cannon\", \"Revel\"],\n            win_rate=16.7,\n            play_rate=10.8\n        )\n    ], description=\"List of current meta decks\")\n\nScenario_Schema = [ItemBuild, ChampionBuild, PlayStyle, Augment, ChampionItemSynergy, ItemCombination, MetaDeck, TFTScenario]\n\n# Section 2: Class\nclass TFTServer:\n    def __init__(self):\n        \"\"\"Initialize TFT server with empty state.\"\"\"\n        self.championBuildsMap: Dict[str, ChampionBuild] = {}\n        self.playStylesMap: Dict[str, PlayStyle] = {}\n        self.augmentsList: List[Augment] = []\n        self.itemChampionSynergiesMap: Dict[str, List[ChampionItemSynergy]] = {}\n        self.itemCombinationsList: List[ItemCombination] = []\n        self.metaDecksList: List[MetaDeck] = []\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the server instance.\"\"\"\n        model = TFTScenario(**scenario)\n        self.championBuildsMap = model.championBuildsMap\n        self.playStylesMap = model.playStylesMap\n        self.augmentsList = model.augmentsList\n        self.itemChampionSynergiesMap = model.itemChampionSynergiesMap\n        self.itemCombinationsList = model.itemCombinationsList\n        self.metaDecksList = model.metaDecksList\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"championBuildsMap\": {k: v.dict() for k, v in self.championBuildsMap.items()},\n            \"playStylesMap\": {k: v.dict() for k, v in self.playStylesMap.items()},\n            \"augmentsList\": [a.dict() for a in self.augmentsList],\n            \"itemChampionSynergiesMap\": {k: [s.dict() for s in v] for k, v in self.itemChampionSynergiesMap.items()},\n            \"itemCombinationsList\": [c.dict() for c in self.itemCombinationsList],\n            \"metaDecksList\": [d.dict() for d in self.metaDecksList]\n        }\n\n    def tft_get_champion_item_build(self, champion_name: str) -> dict:\n        \"\"\"Get recommended item builds for a specific champion.\"\"\"\n        if champion_name not in self.championBuildsMap:\n            return {\"champion_name\": champion_name, \"items\": []}\n        \n        build = self.championBuildsMap[champion_name]\n        return {\n            \"champion_name\": build.champion_name,\n            \"items\": [item.dict() for item in build.items]\n        }\n\n    def tft_get_play_style(self, style: Optional[str] = None) -> dict:\n        \"\"\"Get play style recommendations and strategies.\"\"\"\n        if style and style in self.playStylesMap:\n            play_style = self.playStylesMap[style]\n            return play_style.dict()\n        \n        # Return default aggro style if no specific style requested\n        default_style = self.playStylesMap.get(\"aggro\", PlayStyle(style=\"aggro\", description=\"Default aggressive style\", recommendations=[]))\n        return default_style.dict()\n\n    def tft_list_augments(self, limit: Optional[int] = None) -> dict:\n        \"\"\"List TFT augments with performance statistics.\"\"\"\n        augments = self.augmentsList\n        if limit:\n            augments = augments[:limit]\n        \n        return {\"augments\": [augment.dict() for augment in augments]}\n\n    def tft_list_champions_for_item(self, item_name: str) -> dict:\n        \"\"\"Get champion recommendations for a specific item.\"\"\"\n        if item_name not in self.itemChampionSynergiesMap:\n            return {\"champions\": []}\n        \n        synergies = self.itemChampionSynergiesMap[item_name]\n        return {\"champions\": [synergy.dict() for synergy in synergies]}\n\n    def tft_list_item_combinations(self, limit: Optional[int] = None) -> dict:\n        \"\"\"List item combination recipes.\"\"\"\n        combinations = self.itemCombinationsList\n        if limit:\n            combinations = combinations[:limit]\n        \n        return {\"combinations\": [combo.dict() for combo in combinations]}\n\n    def tft_list_meta_decks(self, tier: Optional[str] = None, limit: Optional[int] = None) -> dict:\n        \"\"\"List current meta deck compositions.\"\"\"\n        decks = self.metaDecksList\n        \n        if tier:\n            # Filter by tier if provided (simple string matching)\n            filtered_decks = []\n            for deck in decks:\n                if tier.upper() in deck.name.upper():\n                    filtered_decks.append(deck)\n            decks = filtered_decks\n        \n        if limit:\n            decks = decks[:limit]\n        \n        return {\"decks\": [deck.dict() for deck in decks]}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"TFTServer\")\nserver = TFTServer()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"Load scenario data into the TFT server.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching TFTScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        server.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"Save current TFT state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return server.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef tft_get_champion_item_build(champion_name: str) -> dict:\n    \"\"\"Get recommended item builds for a specific TFT champion.\n    \n    Args:\n        champion_name (str): The name of the TFT champion.\n    \n    Returns:\n        champion_name (str): Champion name.\n        items (list): List of recommended items with priority and win rate.\n    \"\"\"\n    try:\n        if not champion_name or not isinstance(champion_name, str):\n            raise ValueError(\"Champion name must be a non-empty string\")\n        return server.tft_get_champion_item_build(champion_name)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef tft_get_play_style(style: Optional[str] = None) -> dict:\n    \"\"\"Get play style recommendations and strategies.\n    \n    Args:\n        style (str) [Optional]: The play style name (e.g., 'aggro', 'economy', 'reroll').\n    \n    Returns:\n        style (str): Play style name.\n        description (str): Detailed explanation of the play style.\n        recommendations (list): Strategic recommendations and tips.\n    \"\"\"\n    try:\n        if style and not isinstance(style, str):\n            raise ValueError(\"Style must be a string if provided\")\n        return server.tft_get_play_style(style)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef tft_list_augments(limit: Optional[int] = None) -> dict:\n    \"\"\"List TFT augments with their tier and performance statistics.\n    \n    Args:\n        limit (int) [Optional]: Maximum number of augments to return.\n    \n    Returns:\n        augments (list): List of augments with name, tier, description, and win rate.\n    \"\"\"\n    try:\n        if limit is not None and (not isinstance(limit, int) or limit < 0):\n            raise ValueError(\"Limit must be a non-negative integer\")\n        return server.tft_list_augments(limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef tft_list_champions_for_item(item_name: str) -> dict:\n    \"\"\"Get champion recommendations for a specific TFT item.\n    \n    Args:\n        item_name (str): The name of the TFT item.\n    \n    Returns:\n        champions (list): List of champions recommended for the item with synergy scores.\n    \"\"\"\n    try:\n        if not item_name or not isinstance(item_name, str):\n            raise ValueError(\"Item name must be a non-empty string\")\n        return server.tft_list_champions_for_item(item_name)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef tft_list_item_combinations(limit: Optional[int] = None) -> dict:\n    \"\"\"List TFT item combination recipes.\n    \n    Args:\n        limit (int) [Optional]: Maximum number of combinations to return.\n    \n    Returns:\n        combinations (list): List of item combinations showing components and results.\n    \"\"\"\n    try:\n        if limit is not None and (not isinstance(limit, int) or limit < 0):\n            raise ValueError(\"Limit must be a non-negative integer\")\n        return server.tft_list_item_combinations(limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef tft_list_meta_decks(tier: Optional[str] = None, limit: Optional[int] = None) -> dict:\n    \"\"\"List current meta deck compositions with performance statistics.\n    \n    Args:\n        tier (str) [Optional]: Filter decks by tier classification (e.g., 'S', 'A', 'B').\n        limit (int) [Optional]: Maximum number of decks to return.\n    \n    Returns:\n        decks (list): List of meta decks with champions, traits, and performance data.\n    \"\"\"\n    try:\n        if tier is not None and not isinstance(tier, str):\n            raise ValueError(\"Tier must be a string if provided\")\n        if limit is not None and (not isinstance(limit, int) or limit < 0):\n            raise ValueError(\"Limit must be a non-negative integer\")\n        return server.tft_list_meta_decks(tier, limit)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-03T23:17:15.424588",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Minimal TFT scenario with basic champion builds and default reference data",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "championBuildsMap": {
+          "Vayne": {
+            "champion_name": "Vayne",
+            "items": [
+              {
+                "item_name": "Guinsoo's Rageblade",
+                "priority": 1,
+                "win_rate": 65.5
+              },
+              {
+                "item_name": "Runaan's Hurricane",
+                "priority": 2,
+                "win_rate": 63.2
+              }
+            ]
+          }
+        },
+        "playStylesMap": {
+          "balanced": {
+            "style": "balanced",
+            "description": "Balanced approach focusing on steady board development",
+            "recommendations": [
+              "Build economy while maintaining board strength",
+              "Level at standard timings"
+            ]
+          }
+        },
+        "augmentsList": [
+          {
+            "name": "Combat Training",
+            "tier": "Silver",
+            "description": "Your units gain 10% attack damage",
+            "win_rate": 55.0
+          }
+        ],
+        "itemChampionSynergiesMap": {
+          "Guinsoo's Rageblade": [
+            {
+              "champion_name": "Vayne",
+              "synergy_score": 8.5,
+              "win_rate": 65.5
+            }
+          ]
+        },
+        "itemCombinationsList": [
+          {
+            "item1": "Recurve Bow",
+            "item2": "Needlessly Large Rod",
+            "result": "Guinsoo's Rageblade",
+            "description": "Attacks grant 6% bonus attack speed, stacking up to 30 times"
+          }
+        ],
+        "metaDecksList": [
+          {
+            "name": "Rangers",
+            "champions": [
+              "Vayne",
+              "Varus",
+              "Ashe"
+            ],
+            "traits": [
+              "Ranger",
+              "Swiftshot"
+            ],
+            "win_rate": 15.0,
+            "play_rate": 5.0
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Moderate TFT scenario with diverse champion builds, multiple play styles, and varied item synergies",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "championBuildsMap": {
+          "Zed": {
+            "champion_name": "Zed",
+            "items": [
+              {
+                "item_name": "Edge of Night",
+                "priority": 1,
+                "win_rate": 68.2
+              },
+              {
+                "item_name": "Ionic Spark",
+                "priority": 2,
+                "win_rate": 66.1
+              },
+              {
+                "item_name": "Quicksilver",
+                "priority": 3,
+                "win_rate": 64.7
+              }
+            ]
+          },
+          "Lux": {
+            "champion_name": "Lux",
+            "items": [
+              {
+                "item_name": "Blue Buff",
+                "priority": 1,
+                "win_rate": 69.5
+              },
+              {
+                "item_name": "Jeweled Gauntlet",
+                "priority": 2,
+                "win_rate": 67.8
+              },
+              {
+                "item_name": "Infinity Edge",
+                "priority": 3,
+                "win_rate": 65.9
+              }
+            ]
+          },
+          "Sejuani": {
+            "champion_name": "Sejuani",
+            "items": [
+              {
+                "item_name": "Sunfire Cape",
+                "priority": 1,
+                "win_rate": 63.4
+              },
+              {
+                "item_name": "Warmog's Armor",
+                "priority": 2,
+                "win_rate": 61.8
+              }
+            ]
+          }
+        },
+        "playStylesMap": {
+          "hyperroll": {
+            "style": "hyperroll",
+            "description": "Aggressive rolling strategy to 3-star units quickly",
+            "recommendations": [
+              "Roll at level 5 for 2-cost units",
+              "Build strongest board early",
+              "Transition to late game carries"
+            ]
+          },
+          "slowroll": {
+            "style": "slowroll",
+            "description": "Gradual rolling while maintaining economy",
+            "recommendations": [
+              "Stay above 50 gold",
+              "Roll for key units slowly",
+              "Power spike at 3-star units"
+            ]
+          },
+          "fast9": {
+            "style": "fast9",
+            "description": "Rush to level 9 for legendary units",
+            "recommendations": [
+              "Extreme economy management",
+              "Use strongest board to preserve HP",
+              "Roll at level 9 for 5-cost units"
+            ]
+          }
+        },
+        "augmentsList": [
+          {
+            "name": "Golden Ticket",
+            "tier": "Gold",
+            "description": "Gain 1 free refresh each round",
+            "win_rate": 61.2
+          },
+          {
+            "name": "Rich Get Richer",
+            "tier": "Gold",
+            "description": "Gain 15 gold and 2 gold per round",
+            "win_rate": 64.8
+          },
+          {
+            "name": "Portable Forge",
+            "tier": "Gold",
+            "description": "Gain an Ornn item and 7 gold",
+            "win_rate": 65.1
+          },
+          {
+            "name": "Windfall",
+            "tier": "Silver",
+            "description": "Gain 20 gold immediately",
+            "win_rate": 58.7
+          }
+        ],
+        "itemChampionSynergiesMap": {
+          "Edge of Night": [
+            {
+              "champion_name": "Zed",
+              "synergy_score": 9.2,
+              "win_rate": 68.2
+            },
+            {
+              "champion_name": "Taliyah",
+              "synergy_score": 8.1,
+              "win_rate": 64.3
+            }
+          ],
+          "Blue Buff": [
+            {
+              "champion_name": "Lux",
+              "synergy_score": 9.5,
+              "win_rate": 69.5
+            },
+            {
+              "champion_name": "Ziggs",
+              "synergy_score": 8.3,
+              "win_rate": 65.2
+            }
+          ],
+          "Sunfire Cape": [
+            {
+              "champion_name": "Sejuani",
+              "synergy_score": 8.8,
+              "win_rate": 63.4
+            },
+            {
+              "champion_name": "Shen",
+              "synergy_score": 7.9,
+              "win_rate": 61.1
+            }
+          ]
+        },
+        "itemCombinationsList": [
+          {
+            "item1": "B.F. Sword",
+            "item2": "Chain Vest",
+            "result": "Edge of Night",
+            "description": "Once per combat at 60% HP, briefly become untargetable"
+          },
+          {
+            "item1": "Tear of the Goddess",
+            "item2": "Tear of the Goddess",
+            "result": "Blue Buff",
+            "description": "After casting, set mana to 20. Gain 30 mana on takedown"
+          },
+          {
+            "item1": "Chain Vest",
+            "item2": "Giant's Belt",
+            "result": "Sunfire Cape",
+            "description": "Grant 150 bonus HP. Every 2 seconds, deal true damage to nearby enemies"
+          },
+          {
+            "item1": "Giant's Belt",
+            "item2": "Giant's Belt",
+            "result": "Warmog's Armor",
+            "description": "Grant 1000 bonus HP"
+          }
+        ],
+        "metaDecksList": [
+          {
+            "name": "Guild Xayah",
+            "champions": [
+              "Xayah",
+              "Rakan",
+              "Twitch",
+              "Zippy",
+              "Sejuani",
+              "Bard"
+            ],
+            "traits": [
+              "Guild",
+              "Ragewing",
+              "Swiftshot",
+              "Cavalier"
+            ],
+            "win_rate": 21.5,
+            "play_rate": 15.3
+          },
+          {
+            "name": "Dragonmancers",
+            "champions": [
+              "Lee Sin",
+              "Karma",
+              "Volibear",
+              "Yasuo",
+              "Sett"
+            ],
+            "traits": [
+              "Dragonmancer",
+              "Legendary",
+              "Mystic"
+            ],
+            "win_rate": 18.7,
+            "play_rate": 12.8
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Comprehensive TFT scenario with extensive champion builds, multiple play styles, full augment list, and complete meta coverage",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "championBuildsMap": {
+          "Aphelios": {
+            "champion_name": "Aphelios",
+            "items": [
+              {
+                "item_name": "Giant Slayer",
+                "priority": 1,
+                "win_rate": 72.1
+              },
+              {
+                "item_name": "Infinity Edge",
+                "priority": 2,
+                "win_rate": 70.8
+              },
+              {
+                "item_name": "Last Whisper",
+                "priority": 3,
+                "win_rate": 69.5
+              },
+              {
+                "item_name": "Runaan's Hurricane",
+                "priority": 4,
+                "win_rate": 67.2
+              }
+            ]
+          },
+          "Aurelion Sol": {
+            "champion_name": "Aurelion Sol",
+            "items": [
+              {
+                "item_name": "Rabadon's Deathcap",
+                "priority": 1,
+                "win_rate": 74.3
+              },
+              {
+                "item_name": "Jeweled Gauntlet",
+                "priority": 2,
+                "win_rate": 72.6
+              },
+              {
+                "item_name": "Blue Buff",
+                "priority": 3,
+                "win_rate": 71.1
+              },
+              {
+                "item_name": "Hextech Gunblade",
+                "priority": 4,
+                "win_rate": 69.8
+              }
+            ]
+          },
+          "Shi Oh Yu": {
+            "champion_name": "Shi Oh Yu",
+            "items": [
+              {
+                "item_name": "Bloodthirster",
+                "priority": 1,
+                "win_rate": 71.7
+              },
+              {
+                "item_name": "Titan's Resolve",
+                "priority": 2,
+                "win_rate": 69.4
+              },
+              {
+                "item_name": "Quicksilver",
+                "priority": 3,
+                "win_rate": 67.9
+              },
+              {
+                "item_name": "Edge of Night",
+                "priority": 4,
+                "win_rate": 66.3
+              }
+            ]
+          },
+          "Soraka": {
+            "champion_name": "Soraka",
+            "items": [
+              {
+                "item_name": "Blue Buff",
+                "priority": 1,
+                "win_rate": 68.5
+              },
+              {
+                "item_name": "Ionic Spark",
+                "priority": 2,
+                "win_rate": 66.2
+              },
+              {
+                "item_name": "Morellonomicon",
+                "priority": 3,
+                "win_rate": 64.7
+              }
+            ]
+          },
+          "Yone": {
+            "champion_name": "Yone",
+            "items": [
+              {
+                "item_name": "Last Whisper",
+                "priority": 1,
+                "win_rate": 70.9
+              },
+              {
+                "item_name": "Infinity Edge",
+                "priority": 2,
+                "win_rate": 69.2
+              },
+              {
+                "item_name": "Giant Slayer",
+                "priority": 3,
+                "win_rate": 67.8
+              },
+              {
+                "item_name": "Quicksilver",
+                "priority": 4,
+                "win_rate": 66.1
+              }
+            ]
+          },
+          "Zeri": {
+            "champion_name": "Zeri",
+            "items": [
+              {
+                "item_name": "Giant Slayer",
+                "priority": 1,
+                "win_rate": 69.7
+              },
+              {
+                "item_name": "Infinity Edge",
+                "priority": 2,
+                "win_rate": 68.3
+              },
+              {
+                "item_name": "Runaan's Hurricane",
+                "priority": 3,
+                "win_rate": 66.9
+              },
+              {
+                "item_name": "Last Whisper",
+                "priority": 4,
+                "win_rate": 65.4
+              }
+            ]
+          }
+        },
+        "playStylesMap": {
+          "vertical": {
+            "style": "vertical",
+            "description": "Focus on maximizing specific trait bonuses by running many units of the same trait",
+            "recommendations": [
+              "Identify strongest vertical trait early",
+              "Commit to 6 or 8 unit synergy",
+              "Use emblems to reach higher breakpoints",
+              "Position units to maximize trait value"
+            ]
+          },
+          "legendary": {
+            "style": "legendary",
+            "description": "Build around 5-cost legendary units as primary carries",
+            "recommendations": [
+              "Reach level 8 or 9 quickly",
+              "Use strong mid-game units to preserve HP",
+              "Roll for 2-star legendary units",
+              "Build flexible items that work on multiple legendaries"
+            ]
+          },
+          "flex": {
+            "style": "flex",
+            "description": "Adapt composition based on items and units found each game",
+            "recommendations": [
+              "Don't force specific comps",
+              "Build items that work on multiple carries",
+              "Pivot based on early game units",
+              "Use meta knowledge to identify strong flexible options"
+            ]
+          },
+          "casino": {
+            "style": "casino",
+            "description": "High-risk high-reward strategy involving early rolling for specific 3-star units",
+            "recommendations": [
+              "Identify casino target early (usually 3-cost)",
+              "Roll aggressively at level 6 or 7",
+              "Build perfect items for target unit",
+              "Accept high variance in results"
+            ]
+          },
+          "donkey": {
+            "style": "donkey",
+            "description": "Roll every round without building economy, focusing on immediate strength",
+            "recommendations": [
+              "Roll every round to improve board",
+              "Never save more than 10-20 gold",
+              "Focus on 2-star units over economy",
+              "End games quickly win or lose"
+            ]
+          }
+        },
+        "augmentsList": [
+          {
+            "name": "Cybernetic Implants",
+            "tier": "Silver",
+            "description": "Your units with items gain 200 HP and 20% attack damage",
+            "win_rate": 58.5
+          },
+          {
+            "name": "Titanic Strength",
+            "tier": "Silver",
+            "description": "Your units gain 15% of their maximum HP as attack damage",
+            "win_rate": 59.2
+          },
+          {
+            "name": "Binary Airdrop",
+            "tier": "Gold",
+            "description": "Your champions equipped with exactly 2 items gain a random completed item",
+            "win_rate": 63.7
+          },
+          {
+            "name": "Wise Spending",
+            "tier": "Gold",
+            "description": "Gain 2 experience points when you refresh the shop",
+            "win_rate": 62.1
+          },
+          {
+            "name": "High End Shopping",
+            "tier": "Prismatic",
+            "description": "Champions in your shop appear as higher tier",
+            "win_rate": 71.4
+          },
+          {
+            "name": "Level Up!",
+            "tier": "Prismatic",
+            "description": "When you buy experience points, gain an additional 3 points",
+            "win_rate": 69.8
+          },
+          {
+            "name": "Windfall",
+            "tier": "Silver",
+            "description": "Gain 20 gold immediately",
+            "win_rate": 57.3
+          },
+          {
+            "name": "Thrill of the Hunt",
+            "tier": "Silver",
+            "description": "Your units heal 400 HP on kill",
+            "win_rate": 60.1
+          },
+          {
+            "name": "Portable Forge",
+            "tier": "Gold",
+            "description": "Gain an Ornn item component and 7 gold",
+            "win_rate": 64.5
+          },
+          {
+            "name": "Sunfire Board",
+            "tier": "Gold",
+            "description": "At start of combat, enemies take true damage for 10 seconds",
+            "win_rate": 61.9
+          },
+          {
+            "name": "Band of Thieves",
+            "tier": "Silver",
+            "description": "Gain 2 Thief's Gloves",
+            "win_rate": 59.8
+          },
+          {
+            "name": "Rich Get Richer",
+            "tier": "Gold",
+            "description": "Gain 15 gold and 2 gold per round",
+            "win_rate": 65.2
+          },
+          {
+            "name": "Golden Ticket",
+            "tier": "Gold",
+            "description": "Gain 1 free refresh each round",
+            "win_rate": 62.7
+          },
+          {
+            "name": "March of Progress",
+            "tier": "Prismatic",
+            "description": "Gain 5 experience points per round but cannot purchase experience",
+            "win_rate": 70.1
+          },
+          {
+            "name": "Ancient Archives",
+            "tier": "Gold",
+            "description": "Gain 1 Tome of Traits and 8 gold",
+            "win_rate": 63.3
+          }
+        ],
+        "itemChampionSynergiesMap": {
+          "Giant Slayer": [
+            {
+              "champion_name": "Aphelios",
+              "synergy_score": 9.7,
+              "win_rate": 72.1
+            },
+            {
+              "champion_name": "Zeri",
+              "synergy_score": 9.2,
+              "win_rate": 69.7
+            },
+            {
+              "champion_name": "Jinx",
+              "synergy_score": 8.8,
+              "win_rate": 67.5
+            },
+            {
+              "champion_name": "Caitlyn",
+              "synergy_score": 8.3,
+              "win_rate": 65.2
+            }
+          ],
+          "Rabadon's Deathcap": [
+            {
+              "champion_name": "Aurelion Sol",
+              "synergy_score": 9.9,
+              "win_rate": 74.3
+            },
+            {
+              "champion_name": "Ahri",
+              "synergy_score": 9.1,
+              "win_rate": 68.9
+            },
+            {
+              "champion_name": "Lux",
+              "synergy_score": 8.7,
+              "win_rate": 66.4
+            },
+            {
+              "champion_name": "Ziggs",
+              "synergy_score": 8.2,
+              "win_rate": 64.8
+            }
+          ],
+          "Bloodthirster": [
+            {
+              "champion_name": "Shi Oh Yu",
+              "synergy_score": 9.4,
+              "win_rate": 71.7
+            },
+            {
+              "champion_name": "Yasuo",
+              "synergy_score": 9.3,
+              "win_rate": 69.1
+            },
+            {
+              "champion_name": "Fiora",
+              "synergy_score": 8.7,
+              "win_rate": 66.8
+            },
+            {
+              "champion_name": "Yone",
+              "synergy_score": 8.5,
+              "win_rate": 65.5
+            }
+          ],
+          "Blue Buff": [
+            {
+              "champion_name": "Soraka",
+              "synergy_score": 9.6,
+              "win_rate": 68.5
+            },
+            {
+              "champion_name": "Ahri",
+              "synergy_score": 9.8,
+              "win_rate": 68.9
+            },
+            {
+              "champion_name": "Lux",
+              "synergy_score": 9.1,
+              "win_rate": 66.4
+            },
+            {
+              "champion_name": "Ziggs",
+              "synergy_score": 8.5,
+              "win_rate": 64.8
+            }
+          ]
+        },
+        "itemCombinationsList": [
+          {
+            "item1": "B.F. Sword",
+            "item2": "Recurve Bow",
+            "result": "Giant Slayer",
+            "description": "Deal 20% bonus damage. If target has more than 1600 HP, deal 60% bonus instead"
+          },
+          {
+            "item1": "Needlessly Large Rod",
+            "item2": "Needlessly Large Rod",
+            "result": "Rabadon's Deathcap",
+            "description": "Grant 75 bonus ability power"
+          },
+          {
+            "item1": "B.F. Sword",
+            "item2": "Negatron Cloak",
+            "result": "Bloodthirster",
+            "description": "Grant 40% omnivamp. Once per combat at 40% HP, gain 25% max HP shield"
+          },
+          {
+            "item1": "Tear of the Goddess",
+            "item2": "Tear of the Goddess",
+            "result": "Blue Buff",
+            "description": "After casting, set mana to 20. Gain 30 mana on takedown"
+          },
+          {
+            "item1": "Recurve Bow",
+            "item2": "Needlessly Large Rod",
+            "result": "Runaan's Hurricane",
+            "description": "Attacks fire bolts at nearby enemies dealing 75% damage"
+          },
+          {
+            "item1": "B.F. Sword",
+            "item2": "Sparring Gloves",
+            "result": "Infinity Edge",
+            "description": "Grants 75% critical strike chance and 10% critical strike damage"
+          },
+          {
+            "item1": "Recurve Bow",
+            "item2": "Chain Vest",
+            "result": "Titan's Resolve",
+            "description": "Grant 2% attack damage and 2% armor and magic resist, stacking up to 25 times"
+          },
+          {
+            "item1": "Negatron Cloak",
+            "item2": "Sparring Gloves",
+            "result": "Quicksilver",
+            "description": "Grant 30% bonus attack speed. Combat start: Grant immunity to crowd control for 15 seconds"
+          }
+        ],
+        "metaDecksList": [
+          {
+            "name": "Legendary Dragons",
+            "champions": [
+              "Aurelion Sol",
+              "Shi Oh Yu",
+              "Idas",
+              "Daeja",
+              "Sy'fen",
+              "Yone",
+              "Soraka",
+              "Bard"
+            ],
+            "traits": [
+              "Dragon",
+              "Mystic",
+              "Bard",
+              "Guardian",
+              "Bruiser"
+            ],
+            "win_rate": 28.5,
+            "play_rate": 22.1
+          },
+          {
+            "name": "Guild Swiftshots",
+            "champions": [
+              "Xayah",
+              "Twitch",
+              "Zippy",
+              "Jayce",
+              "Sejuani",
+              "Rakan",
+              "Bard",
+              "Lulu"
+            ],
+            "traits": [
+              "Guild",
+              "Swiftshot",
+              "Ragewing",
+              "Cavalier",
+              "Mystic",
+              "Shapeshifter"
+            ],
+            "win_rate": 24.7,
+            "play_rate": 18.9
+          },
+          {
+            "name": "Mage Spellslingers",
+            "champions": [
+              "Aurelion Sol",
+              "Lux",
+              "Ziggs",
+              "Sona",
+              "Ryze",
+              "Tulsi",
+              "Lulu",
+              "Bard"
+            ],
+            "traits": [
+              "Mage",
+              "Evoker",
+              "Mystic",
+              "Caretaker",
+              "Bard"
+            ],
+            "win_rate": 22.3,
+            "play_rate": 16.4
+          },
+          {
+            "name": "Assassin Spies",
+            "champions": [
+              "Pyke",
+              "Qiyana",
+              "Diana",
+              "Taliyah",
+              "Akali",
+              "Zed",
+              "Kha'Zix",
+              "Bard"
+            ],
+            "traits": [
+              "Assassin",
+              "Whispers",
+              "Scalescorn",
+              "Thief",
+              "Mystic"
+            ],
+            "win_rate": 19.8,
+            "play_rate": 14.2
+          },
+          {
+            "name": "Shapeshifter Ragewings",
+            "champions": [
+              "Shyvana",
+              "Gnar",
+              "Rakan",
+              "Xayah",
+              "Sett",
+              "Shen",
+              "Swain",
+              "Yone"
+            ],
+            "traits": [
+              "Shapeshifter",
+              "Ragewing",
+              "Dragonmancer",
+              "Guardian",
+              "Bruiser"
+            ],
+            "win_rate": 17.6,
+            "play_rate": 11.8
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Edge case scenario testing empty collections, extreme values, and boundary conditions",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "championBuildsMap": {
+          "TestChampion": {
+            "champion_name": "TestChampion",
+            "items": []
+          }
+        },
+        "playStylesMap": {},
+        "augmentsList": [],
+        "itemChampionSynergiesMap": {},
+        "itemCombinationsList": [],
+        "metaDecksList": []
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "tft_get_champion_item_build",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_get_play_style",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_augments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_champions_for_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_item_combinations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_meta_decks",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 54.85617995262146
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_executions": [
+              {
+                "tool_name": "tft_get_champion_item_build",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "tft_get_play_style",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "tft_list_augments",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "tft_list_champions_for_item",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "tft_list_item_combinations",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "tft_list_meta_decks",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 58.45156455039978
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "tft_get_champion_item_build",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_get_play_style",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_augments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_champions_for_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_item_combinations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_meta_decks",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 109.8655333518982
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "tft_get_champion_item_build",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_get_play_style",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_augments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_champions_for_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_item_combinations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_meta_decks",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 64.25108575820923
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "tft_get_champion_item_build",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_get_play_style",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_augments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_champions_for_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_item_combinations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_meta_decks",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 54.85617995262146
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_executions": [
+              {
+                "tool_name": "tft_get_champion_item_build",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "tft_get_play_style",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "tft_list_augments",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "tft_list_champions_for_item",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "tft_list_item_combinations",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "tft_list_meta_decks",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 58.45156455039978
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "tft_get_champion_item_build",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_get_play_style",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_augments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_champions_for_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_item_combinations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_meta_decks",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 109.8655333518982
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "tft_get_champion_item_build",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_get_play_style",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_augments",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_champions_for_item",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_item_combinations",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "tft_list_meta_decks",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 64.25108575820923
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/TFTServer.py"
+  }
+}

@@ -1,0 +1,298 @@
+{
+  "class_name": "CampusCard",
+  "description": "Unified campus card service for balance checks, transaction history, recharges, and card management.",
+  "tools": [
+    {
+      "name": "query_balance",
+      "description": "Retrieve the current balance and currency of a campus card account.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "The unique identifier of the campus card account."
+          }
+        },
+        "required": [
+          "userId"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "The unique identifier of the campus card account."
+          },
+          "balance": {
+            "type": "number",
+            "description": "Current available balance on the card."
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO-4217 currency code for the balance (e.g., CNY)."
+          }
+        }
+      }
+    },
+    {
+      "name": "query_transactions",
+      "description": "Fetch paginated transaction history for a campus card within an optional date range.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "The unique identifier of the campus card account."
+          },
+          "startDate": {
+            "type": "string",
+            "description": "Start date in YYYY-MM-DD format; inclusive."
+          },
+          "endDate": {
+            "type": "string",
+            "description": "End date in YYYY-MM-DD format; inclusive."
+          }
+        },
+        "required": [
+          "userId"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "transactions": {
+            "type": "array",
+            "description": "Chronological list of transactions.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tradeId": {
+                  "type": "string",
+                  "description": "Unique identifier for the transaction."
+                },
+                "merchantName": {
+                  "type": "string",
+                  "description": "Name of the merchant or location where the transaction occurred."
+                },
+                "date": {
+                  "type": "string",
+                  "description": "Transaction timestamp in YYYY-MM-DD HH:mm:ss format."
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "Transaction amount; negative for expenses, positive for refunds/recharges."
+                },
+                "balanceAfter": {
+                  "type": "number",
+                  "description": "Account balance immediately after the transaction."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "query_basic_info",
+      "description": "Obtain status and personal details of a campus card after password verification.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "The unique identifier of the campus card account."
+          },
+          "password": {
+            "type": "string",
+            "description": "Campus card password for authentication."
+          }
+        },
+        "required": [
+          "userId",
+          "password"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "The unique identifier of the campus card account."
+          },
+          "name": {
+            "type": "string",
+            "description": "Full name of the cardholder."
+          },
+          "status": {
+            "type": "integer",
+            "description": "Numeric status code: 1-normal, 2-lost, 3-system frozen, 4-closed, 5-pre-closed, 6-manually frozen."
+          },
+          "statusText": {
+            "type": "string",
+            "description": "Human-readable description of the current card status."
+          }
+        }
+      }
+    },
+    {
+      "name": "recharge",
+      "description": "Add funds to a campus card using a supported payment method.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "The unique identifier of the campus card account."
+          },
+          "amount": {
+            "type": "number",
+            "description": "Recharge amount in the card's currency."
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "alipay",
+              "wechat",
+              "bank_card"
+            ],
+            "description": "Payment channel used for the recharge."
+          }
+        },
+        "required": [
+          "userId",
+          "amount",
+          "paymentMethod"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "The unique identifier of the campus card account."
+          },
+          "success": {
+            "type": "boolean",
+            "description": "True if the recharge succeeded."
+          },
+          "amount": {
+            "type": "number",
+            "description": "Actual amount recharged."
+          },
+          "balanceAfter": {
+            "type": "number",
+            "description": "New balance after the recharge."
+          },
+          "transactionId": {
+            "type": "string",
+            "description": "Unique identifier for the recharge transaction."
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable result message."
+          }
+        }
+      }
+    },
+    {
+      "name": "update_info",
+      "description": "Update optional profile fields of a campus card after password verification.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "The unique identifier of the campus card account."
+          },
+          "password": {
+            "type": "string",
+            "description": "Campus card password for authentication."
+          },
+          "phone": {
+            "type": "string",
+            "description": "New phone number to associate with the account."
+          },
+          "email": {
+            "type": "string",
+            "description": "New email address to associate with the account."
+          },
+          "address": {
+            "type": "string",
+            "description": "New residential or office address to associate with the account."
+          }
+        },
+        "required": [
+          "userId",
+          "password"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "The unique identifier of the campus card account."
+          },
+          "success": {
+            "type": "boolean",
+            "description": "True if at least one field was updated."
+          },
+          "updatedFields": {
+            "type": "array",
+            "description": "List of field names that were successfully modified.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable result message."
+          }
+        }
+      }
+    },
+    {
+      "name": "lostCard",
+      "description": "Report the campus card as lost to freeze it and prevent unauthorized use.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "The unique identifier of the campus card account."
+          },
+          "password": {
+            "type": "string",
+            "description": "Campus card password for authentication."
+          }
+        },
+        "required": [
+          "userId",
+          "password"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "The unique identifier of the campus card account."
+          },
+          "success": {
+            "type": "boolean",
+            "description": "True if the card was successfully flagged as lost."
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable result message."
+          },
+          "status": {
+            "type": "integer",
+            "description": "Numeric status code after the operation (same encoding as query_basic_info)."
+          }
+        }
+      }
+    }
+  ]
+}

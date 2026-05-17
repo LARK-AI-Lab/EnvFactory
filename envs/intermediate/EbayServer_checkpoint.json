@@ -1,0 +1,1174 @@
+{
+  "metadata": {
+    "class_name": "EbayServer",
+    "metadata_path": "envs\\metadata\\EbayServer_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-03-05T19:35:00.794798",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "EbayServer",
+    "description": "eCommerce server providing access to eBay marketplace operations including item search, listing management, seller operations, and order processing.",
+    "tools": [
+      {
+        "name": "search_items",
+        "description": "Search for items on the eBay marketplace using keywords and optional filters.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "keywords": {
+              "type": "string",
+              "description": "Search query terms used to find items on the eBay marketplace."
+            },
+            "category_id": {
+              "type": "string",
+              "description": "The eBay category ID used to classify items into specific product taxonomies."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of search results to return (default: 10, maximum: 100)."
+            },
+            "sort": {
+              "type": "string",
+              "description": "Sort order for results (e.g., 'bestMatch', 'price' for ascending price, '-price' for descending price)."
+            }
+          },
+          "required": [
+            "keywords"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "type": "integer",
+              "description": "Total number of items matching the search criteria."
+            },
+            "items": {
+              "type": "array",
+              "description": "List of items matching the search query.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "item_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the eBay item listing."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The title of the item listing."
+                  },
+                  "price": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "type": "number",
+                        "description": "The numerical monetary amount."
+                      },
+                      "currency": {
+                        "type": "string",
+                        "description": "The ISO 4217 currency code representing the monetary unit (e.g., USD, EUR, GBP)."
+                      }
+                    }
+                  },
+                  "condition": {
+                    "type": "string",
+                    "description": "The physical condition state of the item (e.g., NEW, USED, REFURBISHED)."
+                  },
+                  "seller": {
+                    "type": "object",
+                    "properties": {
+                      "username": {
+                        "type": "string",
+                        "description": "The eBay username of the seller."
+                      },
+                      "feedback_score": {
+                        "type": "integer",
+                        "description": "The seller's feedback score rating."
+                      }
+                    }
+                  },
+                  "listing_url": {
+                    "type": "string",
+                    "description": "The URL to view the item listing on eBay."
+                  },
+                  "thumbnail": {
+                    "type": "string",
+                    "description": "URL of the item's thumbnail image."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_item_details",
+        "description": "Retrieve comprehensive details for a specific eBay item listing.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "item_id": {
+              "type": "string",
+              "description": "The unique identifier of the eBay item listing."
+            }
+          },
+          "required": [
+            "item_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "item_id": {
+              "type": "string",
+              "description": "The unique identifier of the eBay item listing."
+            },
+            "title": {
+              "type": "string",
+              "description": "The title of the item listing."
+            },
+            "description": {
+              "type": "string",
+              "description": "Detailed text description of the item."
+            },
+            "price": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "number",
+                  "description": "The numerical monetary amount."
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "The ISO 4217 currency code representing the monetary unit (e.g., USD, EUR, GBP)."
+                }
+              }
+            },
+            "condition": {
+              "type": "string",
+              "description": "The physical condition state of the item (e.g., NEW, USED, REFURBISHED)."
+            },
+            "seller": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string",
+                  "description": "The eBay username of the seller."
+                },
+                "feedback_score": {
+                  "type": "integer",
+                  "description": "The seller's feedback score rating."
+                },
+                "feedback_percentage": {
+                  "type": "number",
+                  "description": "The seller's positive feedback percentage."
+                }
+              }
+            },
+            "images": {
+              "type": "array",
+              "description": "URLs of item images.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "item_specifics": {
+              "type": "object",
+              "description": "Key-value pairs of item attributes and specifications."
+            },
+            "shipping_options": {
+              "type": "array",
+              "description": "Available shipping methods and costs.",
+              "items": {
+                "type": "object"
+              }
+            },
+            "return_policy": {
+              "type": "object",
+              "description": "Details of the seller's return policy."
+            }
+          }
+        }
+      },
+      {
+        "name": "create_listing",
+        "description": "Create a new item listing on eBay for selling products (seller operation).",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "The title of the item listing."
+            },
+            "description": {
+              "type": "string",
+              "description": "Detailed text description of the item."
+            },
+            "category_id": {
+              "type": "string",
+              "description": "The eBay category ID used to classify items into specific product taxonomies."
+            },
+            "price": {
+              "type": "number",
+              "description": "The numerical monetary amount for the item price."
+            },
+            "currency": {
+              "type": "string",
+              "description": "The ISO 4217 currency code representing the monetary unit (e.g., USD, EUR, GBP)."
+            },
+            "condition": {
+              "type": "string",
+              "description": "The physical condition state of the item (e.g., NEW, USED, REFURBISHED)."
+            },
+            "quantity": {
+              "type": "integer",
+              "description": "Number of items available for sale."
+            }
+          },
+          "required": [
+            "title",
+            "description",
+            "category_id",
+            "price"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "listing_id": {
+              "type": "string",
+              "description": "The unique identifier of the created eBay listing."
+            },
+            "status": {
+              "type": "string",
+              "description": "Current status of the listing (e.g., ACTIVE, PENDING)."
+            },
+            "created_at": {
+              "type": "string",
+              "description": "ISO 8601 timestamp when the listing was created."
+            },
+            "url": {
+              "type": "string",
+              "description": "The URL to view the created listing on eBay."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_order_details",
+        "description": "Retrieve detailed information about a specific eBay order transaction.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "description": "The unique identifier of the eBay order transaction."
+            }
+          },
+          "required": [
+            "order_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "description": "The unique identifier of the eBay order transaction."
+            },
+            "status": {
+              "type": "string",
+              "description": "Current fulfillment status of the order."
+            },
+            "buyer": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string",
+                  "description": "The eBay username of the buyer."
+                },
+                "email": {
+                  "type": "string",
+                  "description": "Contact email address of the buyer."
+                }
+              }
+            },
+            "items": {
+              "type": "array",
+              "description": "Line items included in the order.",
+              "items": {
+                "type": "object"
+              }
+            },
+            "total": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "number",
+                  "description": "The numerical monetary amount."
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "The ISO 4217 currency code representing the monetary unit (e.g., USD, EUR, GBP)."
+                }
+              }
+            },
+            "shipping_address": {
+              "type": "object",
+              "description": "Delivery address for the order."
+            },
+            "created_at": {
+              "type": "string",
+              "description": "ISO 8601 timestamp when the order was placed."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_categories",
+        "description": "Retrieve the category taxonomy for a specific eBay marketplace.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "marketplace_id": {
+              "type": "string",
+              "description": "The eBay marketplace ID (e.g., 'EBAY_US', 'EBAY_GB') to retrieve categories for."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "categories": {
+              "type": "array",
+              "description": "List of available categories in the marketplace.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "category_id": {
+                    "type": "string",
+                    "description": "The eBay category ID used to classify items into specific product taxonomies."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Display name of the category."
+                  },
+                  "parent_id": {
+                    "type": "string",
+                    "description": "Category ID of the parent category in the taxonomy hierarchy."
+                  },
+                  "level": {
+                    "type": "integer",
+                    "description": "Depth level of the category in the taxonomy tree."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Price(BaseModel):\n    \"\"\"Price with currency.\"\"\"\n    value: float = Field(..., ge=0, description=\"Monetary amount\")\n    currency: str = Field(..., pattern=r\"^[A-Z]{3}$\", description=\"ISO 4217 currency code\")\n\nclass Seller(BaseModel):\n    \"\"\"Seller information.\"\"\"\n    username: str = Field(..., description=\"Seller username\")\n    feedback_score: int = Field(..., ge=0, description=\"Feedback score\")\n    feedback_percentage: Optional[float] = Field(None, ge=0, le=100, description=\"Positive feedback percentage\")\n\nclass Buyer(BaseModel):\n    \"\"\"Buyer information.\"\"\"\n    username: str = Field(..., description=\"Buyer username\")\n    email: str = Field(..., description=\"Buyer email\")\n\nclass SearchItem(BaseModel):\n    \"\"\"Search result item.\"\"\"\n    item_id: str = Field(..., description=\"Item ID\")\n    title: str = Field(..., description=\"Item title\")\n    price: Price = Field(..., description=\"Item price\")\n    condition: str = Field(..., description=\"Item condition\")\n    seller: Seller = Field(..., description=\"Seller info\")\n    listing_url: str = Field(..., description=\"Listing URL\")\n    thumbnail: str = Field(..., description=\"Thumbnail URL\")\n\nclass ItemDetails(BaseModel):\n    \"\"\"Full item details.\"\"\"\n    item_id: str = Field(..., description=\"Item ID\")\n    title: str = Field(..., description=\"Item title\")\n    description: str = Field(..., description=\"Item description\")\n    price: Price = Field(..., description=\"Item price\")\n    condition: str = Field(..., description=\"Item condition\")\n    seller: Seller = Field(..., description=\"Seller info\")\n    images: List[str] = Field(default=[], description=\"Image URLs\")\n    item_specifics: Dict[str, Any] = Field(default={}, description=\"Item attributes\")\n    shipping_options: List[Dict[str, Any]] = Field(default=[], description=\"Shipping options\")\n    return_policy: Dict[str, Any] = Field(default={}, description=\"Return policy\")\n\nclass Listing(BaseModel):\n    \"\"\"Created listing.\"\"\"\n    listing_id: str = Field(..., description=\"Listing ID\")\n    status: str = Field(..., description=\"Listing status\")\n    created_at: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"Creation timestamp\")\n    url: str = Field(..., description=\"Listing URL\")\n\nclass Order(BaseModel):\n    \"\"\"Order details.\"\"\"\n    order_id: str = Field(..., description=\"Order ID\")\n    status: str = Field(..., description=\"Order status\")\n    buyer: Buyer = Field(..., description=\"Buyer info\")\n    items: List[Dict[str, Any]] = Field(default=[], description=\"Order items\")\n    total: Price = Field(..., description=\"Order total\")\n    shipping_address: Dict[str, Any] = Field(default={}, description=\"Shipping address\")\n    created_at: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"Order timestamp\")\n\nclass Category(BaseModel):\n    \"\"\"Category information.\"\"\"\n    category_id: str = Field(..., description=\"Category ID\")\n    name: str = Field(..., description=\"Category name\")\n    parent_id: Optional[str] = Field(None, description=\"Parent category ID\")\n    level: int = Field(..., ge=0, description=\"Category level\")\n\nclass EbayScenario(BaseModel):\n    \"\"\"eBay marketplace scenario.\"\"\"\n    items: Dict[str, ItemDetails] = Field(default={}, description=\"All items\")\n    listings: Dict[str, Listing] = Field(default={}, description=\"All listings\")\n    orders: Dict[str, Order] = Field(default={}, description=\"All orders\")\n    categories: Dict[str, Category] = Field(default={}, description=\"All categories\")\n    current_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"Current timestamp\")\n\nScenario_Schema = [Price, Seller, Buyer, SearchItem, ItemDetails, Listing, Order, Category, EbayScenario]\n\n# Section 2: Class\nclass EbayServer:\n    def __init__(self):\n        \"\"\"Initialize eBay server with empty state.\"\"\"\n        self.items: Dict[str, ItemDetails] = {}\n        self.listings: Dict[str, Listing] = {}\n        self.orders: Dict[str, Order] = {}\n        self.categories: Dict[str, Category] = {}\n        self.current_time: str = \"\"\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the server.\"\"\"\n        model = EbayScenario(**scenario)\n        self.items = model.items\n        self.listings = model.listings\n        self.orders = model.orders\n        self.categories = model.categories\n        self.current_time = model.current_time\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"items\": {k: v.model_dump() for k, v in self.items.items()},\n            \"listings\": {k: v.model_dump() for k, v in self.listings.items()},\n            \"orders\": {k: v.model_dump() for k, v in self.orders.items()},\n            \"categories\": {k: v.model_dump() for k, v in self.categories.items()},\n            \"current_time\": self.current_time\n        }\n\n    def search_items(self, keywords: str, category_id: Optional[str], limit: Optional[int], sort: Optional[str]) -> dict:\n        \"\"\"Search for items matching criteria.\"\"\"\n        results = []\n        for item in self.items.values():\n            if keywords.lower() in item.title.lower() or keywords.lower() in item.description.lower():\n                if category_id is None or category_id in item.item_specifics.get(\"category_id\", \"\"):\n                    results.append(SearchItem(\n                        item_id=item.item_id,\n                        title=item.title,\n                        price=item.price,\n                        condition=item.condition,\n                        seller=Seller(username=item.seller.username, feedback_score=item.seller.feedback_score),\n                        listing_url=f\"https://ebay.com/itm/{item.item_id}\",\n                        thumbnail=item.images[0] if item.images else \"\"\n                    ))\n        \n        if sort == \"price\":\n            results.sort(key=lambda x: x.price.value)\n        elif sort == \"-price\":\n            results.sort(key=lambda x: x.price.value, reverse=True)\n        \n        max_limit = limit if limit else 10\n        results = results[:max_limit]\n        \n        return {\n            \"total\": len(results),\n            \"items\": [r.model_dump() for r in results]\n        }\n\n    def get_item_details(self, item_id: str) -> dict:\n        \"\"\"Retrieve full item details.\"\"\"\n        item = self.items[item_id]\n        return item.model_dump()\n\n    def create_listing(self, title: str, description: str, category_id: str, price: float, currency: Optional[str], condition: Optional[str], quantity: Optional[int]) -> dict:\n        \"\"\"Create a new listing.\"\"\"\n        listing_id = f\"LST{len(self.listings) + 1:06d}\"\n        curr = currency if currency else \"USD\"\n        cond = condition if condition else \"NEW\"\n        qty = quantity if quantity else 1\n        \n        listing = Listing(\n            listing_id=listing_id,\n            status=\"ACTIVE\",\n            created_at=self.current_time,\n            url=f\"https://ebay.com/itm/{listing_id}\"\n        )\n        \n        item = ItemDetails(\n            item_id=listing_id,\n            title=title,\n            description=description,\n            price=Price(value=price, currency=curr),\n            condition=cond,\n            seller=Seller(username=\"current_user\", feedback_score=0),\n            item_specifics={\"category_id\": category_id, \"quantity\": qty}\n        )\n        \n        self.listings[listing_id] = listing\n        self.items[listing_id] = item\n        \n        return listing.model_dump()\n\n    def get_order_details(self, order_id: str) -> dict:\n        \"\"\"Retrieve order details.\"\"\"\n        order = self.orders[order_id]\n        return order.model_dump()\n\n    def get_categories(self, marketplace_id: Optional[str]) -> dict:\n        \"\"\"Retrieve category taxonomy.\"\"\"\n        return {\n            \"categories\": [c.model_dump() for c in self.categories.values()]\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"EbayServer\")\nserver = EbayServer()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the eBay server.\n\n    Args:\n        scenario (dict): Scenario dictionary matching EbayScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        server.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current eBay server state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return server.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_items(keywords: str, category_id: str = None, limit: int = None, sort: str = None) -> dict:\n    \"\"\"\n    Search for items on the eBay marketplace using keywords and optional filters.\n\n    Args:\n        keywords (str): Search query terms used to find items on the eBay marketplace.\n        category_id (str): [Optional] The eBay category ID used to classify items into specific product taxonomies.\n        limit (int): [Optional] Maximum number of search results to return (default: 10, maximum: 100).\n        sort (str): [Optional] Sort order for results (e.g., 'bestMatch', 'price' for ascending price, '-price' for descending price).\n\n    Returns:\n        total (int): Total number of items matching the search criteria.\n        items (list): List of items matching the search query.\n    \"\"\"\n    try:\n        if not keywords or not isinstance(keywords, str):\n            raise ValueError(\"Keywords must be a non-empty string\")\n        return server.search_items(keywords, category_id, limit, sort)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_item_details(item_id: str) -> dict:\n    \"\"\"\n    Retrieve comprehensive details for a specific eBay item listing.\n\n    Args:\n        item_id (str): The unique identifier of the eBay item listing.\n\n    Returns:\n        item_id (str): The unique identifier of the eBay item listing.\n        title (str): The title of the item listing.\n        description (str): Detailed text description of the item.\n        price (dict): Item price with value and currency.\n        condition (str): The physical condition state of the item.\n        seller (dict): Seller information.\n        images (list): URLs of item images.\n        item_specifics (dict): Key-value pairs of item attributes and specifications.\n        shipping_options (list): Available shipping methods and costs.\n        return_policy (dict): Details of the seller's return policy.\n    \"\"\"\n    try:\n        if not item_id or not isinstance(item_id, str):\n            raise ValueError(\"Item ID must be a non-empty string\")\n        if item_id not in server.items:\n            raise ValueError(f\"Item {item_id} not found\")\n        return server.get_item_details(item_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef create_listing(title: str, description: str, category_id: str, price: float, currency: str = None, condition: str = None, quantity: int = None) -> dict:\n    \"\"\"\n    Create a new item listing on eBay for selling products (seller operation).\n\n    Args:\n        title (str): The title of the item listing.\n        description (str): Detailed text description of the item.\n        category_id (str): The eBay category ID used to classify items into specific product taxonomies.\n        price (float): The numerical monetary amount for the item price.\n        currency (str): [Optional] The ISO 4217 currency code representing the monetary unit (e.g., USD, EUR, GBP).\n        condition (str): [Optional] The physical condition state of the item (e.g., NEW, USED, REFURBISHED).\n        quantity (int): [Optional] Number of items available for sale.\n\n    Returns:\n        listing_id (str): The unique identifier of the created eBay listing.\n        status (str): Current status of the listing (e.g., ACTIVE, PENDING).\n        created_at (str): ISO 8601 timestamp when the listing was created.\n        url (str): The URL to view the created listing on eBay.\n    \"\"\"\n    try:\n        if not title or not isinstance(title, str):\n            raise ValueError(\"Title must be a non-empty string\")\n        if not description or not isinstance(description, str):\n            raise ValueError(\"Description must be a non-empty string\")\n        if not category_id or not isinstance(category_id, str):\n            raise ValueError(\"Category ID must be a non-empty string\")\n        return server.create_listing(title, description, category_id, price, currency, condition, quantity)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_order_details(order_id: str) -> dict:\n    \"\"\"\n    Retrieve detailed information about a specific eBay order transaction.\n\n    Args:\n        order_id (str): The unique identifier of the eBay order transaction.\n\n    Returns:\n        order_id (str): The unique identifier of the eBay order transaction.\n        status (str): Current fulfillment status of the order.\n        buyer (dict): Buyer information.\n        items (list): Line items included in the order.\n        total (dict): Order total with value and currency.\n        shipping_address (dict): Delivery address for the order.\n        created_at (str): ISO 8601 timestamp when the order was placed.\n    \"\"\"\n    try:\n        if not order_id or not isinstance(order_id, str):\n            raise ValueError(\"Order ID must be a non-empty string\")\n        if order_id not in server.orders:\n            raise ValueError(f\"Order {order_id} not found\")\n        return server.get_order_details(order_id)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_categories(marketplace_id: str = None) -> dict:\n    \"\"\"\n    Retrieve the category taxonomy for a specific eBay marketplace.\n\n    Args:\n        marketplace_id (str): [Optional] The eBay marketplace ID (e.g., 'EBAY_US', 'EBAY_GB') to retrieve categories for.\n\n    Returns:\n        categories (list): List of available categories in the marketplace.\n    \"\"\"\n    try:\n        return server.get_categories(marketplace_id)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-03-05T19:35:00.794798",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic eBay marketplace with one item and one category",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "items": {
+          "ITEM001": {
+            "item_id": "ITEM001",
+            "title": "Vintage Camera",
+            "description": "Classic film camera in excellent condition",
+            "price": {
+              "value": 150.0,
+              "currency": "USD"
+            },
+            "condition": "Used",
+            "seller": {
+              "username": "photo_collector",
+              "feedback_score": 250,
+              "feedback_percentage": 98.5
+            },
+            "images": [
+              "https://example.com/img1.jpg"
+            ],
+            "item_specifics": {
+              "brand": "Canon",
+              "year": "1985"
+            },
+            "shipping_options": [
+              {
+                "method": "Standard",
+                "cost": 10.0
+              }
+            ],
+            "return_policy": {
+              "returns_accepted": true,
+              "days": 30
+            }
+          }
+        },
+        "listings": {},
+        "orders": {},
+        "categories": {
+          "CAT001": {
+            "category_id": "CAT001",
+            "name": "Cameras & Photo",
+            "parent_id": null,
+            "level": 0
+          }
+        },
+        "current_time": "2026-03-05T11:30:00"
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Active marketplace with items, listings, and one order",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "items": {
+          "ITEM001": {
+            "item_id": "ITEM001",
+            "title": "Wireless Headphones",
+            "description": "Noise-cancelling Bluetooth headphones",
+            "price": {
+              "value": 89.99,
+              "currency": "USD"
+            },
+            "condition": "New",
+            "seller": {
+              "username": "tech_store",
+              "feedback_score": 1500,
+              "feedback_percentage": 99.2
+            },
+            "images": [
+              "https://example.com/headphones1.jpg",
+              "https://example.com/headphones2.jpg"
+            ],
+            "item_specifics": {
+              "brand": "Sony",
+              "color": "Black",
+              "wireless": true
+            },
+            "shipping_options": [
+              {
+                "method": "Express",
+                "cost": 15.0
+              },
+              {
+                "method": "Standard",
+                "cost": 5.0
+              }
+            ],
+            "return_policy": {
+              "returns_accepted": true,
+              "days": 60
+            }
+          },
+          "ITEM002": {
+            "item_id": "ITEM002",
+            "title": "Vintage Watch",
+            "description": "Mechanical watch from 1970s",
+            "price": {
+              "value": 0.0,
+              "currency": "EUR"
+            },
+            "condition": "For parts",
+            "seller": {
+              "username": "watch_repair",
+              "feedback_score": 85
+            },
+            "images": [],
+            "item_specifics": {},
+            "shipping_options": [],
+            "return_policy": {}
+          }
+        },
+        "listings": {
+          "LIST001": {
+            "listing_id": "LIST001",
+            "status": "active",
+            "created_at": "2026-03-01T10:00:00",
+            "url": "https://ebay.com/itm/LIST001"
+          }
+        },
+        "orders": {
+          "ORD001": {
+            "order_id": "ORD001",
+            "status": "paid",
+            "buyer": {
+              "username": "john_buyer",
+              "email": "john@example.com"
+            },
+            "items": [
+              {
+                "item_id": "ITEM001",
+                "quantity": 1
+              }
+            ],
+            "total": {
+              "value": 104.99,
+              "currency": "USD"
+            },
+            "shipping_address": {
+              "street": "123 Main St",
+              "city": "Boston",
+              "zip": "02101"
+            },
+            "created_at": "2026-03-04T14:30:00"
+          }
+        },
+        "categories": {
+          "CAT001": {
+            "category_id": "CAT001",
+            "name": "Electronics",
+            "parent_id": null,
+            "level": 0
+          },
+          "CAT002": {
+            "category_id": "CAT002",
+            "name": "Audio",
+            "parent_id": "CAT001",
+            "level": 1
+          }
+        },
+        "current_time": "2026-03-05T11:30:00"
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Full marketplace with multiple items, listings, orders, and category hierarchy",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "items": {
+          "ITEM001": {
+            "item_id": "ITEM001",
+            "title": "Gaming Laptop",
+            "description": "High-performance gaming laptop with RTX graphics",
+            "price": {
+              "value": 1299.99,
+              "currency": "USD"
+            },
+            "condition": "New",
+            "seller": {
+              "username": "tech_megastore",
+              "feedback_score": 5000,
+              "feedback_percentage": 99.8
+            },
+            "images": [
+              "https://example.com/laptop1.jpg",
+              "https://example.com/laptop2.jpg",
+              "https://example.com/laptop3.jpg"
+            ],
+            "item_specifics": {
+              "brand": "ASUS",
+              "ram": "32GB",
+              "storage": "1TB SSD",
+              "gpu": "RTX 4060"
+            },
+            "shipping_options": [
+              {
+                "method": "Express",
+                "cost": 25.0
+              },
+              {
+                "method": "Standard",
+                "cost": 10.0
+              }
+            ],
+            "return_policy": {
+              "returns_accepted": true,
+              "days": 30,
+              "restocking_fee": 15.0
+            }
+          },
+          "ITEM002": {
+            "item_id": "ITEM002",
+            "title": "Mechanical Keyboard",
+            "description": "RGB mechanical keyboard with Cherry MX switches",
+            "price": {
+              "value": 149.5,
+              "currency": "USD"
+            },
+            "condition": "New",
+            "seller": {
+              "username": "keyboard_pro",
+              "feedback_score": 850,
+              "feedback_percentage": 98.0
+            },
+            "images": [
+              "https://example.com/kb1.jpg"
+            ],
+            "item_specifics": {
+              "switches": "Cherry MX Red",
+              "rgb": true,
+              "layout": "Full-size"
+            },
+            "shipping_options": [
+              {
+                "method": "Standard",
+                "cost": 8.0
+              }
+            ],
+            "return_policy": {
+              "returns_accepted": true,
+              "days": 14
+            }
+          },
+          "ITEM003": {
+            "item_id": "ITEM003",
+            "title": "Antique Book Collection",
+            "description": "Rare first edition books from 1920s",
+            "price": {
+              "value": 450.0,
+              "currency": "GBP"
+            },
+            "condition": "Used",
+            "seller": {
+              "username": "rare_books_uk",
+              "feedback_score": 320,
+              "feedback_percentage": 100.0
+            },
+            "images": [
+              "https://example.com/books1.jpg",
+              "https://example.com/books2.jpg"
+            ],
+            "item_specifics": {
+              "era": "1920s",
+              "language": "English",
+              "count": 5
+            },
+            "shipping_options": [
+              {
+                "method": "Insured",
+                "cost": 35.0
+              }
+            ],
+            "return_policy": {
+              "returns_accepted": false
+            }
+          }
+        },
+        "listings": {
+          "LIST001": {
+            "listing_id": "LIST001",
+            "status": "active",
+            "created_at": "2026-02-28T09:00:00",
+            "url": "https://ebay.com/itm/LIST001"
+          },
+          "LIST002": {
+            "listing_id": "LIST002",
+            "status": "sold",
+            "created_at": "2026-03-01T12:30:00",
+            "url": "https://ebay.com/itm/LIST002"
+          },
+          "LIST003": {
+            "listing_id": "LIST003",
+            "status": "ended",
+            "created_at": "2026-02-15T08:00:00",
+            "url": "https://ebay.com/itm/LIST003"
+          }
+        },
+        "orders": {
+          "ORD001": {
+            "order_id": "ORD001",
+            "status": "shipped",
+            "buyer": {
+              "username": "gamer_pro",
+              "email": "gamer@example.com"
+            },
+            "items": [
+              {
+                "item_id": "ITEM001",
+                "quantity": 1
+              },
+              {
+                "item_id": "ITEM002",
+                "quantity": 1
+              }
+            ],
+            "total": {
+              "value": 1474.49,
+              "currency": "USD"
+            },
+            "shipping_address": {
+              "street": "456 Oak Ave",
+              "city": "Seattle",
+              "state": "WA",
+              "zip": "98101",
+              "country": "USA"
+            },
+            "created_at": "2026-03-03T16:45:00"
+          },
+          "ORD002": {
+            "order_id": "ORD002",
+            "status": "pending",
+            "buyer": {
+              "username": "book_lover",
+              "email": "books@example.com"
+            },
+            "items": [
+              {
+                "item_id": "ITEM003",
+                "quantity": 1
+              }
+            ],
+            "total": {
+              "value": 485.0,
+              "currency": "GBP"
+            },
+            "shipping_address": {
+              "street": "10 Baker St",
+              "city": "London",
+              "zip": "NW1 6XE",
+              "country": "UK"
+            },
+            "created_at": "2026-03-05T10:00:00"
+          }
+        },
+        "categories": {
+          "CAT001": {
+            "category_id": "CAT001",
+            "name": "Electronics",
+            "parent_id": null,
+            "level": 0
+          },
+          "CAT002": {
+            "category_id": "CAT002",
+            "name": "Computers",
+            "parent_id": "CAT001",
+            "level": 1
+          },
+          "CAT003": {
+            "category_id": "CAT003",
+            "name": "Laptops",
+            "parent_id": "CAT002",
+            "level": 2
+          },
+          "CAT004": {
+            "category_id": "CAT004",
+            "name": "Books",
+            "parent_id": null,
+            "level": 0
+          }
+        },
+        "current_time": "2026-03-05T11:30:00"
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty marketplace with no items, listings, or orders",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "items": {},
+        "listings": {},
+        "orders": {},
+        "categories": {},
+        "current_time": "2026-03-05T11:30:00"
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_item_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_listing",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_categories",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_item_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_listing",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_categories",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_item_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_listing",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_categories",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_item_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_listing",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_categories",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_item_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_listing",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_categories",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_item_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_listing",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_categories",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_item_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_listing",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_categories",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "search_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_item_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "create_listing",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_order_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_categories",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/EbayServer.py"
+  }
+}

@@ -1,0 +1,255 @@
+{
+  "class_name": "PayPalPaymentProcessor",
+  "description": "PayPal REST API integration for creating, authorizing, capturing, and managing payment orders.",
+  "tools": [
+    {
+      "name": "create_order",
+      "description": "Create a new PayPal order for payment processing with specified amount and currency.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "The total payment amount as a decimal string (e.g., '100.00')."
+          },
+          "currency_code": {
+            "type": "string",
+            "description": "The three-letter ISO 4217 currency code for the payment (e.g., 'USD', 'EUR')."
+          },
+          "intent": {
+            "type": "string",
+            "description": "The payment intent: 'CAPTURE' for immediate payment capture or 'AUTHORIZE' for delayed capture requiring explicit authorization."
+          },
+          "description": {
+            "type": "string",
+            "description": "A human-readable description of the order for reference purposes."
+          },
+          "items": {
+            "type": "array",
+            "description": "Line items included in the order, each containing name, quantity, and unit_amount properties."
+          }
+        },
+        "required": [
+          "amount"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique PayPal order identifier used to reference this order in subsequent operations."
+          },
+          "status": {
+            "type": "string",
+            "description": "The current status of the order (e.g., 'CREATED', 'APPROVED', 'COMPLETED')."
+          },
+          "intent": {
+            "type": "string",
+            "description": "The payment intent: 'CAPTURE' for immediate payment capture or 'AUTHORIZE' for delayed capture requiring explicit authorization."
+          },
+          "amount": {
+            "type": "string",
+            "description": "The total payment amount as a decimal string."
+          },
+          "currency": {
+            "type": "string",
+            "description": "The three-letter ISO 4217 currency code for the payment."
+          },
+          "links": {
+            "type": "array",
+            "description": "HATEOAS links for order-related actions such as approval and capture URLs."
+          }
+        }
+      }
+    },
+    {
+      "name": "capture_order",
+      "description": "Capture payment for an order to complete the transaction and transfer funds.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "description": "The unique PayPal order identifier used to reference this order in subsequent operations."
+          }
+        },
+        "required": [
+          "order_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique PayPal order identifier used to reference this order in subsequent operations."
+          },
+          "status": {
+            "type": "string",
+            "description": "The current status of the order (e.g., 'CREATED', 'APPROVED', 'COMPLETED')."
+          },
+          "capture_id": {
+            "type": "string",
+            "description": "The unique identifier for the payment capture transaction."
+          },
+          "amount": {
+            "type": "string",
+            "description": "The total payment amount as a decimal string."
+          },
+          "currency": {
+            "type": "string",
+            "description": "The three-letter ISO 4217 currency code for the payment."
+          },
+          "payer": {
+            "type": "object",
+            "description": "Information about the payer including email, name, and PayPal account details."
+          }
+        }
+      }
+    },
+    {
+      "name": "authorize_order",
+      "description": "Authorize payment for an order without capturing funds, allowing for delayed capture.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "description": "The unique PayPal order identifier used to reference this order in subsequent operations."
+          }
+        },
+        "required": [
+          "order_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique PayPal order identifier used to reference this order in subsequent operations."
+          },
+          "status": {
+            "type": "string",
+            "description": "The current status of the order (e.g., 'CREATED', 'APPROVED', 'COMPLETED')."
+          },
+          "authorization_id": {
+            "type": "string",
+            "description": "The unique identifier for the payment authorization that can be used to capture funds later."
+          },
+          "amount": {
+            "type": "string",
+            "description": "The total payment amount as a decimal string."
+          },
+          "currency": {
+            "type": "string",
+            "description": "The three-letter ISO 4217 currency code for the payment."
+          },
+          "expiration_time": {
+            "type": "string",
+            "description": "The ISO 8601 timestamp when the authorization expires and can no longer be captured."
+          }
+        }
+      }
+    },
+    {
+      "name": "capture_authorized_payment",
+      "description": "Capture funds from a previously authorized payment, either partially or in full.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "authorization_id": {
+            "type": "string",
+            "description": "The unique identifier for the payment authorization that can be used to capture funds later."
+          },
+          "amount": {
+            "type": "string",
+            "description": "The amount to capture as a decimal string; if omitted, captures the full authorized amount."
+          },
+          "final_capture": {
+            "type": "boolean",
+            "description": "Indicates whether this is the final capture for the authorization; if true, any remaining authorized amount is released."
+          }
+        },
+        "required": [
+          "authorization_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier for the payment capture transaction."
+          },
+          "status": {
+            "type": "string",
+            "description": "The current status of the capture (e.g., 'PENDING', 'COMPLETED', 'DECLINED')."
+          },
+          "amount": {
+            "type": "string",
+            "description": "The total payment amount as a decimal string."
+          },
+          "currency": {
+            "type": "string",
+            "description": "The three-letter ISO 4217 currency code for the payment."
+          },
+          "final_capture": {
+            "type": "boolean",
+            "description": "Indicates whether this is the final capture for the authorization; if true, any remaining authorized amount is released."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_order_details",
+      "description": "Retrieve complete details of an existing PayPal order including status, payer information, and purchase units.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "description": "The unique PayPal order identifier used to reference this order in subsequent operations."
+          }
+        },
+        "required": [
+          "order_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique PayPal order identifier used to reference this order in subsequent operations."
+          },
+          "status": {
+            "type": "string",
+            "description": "The current status of the order (e.g., 'CREATED', 'APPROVED', 'COMPLETED')."
+          },
+          "intent": {
+            "type": "string",
+            "description": "The payment intent: 'CAPTURE' for immediate payment capture or 'AUTHORIZE' for delayed capture requiring explicit authorization."
+          },
+          "purchase_units": {
+            "type": "array",
+            "description": "The items or services being purchased, including amounts, descriptions, and shipping details."
+          },
+          "payer": {
+            "type": "object",
+            "description": "Information about the payer including email, name, and PayPal account details."
+          },
+          "create_time": {
+            "type": "string",
+            "description": "The ISO 8601 timestamp when the order was created."
+          },
+          "update_time": {
+            "type": "string",
+            "description": "The ISO 8601 timestamp when the order was last updated."
+          }
+        }
+      }
+    }
+  ]
+}

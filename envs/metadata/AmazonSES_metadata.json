@@ -1,0 +1,229 @@
+{
+  "class_name": "AmazonSES",
+  "description": "Amazon Simple Email Service (SES) API for sending emails, managing templates, and verifying sender identities.",
+  "tools": [
+    {
+      "name": "send_email",
+      "description": "Send a formatted email with subject and body to specified recipients via Amazon SES.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "destination": {
+            "type": "object",
+            "description": "Recipient email addresses organized by delivery type (To, Cc, Bcc)."
+          },
+          "message": {
+            "type": "object",
+            "description": "Email content including subject line and body (text or HTML format)."
+          },
+          "source": {
+            "type": "string",
+            "description": "The verified sender email address. Must be verified in Amazon SES."
+          },
+          "reply_to_addresses": {
+            "type": "array",
+            "description": "Email addresses that will receive replies when recipients respond to this email."
+          },
+          "return_path": {
+            "type": "string",
+            "description": "Email address where bounce and complaint notifications will be sent."
+          }
+        },
+        "required": [
+          "destination",
+          "message"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "MessageId": {
+            "type": "string",
+            "description": "Unique identifier assigned to the sent email message by Amazon SES."
+          },
+          "RequestId": {
+            "type": "string",
+            "description": "AWS request identifier for tracking and debugging purposes."
+          }
+        }
+      }
+    },
+    {
+      "name": "send_raw_email",
+      "description": "Send a raw MIME-formatted email message, allowing full control over email headers and content structure.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "raw_message": {
+            "type": "string",
+            "description": "Base64-encoded MIME message containing complete email headers and body."
+          },
+          "source": {
+            "type": "string",
+            "description": "The verified sender email address. Must be verified in Amazon SES."
+          },
+          "destinations": {
+            "type": "array",
+            "description": "Recipient email addresses that override the To/Cc/Bcc headers in the MIME message."
+          }
+        },
+        "required": [
+          "raw_message"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "MessageId": {
+            "type": "string",
+            "description": "Unique identifier assigned to the sent email message by Amazon SES."
+          }
+        }
+      }
+    },
+    {
+      "name": "send_templated_email",
+      "description": "Send an email using a pre-configured SES template with dynamic variable substitution.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "destination": {
+            "type": "object",
+            "description": "Recipient email addresses organized by delivery type (To, Cc, Bcc)."
+          },
+          "template": {
+            "type": "string",
+            "description": "Name of the Amazon SES email template to use for this message."
+          },
+          "template_data": {
+            "type": "string",
+            "description": "JSON string containing key-value pairs for template variable substitution."
+          },
+          "source": {
+            "type": "string",
+            "description": "The verified sender email address. Must be verified in Amazon SES."
+          }
+        },
+        "required": [
+          "destination",
+          "template",
+          "template_data"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "MessageId": {
+            "type": "string",
+            "description": "Unique identifier assigned to the sent email message by Amazon SES."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_send_statistics",
+      "description": "Retrieve email sending statistics for the AWS account over the last 14 days, including delivery attempts, bounces, and complaints.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "SendDataPoints": {
+            "type": "array",
+            "description": "Time-series data points containing email sending metrics aggregated by time period.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "Timestamp": {
+                  "type": "string",
+                  "description": "ISO 8601 timestamp indicating when this data point was recorded."
+                },
+                "DeliveryAttempts": {
+                  "type": "integer",
+                  "description": "Total number of email delivery attempts during this time period."
+                },
+                "Bounces": {
+                  "type": "integer",
+                  "description": "Number of emails that bounced (hard or soft) during this time period."
+                },
+                "Complaints": {
+                  "type": "integer",
+                  "description": "Number of spam complaints received during this time period."
+                },
+                "Rejects": {
+                  "type": "integer",
+                  "description": "Number of emails rejected by Amazon SES during this time period."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "verify_email_identity",
+      "description": "Initiate the verification process for an email address to authorize it as a sender in Amazon SES.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "email_address": {
+            "type": "string",
+            "description": "The email address to verify as a sender identity in Amazon SES."
+          }
+        },
+        "required": [
+          "email_address"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Current verification status: pending (verification email sent), success (verified), or failed (verification unsuccessful)."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_identity_verification_attributes",
+      "description": "Retrieve the verification status and attributes for email addresses or domains registered as sender identities.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "identities": {
+            "type": "array",
+            "description": "List of email addresses or domain names to check verification status for."
+          }
+        },
+        "required": [
+          "identities"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "VerificationAttributes": {
+            "type": "object",
+            "description": "Map of identity names to their verification status and attributes.",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "VerificationStatus": {
+                  "type": "string",
+                  "description": "Current verification status: Pending (awaiting verification), Success (verified and active), or Failed (verification unsuccessful)."
+                },
+                "VerificationToken": {
+                  "type": "string",
+                  "description": "DKIM verification token for domain identities, used to configure DNS records."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

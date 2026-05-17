@@ -1,0 +1,1258 @@
+{
+  "metadata": {
+    "class_name": "MailgunCommunication",
+    "metadata_path": "envs\\metadata\\MailgunCommunication_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-03-05T20:01:33.509197",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "MailgunCommunication",
+    "description": "Email delivery and analytics service for sending transactional emails, tracking engagement metrics, validating addresses, and retrieving delivery statistics through the Mailgun API.",
+    "tools": [
+      {
+        "name": "send_email",
+        "description": "Send a transactional email with optional HTML content, template rendering, and engagement tracking capabilities.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "to_email": {
+              "type": "string",
+              "description": "The recipient's email address where the message will be delivered."
+            },
+            "subject": {
+              "type": "string",
+              "description": "The subject line that appears in the recipient's inbox."
+            },
+            "text": {
+              "type": "string",
+              "description": "Plain text version of the email body for clients that don't support HTML."
+            },
+            "from_email": {
+              "type": "string",
+              "description": "The sender's email address. If not provided, uses the domain's default sender address."
+            },
+            "html": {
+              "type": "string",
+              "description": "HTML-formatted version of the email body for rich content display."
+            },
+            "template": {
+              "type": "string",
+              "description": "Name of a pre-configured Mailgun template to use for email rendering."
+            },
+            "tracking_clicks": {
+              "type": "boolean",
+              "description": "Enable tracking of link clicks within the email content (default: true)."
+            },
+            "tracking_opens": {
+              "type": "boolean",
+              "description": "Enable tracking of email opens via invisible pixel (default: true)."
+            }
+          },
+          "required": [
+            "to_email",
+            "subject",
+            "text"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique message identifier assigned by Mailgun for tracking and reference."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable status message describing the send operation result."
+            },
+            "status": {
+              "type": "string",
+              "description": "Current delivery status of the email: 'queued' (accepted for delivery) or 'sent' (transmitted to recipient server)."
+            }
+          }
+        }
+      },
+      {
+        "name": "send_mime_email",
+        "description": "Send a pre-formatted MIME message for advanced use cases requiring full control over email structure and headers.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "to_email": {
+              "type": "string",
+              "description": "The recipient's email address where the message will be delivered."
+            },
+            "mime_message": {
+              "type": "string",
+              "description": "Complete MIME-encoded email message including headers, body, and attachments."
+            },
+            "from_email": {
+              "type": "string",
+              "description": "The sender's email address. If not provided, uses the domain's default sender address."
+            }
+          },
+          "required": [
+            "to_email",
+            "mime_message"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique message identifier assigned by Mailgun for tracking and reference."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable status message describing the send operation result."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_events",
+        "description": "Retrieve detailed event logs for email lifecycle tracking including delivery, opens, clicks, bounces, and complaints.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "domain": {
+              "type": "string",
+              "description": "The Mailgun sending domain to query events for."
+            },
+            "event_types": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter results by specific event types: 'accepted', 'delivered', 'failed', 'opened', 'clicked', 'unsubscribed', 'complained', or 'stored'."
+            },
+            "begin_time": {
+              "type": "string",
+              "description": "Start of the time range to query, formatted as RFC 2822 timestamp (e.g., 'Mon, 01 Jan 2026 00:00:00 GMT')."
+            },
+            "end_time": {
+              "type": "string",
+              "description": "End of the time range to query, formatted as RFC 2822 timestamp (e.g., 'Mon, 01 Jan 2026 23:59:59 GMT')."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of events to return in a single response (default: 100, maximum: 300)."
+            }
+          },
+          "required": [
+            "domain"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "event": {
+                    "type": "string",
+                    "description": "Type of email event that occurred (e.g., 'delivered', 'opened', 'clicked', 'bounced')."
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "Unique identifier for this specific event occurrence."
+                  },
+                  "timestamp": {
+                    "type": "number",
+                    "description": "Unix timestamp indicating when the event occurred."
+                  },
+                  "recipient": {
+                    "type": "string",
+                    "description": "Email address of the recipient associated with this event."
+                  },
+                  "domain": {
+                    "type": "string",
+                    "description": "The Mailgun sending domain that originated the message."
+                  },
+                  "message": {
+                    "type": "object",
+                    "description": "Message headers and metadata associated with the event."
+                  }
+                }
+              },
+              "description": "Array of email events matching the query criteria."
+            },
+            "paging": {
+              "type": "object",
+              "properties": {
+                "next": {
+                  "type": "string",
+                  "description": "URL to retrieve the next page of results if more events are available."
+                },
+                "previous": {
+                  "type": "string",
+                  "description": "URL to retrieve the previous page of results."
+                }
+              },
+              "description": "Pagination controls for navigating through large result sets."
+            }
+          }
+        }
+      },
+      {
+        "name": "validate_email",
+        "description": "Verify email address validity, syntax correctness, and mailbox existence using Mailgun's validation service.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string",
+              "description": "The email address to validate for syntax, domain, and mailbox verification."
+            }
+          },
+          "required": [
+            "email"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "The normalized email address that was validated."
+            },
+            "is_valid": {
+              "type": "boolean",
+              "description": "Overall validation result indicating whether the email address is valid and deliverable."
+            },
+            "mailbox_verification": {
+              "type": "string",
+              "description": "Mailbox existence check result: 'true' (exists), 'false' (doesn't exist), 'unknown' (cannot verify), or 'null' (not checked)."
+            },
+            "parts": {
+              "type": "object",
+              "properties": {
+                "local_part": {
+                  "type": "string",
+                  "description": "The username portion before the @ symbol."
+                },
+                "domain": {
+                  "type": "string",
+                  "description": "The domain portion after the @ symbol."
+                },
+                "display_name": {
+                  "type": "string",
+                  "description": "Display name if the address was provided in 'Name <email>' format."
+                }
+              },
+              "description": "Parsed components of the email address."
+            },
+            "did_you_mean": {
+              "type": "string",
+              "description": "Suggested correction if a common typo or misspelling was detected in the email address."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_stats",
+        "description": "Retrieve aggregated email delivery and engagement statistics for a sending domain.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "domain": {
+              "type": "string",
+              "description": "The Mailgun sending domain to retrieve statistics for."
+            },
+            "event_types": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter statistics by specific event types: 'accepted', 'delivered', 'failed', 'opened', 'clicked', 'complained', or 'unsubscribed'."
+            }
+          },
+          "required": [
+            "domain"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "stats": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "time": {
+                    "type": "string",
+                    "description": "Timestamp for this statistics bucket."
+                  },
+                  "accepted": {
+                    "type": "object",
+                    "properties": {
+                      "incoming": {
+                        "type": "integer",
+                        "description": "Number of incoming messages accepted."
+                      },
+                      "outgoing": {
+                        "type": "integer",
+                        "description": "Number of outgoing messages accepted for delivery."
+                      }
+                    },
+                    "description": "Count of messages accepted by Mailgun."
+                  },
+                  "delivered": {
+                    "type": "object",
+                    "properties": {
+                      "smtp": {
+                        "type": "integer",
+                        "description": "Number of messages successfully delivered via SMTP."
+                      },
+                      "http": {
+                        "type": "integer",
+                        "description": "Number of messages successfully delivered via HTTP."
+                      }
+                    },
+                    "description": "Count of messages successfully delivered to recipients."
+                  },
+                  "failed": {
+                    "type": "object",
+                    "properties": {
+                      "temporary": {
+                        "type": "integer",
+                        "description": "Number of temporary delivery failures (will be retried)."
+                      },
+                      "permanent": {
+                        "type": "integer",
+                        "description": "Number of permanent delivery failures (will not be retried)."
+                      }
+                    },
+                    "description": "Count of failed delivery attempts."
+                  },
+                  "opened": {
+                    "type": "integer",
+                    "description": "Number of emails opened by recipients (requires open tracking enabled)."
+                  },
+                  "clicked": {
+                    "type": "integer",
+                    "description": "Number of link clicks within emails (requires click tracking enabled)."
+                  },
+                  "complained": {
+                    "type": "integer",
+                    "description": "Number of spam complaints reported by recipients."
+                  },
+                  "unsubscribed": {
+                    "type": "integer",
+                    "description": "Number of recipients who unsubscribed from the mailing list."
+                  }
+                }
+              },
+              "description": "Time-series statistics broken down by time period."
+            },
+            "total_stats": {
+              "type": "object",
+              "description": "Aggregated totals across all time periods in the query range."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Email(BaseModel):\n    \"\"\"Represents a sent email.\"\"\"\n    id: str = Field(..., description=\"Unique message identifier\")\n    to_email: str = Field(..., pattern=r\"^[^@]+@[^@]+\\.[^@]+$\", description=\"Recipient email address\")\n    subject: str = Field(..., description=\"Email subject line\")\n    status: str = Field(..., description=\"Delivery status\")\n    timestamp: float = Field(..., ge=0, description=\"Send timestamp\")\n\nclass Event(BaseModel):\n    \"\"\"Represents an email event.\"\"\"\n    event: str = Field(..., description=\"Event type\")\n    id: str = Field(..., description=\"Event identifier\")\n    timestamp: float = Field(..., ge=0, description=\"Event timestamp\")\n    recipient: str = Field(..., pattern=r\"^[^@]+@[^@]+\\.[^@]+$\", description=\"Recipient email\")\n    domain: str = Field(..., description=\"Sending domain\")\n    message: Dict[str, Any] = Field(default={}, description=\"Message metadata\")\n\nclass MailgunScenario(BaseModel):\n    \"\"\"Main scenario model for Mailgun communication.\"\"\"\n    emails: Dict[str, Email] = Field(default={}, description=\"Sent emails by ID\")\n    events: List[Event] = Field(default=[], description=\"Email events log\")\n    current_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"Current timestamp in ISO 8601 format\")\n    default_from_email: str = Field(default=\"noreply@mailgun.example.com\", pattern=r\"^[^@]+@[^@]+\\.[^@]+$\", description=\"Default sender address\")\n    domains: List[str] = Field(default=[\"mailgun.example.com\"], description=\"Available sending domains\")\n\nScenario_Schema = [Email, Event, MailgunScenario]\n\n# Section 2: Class\nclass MailgunCommunication:\n    def __init__(self):\n        \"\"\"Initialize Mailgun communication API with empty state.\"\"\"\n        self.emails: Dict[str, Email] = {}\n        self.events: List[Event] = []\n        self.current_time: str = \"\"\n        self.default_from_email: str = \"\"\n        self.domains: List[str] = []\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = MailgunScenario(**scenario)\n        self.emails = model.emails\n        self.events = model.events\n        self.current_time = model.current_time\n        self.default_from_email = model.default_from_email\n        self.domains = model.domains\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"emails\": {email_id: email.model_dump() for email_id, email in self.emails.items()},\n            \"events\": [event.model_dump() for event in self.events],\n            \"current_time\": self.current_time,\n            \"default_from_email\": self.default_from_email,\n            \"domains\": self.domains\n        }\n\n    def send_email(self, to_email: str, subject: str, text: str, from_email: Optional[str], html: Optional[str], template: Optional[str], tracking_clicks: bool, tracking_opens: bool) -> dict:\n        \"\"\"Send a transactional email.\"\"\"\n        import time\n        email_id = f\"msg_{len(self.emails) + 1}\"\n        sender = from_email if from_email else self.default_from_email\n        timestamp = time.mktime(time.strptime(self.current_time, \"%Y-%m-%dT%H:%M:%S\"))\n        \n        email = Email(id=email_id, to_email=to_email, subject=subject, status=\"queued\", timestamp=timestamp)\n        self.emails[email_id] = email\n        \n        event = Event(event=\"accepted\", id=f\"evt_{len(self.events) + 1}\", timestamp=timestamp, recipient=to_email, domain=sender.split(\"@\")[1], message={\"headers\": {\"subject\": subject}})\n        self.events.append(event)\n        \n        return {\"id\": email_id, \"message\": \"Queued. Thank you.\", \"status\": \"queued\"}\n\n    def send_mime_email(self, to_email: str, mime_message: str, from_email: Optional[str]) -> dict:\n        \"\"\"Send a pre-formatted MIME message.\"\"\"\n        import time\n        email_id = f\"msg_{len(self.emails) + 1}\"\n        sender = from_email if from_email else self.default_from_email\n        timestamp = time.mktime(time.strptime(self.current_time, \"%Y-%m-%dT%H:%M:%S\"))\n        \n        email = Email(id=email_id, to_email=to_email, subject=\"MIME Message\", status=\"queued\", timestamp=timestamp)\n        self.emails[email_id] = email\n        \n        event = Event(event=\"accepted\", id=f\"evt_{len(self.events) + 1}\", timestamp=timestamp, recipient=to_email, domain=sender.split(\"@\")[1], message={})\n        self.events.append(event)\n        \n        return {\"id\": email_id, \"message\": \"Queued. Thank you.\"}\n\n    def get_events(self, domain: str, event_types: Optional[List[str]], begin_time: Optional[str], end_time: Optional[str], limit: int) -> dict:\n        \"\"\"Retrieve detailed event logs.\"\"\"\n        import time\n        filtered = [e for e in self.events if e.domain == domain]\n        \n        if event_types:\n            filtered = [e for e in filtered if e.event in event_types]\n        \n        if begin_time:\n            begin_ts = time.mktime(time.strptime(begin_time, \"%a, %d %b %Y %H:%M:%S %Z\"))\n            filtered = [e for e in filtered if e.timestamp >= begin_ts]\n        \n        if end_time:\n            end_ts = time.mktime(time.strptime(end_time, \"%a, %d %b %Y %H:%M:%S %Z\"))\n            filtered = [e for e in filtered if e.timestamp <= end_ts]\n        \n        items = [e.model_dump() for e in filtered[:limit]]\n        return {\"items\": items, \"paging\": {\"next\": \"\", \"previous\": \"\"}}\n\n    def validate_email(self, email: str) -> dict:\n        \"\"\"Verify email address validity.\"\"\"\n        parts = email.split(\"@\")\n        if len(parts) != 2:\n            return {\"address\": email, \"is_valid\": False, \"mailbox_verification\": \"false\", \"parts\": {}, \"did_you_mean\": \"\"}\n        \n        return {\n            \"address\": email,\n            \"is_valid\": True,\n            \"mailbox_verification\": \"unknown\",\n            \"parts\": {\"local_part\": parts[0], \"domain\": parts[1], \"display_name\": \"\"},\n            \"did_you_mean\": \"\"\n        }\n\n    def get_stats(self, domain: str, event_types: Optional[List[str]]) -> dict:\n        \"\"\"Retrieve aggregated email statistics.\"\"\"\n        filtered = [e for e in self.events if e.domain == domain]\n        \n        if event_types:\n            filtered = [e for e in filtered if e.event in event_types]\n        \n        stats_map = {}\n        for event in filtered:\n            event_type = event.event\n            stats_map[event_type] = stats_map.get(event_type, 0) + 1\n        \n        return {\n            \"stats\": [{\n                \"time\": self.current_time,\n                \"accepted\": {\"incoming\": 0, \"outgoing\": stats_map.get(\"accepted\", 0)},\n                \"delivered\": {\"smtp\": stats_map.get(\"delivered\", 0), \"http\": 0},\n                \"failed\": {\"temporary\": 0, \"permanent\": stats_map.get(\"failed\", 0)},\n                \"opened\": stats_map.get(\"opened\", 0),\n                \"clicked\": stats_map.get(\"clicked\", 0),\n                \"complained\": stats_map.get(\"complained\", 0),\n                \"unsubscribed\": stats_map.get(\"unsubscribed\", 0)\n            }],\n            \"total_stats\": stats_map\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"MailgunCommunication\")\napi = MailgunCommunication()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Mailgun API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching MailgunScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Mailgun state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef send_email(to_email: str, subject: str, text: str, from_email: str = None, html: str = None, template: str = None, tracking_clicks: bool = True, tracking_opens: bool = True) -> dict:\n    \"\"\"\n    Send a transactional email with optional HTML content and tracking.\n\n    Args:\n        to_email (str): The recipient's email address.\n        subject (str): The subject line.\n        text (str): Plain text version of the email body.\n        from_email (str) [Optional]: The sender's email address.\n        html (str) [Optional]: HTML-formatted version of the email body.\n        template (str) [Optional]: Name of a pre-configured Mailgun template.\n        tracking_clicks (bool) [Optional]: Enable tracking of link clicks (default: true).\n        tracking_opens (bool) [Optional]: Enable tracking of email opens (default: true).\n\n    Returns:\n        id (str): Unique message identifier.\n        message (str): Status message.\n        status (str): Delivery status ('queued' or 'sent').\n    \"\"\"\n    try:\n        if not to_email or not isinstance(to_email, str):\n            raise ValueError(\"to_email must be a non-empty string\")\n        if not subject or not isinstance(subject, str):\n            raise ValueError(\"subject must be a non-empty string\")\n        if not text or not isinstance(text, str):\n            raise ValueError(\"text must be a non-empty string\")\n        return api.send_email(to_email, subject, text, from_email, html, template, tracking_clicks, tracking_opens)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef send_mime_email(to_email: str, mime_message: str, from_email: str = None) -> dict:\n    \"\"\"\n    Send a pre-formatted MIME message.\n\n    Args:\n        to_email (str): The recipient's email address.\n        mime_message (str): Complete MIME-encoded email message.\n        from_email (str) [Optional]: The sender's email address.\n\n    Returns:\n        id (str): Unique message identifier.\n        message (str): Status message.\n    \"\"\"\n    try:\n        if not to_email or not isinstance(to_email, str):\n            raise ValueError(\"to_email must be a non-empty string\")\n        if not mime_message or not isinstance(mime_message, str):\n            raise ValueError(\"mime_message must be a non-empty string\")\n        return api.send_mime_email(to_email, mime_message, from_email)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_events(domain: str, event_types: List[str] = None, begin_time: str = None, end_time: str = None, limit: int = 100) -> dict:\n    \"\"\"\n    Retrieve detailed event logs for email lifecycle tracking.\n\n    Args:\n        domain (str): The Mailgun sending domain to query events for.\n        event_types (List[str]) [Optional]: Filter by specific event types.\n        begin_time (str) [Optional]: Start of time range (RFC 2822 format).\n        end_time (str) [Optional]: End of time range (RFC 2822 format).\n        limit (int) [Optional]: Maximum number of events to return (default: 100).\n\n    Returns:\n        items (List[dict]): Array of email events.\n        paging (dict): Pagination controls.\n    \"\"\"\n    try:\n        if not domain or not isinstance(domain, str):\n            raise ValueError(\"domain must be a non-empty string\")\n        if domain not in api.domains:\n            raise ValueError(f\"Domain {domain} not found\")\n        return api.get_events(domain, event_types, begin_time, end_time, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef validate_email(email: str) -> dict:\n    \"\"\"\n    Verify email address validity and syntax correctness.\n\n    Args:\n        email (str): The email address to validate.\n\n    Returns:\n        address (str): The normalized email address.\n        is_valid (bool): Overall validation result.\n        mailbox_verification (str): Mailbox existence check result.\n        parts (dict): Parsed components of the email address.\n        did_you_mean (str): Suggested correction if typo detected.\n    \"\"\"\n    try:\n        if not email or not isinstance(email, str):\n            raise ValueError(\"email must be a non-empty string\")\n        return api.validate_email(email)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_stats(domain: str, event_types: List[str] = None) -> dict:\n    \"\"\"\n    Retrieve aggregated email delivery and engagement statistics.\n\n    Args:\n        domain (str): The Mailgun sending domain to retrieve statistics for.\n        event_types (List[str]) [Optional]: Filter statistics by specific event types.\n\n    Returns:\n        stats (List[dict]): Time-series statistics broken down by time period.\n        total_stats (dict): Aggregated totals across all time periods.\n    \"\"\"\n    try:\n        if not domain or not isinstance(domain, str):\n            raise ValueError(\"domain must be a non-empty string\")\n        if domain not in api.domains:\n            raise ValueError(f\"Domain {domain} not found\")\n        return api.get_stats(domain, event_types)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-03-05T20:01:33.509197",
+      "revision_number": null
+    },
+    {
+      "version": 1,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Email(BaseModel):\n    \"\"\"Represents a sent email.\"\"\"\n    id: str = Field(..., description=\"Unique message identifier\")\n    to_email: str = Field(..., pattern=r\"^[^@]+@[^@]+\\.[^@]+$\", description=\"Recipient email address\")\n    subject: str = Field(..., description=\"Email subject line\")\n    status: str = Field(..., description=\"Delivery status\")\n    timestamp: float = Field(..., ge=0, description=\"Send timestamp\")\n\nclass Event(BaseModel):\n    \"\"\"Represents an email event.\"\"\"\n    event: str = Field(..., description=\"Event type\")\n    id: str = Field(..., description=\"Event identifier\")\n    timestamp: float = Field(..., ge=0, description=\"Event timestamp\")\n    recipient: str = Field(..., pattern=r\"^[^@]+@[^@]+\\.[^@]+$\", description=\"Recipient email\")\n    domain: str = Field(..., description=\"Sending domain\")\n    message: Dict[str, Any] = Field(default_factory=dict, description=\"Message metadata\")\n\nclass MailgunScenario(BaseModel):\n    \"\"\"Main scenario model for Mailgun communication.\"\"\"\n    emails: Dict[str, Email] = Field(default_factory=dict, description=\"Sent emails by ID\")\n    events: List[Event] = Field(default_factory=list, description=\"Email events log\")\n    current_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"Current timestamp in ISO 8601 format\")\n    default_from_email: str = Field(default=\"noreply@mailgun.example.com\", pattern=r\"^[^@]+@[^@]+\\.[^@]+$\", description=\"Default sender address\")\n    domains: List[str] = Field(default_factory=lambda: [\"mailgun.example.com\"], description=\"Available sending domains\")\n\nScenario_Schema = [Email, Event, MailgunScenario]\n\n# Section 2: Class\nclass MailgunCommunication:\n    def __init__(self):\n        \"\"\"Initialize Mailgun communication API with empty state.\"\"\"\n        self.emails: Dict[str, Email] = {}\n        self.events: List[Event] = []\n        self.current_time: str = \"\"\n        self.default_from_email: str = \"noreply@mailgun.example.com\"\n        self.domains: List[str] = [\"mailgun.example.com\"]\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = MailgunScenario(**scenario)\n        self.emails = model.emails\n        self.events = model.events\n        self.current_time = model.current_time\n        self.default_from_email = model.default_from_email\n        self.domains = model.domains\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"emails\": {email_id: email.model_dump() for email_id, email in self.emails.items()},\n            \"events\": [event.model_dump() for event in self.events],\n            \"current_time\": self.current_time,\n            \"default_from_email\": self.default_from_email,\n            \"domains\": self.domains\n        }\n\n    def send_email(self, to_email: str, subject: str, text: str, from_email: Optional[str], html: Optional[str], template: Optional[str], tracking_clicks: bool, tracking_opens: bool) -> dict:\n        \"\"\"Send a transactional email.\"\"\"\n        import time\n        email_id = f\"msg_{len(self.emails) + 1}\"\n        sender = from_email if from_email else self.default_from_email\n        timestamp = time.mktime(time.strptime(self.current_time, \"%Y-%m-%dT%H:%M:%S\"))\n        \n        email = Email(id=email_id, to_email=to_email, subject=subject, status=\"queued\", timestamp=timestamp)\n        self.emails[email_id] = email\n        \n        event = Event(event=\"accepted\", id=f\"evt_{len(self.events) + 1}\", timestamp=timestamp, recipient=to_email, domain=sender.split(\"@\")[1], message={\"headers\": {\"subject\": subject}})\n        self.events.append(event)\n        \n        return {\"id\": email_id, \"message\": \"Queued. Thank you.\", \"status\": \"queued\"}\n\n    def send_mime_email(self, to_email: str, mime_message: str, from_email: Optional[str]) -> dict:\n        \"\"\"Send a pre-formatted MIME message.\"\"\"\n        import time\n        email_id = f\"msg_{len(self.emails) + 1}\"\n        sender = from_email if from_email else self.default_from_email\n        timestamp = time.mktime(time.strptime(self.current_time, \"%Y-%m-%dT%H:%M:%S\"))\n        \n        email = Email(id=email_id, to_email=to_email, subject=\"MIME Message\", status=\"queued\", timestamp=timestamp)\n        self.emails[email_id] = email\n        \n        event = Event(event=\"accepted\", id=f\"evt_{len(self.events) + 1}\", timestamp=timestamp, recipient=to_email, domain=sender.split(\"@\")[1], message={})\n        self.events.append(event)\n        \n        return {\"id\": email_id, \"message\": \"Queued. Thank you.\"}\n\n    def get_events(self, domain: str, event_types: Optional[List[str]], begin_time: Optional[str], end_time: Optional[str], limit: int) -> dict:\n        \"\"\"Retrieve detailed event logs.\"\"\"\n        import time\n        filtered = [e for e in self.events if e.domain == domain]\n        \n        if event_types:\n            filtered = [e for e in filtered if e.event in event_types]\n        \n        if begin_time:\n            begin_ts = time.mktime(time.strptime(begin_time, \"%a, %d %b %Y %H:%M:%S %Z\"))\n            filtered = [e for e in filtered if e.timestamp >= begin_ts]\n        \n        if end_time:\n            end_ts = time.mktime(time.strptime(end_time, \"%a, %d %b %Y %H:%M:%S %Z\"))\n            filtered = [e for e in filtered if e.timestamp <= end_ts]\n        \n        items = [e.model_dump() for e in filtered[:limit]]\n        return {\"items\": items, \"paging\": {\"next\": \"\", \"previous\": \"\"}}\n\n    def validate_email(self, email: str) -> dict:\n        \"\"\"Verify email address validity.\"\"\"\n        parts = email.split(\"@\")\n        if len(parts) != 2:\n            return {\"address\": email, \"is_valid\": False, \"mailbox_verification\": \"false\", \"parts\": {}, \"did_you_mean\": \"\"}\n        \n        return {\n            \"address\": email,\n            \"is_valid\": True,\n            \"mailbox_verification\": \"unknown\",\n            \"parts\": {\"local_part\": parts[0], \"domain\": parts[1], \"display_name\": \"\"},\n            \"did_you_mean\": \"\"\n        }\n\n    def get_stats(self, domain: str, event_types: Optional[List[str]]) -> dict:\n        \"\"\"Retrieve aggregated email statistics.\"\"\"\n        filtered = [e for e in self.events if e.domain == domain]\n        \n        if event_types:\n            filtered = [e for e in filtered if e.event in event_types]\n        \n        stats_map = {}\n        for event in filtered:\n            event_type = event.event\n            stats_map[event_type] = stats_map.get(event_type, 0) + 1\n        \n        return {\n            \"stats\": [{\n                \"time\": self.current_time,\n                \"accepted\": {\"incoming\": 0, \"outgoing\": stats_map.get(\"accepted\", 0)},\n                \"delivered\": {\"smtp\": stats_map.get(\"delivered\", 0), \"http\": 0},\n                \"failed\": {\"temporary\": 0, \"permanent\": stats_map.get(\"failed\", 0)},\n                \"opened\": stats_map.get(\"opened\", 0),\n                \"clicked\": stats_map.get(\"clicked\", 0),\n                \"complained\": stats_map.get(\"complained\", 0),\n                \"unsubscribed\": stats_map.get(\"unsubscribed\", 0)\n            }],\n            \"total_stats\": stats_map\n        }\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"MailgunCommunication\")\napi = MailgunCommunication()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the Mailgun API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching MailgunScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    if not isinstance(scenario, dict):\n        raise ValueError(\"Scenario must be a dictionary\")\n    api.load_scenario(scenario)\n    return \"Successfully loaded scenario\"\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current Mailgun state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    return api.save_scenario()\n\n@mcp.tool()\ndef send_email(to_email: str, subject: str, text: str, from_email: str = None, html: str = None, template: str = None, tracking_clicks: bool = True, tracking_opens: bool = True) -> dict:\n    \"\"\"\n    Send a transactional email with optional HTML content and tracking.\n\n    Args:\n        to_email (str): The recipient's email address.\n        subject (str): The subject line.\n        text (str): Plain text version of the email body.\n        from_email (str) [Optional]: The sender's email address.\n        html (str) [Optional]: HTML-formatted version of the email body.\n        template (str) [Optional]: Name of a pre-configured Mailgun template.\n        tracking_clicks (bool) [Optional]: Enable tracking of link clicks (default: true).\n        tracking_opens (bool) [Optional]: Enable tracking of email opens (default: true).\n\n    Returns:\n        id (str): Unique message identifier.\n        message (str): Status message.\n        status (str): Delivery status ('queued' or 'sent').\n    \"\"\"\n    if not to_email or not isinstance(to_email, str):\n        raise ValueError(\"to_email must be a non-empty string\")\n    if not subject or not isinstance(subject, str):\n        raise ValueError(\"subject must be a non-empty string\")\n    if not text or not isinstance(text, str):\n        raise ValueError(\"text must be a non-empty string\")\n    return api.send_email(to_email, subject, text, from_email, html, template, tracking_clicks, tracking_opens)\n\n@mcp.tool()\ndef send_mime_email(to_email: str, mime_message: str, from_email: str = None) -> dict:\n    \"\"\"\n    Send a pre-formatted MIME message.\n\n    Args:\n        to_email (str): The recipient's email address.\n        mime_message (str): Complete MIME-encoded email message.\n        from_email (str) [Optional]: The sender's email address.\n\n    Returns:\n        id (str): Unique message identifier.\n        message (str): Status message.\n    \"\"\"\n    if not to_email or not isinstance(to_email, str):\n        raise ValueError(\"to_email must be a non-empty string\")\n    if not mime_message or not isinstance(mime_message, str):\n        raise ValueError(\"mime_message must be a non-empty string\")\n    return api.send_mime_email(to_email, mime_message, from_email)\n\n@mcp.tool()\ndef get_events(domain: str, event_types: List[str] = None, begin_time: str = None, end_time: str = None, limit: int = 100) -> dict:\n    \"\"\"\n    Retrieve detailed event logs for email lifecycle tracking.\n\n    Args:\n        domain (str): The Mailgun sending domain to query events for.\n        event_types (List[str]) [Optional]: Filter by specific event types.\n        begin_time (str) [Optional]: Start of time range (RFC 2822 format).\n        end_time (str) [Optional]: End of time range (RFC 2822 format).\n        limit (int) [Optional]: Maximum number of events to return (default: 100).\n\n    Returns:\n        items (List[dict]): Array of email events.\n        paging (dict): Pagination controls.\n    \"\"\"\n    if not domain or not isinstance(domain, str):\n        raise ValueError(\"domain must be a non-empty string\")\n    if domain not in api.domains:\n        raise ValueError(f\"Domain {domain} not found\")\n    return api.get_events(domain, event_types, begin_time, end_time, limit)\n\n@mcp.tool()\ndef validate_email(email: str) -> dict:\n    \"\"\"\n    Verify email address validity and syntax correctness.\n\n    Args:\n        email (str): The email address to validate.\n\n    Returns:\n        address (str): The normalized email address.\n        is_valid (bool): Overall validation result.\n        mailbox_verification (str): Mailbox existence check result.\n        parts (dict): Parsed components of the email address.\n        did_you_mean (str): Suggested correction if typo detected.\n    \"\"\"\n    if not email or not isinstance(email, str):\n        raise ValueError(\"email must be a non-empty string\")\n    return api.validate_email(email)\n\n@mcp.tool()\ndef get_stats(domain: str, event_types: List[str] = None) -> dict:\n    \"\"\"\n    Retrieve aggregated email delivery and engagement statistics.\n\n    Args:\n        domain (str): The Mailgun sending domain to retrieve statistics for.\n        event_types (List[str]) [Optional]: Filter statistics by specific event types.\n\n    Returns:\n        stats (List[dict]): Time-series statistics broken down by time period.\n        total_stats (dict): Aggregated totals across all time periods.\n    \"\"\"\n    if not domain or not isinstance(domain, str):\n        raise ValueError(\"domain must be a non-empty string\")\n    if domain not in api.domains:\n        raise ValueError(f\"Domain {domain} not found\")\n    return api.get_stats(domain, event_types)\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-03-05T20:01:33.509197",
+      "revision_number": 1
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Single email sent with one delivered event",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "emails": {
+          "msg_001": {
+            "id": "msg_001",
+            "to_email": "user@example.com",
+            "subject": "Welcome",
+            "status": "delivered",
+            "timestamp": 1709640000.0
+          }
+        },
+        "events": [
+          {
+            "event": "delivered",
+            "id": "evt_001",
+            "timestamp": 1709640005.0,
+            "recipient": "user@example.com",
+            "domain": "mailgun.example.com",
+            "message": {
+              "headers": {
+                "message-id": "msg_001"
+              }
+            }
+          }
+        ],
+        "current_time": "2026-03-05T12:00:00",
+        "default_from_email": "noreply@mailgun.example.com",
+        "domains": [
+          "mailgun.example.com"
+        ]
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple emails with varied statuses and event types",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "emails": {
+          "msg_001": {
+            "id": "msg_001",
+            "to_email": "alice@company.com",
+            "subject": "Project Update",
+            "status": "delivered",
+            "timestamp": 1709640000.0
+          },
+          "msg_002": {
+            "id": "msg_002",
+            "to_email": "bob@startup.io",
+            "subject": "Meeting Reminder",
+            "status": "opened",
+            "timestamp": 1709640100.0
+          },
+          "msg_003": {
+            "id": "msg_003",
+            "to_email": "invalid@domain.xyz",
+            "subject": "Newsletter",
+            "status": "failed",
+            "timestamp": 1709640200.0
+          }
+        },
+        "events": [
+          {
+            "event": "delivered",
+            "id": "evt_001",
+            "timestamp": 1709640005.0,
+            "recipient": "alice@company.com",
+            "domain": "mailgun.example.com",
+            "message": {
+              "headers": {
+                "message-id": "msg_001"
+              }
+            }
+          },
+          {
+            "event": "opened",
+            "id": "evt_002",
+            "timestamp": 1709640150.0,
+            "recipient": "bob@startup.io",
+            "domain": "mailgun.example.com",
+            "message": {
+              "headers": {
+                "message-id": "msg_002"
+              }
+            }
+          },
+          {
+            "event": "failed",
+            "id": "evt_003",
+            "timestamp": 1709640205.0,
+            "recipient": "invalid@domain.xyz",
+            "domain": "mailgun.example.com",
+            "message": {
+              "headers": {
+                "message-id": "msg_003"
+              },
+              "error": "Domain not found"
+            }
+          }
+        ],
+        "current_time": "2026-03-05T12:30:00",
+        "default_from_email": "support@mailgun.example.com",
+        "domains": [
+          "mailgun.example.com",
+          "notifications.example.com"
+        ]
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich email campaign with multiple events per message including clicks and bounces",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "emails": {
+          "msg_001": {
+            "id": "msg_001",
+            "to_email": "customer1@shop.com",
+            "subject": "Flash Sale - 50% Off",
+            "status": "clicked",
+            "timestamp": 1709640000.0
+          },
+          "msg_002": {
+            "id": "msg_002",
+            "to_email": "customer2@retail.net",
+            "subject": "Flash Sale - 50% Off",
+            "status": "opened",
+            "timestamp": 1709640010.0
+          },
+          "msg_003": {
+            "id": "msg_003",
+            "to_email": "old_email@defunct.org",
+            "subject": "Flash Sale - 50% Off",
+            "status": "bounced",
+            "timestamp": 1709640020.0
+          },
+          "msg_004": {
+            "id": "msg_004",
+            "to_email": "customer3@business.co",
+            "subject": "Flash Sale - 50% Off",
+            "status": "delivered",
+            "timestamp": 1709640030.0
+          },
+          "msg_005": {
+            "id": "msg_005",
+            "to_email": "spam_trap@example.com",
+            "subject": "Flash Sale - 50% Off",
+            "status": "complained",
+            "timestamp": 1709640040.0
+          }
+        },
+        "events": [
+          {
+            "event": "delivered",
+            "id": "evt_001",
+            "timestamp": 1709640005.0,
+            "recipient": "customer1@shop.com",
+            "domain": "notifications.example.com",
+            "message": {
+              "headers": {
+                "message-id": "msg_001"
+              }
+            }
+          },
+          {
+            "event": "opened",
+            "id": "evt_002",
+            "timestamp": 1709640100.0,
+            "recipient": "customer1@shop.com",
+            "domain": "notifications.example.com",
+            "message": {
+              "headers": {
+                "message-id": "msg_001"
+              },
+              "user-agent": "Mozilla/5.0"
+            }
+          },
+          {
+            "event": "clicked",
+            "id": "evt_003",
+            "timestamp": 1709640120.0,
+            "recipient": "customer1@shop.com",
+            "domain": "notifications.example.com",
+            "message": {
+              "headers": {
+                "message-id": "msg_001"
+              },
+              "url": "https://shop.com/sale"
+            }
+          },
+          {
+            "event": "delivered",
+            "id": "evt_004",
+            "timestamp": 1709640015.0,
+            "recipient": "customer2@retail.net",
+            "domain": "notifications.example.com",
+            "message": {
+              "headers": {
+                "message-id": "msg_002"
+              }
+            }
+          },
+          {
+            "event": "opened",
+            "id": "evt_005",
+            "timestamp": 1709640200.0,
+            "recipient": "customer2@retail.net",
+            "domain": "notifications.example.com",
+            "message": {
+              "headers": {
+                "message-id": "msg_002"
+              }
+            }
+          },
+          {
+            "event": "bounced",
+            "id": "evt_006",
+            "timestamp": 1709640025.0,
+            "recipient": "old_email@defunct.org",
+            "domain": "notifications.example.com",
+            "message": {
+              "headers": {
+                "message-id": "msg_003"
+              },
+              "error": "Mailbox does not exist"
+            }
+          },
+          {
+            "event": "delivered",
+            "id": "evt_007",
+            "timestamp": 1709640035.0,
+            "recipient": "customer3@business.co",
+            "domain": "notifications.example.com",
+            "message": {
+              "headers": {
+                "message-id": "msg_004"
+              }
+            }
+          },
+          {
+            "event": "complained",
+            "id": "evt_008",
+            "timestamp": 1709640300.0,
+            "recipient": "spam_trap@example.com",
+            "domain": "notifications.example.com",
+            "message": {
+              "headers": {
+                "message-id": "msg_005"
+              },
+              "complaint-type": "abuse"
+            }
+          }
+        ],
+        "current_time": "2026-03-05T13:00:00",
+        "default_from_email": "marketing@notifications.example.com",
+        "domains": [
+          "mailgun.example.com",
+          "notifications.example.com",
+          "transactional.example.com"
+        ]
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty state with no emails or events",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "emails": {},
+        "events": [],
+        "current_time": "2026-03-05T00:00:00",
+        "default_from_email": "noreply@mailgun.example.com",
+        "domains": [
+          "mailgun.example.com"
+        ]
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 3,
+      "failed_scenarios": 1,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": false,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {},
+            "tool_execution": [],
+            "save_scenario": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_execution": [
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "send_mime_email",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_events",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "validate_email",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_stats",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_email (validation)",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_mime_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_mime_email (validation)",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_events",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_events (validation)",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "validate_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "validate_email (edge case)",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "validate_email (validation)",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stats",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stats (validation)",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_execution": [
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "send_mime_email",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_events",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "validate_email",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_stats",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_mime_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_events",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "validate_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stats",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": ""
+            },
+            "tool_execution": [
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "send_mime_email",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_events",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "validate_email",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "get_stats",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_mime_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_events",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "validate_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stats",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "send_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "send_mime_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_events",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "validate_email",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_stats",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_001"
+      ],
+      "aggregated_errors": {
+        "total_failed": 1,
+        "scenario_ids": [
+          "scenario_001"
+        ],
+        "error_categories": {
+          "critical": [],
+          "high": [],
+          "medium": [],
+          "low": []
+        },
+        "error_patterns": [],
+        "severity_summary": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0
+        }
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 4,
+        "failed_scenarios": 0,
+        "all_passed": true,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "send_email",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "send_mime_email",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_events",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "validate_email",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_stats",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "simple",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": ""
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "send_email",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "send_mime_email",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "get_events",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "validate_email",
+                  "passed": true,
+                  "error": ""
+                },
+                {
+                  "tool_name": "get_stats",
+                  "passed": true,
+                  "error": ""
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": ""
+              }
+            },
+            "complexity_level": "medium",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "send_email",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "send_mime_email",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_events",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "validate_email",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_stats",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "complex",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "send_email",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "send_mime_email",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_events",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "validate_email",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_stats",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "boundary",
+            "execution_time": 0.0
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 1,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/MailgunCommunication.py"
+  }
+}

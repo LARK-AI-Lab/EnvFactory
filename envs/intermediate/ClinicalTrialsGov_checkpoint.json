@@ -1,0 +1,913 @@
+{
+  "metadata": {
+    "class_name": "ClinicalTrialsGov",
+    "metadata_path": "envs/metadata/ClinicalTrialsGov_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-04-17T09:45:40.798875",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "ClinicalTrialsGov",
+    "description": "MCP server exposing the ClinicalTrials.gov REST API for discovering, retrieving, and analyzing clinical-study records.",
+    "tools": [
+      {
+        "name": "clinicaltrials_list_studies",
+        "description": "Search and paginate through clinical studies using flexible query objects.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "object",
+              "description": "Optional query object (e.g., {\"term\":\"diabetes\"}) that defines search filters."
+            },
+            "pageSize": {
+              "type": "integer",
+              "description": "Maximum number of studies to return in this page (1-1000)."
+            },
+            "pageToken": {
+              "type": "string",
+              "description": "Pagination token returned by a previous call to retrieve the next page."
+            },
+            "format": {
+              "type": "string",
+              "description": "Response format; always \"json\" for MCP usage."
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "studies": {
+              "type": "array",
+              "description": "List of matching studies with brief metadata.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "nctId": {
+                    "type": "string",
+                    "description": "The unique ClinicalTrials.gov identifier (NCT ID) of the study."
+                  },
+                  "briefTitle": {
+                    "type": "string",
+                    "description": "Short public title of the clinical study."
+                  },
+                  "overallStatus": {
+                    "type": "string",
+                    "description": "Current recruitment/review status of the study."
+                  },
+                  "conditions": {
+                    "type": "array",
+                    "description": "Medical conditions addressed by the study.",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "interventions": {
+                    "type": "array",
+                    "description": "Drugs, devices, procedures, or behavioral interventions being studied.",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "phases": {
+                    "type": "array",
+                    "description": "Clinical trial phases (e.g., Phase 1, Phase 2).",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "nextPageToken": {
+              "type": "string",
+              "description": "Token to supply in the next request to continue pagination; absent when no more pages exist."
+            },
+            "totalCount": {
+              "type": "integer",
+              "description": "Total number of studies matching the query across all pages."
+            }
+          }
+        }
+      },
+      {
+        "name": "clinicaltrials_get_study",
+        "description": "Retrieve full protocol, results, and derived sections for one or more studies by NCT ID.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "nctIds": {
+              "type": "string",
+              "description": "Comma-separated list of ClinicalTrials.gov NCT IDs to fetch."
+            }
+          },
+          "required": [
+            "nctIds"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "studies": {
+              "type": "array",
+              "description": "Detailed study records for each requested NCT ID.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "nctId": {
+                    "type": "string",
+                    "description": "The unique ClinicalTrials.gov identifier (NCT ID) of the study."
+                  },
+                  "protocolSection": {
+                    "type": "object",
+                    "description": "Comprehensive protocol information including design, eligibility, and contacts."
+                  },
+                  "resultsSection": {
+                    "type": "object",
+                    "description": "Reported outcomes, adverse events, and participant flow after study completion."
+                  },
+                  "derivedSection": {
+                    "type": "object",
+                    "description": "Computed or enriched metadata such as calculated completion dates."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "clinicaltrials_search_studies",
+        "description": "Quickly find studies using high-level filters for condition, intervention, location, and status.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "condition": {
+              "type": "string",
+              "description": "Disease or medical condition being studied."
+            },
+            "intervention": {
+              "type": "string",
+              "description": "Drug, device, procedure, or behavioral intervention under investigation."
+            },
+            "location": {
+              "type": "string",
+              "description": "Geographic location such as city, state, or country where recruitment occurs."
+            },
+            "status": {
+              "type": "string",
+              "description": "Study recruitment or review status (e.g., recruiting, active, completed)."
+            },
+            "pageSize": {
+              "type": "integer",
+              "description": "Maximum number of studies to return (1-1000)."
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "studies": {
+              "type": "array",
+              "description": "Array of study summaries matching the provided filters.",
+              "items": {
+                "type": "object"
+              }
+            },
+            "totalCount": {
+              "type": "integer",
+              "description": "Total number of studies matching the filters across all pages."
+            }
+          }
+        }
+      },
+      {
+        "name": "clinicaltrials_get_results",
+        "description": "Obtain reported results, outcome measures, adverse events, and participant flow for a single study.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "nctId": {
+              "type": "string",
+              "description": "The unique ClinicalTrials.gov identifier (NCT ID) whose results are requested."
+            }
+          },
+          "required": [
+            "nctId"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "nctId": {
+              "type": "string",
+              "description": "The unique ClinicalTrials.gov identifier (NCT ID) of the study."
+            },
+            "outcomeMeasures": {
+              "type": "array",
+              "description": "Primary and secondary outcome measures with analyzed data points.",
+              "items": {
+                "type": "object"
+              }
+            },
+            "adverseEvents": {
+              "type": "array",
+              "description": "Summary tables of adverse events reported by arm and severity.",
+              "items": {
+                "type": "object"
+              }
+            },
+            "participantFlow": {
+              "type": "object",
+              "description": "Diagram and numbers detailing participant progression through trial phases."
+            }
+          }
+        }
+      },
+      {
+        "name": "clinicaltrials_analyze_trends",
+        "description": "Aggregate statistics on groups of trials by a chosen attribute such as phase, status, condition, or sponsor.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "object",
+              "description": "Query object used to select the cohort of studies to analyze."
+            },
+            "group_by": {
+              "type": "string",
+              "description": "Attribute to group studies by (e.g., \"phase\", \"status\", \"condition\", \"sponsor\")."
+            }
+          },
+          "required": [
+            "query"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "group_by": {
+              "type": "string",
+              "description": "The attribute used for grouping the selected studies."
+            },
+            "buckets": {
+              "type": "array",
+              "description": "Count of studies falling into each distinct value of the grouping attribute.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "description": "Distinct value of the grouping attribute (e.g., \"Phase 2\")."
+                  },
+                  "count": {
+                    "type": "integer",
+                    "description": "Number of studies that share this key value."
+                  }
+                }
+              }
+            },
+            "totalCount": {
+              "type": "integer",
+              "description": "Total number of studies included in the analysis."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nimport httpx\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass StudySummary(BaseModel):\n    \"\"\"Brief metadata for a clinical study.\"\"\"\n    nctId: str = Field(..., description=\"Unique NCT ID\")\n    briefTitle: str = Field(default=\"\", description=\"Short public title\")\n    overallStatus: str = Field(default=\"\", description=\"Recruitment/review status\")\n    conditions: List[str] = Field(default=[], description=\"Medical conditions\")\n    interventions: List[str] = Field(default=[], description=\"Interventions\")\n    phases: List[str] = Field(default=[], description=\"Trial phases\")\n\nclass ClinicalTrialsScenario(BaseModel):\n    \"\"\"Main scenario model for ClinicalTrials.gov API state.\"\"\"\n    base_url: str = Field(default=\"https://clinicaltrials.gov/api/v2\", description=\"API base URL\")\n    default_page_size: int = Field(default=10, ge=1, le=1000, description=\"Default page size\")\n    cached_studies: Dict[str, Any] = Field(default={}, description=\"Cache of fetched studies by NCT ID\")\n\nScenario_Schema = [StudySummary, ClinicalTrialsScenario]\n\n# Section 2: Class\nclass ClinicalTrialsAPI:\n    def __init__(self):\n        \"\"\"Initialize API with empty state.\"\"\"\n        self.base_url: str = \"\"\n        self.default_page_size: int = 10\n        self.cached_studies: Dict[str, Any] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = ClinicalTrialsScenario(**scenario)\n        self.base_url = model.base_url\n        self.default_page_size = model.default_page_size\n        self.cached_studies = model.cached_studies\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"base_url\": self.base_url,\n            \"default_page_size\": self.default_page_size,\n            \"cached_studies\": self.cached_studies,\n        }\n\n    def _extract_study_summary(self, study: dict) -> dict:\n        \"\"\"Extract brief metadata from a raw study record.\"\"\"\n        proto = study.get(\"protocolSection\", {})\n        id_mod = proto.get(\"identificationModule\", {})\n        status_mod = proto.get(\"statusModule\", {})\n        cond_mod = proto.get(\"conditionsModule\", {})\n        design_mod = proto.get(\"designModule\", {})\n        arms_mod = proto.get(\"armsInterventionsModule\", {})\n\n        interventions = [\n            i.get(\"name\", \"\") for i in arms_mod.get(\"interventions\", [])\n        ]\n        return {\n            \"nctId\": id_mod.get(\"nctId\", \"\"),\n            \"briefTitle\": id_mod.get(\"briefTitle\", \"\"),\n            \"overallStatus\": status_mod.get(\"overallStatus\", \"\"),\n            \"conditions\": cond_mod.get(\"conditions\", []),\n            \"interventions\": interventions,\n            \"phases\": design_mod.get(\"phases\", []),\n        }\n\n    def list_studies(self, query: Optional[dict], page_size: int, page_token: Optional[str]) -> dict:\n        \"\"\"Search and paginate through clinical studies.\"\"\"\n        params = {\"format\": \"json\", \"pageSize\": page_size}\n        if query:\n            if \"term\" in query:\n                params[\"query.term\"] = query[\"term\"]\n            for k, v in query.items():\n                if k != \"term\":\n                    params[f\"query.{k}\"] = v\n        if page_token:\n            params[\"pageToken\"] = page_token\n\n        resp = httpx.get(f\"{self.base_url}/studies\", params=params, timeout=30)\n        resp.raise_for_status()\n        data = resp.json()\n\n        studies = [self._extract_study_summary(s) for s in data.get(\"studies\", [])]\n        result = {\"studies\": studies, \"totalCount\": data.get(\"totalCount\", 0)}\n        if \"nextPageToken\" in data:\n            result[\"nextPageToken\"] = data[\"nextPageToken\"]\n        return result\n\n    def get_study(self, nct_ids: str) -> dict:\n        \"\"\"Retrieve full protocol and results for one or more studies.\"\"\"\n        ids = [i.strip() for i in nct_ids.split(\",\")]\n        studies = []\n        for nct_id in ids:\n            resp = httpx.get(f\"{self.base_url}/studies/{nct_id}\", params={\"format\": \"json\"}, timeout=30)\n            resp.raise_for_status()\n            data = resp.json()\n            proto = data.get(\"protocolSection\", {})\n            id_mod = proto.get(\"identificationModule\", {})\n            record = {\n                \"nctId\": id_mod.get(\"nctId\", nct_id),\n                \"protocolSection\": proto,\n                \"resultsSection\": data.get(\"resultsSection\", {}),\n                \"derivedSection\": data.get(\"derivedSection\", {}),\n            }\n            self.cached_studies[nct_id] = record\n            studies.append(record)\n        return {\"studies\": studies}\n\n    def search_studies(self, condition: Optional[str], intervention: Optional[str],\n                       location: Optional[str], status: Optional[str], page_size: int) -> dict:\n        \"\"\"Find studies using high-level filters.\"\"\"\n        params = {\"format\": \"json\", \"pageSize\": page_size}\n        if condition:\n            params[\"query.cond\"] = condition\n        if intervention:\n            params[\"query.intr\"] = intervention\n        if location:\n            params[\"query.locn\"] = location\n        if status:\n            params[\"filter.overallStatus\"] = status.upper()\n\n        resp = httpx.get(f\"{self.base_url}/studies\", params=params, timeout=30)\n        resp.raise_for_status()\n        data = resp.json()\n\n        studies = [self._extract_study_summary(s) for s in data.get(\"studies\", [])]\n        return {\"studies\": studies, \"totalCount\": data.get(\"totalCount\", 0)}\n\n    def get_results(self, nct_id: str) -> dict:\n        \"\"\"Get reported results, outcomes, adverse events, and participant flow.\"\"\"\n        resp = httpx.get(f\"{self.base_url}/studies/{nct_id}\", params={\"format\": \"json\"}, timeout=30)\n        resp.raise_for_status()\n        data = resp.json()\n        results = data.get(\"resultsSection\", {})\n        return {\n            \"nctId\": nct_id,\n            \"outcomeMeasures\": results.get(\"outcomeMeasuresModule\", {}).get(\"outcomeMeasures\", []),\n            \"adverseEvents\": results.get(\"adverseEventsModule\", {}).get(\"adverseEvents\", []),\n            \"participantFlow\": results.get(\"participantFlowModule\", {}),\n        }\n\n    def analyze_trends(self, query: dict, group_by: str) -> dict:\n        \"\"\"Aggregate statistics on studies grouped by a chosen attribute.\"\"\"\n        params = {\"format\": \"json\", \"pageSize\": 1000}\n        if \"term\" in query:\n            params[\"query.term\"] = query[\"term\"]\n        for k, v in query.items():\n            if k != \"term\":\n                params[f\"query.{k}\"] = v\n\n        all_studies = []\n        page_token = None\n        while True:\n            if page_token:\n                params[\"pageToken\"] = page_token\n            resp = httpx.get(f\"{self.base_url}/studies\", params=params, timeout=30)\n            resp.raise_for_status()\n            data = resp.json()\n            all_studies.extend(data.get(\"studies\", []))\n            page_token = data.get(\"nextPageToken\")\n            if not page_token:\n                break\n\n        counts: Dict[str, int] = {}\n        for study in all_studies:\n            proto = study.get(\"protocolSection\", {})\n            if group_by == \"phase\":\n                keys = proto.get(\"designModule\", {}).get(\"phases\", [\"N/A\"])\n            elif group_by == \"status\":\n                keys = [proto.get(\"statusModule\", {}).get(\"overallStatus\", \"N/A\")]\n            elif group_by == \"condition\":\n                keys = proto.get(\"conditionsModule\", {}).get(\"conditions\", [\"N/A\"])\n            elif group_by == \"sponsor\":\n                keys = [proto.get(\"sponsorCollaboratorsModule\", {}).get(\"leadSponsor\", {}).get(\"name\", \"N/A\")]\n            else:\n                keys = [\"N/A\"]\n            for key in keys:\n                counts[key] = counts.get(key, 0) + 1\n\n        buckets = [{\"key\": k, \"count\": v} for k, v in sorted(counts.items(), key=lambda x: -x[1])]\n        return {\"group_by\": group_by, \"buckets\": buckets, \"totalCount\": len(all_studies)}\n\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"ClinicalTrialsGov\")\napi = ClinicalTrialsAPI()\napi.load_scenario({})  # load defaults\n\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the ClinicalTrials API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching ClinicalTrialsScenario schema.\n\n    Returns:\n        success_message (str): Confirmation message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef clinicaltrials_list_studies(\n    query: Optional[dict] = None,\n    pageSize: Optional[int] = None,\n    pageToken: Optional[str] = None,\n    format: Optional[str] = None,\n) -> dict:\n    \"\"\"\n    Search and paginate through clinical studies using flexible query objects.\n\n    Args:\n        query (dict): [Optional] Query object (e.g., {\"term\": \"diabetes\"}) defining search filters.\n        pageSize (int): [Optional] Maximum number of studies to return (1-1000).\n        pageToken (str): [Optional] Pagination token from a previous call.\n        format (str): [Optional] Response format; always \"json\" for MCP usage.\n\n    Returns:\n        studies (array): List of matching studies with brief metadata.\n        nextPageToken (str): Token for the next page (absent when no more pages).\n        totalCount (int): Total number of matching studies across all pages.\n    \"\"\"\n    try:\n        size = pageSize if pageSize is not None else api.default_page_size\n        return api.list_studies(query, size, pageToken)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef clinicaltrials_get_study(nctIds: str) -> dict:\n    \"\"\"\n    Retrieve full protocol, results, and derived sections for one or more studies by NCT ID.\n\n    Args:\n        nctIds (str): Comma-separated list of ClinicalTrials.gov NCT IDs to fetch.\n\n    Returns:\n        studies (array): Detailed study records for each requested NCT ID, each containing\n            nctId (str), protocolSection (dict), resultsSection (dict), derivedSection (dict).\n    \"\"\"\n    try:\n        if not nctIds or not isinstance(nctIds, str):\n            raise ValueError(\"nctIds must be a non-empty string\")\n        return api.get_study(nctIds)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef clinicaltrials_search_studies(\n    condition: Optional[str] = None,\n    intervention: Optional[str] = None,\n    location: Optional[str] = None,\n    status: Optional[str] = None,\n    pageSize: Optional[int] = None,\n) -> dict:\n    \"\"\"\n    Quickly find studies using high-level filters for condition, intervention, location, and status.\n\n    Args:\n        condition (str): [Optional] Disease or medical condition being studied.\n        intervention (str): [Optional] Drug, device, procedure, or behavioral intervention.\n        location (str): [Optional] Geographic location where recruitment occurs.\n        status (str): [Optional] Study recruitment or review status (e.g., recruiting, completed).\n        pageSize (int): [Optional] Maximum number of studies to return (1-1000).\n\n    Returns:\n        studies (array): Array of study summaries matching the provided filters.\n        totalCount (int): Total number of matching studies across all pages.\n    \"\"\"\n    try:\n        size = pageSize if pageSize is not None else api.default_page_size\n        return api.search_studies(condition, intervention, location, status, size)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef clinicaltrials_get_results(nctId: str) -> dict:\n    \"\"\"\n    Obtain reported results, outcome measures, adverse events, and participant flow for a study.\n\n    Args:\n        nctId (str): The unique ClinicalTrials.gov identifier (NCT ID) whose results are requested.\n\n    Returns:\n        nctId (str): The NCT ID of the study.\n        outcomeMeasures (array): Primary and secondary outcome measures with analyzed data.\n        adverseEvents (array): Adverse events reported by arm and severity.\n        participantFlow (dict): Participant progression numbers through trial phases.\n    \"\"\"\n    try:\n        if not nctId or not isinstance(nctId, str):\n            raise ValueError(\"nctId must be a non-empty string\")\n        return api.get_results(nctId)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef clinicaltrials_analyze_trends(query: dict, group_by: Optional[str] = None) -> dict:\n    \"\"\"\n    Aggregate statistics on groups of trials by a chosen attribute.\n\n    Args:\n        query (dict): Query object used to select the cohort of studies to analyze.\n        group_by (str): [Optional] Attribute to group studies by: \"phase\", \"status\", \"condition\", or \"sponsor\".\n\n    Returns:\n        group_by (str): The attribute used for grouping.\n        buckets (array): Each bucket has key (str) and count (int).\n        totalCount (int): Total number of studies included in the analysis.\n    \"\"\"\n    try:\n        if not isinstance(query, dict):\n            raise ValueError(\"query must be a dictionary\")\n        gb = group_by if group_by else \"status\"\n        return api.analyze_trends(query, gb)\n    except Exception as e:\n        raise e\n\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-04-17T09:45:40.798895",
+      "revision_number": null
+    },
+    {
+      "version": 1,
+      "code": "\n```python\nimport httpx\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass StudySummary(BaseModel):\n    nctId: str\n    briefTitle: str = \"\"\n    overallStatus: str = \"\"\n    conditions: List[str] = Field(default_factory=list)\n    interventions: List[str] = Field(default_factory=list)\n    phases: List[str] = Field(default_factory=list)\n\nclass ClinicalTrialsScenario(BaseModel):\n    base_url: str = \"https://clinicaltrials.gov/api/v2\"\n    default_page_size: int = Field(default=10, ge=1, le=1000)\n    cached_studies: Dict[str, Any] = Field(default_factory=dict)\n\nScenario_Schema = [StudySummary, ClinicalTrialsScenario]\n\n# Section 2: Class\nclass ClinicalTrialsAPI:\n    def __init__(self):\n        self.base_url: str = \"\"\n        self.default_page_size: int = 10\n        self.cached_studies: Dict[str, Any] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        model = ClinicalTrialsScenario(**scenario)\n        self.base_url = model.base_url\n        self.default_page_size = model.default_page_size\n        self.cached_studies = model.cached_studies\n\n    def save_scenario(self) -> dict:\n        return {\n            \"base_url\": self.base_url,\n            \"default_page_size\": self.default_page_size,\n            \"cached_studies\": self.cached_studies,\n        }\n\n    def _extract_study_summary(self, study: dict) -> dict:\n        proto = study.get(\"protocolSection\", {})\n        id_mod = proto.get(\"identificationModule\", {})\n        status_mod = proto.get(\"statusModule\", {})\n        cond_mod = proto.get(\"conditionsModule\", {})\n        design_mod = proto.get(\"designModule\", {})\n        arms_mod = proto.get(\"armsInterventionsModule\", {})\n        interventions = [i.get(\"name\", \"\") for i in arms_mod.get(\"interventions\", [])]\n        return {\n            \"nctId\": id_mod.get(\"nctId\", \"\"),\n            \"briefTitle\": id_mod.get(\"briefTitle\", \"\"),\n            \"overallStatus\": status_mod.get(\"overallStatus\", \"\"),\n            \"conditions\": cond_mod.get(\"conditions\", []),\n            \"interventions\": interventions,\n            \"phases\": design_mod.get(\"phases\", []),\n        }\n\n    def list_studies(self, query: Optional[dict], page_size: int, page_token: Optional[str]) -> dict:\n        params = {\"format\": \"json\", \"pageSize\": page_size}\n        if query:\n            if \"term\" in query:\n                params[\"query.term\"] = query[\"term\"]\n            for k, v in query.items():\n                if k != \"term\":\n                    params[f\"query.{k}\"] = v\n        if page_token:\n            params[\"pageToken\"] = page_token\n        resp = httpx.get(f\"{self.base_url}/studies\", params=params, timeout=30)\n        resp.raise_for_status()\n        data = resp.json()\n        studies = [self._extract_study_summary(s) for s in data.get(\"studies\", [])]\n        result = {\"studies\": studies, \"totalCount\": data.get(\"totalCount\", 0)}\n        if \"nextPageToken\" in data:\n            result[\"nextPageToken\"] = data[\"nextPageToken\"]\n        return result\n\n    def get_study(self, nct_ids: str) -> dict:\n        ids = [i.strip() for i in nct_ids.split(\",\")]\n        studies = []\n        for nct_id in ids:\n            resp = httpx.get(f\"{self.base_url}/studies/{nct_id}\", params={\"format\": \"json\"}, timeout=30)\n            resp.raise_for_status()\n            data = resp.json()\n            proto = data.get(\"protocolSection\", {})\n            id_mod = proto.get(\"identificationModule\", {})\n            record = {\n                \"nctId\": id_mod.get(\"nctId\", nct_id),\n                \"protocolSection\": proto,\n                \"resultsSection\": data.get(\"resultsSection\", {}),\n                \"derivedSection\": data.get(\"derivedSection\", {}),\n            }\n            self.cached_studies[nct_id] = record\n            studies.append(record)\n        return {\"studies\": studies}\n\n    def search_studies(self, condition: Optional[str], intervention: Optional[str],\n                       location: Optional[str], status: Optional[str], page_size: int) -> dict:\n        params = {\"format\": \"json\", \"pageSize\": page_size}\n        if condition:\n            params[\"query.cond\"] = condition\n        if intervention:\n            params[\"query.intr\"] = intervention\n        if location:\n            params[\"query.locn\"] = location\n        if status:\n            params[\"filter.overallStatus\"] = status.upper()\n        resp = httpx.get(f\"{self.base_url}/studies\", params=params, timeout=30)\n        resp.raise_for_status()\n        data = resp.json()\n        studies = [self._extract_study_summary(s) for s in data.get(\"studies\", [])]\n        return {\"studies\": studies, \"totalCount\": data.get(\"totalCount\", 0)}\n\n    def get_results(self, nct_id: str) -> dict:\n        resp = httpx.get(f\"{self.base_url}/studies/{nct_id}\", params={\"format\": \"json\"}, timeout=30)\n        resp.raise_for_status()\n        data = resp.json()\n        results = data.get(\"resultsSection\", {})\n        return {\n            \"nctId\": nct_id,\n            \"outcomeMeasures\": results.get(\"outcomeMeasuresModule\", {}).get(\"outcomeMeasures\", []),\n            \"adverseEvents\": results.get(\"adverseEventsModule\", {}).get(\"adverseEvents\", []),\n            \"participantFlow\": results.get(\"participantFlowModule\", {}),\n        }\n\n    def analyze_trends(self, query: dict, group_by: str) -> dict:\n        params = {\"format\": \"json\", \"pageSize\": 1000}\n        if \"term\" in query:\n            params[\"query.term\"] = query[\"term\"]\n        for k, v in query.items():\n            if k != \"term\":\n                params[f\"query.{k}\"] = v\n        all_studies = []\n        page_token = None\n        while True:\n            if page_token:\n                params[\"pageToken\"] = page_token\n            resp = httpx.get(f\"{self.base_url}/studies\", params=params, timeout=30)\n            resp.raise_for_status()\n            data = resp.json()\n            all_studies.extend(data.get(\"studies\", []))\n            page_token = data.get(\"nextPageToken\")\n            if not page_token:\n                break\n        counts: Dict[str, int] = {}\n        for study in all_studies:\n            proto = study.get(\"protocolSection\", {})\n            if group_by == \"phase\":\n                keys = proto.get(\"designModule\", {}).get(\"phases\", [\"N/A\"])\n            elif group_by == \"status\":\n                keys = [proto.get(\"statusModule\", {}).get(\"overallStatus\", \"N/A\")]\n            elif group_by == \"condition\":\n                keys = proto.get(\"conditionsModule\", {}).get(\"conditions\", [\"N/A\"])\n            elif group_by == \"sponsor\":\n                keys = [proto.get(\"sponsorCollaboratorsModule\", {}).get(\"leadSponsor\", {}).get(\"name\", \"N/A\")]\n            else:\n                keys = [\"N/A\"]\n            for key in keys:\n                counts[key] = counts.get(key, 0) + 1\n        buckets = [{\"key\": k, \"count\": v} for k, v in sorted(counts.items(), key=lambda x: -x[1])]\n        return {\"group_by\": group_by, \"buckets\": buckets, \"totalCount\": len(all_studies)}\n\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"ClinicalTrialsGov\")\napi = ClinicalTrialsAPI()\napi.load_scenario({})\n\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the ClinicalTrials API.\n\n    Args:\n        scenario: Scenario dictionary matching ClinicalTrialsScenario schema.\n\n    Returns:\n        success_message: Confirmation message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current state as scenario dictionary.\n\n    Returns:\n        scenario: Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef clinicaltrials_list_studies(\n    query: Optional[dict] = None,\n    pageSize: Optional[int] = None,\n    pageToken: Optional[str] = None,\n    format: Optional[str] = None,\n) -> dict:\n    \"\"\"\n    Search and paginate through clinical studies using flexible query objects.\n\n    Args:\n        query: Query object (e.g., {\"term\": \"diabetes\"}) defining search filters.\n        pageSize: Maximum number of studies to return (1-1000).\n        pageToken: Pagination token from a previous call.\n        format: Response format; always \"json\" for MCP usage.\n\n    Returns:\n        studies: List of matching studies with brief metadata.\n        nextPageToken: Token for the next page (absent when no more pages).\n        totalCount: Total number of matching studies across all pages.\n    \"\"\"\n    try:\n        size = pageSize if pageSize is not None else api.default_page_size\n        return api.list_studies(query, size, pageToken)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef clinicaltrials_get_study(nctIds: str) -> dict:\n    \"\"\"\n    Retrieve full protocol, results, and derived sections for one or more studies by NCT ID.\n\n    Args:\n        nctIds: Comma-separated list of ClinicalTrials.gov NCT IDs to fetch.\n\n    Returns:\n        studies: Detailed study records for each requested NCT ID, each containing\n            nctId, protocolSection, resultsSection, derivedSection.\n    \"\"\"\n    try:\n        if not nctIds or not isinstance(nctIds, str):\n            raise ValueError(\"nctIds must be a non-empty string\")\n        return api.get_study(nctIds)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef clinicaltrials_search_studies(\n    condition: Optional[str] = None,\n    intervention: Optional[str] = None,\n    location: Optional[str] = None,\n    status: Optional[str] = None,\n    pageSize: Optional[int] = None,\n) -> dict:\n    \"\"\"\n    Quickly find studies using high-level filters for condition, intervention, location, and status.\n\n    Args:\n        condition: Disease or medical condition being studied.\n        intervention: Drug, device, procedure, or behavioral intervention.\n        location: Geographic location where recruitment occurs.\n        status: Study recruitment or review status (e.g., recruiting, completed).\n        pageSize: Maximum number of studies to return (1-1000).\n\n    Returns:\n        studies: Array of study summaries matching the provided filters.\n        totalCount: Total number of matching studies across all pages.\n    \"\"\"\n    try:\n        size = pageSize if pageSize is not None else api.default_page_size\n        return api.search_studies(condition, intervention, location, status, size)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef clinicaltrials_get_results(nctId: str) -> dict:\n    \"\"\"\n    Obtain reported results, outcome measures, adverse events, and participant flow for a study.\n\n    Args:\n        nctId: The unique ClinicalTrials.gov identifier (NCT ID) whose results are requested.\n\n    Returns:\n        nctId: The NCT ID of the study.\n        outcomeMeasures: Primary and secondary outcome measures with analyzed data.\n        adverseEvents: Adverse events reported by arm and severity.\n        participantFlow: Participant progression numbers through trial phases.\n    \"\"\"\n    try:\n        if not nctId or not isinstance(nctId, str):\n            raise ValueError(\"nctId must be a non-empty string\")\n        return api.get_results(nctId)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef clinicaltrials_analyze_trends(query: dict, group_by: Optional[str] = None) -> dict:\n    \"\"\"\n    Aggregate statistics on groups of trials by a chosen attribute.\n\n    Args:\n        query: Query object used to select the cohort of studies to analyze.\n        group_by: Attribute to group studies by: \"phase\", \"status\", \"condition\", or \"sponsor\".\n\n    Returns:\n        group_by: The attribute used for grouping.\n        buckets: Each bucket has key and count.\n        totalCount: Total number of studies included in the analysis.\n    \"\"\"\n    try:\n        if not isinstance(query, dict):\n            raise ValueError(\"query must be a dictionary\")\n        gb = group_by if group_by else \"status\"\n        return api.analyze_trends(query, gb)\n    except Exception as e:\n        raise e\n\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n```\n",
+      "timestamp": "2026-04-17T09:45:40.798900",
+      "revision_number": 1
+    },
+    {
+      "version": 2,
+      "code": "\n```python\nimport httpx\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass StudySummary(BaseModel):\n    nctId: str\n    briefTitle: str = \"\"\n    overallStatus: str = \"\"\n    conditions: List[str] = Field(default_factory=list)\n    interventions: List[str] = Field(default_factory=list)\n    phases: List[str] = Field(default_factory=list)\n\nclass ClinicalTrialsScenario(BaseModel):\n    base_url: str = \"https://clinicaltrials.gov/api/v2\"\n    default_page_size: int = Field(default=10, ge=1, le=1000)\n    cached_studies: Dict[str, Any] = Field(default_factory=dict)\n\nScenario_Schema = [StudySummary, ClinicalTrialsScenario]\n\n# Section 2: Class\nclass ClinicalTrialsAPI:\n    def __init__(self):\n        self.base_url: str = \"\"\n        self.default_page_size: int = 10\n        self.cached_studies: Dict[str, Any] = {}\n\n    def load_scenario(self, scenario: dict) -> None:\n        model = ClinicalTrialsScenario(**scenario)\n        self.base_url = model.base_url\n        self.default_page_size = model.default_page_size\n        self.cached_studies = model.cached_studies\n\n    def save_scenario(self) -> dict:\n        return {\n            \"base_url\": self.base_url,\n            \"default_page_size\": self.default_page_size,\n            \"cached_studies\": self.cached_studies,\n        }\n\n    def _extract_study_summary(self, study: dict) -> dict:\n        proto = study.get(\"protocolSection\", {})\n        id_mod = proto.get(\"identificationModule\", {})\n        status_mod = proto.get(\"statusModule\", {})\n        cond_mod = proto.get(\"conditionsModule\", {})\n        design_mod = proto.get(\"designModule\", {})\n        arms_mod = proto.get(\"armsInterventionsModule\", {})\n        interventions = [i.get(\"name\", \"\") for i in arms_mod.get(\"interventions\", [])]\n        return {\n            \"nctId\": id_mod.get(\"nctId\", \"\"),\n            \"briefTitle\": id_mod.get(\"briefTitle\", \"\"),\n            \"overallStatus\": status_mod.get(\"overallStatus\", \"\"),\n            \"conditions\": cond_mod.get(\"conditions\", []),\n            \"interventions\": interventions,\n            \"phases\": design_mod.get(\"phases\", []),\n        }\n\n    def list_studies(self, query: Optional[dict], page_size: int, page_token: Optional[str]) -> dict:\n        params = {\"format\": \"json\", \"pageSize\": page_size}\n        if query:\n            if \"term\" in query:\n                params[\"query.term\"] = query[\"term\"]\n            for k, v in query.items():\n                if k != \"term\":\n                    params[f\"query.{k}\"] = v\n        if page_token:\n            params[\"pageToken\"] = page_token\n        resp = httpx.get(f\"{self.base_url}/studies\", params=params, timeout=30)\n        resp.raise_for_status()\n        data = resp.json()\n        studies = [self._extract_study_summary(s) for s in data.get(\"studies\", [])]\n        result = {\"studies\": studies, \"totalCount\": data.get(\"totalCount\", 0)}\n        if \"nextPageToken\" in data:\n            result[\"nextPageToken\"] = data[\"nextPageToken\"]\n        return result\n\n    def get_study(self, nct_ids: str) -> dict:\n        ids = [i.strip() for i in nct_ids.split(\",\")]\n        studies = []\n        for nct_id in ids:\n            resp = httpx.get(f\"{self.base_url}/studies/{nct_id}\", params={\"format\": \"json\"}, timeout=30)\n            resp.raise_for_status()\n            data = resp.json()\n            proto = data.get(\"protocolSection\", {})\n            id_mod = proto.get(\"identificationModule\", {})\n            record = {\n                \"nctId\": id_mod.get(\"nctId\", nct_id),\n                \"protocolSection\": proto,\n                \"resultsSection\": data.get(\"resultsSection\", {}),\n                \"derivedSection\": data.get(\"derivedSection\", {}),\n            }\n            self.cached_studies[nct_id] = record\n            studies.append(record)\n        return {\"studies\": studies}\n\n    def search_studies(self, condition: Optional[str], intervention: Optional[str],\n                       location: Optional[str], status: Optional[str], page_size: int) -> dict:\n        params = {\"format\": \"json\", \"pageSize\": page_size}\n        if condition:\n            params[\"query.cond\"] = condition\n        if intervention:\n            params[\"query.intr\"] = intervention\n        if location:\n            params[\"query.locn\"] = location\n        if status:\n            params[\"filter.overallStatus\"] = status.upper()\n        resp = httpx.get(f\"{self.base_url}/studies\", params=params, timeout=30)\n        resp.raise_for_status()\n        data = resp.json()\n        studies = [self._extract_study_summary(s) for s in data.get(\"studies\", [])]\n        return {\"studies\": studies, \"totalCount\": data.get(\"totalCount\", 0)}\n\n    def get_results(self, nct_id: str) -> dict:\n        resp = httpx.get(f\"{self.base_url}/studies/{nct_id}\", params={\"format\": \"json\"}, timeout=30)\n        resp.raise_for_status()\n        data = resp.json()\n        results = data.get(\"resultsSection\", {})\n        return {\n            \"nctId\": nct_id,\n            \"outcomeMeasures\": results.get(\"outcomeMeasuresModule\", {}).get(\"outcomeMeasures\", []),\n            \"adverseEvents\": results.get(\"adverseEventsModule\", {}).get(\"adverseEvents\", []),\n            \"participantFlow\": results.get(\"participantFlowModule\", {}),\n        }\n\n    def analyze_trends(self, query: dict, group_by: str) -> dict:\n        params = {\"format\": \"json\", \"pageSize\": 1000}\n        if \"term\" in query:\n            params[\"query.term\"] = query[\"term\"]\n        for k, v in query.items():\n            if k != \"term\":\n                params[f\"query.{k}\"] = v\n        all_studies = []\n        page_token = None\n        while True:\n            if page_token:\n                params[\"pageToken\"] = page_token\n            resp = httpx.get(f\"{self.base_url}/studies\", params=params, timeout=30)\n            resp.raise_for_status()\n            data = resp.json()\n            all_studies.extend(data.get(\"studies\", []))\n            page_token = data.get(\"nextPageToken\")\n            if not page_token:\n                break\n        counts: Dict[str, int] = {}\n        for study in all_studies:\n            proto = study.get(\"protocolSection\", {})\n            if group_by == \"phase\":\n                keys = proto.get(\"designModule\", {}).get(\"phases\", [\"N/A\"])\n            elif group_by == \"status\":\n                keys = [proto.get(\"statusModule\", {}).get(\"overallStatus\", \"N/A\")]\n            elif group_by == \"condition\":\n                keys = proto.get(\"conditionsModule\", {}).get(\"conditions\", [\"N/A\"])\n            elif group_by == \"sponsor\":\n                keys = [proto.get(\"sponsorCollaboratorsModule\", {}).get(\"leadSponsor\", {}).get(\"name\", \"N/A\")]\n            else:\n                keys = [\"N/A\"]\n            for key in keys:\n                counts[key] = counts.get(key, 0) + 1\n        buckets = [{\"key\": k, \"count\": v} for k, v in sorted(counts.items(), key=lambda x: -x[1])]\n        return {\"group_by\": group_by, \"buckets\": buckets, \"totalCount\": len(all_studies)}\n\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"ClinicalTrialsGov\")\napi = ClinicalTrialsAPI()\napi.load_scenario({})\n\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the ClinicalTrials API.\n\n    Args:\n        scenario: Scenario dictionary matching ClinicalTrialsScenario schema.\n\n    Returns:\n        success_message: Confirmation message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current state as scenario dictionary.\n\n    Returns:\n        scenario: Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef clinicaltrials_list_studies(\n    query: Optional[dict] = None,\n    pageSize: Optional[int] = None,\n    pageToken: Optional[str] = None,\n) -> dict:\n    \"\"\"\n    Search and paginate through clinical studies using flexible query objects.\n\n    Args:\n        query: Query object (e.g., {\"term\": \"diabetes\"}) defining search filters.\n        pageSize: Maximum number of studies to return (1-1000).\n        pageToken: Pagination token from a previous call.\n\n    Returns:\n        studies: List of matching studies with brief metadata.\n        nextPageToken: Token for the next page (absent when no more pages).\n        totalCount: Total number of matching studies across all pages.\n    \"\"\"\n    try:\n        size = pageSize if pageSize is not None else api.default_page_size\n        return api.list_studies(query, size, pageToken)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef clinicaltrials_get_study(nctIds: str) -> dict:\n    \"\"\"\n    Retrieve full protocol, results, and derived sections for one or more studies by NCT ID.\n\n    Args:\n        nctIds: Comma-separated list of ClinicalTrials.gov NCT IDs to fetch.\n\n    Returns:\n        studies: Detailed study records for each requested NCT ID, each containing\n            nctId, protocolSection, resultsSection, derivedSection.\n    \"\"\"\n    try:\n        if not nctIds or not isinstance(nctIds, str):\n            raise ValueError(\"nctIds must be a non-empty string\")\n        return api.get_study(nctIds)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef clinicaltrials_search_studies(\n    condition: Optional[str] = None,\n    intervention: Optional[str] = None,\n    location: Optional[str] = None,\n    status: Optional[str] = None,\n    pageSize: Optional[int] = None,\n) -> dict:\n    \"\"\"\n    Quickly find studies using high-level filters for condition, intervention, location, and status.\n\n    Args:\n        condition: Disease or medical condition being studied.\n        intervention: Drug, device, procedure, or behavioral intervention.\n        location: Geographic location where recruitment occurs.\n        status: Study recruitment or review status (e.g., recruiting, completed).\n        pageSize: Maximum number of studies to return (1-1000).\n\n    Returns:\n        studies: Array of study summaries matching the provided filters.\n        totalCount: Total number of matching studies across all pages.\n    \"\"\"\n    try:\n        size = pageSize if pageSize is not None else api.default_page_size\n        return api.search_studies(condition, intervention, location, status, size)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef clinicaltrials_get_results(nctId: str) -> dict:\n    \"\"\"\n    Obtain reported results, outcome measures, adverse events, and participant flow for a study.\n\n    Args:\n        nctId: The unique ClinicalTrials.gov identifier (NCT ID) whose results are requested.\n\n    Returns:\n        nctId: The NCT ID of the study.\n        outcomeMeasures: Primary and secondary outcome measures with analyzed data.\n        adverseEvents: Adverse events reported by arm and severity.\n        participantFlow: Participant progression numbers through trial phases.\n    \"\"\"\n    try:\n        if not nctId or not isinstance(nctId, str):\n            raise ValueError(\"nctId must be a non-empty string\")\n        return api.get_results(nctId)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef clinicaltrials_analyze_trends(query: dict, group_by: Optional[str] = None) -> dict:\n    \"\"\"\n    Aggregate statistics on groups of trials by a chosen attribute.\n\n    Args:\n        query: Query object used to select the cohort of studies to analyze.\n        group_by: Attribute to group studies by: \"phase\", \"status\", \"condition\", or \"sponsor\".\n\n    Returns:\n        group_by: The attribute used for grouping.\n        buckets: Each bucket has key and count.\n        totalCount: Total number of studies included in the analysis.\n    \"\"\"\n    try:\n        if not isinstance(query, dict):\n            raise ValueError(\"query must be a dictionary\")\n        gb = group_by if group_by else \"status\"\n        return api.analyze_trends(query, gb)\n    except Exception as e:\n        raise e\n\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n```\n",
+      "timestamp": "2026-04-17T09:45:40.798903",
+      "revision_number": 2
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Minimal scenario with default settings and no cached studies",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "base_url": "https://clinicaltrials.gov/api/v2",
+        "default_page_size": 10,
+        "cached_studies": {}
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Scenario with a few cached studies covering different statuses and conditions",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "base_url": "https://clinicaltrials.gov/api/v2",
+        "default_page_size": 20,
+        "cached_studies": {
+          "NCT04321234": {
+            "nctId": "NCT04321234",
+            "briefTitle": "Study of Drug A in Type 2 Diabetes",
+            "overallStatus": "RECRUITING",
+            "conditions": [
+              "Type 2 Diabetes"
+            ],
+            "interventions": [
+              "Drug A"
+            ],
+            "phases": [
+              "PHASE2"
+            ]
+          },
+          "NCT04567890": {
+            "nctId": "NCT04567890",
+            "briefTitle": "Immunotherapy for Non-Small Cell Lung Cancer",
+            "overallStatus": "COMPLETED",
+            "conditions": [
+              "Non-Small Cell Lung Cancer"
+            ],
+            "interventions": [
+              "Pembrolizumab"
+            ],
+            "phases": [
+              "PHASE3"
+            ]
+          },
+          "NCT04112233": {
+            "nctId": "NCT04112233",
+            "briefTitle": "Observational Study of Hypertension Management",
+            "overallStatus": "ACTIVE_NOT_RECRUITING",
+            "conditions": [
+              "Hypertension"
+            ],
+            "interventions": [],
+            "phases": []
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Rich cache with diverse studies across multiple phases, conditions, and statuses",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "base_url": "https://clinicaltrials.gov/api/v2",
+        "default_page_size": 50,
+        "cached_studies": {
+          "NCT05001111": {
+            "nctId": "NCT05001111",
+            "briefTitle": "Phase 1 Safety Study of Gene Therapy in Rare Disease",
+            "overallStatus": "RECRUITING",
+            "conditions": [
+              "Spinal Muscular Atrophy"
+            ],
+            "interventions": [
+              "Gene Therapy Vector AAV9"
+            ],
+            "phases": [
+              "PHASE1"
+            ]
+          },
+          "NCT05002222": {
+            "nctId": "NCT05002222",
+            "briefTitle": "Combination Chemotherapy for Acute Myeloid Leukemia",
+            "overallStatus": "COMPLETED",
+            "conditions": [
+              "Acute Myeloid Leukemia"
+            ],
+            "interventions": [
+              "Cytarabine",
+              "Daunorubicin"
+            ],
+            "phases": [
+              "PHASE2",
+              "PHASE3"
+            ]
+          },
+          "NCT05003333": {
+            "nctId": "NCT05003333",
+            "briefTitle": "Vaccine Efficacy Trial for Respiratory Syncytial Virus",
+            "overallStatus": "ENROLLING_BY_INVITATION",
+            "conditions": [
+              "Respiratory Syncytial Virus Infection"
+            ],
+            "interventions": [
+              "RSV Vaccine mRNA-1345"
+            ],
+            "phases": [
+              "PHASE3"
+            ]
+          },
+          "NCT05004444": {
+            "nctId": "NCT05004444",
+            "briefTitle": "Behavioral Intervention for Major Depressive Disorder",
+            "overallStatus": "SUSPENDED",
+            "conditions": [
+              "Major Depressive Disorder"
+            ],
+            "interventions": [
+              "Cognitive Behavioral Therapy"
+            ],
+            "phases": [
+              "PHASE2"
+            ]
+          },
+          "NCT05005555": {
+            "nctId": "NCT05005555",
+            "briefTitle": "CAR-T Cell Therapy in Relapsed Multiple Myeloma",
+            "overallStatus": "RECRUITING",
+            "conditions": [
+              "Multiple Myeloma"
+            ],
+            "interventions": [
+              "BCMA-targeted CAR-T"
+            ],
+            "phases": [
+              "PHASE1",
+              "PHASE2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Invalid page size exceeding maximum allowed value of 1000",
+      "expected_behavior": "validation_error",
+      "scenario_data": {
+        "base_url": "https://clinicaltrials.gov/api/v2",
+        "default_page_size": 9999,
+        "cached_studies": {}
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 0,
+      "failed_scenarios": 4,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014412921232516BfJkjQ0M)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014412921232516BfJkjQ0M)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014412935186634VZsXEbla)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014412935186634VZsXEbla)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 2026041701441291166988108iNZ0Hx)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 2026041701441291166988108iNZ0Hx)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014413375972786byPKbPNf)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014413375972786byPKbPNf)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 0,
+      "failed_scenarios": 4,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 202604170145402471370980X3z26fE)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 202604170145402471370980X3z26fE)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014540218164418SL6r6p2O)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014540218164418SL6r6p2O)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 2026041701454022292678146U6ao9D)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 2026041701454022292678146U6ao9D)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014540651853372VzjyXiM8)\"},\"type\":\"error\"}\n",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014540651853372VzjyXiM8)\"},\"type\":\"error\"}\n"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_001",
+        "scenario_002",
+        "scenario_003",
+        "scenario_004"
+      ],
+      "aggregated_errors": {
+        "total_failed": 4,
+        "scenario_ids": [
+          "scenario_001",
+          "scenario_002",
+          "scenario_003",
+          "scenario_004"
+        ],
+        "error_categories": {
+          "critical": [],
+          "high": [],
+          "medium": [],
+          "low": [
+            {
+              "scenario_id": "scenario_001",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014412921232516BfJkjQ0M)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014412921232516BfJkjQ0M)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_002",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014412935186634VZsXEbla)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014412935186634VZsXEbla)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 2026041701441291166988108iNZ0Hx)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 2026041701441291166988108iNZ0Hx)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_004",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014413375972786byPKbPNf)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014413375972786byPKbPNf)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            }
+          ]
+        },
+        "error_patterns": [
+          {
+            "type": "Validation Error",
+            "location": "validate_scenario",
+            "count": 4,
+            "scenario_ids": [
+              "scenario_001",
+              "scenario_002",
+              "scenario_003",
+              "scenario_004"
+            ]
+          }
+        ],
+        "severity_summary": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 4
+        }
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 0,
+        "failed_scenarios": 4,
+        "all_passed": false,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 202604170144573078985125oPdyknd)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 202604170144573078985125oPdyknd)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "simple",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014457317874426IpueGzVL)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014457317874426IpueGzVL)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "medium",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014457307897150p6CBEsDQ)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014457307897150p6CBEsDQ)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "complex",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014457837882550221d1wKf)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014457837882550221d1wKf)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "boundary",
+            "execution_time": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "revision_number": 2,
+      "failed_scenario_ids": [
+        "scenario_001",
+        "scenario_002",
+        "scenario_003",
+        "scenario_004"
+      ],
+      "aggregated_errors": {
+        "total_failed": 4,
+        "scenario_ids": [
+          "scenario_001",
+          "scenario_002",
+          "scenario_003",
+          "scenario_004"
+        ],
+        "error_categories": {
+          "critical": [],
+          "high": [],
+          "medium": [],
+          "low": [
+            {
+              "scenario_id": "scenario_001",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 202604170144573078985125oPdyknd)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 202604170144573078985125oPdyknd)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_002",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014457317874426IpueGzVL)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014457317874426IpueGzVL)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014457307897150p6CBEsDQ)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014457307897150p6CBEsDQ)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_004",
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014457837882550221d1wKf)\"},\"type\":\"error\"}\n",
+              "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014457837882550221d1wKf)\"},\"type\":\"error\"}\n",
+              "expected_error": false
+            }
+          ]
+        },
+        "error_patterns": [
+          {
+            "type": "Validation Error",
+            "location": "validate_scenario",
+            "count": 4,
+            "scenario_ids": [
+              "scenario_001",
+              "scenario_002",
+              "scenario_003",
+              "scenario_004"
+            ]
+          }
+        ],
+        "severity_summary": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 4
+        }
+      },
+      "revised_code_version": 2,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 0,
+        "failed_scenarios": 4,
+        "all_passed": false,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 202604170145402471370980X3z26fE)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 202604170145402471370980X3z26fE)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "simple",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014540218164418SL6r6p2O)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014540218164418SL6r6p2O)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "medium",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 2026041701454022292678146U6ao9D)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 2026041701454022292678146U6ao9D)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "complex",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014540651853372VzjyXiM8)\"},\"type\":\"error\"}\n",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.BadRequestError: AnthropicException - {\"error\":{\"type\":\"\\u003cnil\\u003e\",\"message\":\"***.***.***.description: Extra inputs are not permitted (request id: 20260417014540651853372VzjyXiM8)\"},\"type\":\"error\"}\n"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "boundary",
+            "execution_time": 0.0
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 2,
+    "total_time": 0.0,
+    "success": false,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/ClinicalTrialsGov.py"
+  }
+}

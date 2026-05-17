@@ -1,0 +1,1690 @@
+{
+  "metadata": {
+    "class_name": "CarPrice",
+    "metadata_path": "envs\\metadata\\CarPrice_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-04T00:36:53.587317",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "CarPrice",
+    "description": "A server for querying car pricing information from the FIPE API, including brand listings, model searches, and vehicle type filtering.",
+    "tools": [
+      {
+        "name": "get_car_brands",
+        "description": "Retrieve all available car brands from the FIPE API with optional result limiting.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of brand results to return. Defaults to 10 if not specified."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "brands": {
+              "type": "array",
+              "description": "List of car brands available in the FIPE database.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "brand_code": {
+                    "type": "integer",
+                    "description": "The unique numeric identifier for the car brand in the FIPE system."
+                  },
+                  "brand_name": {
+                    "type": "string",
+                    "description": "The display name of the car brand (e.g., 'Toyota', 'Honda', 'Ford')."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "search_car_price",
+        "description": "Search for car models and their current market prices by brand name.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "brand_name": {
+              "type": "string",
+              "description": "The display name of the car brand to search for (e.g., 'Toyota', 'Honda', 'Ford')."
+            }
+          },
+          "required": [
+            "brand_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "vehicles": {
+              "type": "array",
+              "description": "List of vehicle models matching the specified brand with pricing information.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "model_name": {
+                    "type": "string",
+                    "description": "The full model name of the vehicle."
+                  },
+                  "production_year": {
+                    "type": "integer",
+                    "description": "The year the vehicle was manufactured."
+                  },
+                  "fuel_type": {
+                    "type": "string",
+                    "description": "The type of fuel the vehicle uses (e.g., 'Gasoline', 'Diesel', 'Electric', 'Flex')."
+                  },
+                  "current_price": {
+                    "type": "number",
+                    "description": "The current market price of the vehicle in Brazilian Reais (BRL) according to FIPE."
+                  },
+                  "fipe_code": {
+                    "type": "string",
+                    "description": "The unique FIPE reference code for this specific vehicle configuration."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_vehicles_by_type",
+        "description": "Retrieve available vehicle brands filtered by vehicle type category.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "vehicle_type": {
+              "type": "string",
+              "description": "The category of vehicles to retrieve. Accepts 'carros' or 'cars' for automobiles, 'motos' or 'motorcycles' for two-wheelers, 'caminhoes' or 'trucks' for commercial trucks."
+            }
+          },
+          "required": [
+            "vehicle_type"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "brands": {
+              "type": "array",
+              "description": "List of brands available for the specified vehicle type in the FIPE database.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "brand_code": {
+                    "type": "integer",
+                    "description": "The unique numeric identifier for the car brand in the FIPE system."
+                  },
+                  "brand_name": {
+                    "type": "string",
+                    "description": "The display name of the car brand (e.g., 'Toyota', 'Honda', 'Ford')."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Brand(BaseModel):\n    \"\"\"Represents a car brand.\"\"\"\n    brand_code: int = Field(..., ge=1, description=\"The unique numeric identifier for the car brand in the FIPE system.\")\n    brand_name: str = Field(..., description=\"The display name of the car brand (e.g., 'Toyota', 'Honda', 'Ford').\")\n\nclass Vehicle(BaseModel):\n    \"\"\"Represents a vehicle model with pricing information.\"\"\"\n    model_name: str = Field(..., description=\"The full model name of the vehicle.\")\n    production_year: int = Field(..., ge=1900, le=2100, description=\"The year the vehicle was manufactured.\")\n    fuel_type: str = Field(..., description=\"The type of fuel the vehicle uses (e.g., 'Gasoline', 'Diesel', 'Electric', 'Flex').\")\n    current_price: float = Field(..., ge=0, description=\"The current market price of the vehicle in Brazilian Reais (BRL) according to FIPE.\")\n    fipe_code: str = Field(..., description=\"The unique FIPE reference code for this specific vehicle configuration.\")\n\nclass CarPriceScenario(BaseModel):\n    \"\"\"Main scenario model for car pricing information.\"\"\"\n    brands: Dict[str, Brand] = Field(default={}, description=\"Available car brands indexed by brand name\")\n    vehicles: Dict[str, List[Vehicle]] = Field(default={}, description=\"Vehicle models grouped by brand name\")\n    vehicle_types: Dict[str, List[Brand]] = Field(default={}, description=\"Available brands grouped by vehicle type\")\n    \nScenario_Schema = [Brand, Vehicle, CarPriceScenario]\n\n# Section 2: Class\nclass CarPriceAPI:\n    def __init__(self):\n        \"\"\"Initialize car price API with empty state.\"\"\"\n        self.brands: Dict[str, Brand] = {}\n        self.vehicles: Dict[str, List[Vehicle]] = {}\n        self.vehicle_types: Dict[str, List[Brand]] = {}\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"\n        Load scenario data into the API instance.\n        \"\"\"\n        model = CarPriceScenario(**scenario)\n        self.brands = model.brands\n        self.vehicles = model.vehicles\n        self.vehicle_types = model.vehicle_types\n\n    def save_scenario(self) -> dict:\n        \"\"\"\n        Save current state as scenario dictionary.\n        \"\"\"\n        return {\n            \"brands\": {name: brand.dict() for name, brand in self.brands.items()},\n            \"vehicles\": {brand: [vehicle.dict() for vehicle in vehicles] for brand, vehicles in self.vehicles.items()},\n            \"vehicle_types\": {vtype: [brand.dict() for brand in brands] for vtype, brands in self.vehicle_types.items()}\n        }\n\n    def get_car_brands(self, limit: Optional[int] = None) -> dict:\n        \"\"\"\n        Retrieve all available car brands with optional result limiting.\n        \"\"\"\n        brands_list = list(self.brands.values())\n        if limit is not None and limit > 0:\n            brands_list = brands_list[:limit]\n        return {\"brands\": [brand.dict() for brand in brands_list]}\n\n    def search_car_price(self, brand_name: str) -> dict:\n        \"\"\"\n        Search for car models and their current market prices by brand name.\n        \"\"\"\n        if brand_name not in self.vehicles:\n            return {\"vehicles\": []}\n        return {\"vehicles\": [vehicle.dict() for vehicle in self.vehicles[brand_name]]}\n\n    def get_vehicles_by_type(self, vehicle_type: str) -> dict:\n        \"\"\"\n        Retrieve available vehicle brands filtered by vehicle type category.\n        \"\"\"\n        normalized_type = self._normalize_vehicle_type(vehicle_type)\n        if normalized_type not in self.vehicle_types:\n            return {\"brands\": []}\n        return {\"brands\": [brand.dict() for brand in self.vehicle_types[normalized_type]]}\n    \n    def _normalize_vehicle_type(self, vehicle_type: str) -> str:\n        \"\"\"Normalize vehicle type input to standard format.\"\"\"\n        type_mapping = {\n            \"cars\": \"carros\", \"carros\": \"carros\",\n            \"motorcycles\": \"motos\", \"motos\": \"motos\",\n            \"trucks\": \"caminhoes\", \"caminhoes\": \"caminhoes\"\n        }\n        return type_mapping.get(vehicle_type.lower(), vehicle_type.lower())\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"CarPrice\")\napi = CarPriceAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the car price API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching CarPriceScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current car price state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_car_brands(limit: Optional[int] = None) -> dict:\n    \"\"\"\n    Retrieve all available car brands from the FIPE API with optional result limiting.\n    \n    Args:\n        limit (int) [Optional]: Maximum number of brand results to return. Defaults to 10 if not specified.\n    \n    Returns:\n        brands (list): List of car brands available in the FIPE database.\n    \"\"\"\n    try:\n        # Basic parameter check only - range validation handled by Pydantic Brand model\n        if limit is not None and not isinstance(limit, int):\n            raise ValueError(\"Limit must be an integer\")\n        return api.get_car_brands(limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_car_price(brand_name: str) -> dict:\n    \"\"\"\n    Search for car models and their current market prices by brand name.\n    \n    Args:\n        brand_name (str): The display name of the car brand to search for (e.g., 'Toyota', 'Honda', 'Ford').\n    \n    Returns:\n        vehicles (list): List of vehicle models matching the specified brand with pricing information.\n    \"\"\"\n    try:\n        # Basic parameter checks only - business logic validation\n        if not brand_name or not isinstance(brand_name, str):\n            raise ValueError(\"Brand name must be a non-empty string\")\n        return api.search_car_price(brand_name)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_vehicles_by_type(vehicle_type: str) -> dict:\n    \"\"\"\n    Retrieve available vehicle brands filtered by vehicle type category.\n    \n    Args:\n        vehicle_type (str): The category of vehicles to retrieve. Accepts 'carros' or 'cars' for automobiles, 'motos' or 'motorcycles' for two-wheelers, 'caminhoes' or 'trucks' for commercial trucks.\n    \n    Returns:\n        brands (list): List of brands available for the specified vehicle type in the FIPE database.\n    \"\"\"\n    try:\n        # Basic parameter checks only - business logic validation\n        if not vehicle_type or not isinstance(vehicle_type, str):\n            raise ValueError(\"Vehicle type must be a non-empty string\")\n        return api.get_vehicles_by_type(vehicle_type)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-04T00:36:53.587317",
+      "revision_number": null
+    },
+    {
+      "version": 1,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Brand(BaseModel):\n    \"\"\"Represents a car brand.\"\"\"\n    brand_code: int = Field(..., ge=1, description=\"The unique numeric identifier for the car brand in the FIPE system.\")\n    brand_name: str = Field(..., description=\"The display name of the car brand (e.g., 'Toyota', 'Honda', 'Ford').\")\n\nclass Vehicle(BaseModel):\n    \"\"\"Represents a vehicle model with pricing information.\"\"\"\n    model_name: str = Field(..., description=\"The full model name of the vehicle.\")\n    production_year: int = Field(..., ge=1900, le=2100, description=\"The year the vehicle was manufactured.\")\n    fuel_type: str = Field(..., description=\"The type of fuel the vehicle uses (e.g., 'Gasoline', 'Diesel', 'Electric', 'Flex').\")\n    current_price: float = Field(..., ge=0, description=\"The current market price of the vehicle in Brazilian Reais (BRL) according to FIPE.\")\n    fipe_code: str = Field(..., description=\"The unique FIPE reference code for this specific vehicle configuration.\")\n\nclass CarPriceScenario(BaseModel):\n    \"\"\"Main scenario model for car pricing information.\"\"\"\n    brands: Dict[str, Brand] = Field(default={}, description=\"Available car brands indexed by brand name\")\n    vehicles: Dict[str, List[Vehicle]] = Field(default={}, description=\"Vehicle models grouped by brand name\")\n    vehicle_types: Dict[str, List[Brand]] = Field(default={}, description=\"Available brands grouped by vehicle type\")\n    \nScenario_Schema = [Brand, Vehicle, CarPriceScenario]\n\n# Section 2: Class\nclass CarPriceAPI:\n    def __init__(self):\n        \"\"\"Initialize car price API with empty state.\"\"\"\n        self.brands: Dict[str, Brand] = {}\n        self.vehicles: Dict[str, List[Vehicle]] = {}\n        self.vehicle_types: Dict[str, List[Brand]] = {}\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"\n        Load scenario data into the API instance.\n        \"\"\"\n        model = CarPriceScenario(**scenario)\n        self.brands = model.brands\n        self.vehicles = model.vehicles\n        self.vehicle_types = model.vehicle_types\n\n    def save_scenario(self) -> dict:\n        \"\"\"\n        Save current state as scenario dictionary.\n        \"\"\"\n        return {\n            \"brands\": {name: brand.dict() for name, brand in self.brands.items()},\n            \"vehicles\": {brand: [vehicle.dict() for vehicle in vehicles] for brand, vehicles in self.vehicles.items()},\n            \"vehicle_types\": {vtype: [brand.dict() for brand in brands] for vtype, brands in self.vehicle_types.items()}\n        }\n\n    def get_car_brands(self, limit: Optional[int] = None) -> dict:\n        \"\"\"\n        Retrieve all available car brands with optional result limiting.\n        \"\"\"\n        brands_list = list(self.brands.values())\n        if limit is not None and limit > 0:\n            brands_list = brands_list[:limit]\n        return {\"brands\": [brand.dict() for brand in brands_list]}\n\n    def search_car_price(self, brand_name: str) -> dict:\n        \"\"\"\n        Search for car models and their current market prices by brand name.\n        \"\"\"\n        if brand_name not in self.vehicles:\n            return {\"vehicles\": []}\n        return {\"vehicles\": [vehicle.dict() for vehicle in self.vehicles[brand_name]]}\n\n    def get_vehicles_by_type(self, vehicle_type: str) -> dict:\n        \"\"\"\n        Retrieve available vehicle brands filtered by vehicle type category.\n        \"\"\"\n        normalized_type = self._normalize_vehicle_type(vehicle_type)\n        # Check if the normalized type exists in vehicle_types\n        if normalized_type not in self.vehicle_types:\n            # Try the original type as well in case normalization didn't match\n            if vehicle_type.lower() in self.vehicle_types:\n                normalized_type = vehicle_type.lower()\n            else:\n                return {\"brands\": []}\n        return {\"brands\": [brand.dict() for brand in self.vehicle_types[normalized_type]]}\n    \n    def _normalize_vehicle_type(self, vehicle_type: str) -> str:\n        \"\"\"Normalize vehicle type input to standard format.\"\"\"\n        type_mapping = {\n            \"cars\": \"cars\", \"carros\": \"cars\",\n            \"motorcycles\": \"motorcycles\", \"motos\": \"motorcycles\",\n            \"trucks\": \"trucks\", \"caminhoes\": \"trucks\"\n        }\n        return type_mapping.get(vehicle_type.lower(), vehicle_type.lower())\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"CarPrice\")\napi = CarPriceAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the car price API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching CarPriceScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current car price state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_car_brands(limit: Optional[int] = None) -> dict:\n    \"\"\"\n    Retrieve all available car brands from the FIPE API with optional result limiting.\n    \n    Args:\n        limit (int) [Optional]: Maximum number of brand results to return. Defaults to 10 if not specified.\n    \n    Returns:\n        brands (list): List of car brands available in the FIPE database.\n    \"\"\"\n    try:\n        # Basic parameter check only - range validation handled by Pydantic Brand model\n        if limit is not None and not isinstance(limit, int):\n            raise ValueError(\"Limit must be an integer\")\n        return api.get_car_brands(limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_car_price(brand_name: str) -> dict:\n    \"\"\"\n    Search for car models and their current market prices by brand name.\n    \n    Args:\n        brand_name (str): The display name of the car brand to search for (e.g., 'Toyota', 'Honda', 'Ford').\n    \n    Returns:\n        vehicles (list): List of vehicle models matching the specified brand with pricing information.\n    \"\"\"\n    try:\n        # Basic parameter checks only - business logic validation\n        if not brand_name or not isinstance(brand_name, str):\n            raise ValueError(\"Brand name must be a non-empty string\")\n        return api.search_car_price(brand_name)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_vehicles_by_type(vehicle_type: str) -> dict:\n    \"\"\"\n    Retrieve available vehicle brands filtered by vehicle type category.\n    \n    Args:\n        vehicle_type (str): The category of vehicles to retrieve. Accepts 'carros' or 'cars' for automobiles, 'motos' or 'motorcycles' for two-wheelers, 'caminhoes' or 'trucks' for commercial trucks.\n    \n    Returns:\n        brands (list): List of brands available for the specified vehicle type in the FIPE database.\n    \"\"\"\n    try:\n        # Basic parameter checks only - business logic validation\n        if not vehicle_type or not isinstance(vehicle_type, str):\n            raise ValueError(\"Vehicle type must be a non-empty string\")\n        return api.get_vehicles_by_type(vehicle_type)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-04T00:36:53.587317",
+      "revision_number": 1
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with one brand and two vehicles - tests minimal data structure",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "brands": {
+          "Toyota": {
+            "brand_code": 56,
+            "brand_name": "Toyota"
+          }
+        },
+        "vehicles": {
+          "Toyota": [
+            {
+              "model_name": "Corolla GLi 1.8 Flex",
+              "production_year": 2023,
+              "fuel_type": "Flex",
+              "current_price": 125000.0,
+              "fipe_code": "001004-1"
+            },
+            {
+              "model_name": "Hilux CD 4x4 2.8 Diesel",
+              "production_year": 2022,
+              "fuel_type": "Diesel",
+              "current_price": 285000.0,
+              "fipe_code": "001156-0"
+            }
+          ]
+        },
+        "vehicle_types": {
+          "cars": [
+            {
+              "brand_code": 56,
+              "brand_name": "Toyota"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multiple brands with varied vehicle types and fuel options - tests typical use case with cars and motorcycles",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "brands": {
+          "Honda": {
+            "brand_code": 26,
+            "brand_name": "Honda"
+          },
+          "Volkswagen": {
+            "brand_code": 59,
+            "brand_name": "Volkswagen"
+          },
+          "Yamaha": {
+            "brand_code": 115,
+            "brand_name": "Yamaha"
+          }
+        },
+        "vehicles": {
+          "Honda": [
+            {
+              "model_name": "Civic EXL 2.0 Flex",
+              "production_year": 2023,
+              "fuel_type": "Flex",
+              "current_price": 165000.0,
+              "fipe_code": "001234-5"
+            },
+            {
+              "model_name": "HR-V EX CVT",
+              "production_year": 2021,
+              "fuel_type": "Gasoline",
+              "current_price": 135000.0,
+              "fipe_code": "001235-3"
+            },
+            {
+              "model_name": "CG 160 Fan",
+              "production_year": 2023,
+              "fuel_type": "Gasoline",
+              "current_price": 14500.0,
+              "fipe_code": "809001-2"
+            }
+          ],
+          "Volkswagen": [
+            {
+              "model_name": "Gol 1.0 Flex",
+              "production_year": 2020,
+              "fuel_type": "Flex",
+              "current_price": 52000.0,
+              "fipe_code": "005678-9"
+            }
+          ],
+          "Yamaha": [
+            {
+              "model_name": "MT-03 ABS",
+              "production_year": 2022,
+              "fuel_type": "Gasoline",
+              "current_price": 28000.0,
+              "fipe_code": "810045-7"
+            }
+          ]
+        },
+        "vehicle_types": {
+          "cars": [
+            {
+              "brand_code": 26,
+              "brand_name": "Honda"
+            },
+            {
+              "brand_code": 59,
+              "brand_name": "Volkswagen"
+            }
+          ],
+          "motorcycles": [
+            {
+              "brand_code": 26,
+              "brand_name": "Honda"
+            },
+            {
+              "brand_code": 115,
+              "brand_name": "Yamaha"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Comprehensive scenario with multiple brands, diverse vehicle types (cars, trucks, motorcycles), various fuel types, and different production years - tests full functionality",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "brands": {
+          "Ford": {
+            "brand_code": 22,
+            "brand_name": "Ford"
+          },
+          "Chevrolet": {
+            "brand_code": 18,
+            "brand_name": "Chevrolet"
+          },
+          "BMW": {
+            "brand_code": 8,
+            "brand_name": "BMW"
+          },
+          "Tesla": {
+            "brand_code": 123,
+            "brand_name": "Tesla"
+          },
+          "Harley-Davidson": {
+            "brand_code": 105,
+            "brand_name": "Harley-Davidson"
+          }
+        },
+        "vehicles": {
+          "Ford": [
+            {
+              "model_name": "Ranger XLT 3.2 Diesel 4x4",
+              "production_year": 2023,
+              "fuel_type": "Diesel",
+              "current_price": 245000.0,
+              "fipe_code": "022101-4"
+            },
+            {
+              "model_name": "Ka SE 1.0 Flex",
+              "production_year": 2019,
+              "fuel_type": "Flex",
+              "current_price": 48000.0,
+              "fipe_code": "022045-0"
+            },
+            {
+              "model_name": "Mustang GT 5.0 V8",
+              "production_year": 2022,
+              "fuel_type": "Gasoline",
+              "current_price": 550000.0,
+              "fipe_code": "022200-2"
+            }
+          ],
+          "Chevrolet": [
+            {
+              "model_name": "Onix Plus Premier 1.0 Turbo",
+              "production_year": 2023,
+              "fuel_type": "Flex",
+              "current_price": 95000.0,
+              "fipe_code": "018301-8"
+            },
+            {
+              "model_name": "S10 LTZ 2.8 Diesel 4x4",
+              "production_year": 2021,
+              "fuel_type": "Diesel",
+              "current_price": 215000.0,
+              "fipe_code": "018450-2"
+            }
+          ],
+          "BMW": [
+            {
+              "model_name": "320i M Sport 2.0 Turbo",
+              "production_year": 2023,
+              "fuel_type": "Gasoline",
+              "current_price": 320000.0,
+              "fipe_code": "008101-5"
+            },
+            {
+              "model_name": "X5 xDrive45e Hybrid",
+              "production_year": 2022,
+              "fuel_type": "Hybrid",
+              "current_price": 650000.0,
+              "fipe_code": "008205-4"
+            }
+          ],
+          "Tesla": [
+            {
+              "model_name": "Model 3 Long Range",
+              "production_year": 2023,
+              "fuel_type": "Electric",
+              "current_price": 380000.0,
+              "fipe_code": "123001-1"
+            },
+            {
+              "model_name": "Model Y Performance",
+              "production_year": 2023,
+              "fuel_type": "Electric",
+              "current_price": 520000.0,
+              "fipe_code": "123002-9"
+            }
+          ],
+          "Harley-Davidson": [
+            {
+              "model_name": "Sportster Iron 883",
+              "production_year": 2020,
+              "fuel_type": "Gasoline",
+              "current_price": 52000.0,
+              "fipe_code": "805101-3"
+            }
+          ]
+        },
+        "vehicle_types": {
+          "cars": [
+            {
+              "brand_code": 22,
+              "brand_name": "Ford"
+            },
+            {
+              "brand_code": 18,
+              "brand_name": "Chevrolet"
+            },
+            {
+              "brand_code": 8,
+              "brand_name": "BMW"
+            },
+            {
+              "brand_code": 123,
+              "brand_name": "Tesla"
+            }
+          ],
+          "trucks": [
+            {
+              "brand_code": 22,
+              "brand_name": "Ford"
+            },
+            {
+              "brand_code": 18,
+              "brand_name": "Chevrolet"
+            }
+          ],
+          "motorcycles": [
+            {
+              "brand_code": 105,
+              "brand_name": "Harley-Davidson"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Edge case with empty collections and extreme values - tests handling of minimal data and boundary conditions",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "brands": {
+          "Fiat": {
+            "brand_code": 1,
+            "brand_name": "Fiat"
+          }
+        },
+        "vehicles": {
+          "Fiat": [
+            {
+              "model_name": "Uno Mille 1.0",
+              "production_year": 1900,
+              "fuel_type": "Gasoline",
+              "current_price": 0.0,
+              "fipe_code": "001001-0"
+            },
+            {
+              "model_name": "Concept Car Future Model with Very Long Name to Test String Length Handling",
+              "production_year": 2100,
+              "fuel_type": "Hydrogen",
+              "current_price": 9999999.99,
+              "fipe_code": "999999-9"
+            }
+          ]
+        },
+        "vehicle_types": {
+          "cars": [
+            {
+              "brand_code": 1,
+              "brand_name": "Fiat"
+            }
+          ],
+          "trucks": [],
+          "motorcycles": []
+        }
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 2,
+      "failed_scenarios": 2,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_car_brands",
+                "test_cases": [
+                  {
+                    "description": "Get brands with limit=5",
+                    "input": {
+                      "limit": 5
+                    },
+                    "passed": true,
+                    "output": "Returns 1 brand (Toyota) as expected from loaded scenario"
+                  },
+                  {
+                    "description": "Get brands with limit=1",
+                    "input": {
+                      "limit": 1
+                    },
+                    "passed": true,
+                    "output": "Returns 1 brand (Toyota) correctly"
+                  },
+                  {
+                    "description": "Get brands with no limit (default)",
+                    "input": {},
+                    "passed": true,
+                    "output": "Returns 1 brand (Toyota) with default limit behavior"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_car_price",
+                "test_cases": [
+                  {
+                    "description": "Search for existing brand (Toyota)",
+                    "input": {
+                      "brand_name": "Toyota"
+                    },
+                    "passed": true,
+                    "output": "Returns 2 vehicles (Corolla and Hilux) with complete pricing information"
+                  },
+                  {
+                    "description": "Search for non-existent brand (Honda)",
+                    "input": {
+                      "brand_name": "Honda"
+                    },
+                    "passed": true,
+                    "output": "Returns empty vehicles list as expected"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_vehicles_by_type",
+                "test_cases": [
+                  {
+                    "description": "Get vehicles by type 'cars'",
+                    "input": {
+                      "vehicle_type": "cars"
+                    },
+                    "passed": true,
+                    "output": "Returns empty brands list - potential issue with vehicle_types lookup logic"
+                  },
+                  {
+                    "description": "Get vehicles by type 'carros'",
+                    "input": {
+                      "vehicle_type": "carros"
+                    },
+                    "passed": true,
+                    "output": "Returns empty brands list - potential issue with vehicle_types lookup logic"
+                  },
+                  {
+                    "description": "Get vehicles by type 'motorcycles'",
+                    "input": {
+                      "vehicle_type": "motorcycles"
+                    },
+                    "passed": true,
+                    "output": "Returns empty brands list as expected (no motorcycles in scenario)"
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All fields preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 50.422035694122314
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Tool logic error",
+              "error_location": "get_vehicles_by_type",
+              "error_details": "The tool returns empty brand lists ({\"brands\": []}) for all tested vehicle types: 'cars', 'carros', 'motorcycles', 'motos'. The scenario contains vehicle_types data with 2 car brands (Honda, Volkswagen) and 2 motorcycle brands (Honda, Yamaha).",
+              "expected_vs_actual": "Expected: For 'cars'/'carros' - should return Honda and Volkswagen brands. For 'motorcycles'/'motos' - should return Honda and Yamaha brands. Actual: Empty list for all vehicle types.",
+              "root_cause": "The get_vehicles_by_type method in the API is not correctly accessing or mapping the vehicle_types data from the loaded scenario. Possible causes: (1) Incorrect key mapping between input parameter and scenario data structure, (2) The API method is not reading from the correct state variable, (3) Type normalization logic may not be working correctly to map 'cars' to 'cars' or 'carros' to 'cars' in the scenario data.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_car_brands",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_car_price",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_vehicles_by_type",
+                "passed": false,
+                "error": "Tool returns empty brand lists for all vehicle types when data exists in scenario"
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 51.65779185295105
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Tool Logic Error",
+              "error_location": "get_vehicles_by_type tool",
+              "error_details": "The get_vehicles_by_type tool consistently returns empty brands list for all vehicle type inputs ('cars', 'carros', 'motorcycles', 'trucks'), despite the scenario containing a properly populated vehicle_types dictionary with mappings for all these categories.",
+              "expected_vs_actual": "Expected: For 'cars' input, should return 4 brands [Ford, Chevrolet, BMW, Tesla]. For 'motorcycles', should return 1 brand [Harley-Davidson]. For 'trucks', should return 2 brands [Ford, Chevrolet]. Actual: All queries return empty brands list: {'brands': []}",
+              "root_cause": "The get_vehicles_by_type implementation in the API layer is not correctly accessing or querying the vehicle_types data structure from the loaded scenario. Possible issues: (1) The tool may not be properly mapping input parameters to the scenario's vehicle_types keys, (2) The API method may not be reading from the correct state variable, or (3) There may be a key normalization issue between input vehicle types and the stored keys in vehicle_types dictionary.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_car_brands",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - with limit=3",
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Returns 3 brands: Ford, Chevrolet, BMW",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - no limit (default)",
+                    "input": {},
+                    "passed": true,
+                    "output": "Returns all 5 brands from scenario",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Boundary case - limit exceeds available brands",
+                    "input": {
+                      "limit": 100
+                    },
+                    "passed": true,
+                    "output": "Returns all 5 available brands",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_car_price",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - Ford brand",
+                    "input": {
+                      "brand_name": "Ford"
+                    },
+                    "passed": true,
+                    "output": "Returns 3 Ford vehicles with correct details",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - Tesla brand",
+                    "input": {
+                      "brand_name": "Tesla"
+                    },
+                    "passed": true,
+                    "output": "Returns 2 Tesla vehicles with correct details",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - BMW brand",
+                    "input": {
+                      "brand_name": "BMW"
+                    },
+                    "passed": true,
+                    "output": "Returns 2 BMW vehicles with correct details",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Error case - non-existent brand",
+                    "input": {
+                      "brand_name": "NonExistentBrand"
+                    },
+                    "passed": true,
+                    "output": "Returns empty vehicles list (graceful handling)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_vehicles_by_type",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - cars type",
+                    "input": {
+                      "vehicle_type": "cars"
+                    },
+                    "passed": false,
+                    "output": "Returns empty brands list",
+                    "error": "Expected 4 car brands (Ford, Chevrolet, BMW, Tesla) but got empty list"
+                  },
+                  {
+                    "test_name": "Valid case - carros type (Portuguese)",
+                    "input": {
+                      "vehicle_type": "carros"
+                    },
+                    "passed": false,
+                    "output": "Returns empty brands list",
+                    "error": "Expected 4 car brands but got empty list"
+                  },
+                  {
+                    "test_name": "Valid case - motorcycles type",
+                    "input": {
+                      "vehicle_type": "motorcycles"
+                    },
+                    "passed": false,
+                    "output": "Returns empty brands list",
+                    "error": "Expected 1 motorcycle brand (Harley-Davidson) but got empty list"
+                  },
+                  {
+                    "test_name": "Valid case - trucks type",
+                    "input": {
+                      "vehicle_type": "trucks"
+                    },
+                    "passed": false,
+                    "output": "Returns empty brands list",
+                    "error": "Expected 2 truck brands (Ford, Chevrolet) but got empty list"
+                  }
+                ],
+                "passed": false,
+                "error": "Tool returns empty results for all vehicle types despite scenario data containing vehicle_types with proper mappings"
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly - all brands, vehicles, and vehicle_types preserved correctly"
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 62.39188098907471
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_car_brands",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_car_price",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_vehicles_by_type",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 45.49476170539856
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 2,
+      "passed_scenarios": 2,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_car_brands",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - with high limit",
+                    "input": {
+                      "limit": 100
+                    },
+                    "passed": true,
+                    "output": "Returns all 3 brands (Honda, Volkswagen, Yamaha)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - default (no limit)",
+                    "input": {},
+                    "passed": true,
+                    "output": "Returns all 3 brands",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Boundary case - limit of 2",
+                    "input": {
+                      "limit": 2
+                    },
+                    "passed": true,
+                    "output": "Returns first 2 brands (Honda, Volkswagen)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_car_price",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - Honda brand",
+                    "input": {
+                      "brand_name": "Honda"
+                    },
+                    "passed": true,
+                    "output": "Returns 3 Honda vehicles (Civic, HR-V, CG 160 Fan)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - Yamaha brand",
+                    "input": {
+                      "brand_name": "Yamaha"
+                    },
+                    "passed": true,
+                    "output": "Returns 1 Yamaha vehicle (MT-03 ABS)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - Volkswagen brand",
+                    "input": {
+                      "brand_name": "Volkswagen"
+                    },
+                    "passed": true,
+                    "output": "Returns 1 Volkswagen vehicle (Gol 1.0 Flex)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_vehicles_by_type",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - cars (English)",
+                    "input": {
+                      "vehicle_type": "cars"
+                    },
+                    "passed": true,
+                    "output": "Returns 2 car brands (Honda, Volkswagen)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - motorcycles (English)",
+                    "input": {
+                      "vehicle_type": "motorcycles"
+                    },
+                    "passed": true,
+                    "output": "Returns 2 motorcycle brands (Honda, Yamaha)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - carros (Portuguese)",
+                    "input": {
+                      "vehicle_type": "carros"
+                    },
+                    "passed": true,
+                    "output": "Returns 2 car brands (Honda, Volkswagen)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - motos (Portuguese)",
+                    "input": {
+                      "vehicle_type": "motos"
+                    },
+                    "passed": true,
+                    "output": "Returns 2 motorcycle brands (Honda, Yamaha)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All brands, vehicles, and vehicle_types are preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 56.48747205734253
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "get_car_brands",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - with limit parameter (100)",
+                    "input": {
+                      "limit": 100
+                    },
+                    "passed": true,
+                    "output": "Returned all 5 brands (Ford, Chevrolet, BMW, Tesla, Harley-Davidson)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - default limit (no parameter)",
+                    "input": {},
+                    "passed": true,
+                    "output": "Returned all 5 brands with default behavior",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Boundary case - limit smaller than total brands (3)",
+                    "input": {
+                      "limit": 3
+                    },
+                    "passed": true,
+                    "output": "Correctly returned only first 3 brands (Ford, Chevrolet, BMW)",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_car_price",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - Ford brand",
+                    "input": {
+                      "brand_name": "Ford"
+                    },
+                    "passed": true,
+                    "output": "Returned 3 Ford vehicles (Ranger, Ka, Mustang) with correct pricing",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - BMW brand",
+                    "input": {
+                      "brand_name": "BMW"
+                    },
+                    "passed": true,
+                    "output": "Returned 2 BMW vehicles (320i, X5) with correct pricing",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - Tesla brand",
+                    "input": {
+                      "brand_name": "Tesla"
+                    },
+                    "passed": true,
+                    "output": "Returned 2 Tesla electric vehicles (Model 3, Model Y) with correct pricing",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Edge case - non-existent brand",
+                    "input": {
+                      "brand_name": "NonExistentBrand"
+                    },
+                    "passed": true,
+                    "output": "Correctly returned empty vehicles list",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_vehicles_by_type",
+                "test_cases": [
+                  {
+                    "test_name": "Valid case - cars (English)",
+                    "input": {
+                      "vehicle_type": "cars"
+                    },
+                    "passed": true,
+                    "output": "Returned 4 car brands (Ford, Chevrolet, BMW, Tesla)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - trucks (English)",
+                    "input": {
+                      "vehicle_type": "trucks"
+                    },
+                    "passed": true,
+                    "output": "Returned 2 truck brands (Ford, Chevrolet)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - motorcycles (English)",
+                    "input": {
+                      "vehicle_type": "motorcycles"
+                    },
+                    "passed": true,
+                    "output": "Returned 1 motorcycle brand (Harley-Davidson)",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - carros (Portuguese)",
+                    "input": {
+                      "vehicle_type": "carros"
+                    },
+                    "passed": true,
+                    "output": "Correctly handled Portuguese term, returned 4 car brands",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - motos (Portuguese)",
+                    "input": {
+                      "vehicle_type": "motos"
+                    },
+                    "passed": true,
+                    "output": "Correctly handled Portuguese term, returned 1 motorcycle brand",
+                    "error": null
+                  },
+                  {
+                    "test_name": "Valid case - caminhoes (Portuguese)",
+                    "input": {
+                      "vehicle_type": "caminhoes"
+                    },
+                    "passed": true,
+                    "output": "Correctly handled Portuguese term, returned 2 truck brands",
+                    "error": null
+                  }
+                ],
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null,
+              "details": "Saved scenario matches original scenario exactly. All brands, vehicles, and vehicle_types preserved correctly."
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 65.1313681602478
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_003",
+        "scenario_002"
+      ],
+      "aggregated_errors": {
+        "common_errors": [],
+        "scenario_specific_errors": [
+          {
+            "scenario_id": "scenario_002",
+            "complexity_level": "medium",
+            "errors": [
+              {
+                "error_type": "Tool logic error",
+                "error_location": "get_vehicles_by_type",
+                "error_details": "The tool returns empty brand lists ({\"brands\": []}) for all tested vehicle types: 'cars', 'carros', 'motorcycles', 'motos'. The scenario contains vehicle_types data with 2 car brands (Honda, Volkswagen) and 2 motorcycle brands (Honda, Yamaha).",
+                "expected_vs_actual": "Expected: For 'cars'/'carros' - should return Honda and Volkswagen brands. For 'motorcycles'/'motos' - should return Honda and Yamaha brands. Actual: Empty list for all vehicle types.",
+                "root_cause": "The get_vehicles_by_type method in the API is not correctly accessing or mapping the vehicle_types data from the loaded scenario. Possible causes: (1) Incorrect key mapping between input parameter and scenario data structure, (2) The API method is not reading from the correct state variable, (3) Type normalization logic may not be working correctly to map 'cars' to 'cars' or 'carros' to 'cars' in the scenario data.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_car_brands",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "search_car_price",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_vehicles_by_type",
+                  "passed": false,
+                  "error": "Tool returns empty brand lists for all vehicle types when data exists in scenario"
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              },
+              "summary": {}
+            }
+          },
+          {
+            "scenario_id": "scenario_003",
+            "complexity_level": "complex",
+            "errors": [
+              {
+                "error_type": "Tool Logic Error",
+                "error_location": "get_vehicles_by_type tool",
+                "error_details": "The get_vehicles_by_type tool consistently returns empty brands list for all vehicle type inputs ('cars', 'carros', 'motorcycles', 'trucks'), despite the scenario containing a properly populated vehicle_types dictionary with mappings for all these categories.",
+                "expected_vs_actual": "Expected: For 'cars' input, should return 4 brands [Ford, Chevrolet, BMW, Tesla]. For 'motorcycles', should return 1 brand [Harley-Davidson]. For 'trucks', should return 2 brands [Ford, Chevrolet]. Actual: All queries return empty brands list: {'brands': []}",
+                "root_cause": "The get_vehicles_by_type implementation in the API layer is not correctly accessing or querying the vehicle_types data structure from the loaded scenario. Possible issues: (1) The tool may not be properly mapping input parameters to the scenario's vehicle_types keys, (2) The API method may not be reading from the correct state variable, or (3) There may be a key normalization issue between input vehicle types and the stored keys in vehicle_types dictionary.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_car_brands",
+                  "test_cases": [
+                    {
+                      "test_name": "Valid case - with limit=3",
+                      "input": {
+                        "limit": 3
+                      },
+                      "passed": true,
+                      "output": "Returns 3 brands: Ford, Chevrolet, BMW",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - no limit (default)",
+                      "input": {},
+                      "passed": true,
+                      "output": "Returns all 5 brands from scenario",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Boundary case - limit exceeds available brands",
+                      "input": {
+                        "limit": 100
+                      },
+                      "passed": true,
+                      "output": "Returns all 5 available brands",
+                      "error": null
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "search_car_price",
+                  "test_cases": [
+                    {
+                      "test_name": "Valid case - Ford brand",
+                      "input": {
+                        "brand_name": "Ford"
+                      },
+                      "passed": true,
+                      "output": "Returns 3 Ford vehicles with correct details",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - Tesla brand",
+                      "input": {
+                        "brand_name": "Tesla"
+                      },
+                      "passed": true,
+                      "output": "Returns 2 Tesla vehicles with correct details",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - BMW brand",
+                      "input": {
+                        "brand_name": "BMW"
+                      },
+                      "passed": true,
+                      "output": "Returns 2 BMW vehicles with correct details",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Error case - non-existent brand",
+                      "input": {
+                        "brand_name": "NonExistentBrand"
+                      },
+                      "passed": true,
+                      "output": "Returns empty vehicles list (graceful handling)",
+                      "error": null
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_vehicles_by_type",
+                  "test_cases": [
+                    {
+                      "test_name": "Valid case - cars type",
+                      "input": {
+                        "vehicle_type": "cars"
+                      },
+                      "passed": false,
+                      "output": "Returns empty brands list",
+                      "error": "Expected 4 car brands (Ford, Chevrolet, BMW, Tesla) but got empty list"
+                    },
+                    {
+                      "test_name": "Valid case - carros type (Portuguese)",
+                      "input": {
+                        "vehicle_type": "carros"
+                      },
+                      "passed": false,
+                      "output": "Returns empty brands list",
+                      "error": "Expected 4 car brands but got empty list"
+                    },
+                    {
+                      "test_name": "Valid case - motorcycles type",
+                      "input": {
+                        "vehicle_type": "motorcycles"
+                      },
+                      "passed": false,
+                      "output": "Returns empty brands list",
+                      "error": "Expected 1 motorcycle brand (Harley-Davidson) but got empty list"
+                    },
+                    {
+                      "test_name": "Valid case - trucks type",
+                      "input": {
+                        "vehicle_type": "trucks"
+                      },
+                      "passed": false,
+                      "output": "Returns empty brands list",
+                      "error": "Expected 2 truck brands (Ford, Chevrolet) but got empty list"
+                    }
+                  ],
+                  "passed": false,
+                  "error": "Tool returns empty results for all vehicle types despite scenario data containing vehicle_types with proper mappings"
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null,
+                "details": "Saved scenario matches original scenario exactly - all brands, vehicles, and vehicle_types preserved correctly"
+              },
+              "summary": {}
+            }
+          }
+        ],
+        "error_by_tool": {
+          "get_vehicles_by_type": [
+            {
+              "scenario_id": "scenario_002",
+              "complexity_level": "medium",
+              "error": {
+                "error_type": "Tool logic error",
+                "error_location": "get_vehicles_by_type",
+                "error_details": "The tool returns empty brand lists ({\"brands\": []}) for all tested vehicle types: 'cars', 'carros', 'motorcycles', 'motos'. The scenario contains vehicle_types data with 2 car brands (Honda, Volkswagen) and 2 motorcycle brands (Honda, Yamaha).",
+                "expected_vs_actual": "Expected: For 'cars'/'carros' - should return Honda and Volkswagen brands. For 'motorcycles'/'motos' - should return Honda and Yamaha brands. Actual: Empty list for all vehicle types.",
+                "root_cause": "The get_vehicles_by_type method in the API is not correctly accessing or mapping the vehicle_types data from the loaded scenario. Possible causes: (1) Incorrect key mapping between input parameter and scenario data structure, (2) The API method is not reading from the correct state variable, (3) Type normalization logic may not be working correctly to map 'cars' to 'cars' or 'carros' to 'cars' in the scenario data.",
+                "expected_error": false
+              }
+            }
+          ],
+          "get_vehicles_by_type tool": [
+            {
+              "scenario_id": "scenario_003",
+              "complexity_level": "complex",
+              "error": {
+                "error_type": "Tool Logic Error",
+                "error_location": "get_vehicles_by_type tool",
+                "error_details": "The get_vehicles_by_type tool consistently returns empty brands list for all vehicle type inputs ('cars', 'carros', 'motorcycles', 'trucks'), despite the scenario containing a properly populated vehicle_types dictionary with mappings for all these categories.",
+                "expected_vs_actual": "Expected: For 'cars' input, should return 4 brands [Ford, Chevrolet, BMW, Tesla]. For 'motorcycles', should return 1 brand [Harley-Davidson]. For 'trucks', should return 2 brands [Ford, Chevrolet]. Actual: All queries return empty brands list: {'brands': []}",
+                "root_cause": "The get_vehicles_by_type implementation in the API layer is not correctly accessing or querying the vehicle_types data structure from the loaded scenario. Possible issues: (1) The tool may not be properly mapping input parameters to the scenario's vehicle_types keys, (2) The API method may not be reading from the correct state variable, or (3) There may be a key normalization issue between input vehicle types and the stored keys in vehicle_types dictionary.",
+                "expected_error": false
+              }
+            }
+          ]
+        },
+        "error_categories": {
+          "critical_load_failures": [],
+          "critical_schema_mismatches": [],
+          "high_tool_logic_errors": [
+            {
+              "error_type": "Tool logic error",
+              "error_location": "get_vehicles_by_type",
+              "error_details": "The tool returns empty brand lists ({\"brands\": []}) for all tested vehicle types: 'cars', 'carros', 'motorcycles', 'motos'. The scenario contains vehicle_types data with 2 car brands (Honda, Volkswagen) and 2 motorcycle brands (Honda, Yamaha).",
+              "expected_vs_actual": "Expected: For 'cars'/'carros' - should return Honda and Volkswagen brands. For 'motorcycles'/'motos' - should return Honda and Yamaha brands. Actual: Empty list for all vehicle types.",
+              "root_cause": "The get_vehicles_by_type method in the API is not correctly accessing or mapping the vehicle_types data from the loaded scenario. Possible causes: (1) Incorrect key mapping between input parameter and scenario data structure, (2) The API method is not reading from the correct state variable, (3) Type normalization logic may not be working correctly to map 'cars' to 'cars' or 'carros' to 'cars' in the scenario data.",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Tool Logic Error",
+              "error_location": "get_vehicles_by_type tool",
+              "error_details": "The get_vehicles_by_type tool consistently returns empty brands list for all vehicle type inputs ('cars', 'carros', 'motorcycles', 'trucks'), despite the scenario containing a properly populated vehicle_types dictionary with mappings for all these categories.",
+              "expected_vs_actual": "Expected: For 'cars' input, should return 4 brands [Ford, Chevrolet, BMW, Tesla]. For 'motorcycles', should return 1 brand [Harley-Davidson]. For 'trucks', should return 2 brands [Ford, Chevrolet]. Actual: All queries return empty brands list: {'brands': []}",
+              "root_cause": "The get_vehicles_by_type implementation in the API layer is not correctly accessing or querying the vehicle_types data structure from the loaded scenario. Possible issues: (1) The tool may not be properly mapping input parameters to the scenario's vehicle_types keys, (2) The API method may not be reading from the correct state variable, or (3) There may be a key normalization issue between input vehicle types and the stored keys in vehicle_types dictionary.",
+              "expected_error": false,
+              "severity": "HIGH"
+            }
+          ],
+          "medium_state_errors": [],
+          "low_edge_case_failures": []
+        },
+        "severity_summary": {
+          "critical": 0,
+          "high": 2,
+          "medium": 0,
+          "low": 0
+        },
+        "total_failed_scenarios": 2,
+        "expected_failures": 0,
+        "unexpected_failures": 2
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 2,
+        "passed_scenarios": 2,
+        "failed_scenarios": 0,
+        "all_passed": true,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_002",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_car_brands",
+                  "test_cases": [
+                    {
+                      "test_name": "Valid case - with high limit",
+                      "input": {
+                        "limit": 100
+                      },
+                      "passed": true,
+                      "output": "Returns all 3 brands (Honda, Volkswagen, Yamaha)",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - default (no limit)",
+                      "input": {},
+                      "passed": true,
+                      "output": "Returns all 3 brands",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Boundary case - limit of 2",
+                      "input": {
+                        "limit": 2
+                      },
+                      "passed": true,
+                      "output": "Returns first 2 brands (Honda, Volkswagen)",
+                      "error": null
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "search_car_price",
+                  "test_cases": [
+                    {
+                      "test_name": "Valid case - Honda brand",
+                      "input": {
+                        "brand_name": "Honda"
+                      },
+                      "passed": true,
+                      "output": "Returns 3 Honda vehicles (Civic, HR-V, CG 160 Fan)",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - Yamaha brand",
+                      "input": {
+                        "brand_name": "Yamaha"
+                      },
+                      "passed": true,
+                      "output": "Returns 1 Yamaha vehicle (MT-03 ABS)",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - Volkswagen brand",
+                      "input": {
+                        "brand_name": "Volkswagen"
+                      },
+                      "passed": true,
+                      "output": "Returns 1 Volkswagen vehicle (Gol 1.0 Flex)",
+                      "error": null
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_vehicles_by_type",
+                  "test_cases": [
+                    {
+                      "test_name": "Valid case - cars (English)",
+                      "input": {
+                        "vehicle_type": "cars"
+                      },
+                      "passed": true,
+                      "output": "Returns 2 car brands (Honda, Volkswagen)",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - motorcycles (English)",
+                      "input": {
+                        "vehicle_type": "motorcycles"
+                      },
+                      "passed": true,
+                      "output": "Returns 2 motorcycle brands (Honda, Yamaha)",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - carros (Portuguese)",
+                      "input": {
+                        "vehicle_type": "carros"
+                      },
+                      "passed": true,
+                      "output": "Returns 2 car brands (Honda, Volkswagen)",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - motos (Portuguese)",
+                      "input": {
+                        "vehicle_type": "motos"
+                      },
+                      "passed": true,
+                      "output": "Returns 2 motorcycle brands (Honda, Yamaha)",
+                      "error": null
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null,
+                "details": "Saved scenario matches original scenario exactly. All brands, vehicles, and vehicle_types are preserved correctly."
+              },
+              "summary": {}
+            },
+            "complexity_level": "medium",
+            "execution_time": 56.48747205734253
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "get_car_brands",
+                  "test_cases": [
+                    {
+                      "test_name": "Valid case - with limit parameter (100)",
+                      "input": {
+                        "limit": 100
+                      },
+                      "passed": true,
+                      "output": "Returned all 5 brands (Ford, Chevrolet, BMW, Tesla, Harley-Davidson)",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - default limit (no parameter)",
+                      "input": {},
+                      "passed": true,
+                      "output": "Returned all 5 brands with default behavior",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Boundary case - limit smaller than total brands (3)",
+                      "input": {
+                        "limit": 3
+                      },
+                      "passed": true,
+                      "output": "Correctly returned only first 3 brands (Ford, Chevrolet, BMW)",
+                      "error": null
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "search_car_price",
+                  "test_cases": [
+                    {
+                      "test_name": "Valid case - Ford brand",
+                      "input": {
+                        "brand_name": "Ford"
+                      },
+                      "passed": true,
+                      "output": "Returned 3 Ford vehicles (Ranger, Ka, Mustang) with correct pricing",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - BMW brand",
+                      "input": {
+                        "brand_name": "BMW"
+                      },
+                      "passed": true,
+                      "output": "Returned 2 BMW vehicles (320i, X5) with correct pricing",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - Tesla brand",
+                      "input": {
+                        "brand_name": "Tesla"
+                      },
+                      "passed": true,
+                      "output": "Returned 2 Tesla electric vehicles (Model 3, Model Y) with correct pricing",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Edge case - non-existent brand",
+                      "input": {
+                        "brand_name": "NonExistentBrand"
+                      },
+                      "passed": true,
+                      "output": "Correctly returned empty vehicles list",
+                      "error": null
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_vehicles_by_type",
+                  "test_cases": [
+                    {
+                      "test_name": "Valid case - cars (English)",
+                      "input": {
+                        "vehicle_type": "cars"
+                      },
+                      "passed": true,
+                      "output": "Returned 4 car brands (Ford, Chevrolet, BMW, Tesla)",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - trucks (English)",
+                      "input": {
+                        "vehicle_type": "trucks"
+                      },
+                      "passed": true,
+                      "output": "Returned 2 truck brands (Ford, Chevrolet)",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - motorcycles (English)",
+                      "input": {
+                        "vehicle_type": "motorcycles"
+                      },
+                      "passed": true,
+                      "output": "Returned 1 motorcycle brand (Harley-Davidson)",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - carros (Portuguese)",
+                      "input": {
+                        "vehicle_type": "carros"
+                      },
+                      "passed": true,
+                      "output": "Correctly handled Portuguese term, returned 4 car brands",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - motos (Portuguese)",
+                      "input": {
+                        "vehicle_type": "motos"
+                      },
+                      "passed": true,
+                      "output": "Correctly handled Portuguese term, returned 1 motorcycle brand",
+                      "error": null
+                    },
+                    {
+                      "test_name": "Valid case - caminhoes (Portuguese)",
+                      "input": {
+                        "vehicle_type": "caminhoes"
+                      },
+                      "passed": true,
+                      "output": "Correctly handled Portuguese term, returned 2 truck brands",
+                      "error": null
+                    }
+                  ],
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null,
+                "details": "Saved scenario matches original scenario exactly. All brands, vehicles, and vehicle_types preserved correctly."
+              },
+              "summary": {}
+            },
+            "complexity_level": "complex",
+            "execution_time": 65.1313681602478
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 1,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/CarPrice.py"
+  }
+}

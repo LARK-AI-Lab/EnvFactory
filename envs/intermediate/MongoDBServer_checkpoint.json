@@ -1,0 +1,1625 @@
+{
+  "metadata": {
+    "class_name": "MongoDBServer",
+    "metadata_path": "envs/metadata/MongoDBServer_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-04-17T10:01:28.556513",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "MongoDBServer",
+    "description": "MongoDB MCP server exposing core CRUD and metadata operations on databases, collections, and documents.",
+    "tools": [
+      {
+        "name": "list_databases",
+        "description": "List all MongoDB databases visible to the current connection, including their on-disk size and emptiness status.",
+        "input_schema": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "databases": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the database."
+                  },
+                  "sizeOnDisk": {
+                    "type": "integer",
+                    "description": "Approximate total size of the database on disk in bytes."
+                  },
+                  "empty": {
+                    "type": "boolean",
+                    "description": "True if the database contains no collections."
+                  }
+                }
+              },
+              "description": "List of databases with metadata."
+            }
+          }
+        }
+      },
+      {
+        "name": "list_collections",
+        "description": "List all collections within a specified MongoDB database, including their type and options.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "database": {
+              "type": "string",
+              "description": "The name of the MongoDB database whose collections will be listed."
+            }
+          },
+          "required": [
+            "database"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "database": {
+              "type": "string",
+              "description": "The database name provided in the request."
+            },
+            "collections": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the collection."
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "Collection type (e.g., 'collection' or 'view')."
+                  },
+                  "options": {
+                    "type": "object",
+                    "description": "Additional collection options such as validation rules or collation."
+                  }
+                }
+              },
+              "description": "List of collections in the specified database."
+            }
+          }
+        }
+      },
+      {
+        "name": "find",
+        "description": "Query documents in a MongoDB collection with optional filtering, projection, sorting, and pagination.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "database": {
+              "type": "string",
+              "description": "The name of the MongoDB database containing the collection to query."
+            },
+            "collection": {
+              "type": "string",
+              "description": "The name of the MongoDB collection to query."
+            },
+            "filter": {
+              "type": "object",
+              "description": "MongoDB query predicate to filter documents. Defaults to {} (match all)."
+            },
+            "projection": {
+              "type": "object",
+              "description": "Projection specification to include or exclude fields in returned documents."
+            },
+            "sort": {
+              "type": "object",
+              "description": "Sort specification keyed by field names, with values 1 (ascending) or -1 (descending)."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of documents to return. Defaults to 10."
+            },
+            "skip": {
+              "type": "integer",
+              "description": "Number of matching documents to skip before returning results. Defaults to 0."
+            }
+          },
+          "required": [
+            "database",
+            "collection"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "database": {
+              "type": "string",
+              "description": "The database name provided in the request."
+            },
+            "collection": {
+              "type": "string",
+              "description": "The collection name provided in the request."
+            },
+            "documents": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "description": "List of documents matching the query criteria."
+            },
+            "count": {
+              "type": "integer",
+              "description": "Number of documents returned in this response."
+            }
+          }
+        }
+      },
+      {
+        "name": "aggregate",
+        "description": "Execute an aggregation pipeline against a MongoDB collection to perform advanced data processing.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "database": {
+              "type": "string",
+              "description": "The name of the MongoDB database containing the collection to aggregate."
+            },
+            "collection": {
+              "type": "string",
+              "description": "The name of the MongoDB collection to aggregate."
+            },
+            "pipeline": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "description": "Ordered list of MongoDB aggregation pipeline stages (e.g., $match, $group, $project)."
+            }
+          },
+          "required": [
+            "database",
+            "collection",
+            "pipeline"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "database": {
+              "type": "string",
+              "description": "The database name provided in the request."
+            },
+            "collection": {
+              "type": "string",
+              "description": "The collection name provided in the request."
+            },
+            "results": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "description": "List of documents produced by the aggregation pipeline."
+            },
+            "count": {
+              "type": "integer",
+              "description": "Number of documents returned by the aggregation pipeline."
+            }
+          }
+        }
+      },
+      {
+        "name": "insert_one",
+        "description": "Insert a single document into a MongoDB collection.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "database": {
+              "type": "string",
+              "description": "The name of the MongoDB database containing the collection to insert into."
+            },
+            "collection": {
+              "type": "string",
+              "description": "The name of the MongoDB collection to insert the document into."
+            },
+            "document": {
+              "type": "object",
+              "description": "The JSON document to insert into the collection."
+            }
+          },
+          "required": [
+            "database",
+            "collection",
+            "document"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "acknowledged": {
+              "type": "boolean",
+              "description": "True if the insert operation was acknowledged by the server."
+            },
+            "inserted_id": {
+              "type": "string",
+              "description": "The unique identifier (_id) assigned to the inserted document."
+            },
+            "document": {
+              "type": "object",
+              "description": "The full document as inserted, including the generated _id if applicable."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\n\nclass DatabaseInfo(BaseModel):\n    \"\"\"Represents metadata for a MongoDB database.\"\"\"\n    name: str = Field(..., description=\"Name of the database.\")\n    sizeOnDisk: int = Field(..., ge=0, description=\"Approximate total size of the database on disk in bytes.\")\n    empty: bool = Field(..., description=\"True if the database contains no collections.\")\n\nclass CollectionInfo(BaseModel):\n    \"\"\"Represents metadata for a MongoDB collection.\"\"\"\n    name: str = Field(..., description=\"Name of the collection.\")\n    type: str = Field(..., description=\"Collection type (e.g., 'collection' or 'view').\")\n    options: Dict[str, Any] = Field(default={}, description=\"Additional collection options.\")\n\nclass Document(BaseModel):\n    \"\"\"Represents a MongoDB document.\"\"\"\n    id: str = Field(..., description=\"Document unique identifier (_id as string).\")\n    data: Dict[str, Any] = Field(default={}, description=\"Document fields.\")\n\nclass MongoDBScenario(BaseModel):\n    \"\"\"Main scenario model for MongoDB simulation.\"\"\"\n    databases: List[Dict[str, Any]] = Field(default=[\n        {\"name\": \"admin\", \"sizeOnDisk\": 40960, \"empty\": False},\n        {\"name\": \"config\", \"sizeOnDisk\": 73728, \"empty\": False},\n        {\"name\": \"local\", \"sizeOnDisk\": 40960, \"empty\": False},\n        {\"name\": \"testdb\", \"sizeOnDisk\": 204800, \"empty\": False},\n        {\"name\": \"analyticsdb\", \"sizeOnDisk\": 512000, \"empty\": False},\n        {\"name\": \"logsdb\", \"sizeOnDisk\": 1048576, \"empty\": False},\n    ], description=\"List of databases with metadata.\")\n    collections: Dict[str, List[Dict[str, Any]]] = Field(default={\n        \"testdb\": [\n            {\"name\": \"users\", \"type\": \"collection\", \"options\": {}},\n            {\"name\": \"orders\", \"type\": \"collection\", \"options\": {}},\n            {\"name\": \"products\", \"type\": \"collection\", \"options\": {}},\n        ],\n        \"analyticsdb\": [\n            {\"name\": \"events\", \"type\": \"collection\", \"options\": {}},\n            {\"name\": \"sessions\", \"type\": \"collection\", \"options\": {}},\n        ],\n        \"logsdb\": [\n            {\"name\": \"applogs\", \"type\": \"collection\", \"options\": {}},\n        ],\n    }, description=\"Collections keyed by database name.\")\n    documents: Dict[str, List[Dict[str, Any]]] = Field(default={\n        \"testdb.users\": [\n            {\"_id\": \"u001\", \"name\": \"Alice\", \"email\": \"alice@example.com\", \"age\": 30, \"role\": \"admin\"},\n            {\"_id\": \"u002\", \"name\": \"Bob\", \"email\": \"bob@example.com\", \"age\": 25, \"role\": \"user\"},\n            {\"_id\": \"u003\", \"name\": \"Carol\", \"email\": \"carol@example.com\", \"age\": 35, \"role\": \"user\"},\n        ],\n        \"testdb.orders\": [\n            {\"_id\": \"o001\", \"userId\": \"u001\", \"product\": \"Laptop\", \"amount\": 1200.0, \"status\": \"shipped\"},\n            {\"_id\": \"o002\", \"userId\": \"u002\", \"product\": \"Phone\", \"amount\": 800.0, \"status\": \"pending\"},\n            {\"_id\": \"o003\", \"userId\": \"u001\", \"product\": \"Tablet\", \"amount\": 500.0, \"status\": \"delivered\"},\n        ],\n        \"testdb.products\": [\n            {\"_id\": \"p001\", \"name\": \"Laptop\", \"price\": 1200.0, \"stock\": 50, \"category\": \"electronics\"},\n            {\"_id\": \"p002\", \"name\": \"Phone\", \"price\": 800.0, \"stock\": 100, \"category\": \"electronics\"},\n            {\"_id\": \"p003\", \"name\": \"Tablet\", \"price\": 500.0, \"stock\": 75, \"category\": \"electronics\"},\n        ],\n        \"analyticsdb.events\": [\n            {\"_id\": \"e001\", \"type\": \"click\", \"userId\": \"u001\", \"timestamp\": \"2026-04-17T00:00:00\"},\n            {\"_id\": \"e002\", \"type\": \"view\", \"userId\": \"u002\", \"timestamp\": \"2026-04-17T00:01:00\"},\n        ],\n        \"analyticsdb.sessions\": [\n            {\"_id\": \"s001\", \"userId\": \"u001\", \"duration\": 120, \"pages\": 5},\n        ],\n        \"logsdb.applogs\": [\n            {\"_id\": \"l001\", \"level\": \"INFO\", \"message\": \"Server started\", \"timestamp\": \"2026-04-17T00:00:00\"},\n            {\"_id\": \"l002\", \"level\": \"ERROR\", \"message\": \"Connection timeout\", \"timestamp\": \"2026-04-17T00:05:00\"},\n        ],\n    }, description=\"Documents keyed by 'database.collection'.\")\n    next_id_counter: int = Field(default=1000, ge=0, description=\"Counter for generating new document IDs.\")\n\nScenario_Schema = [DatabaseInfo, CollectionInfo, Document, MongoDBScenario]\n\n\n# Section 2: Class\n\nclass MongoDBAPI:\n    def __init__(self):\n        \"\"\"Initialize MongoDB API with empty state.\"\"\"\n        self.databases: List[Dict[str, Any]] = []\n        self.collections: Dict[str, List[Dict[str, Any]]] = {}\n        self.documents: Dict[str, List[Dict[str, Any]]] = {}\n        self.next_id_counter: int = 1000\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = MongoDBScenario(**scenario)\n        self.databases = model.databases\n        self.collections = model.collections\n        self.documents = model.documents\n        self.next_id_counter = model.next_id_counter\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"databases\": self.databases,\n            \"collections\": self.collections,\n            \"documents\": self.documents,\n            \"next_id_counter\": self.next_id_counter,\n        }\n\n    def list_databases(self) -> dict:\n        \"\"\"List all MongoDB databases.\"\"\"\n        return {\"databases\": self.databases}\n\n    def list_collections(self, database: str) -> dict:\n        \"\"\"List all collections in a specified database.\"\"\"\n        cols = self.collections.get(database, [])\n        return {\"database\": database, \"collections\": cols}\n\n    def find(self, database: str, collection: str, filter: Optional[Dict[str, Any]], projection: Optional[Dict[str, Any]], sort: Optional[Dict[str, Any]], limit: int, skip: int) -> dict:\n        \"\"\"Query documents in a collection with optional filtering, projection, sorting, and pagination.\"\"\"\n        key = f\"{database}.{collection}\"\n        all_docs = self.documents.get(key, [])\n\n        # Apply filter\n        if filter:\n            all_docs = [d for d in all_docs if all(d.get(k) == v for k, v in filter.items())]\n\n        # Apply sort\n        if sort:\n            for field, direction in reversed(list(sort.items())):\n                all_docs = sorted(all_docs, key=lambda d: d.get(field, None), reverse=(direction == -1))\n\n        # Apply skip and limit\n        all_docs = all_docs[skip:skip + limit]\n\n        # Apply projection\n        if projection:\n            include = {k for k, v in projection.items() if v == 1}\n            exclude = {k for k, v in projection.items() if v == 0}\n            if include:\n                all_docs = [{k: d[k] for k in include if k in d} for d in all_docs]\n            elif exclude:\n                all_docs = [{k: v for k, v in d.items() if k not in exclude} for d in all_docs]\n\n        return {\"database\": database, \"collection\": collection, \"documents\": all_docs, \"count\": len(all_docs)}\n\n    def aggregate(self, database: str, collection: str, pipeline: List[Dict[str, Any]]) -> dict:\n        \"\"\"Execute an aggregation pipeline against a collection.\"\"\"\n        key = f\"{database}.{collection}\"\n        docs = list(self.documents.get(key, []))\n\n        for stage in pipeline:\n            if \"$match\" in stage:\n                match = stage[\"$match\"]\n                docs = [d for d in docs if all(d.get(k) == v for k, v in match.items())]\n            elif \"$sort\" in stage:\n                sort = stage[\"$sort\"]\n                for field, direction in reversed(list(sort.items())):\n                    docs = sorted(docs, key=lambda d: d.get(field, None), reverse=(direction == -1))\n            elif \"$limit\" in stage:\n                docs = docs[:stage[\"$limit\"]]\n            elif \"$skip\" in stage:\n                docs = docs[stage[\"$skip\"]:]\n            elif \"$project\" in stage:\n                proj = stage[\"$project\"]\n                include = {k for k, v in proj.items() if v == 1}\n                exclude = {k for k, v in proj.items() if v == 0}\n                if include:\n                    docs = [{k: d[k] for k in include if k in d} for d in docs]\n                elif exclude:\n                    docs = [{k: v for k, v in d.items() if k not in exclude} for d in docs]\n            elif \"$count\" in stage:\n                field = stage[\"$count\"]\n                docs = [{field: len(docs)}]\n            elif \"$group\" in stage:\n                group = stage[\"$group\"]\n                group_id_field = group.get(\"_id\")\n                groups: Dict[Any, Dict[str, Any]] = {}\n                for d in docs:\n                    gid = d.get(group_id_field.lstrip(\"$\"), None) if isinstance(group_id_field, str) and group_id_field.startswith(\"$\") else group_id_field\n                    if gid not in groups:\n                        groups[gid] = {\"_id\": gid}\n                    for out_field, expr in group.items():\n                        if out_field == \"_id\":\n                            continue\n                        if isinstance(expr, dict):\n                            if \"$sum\" in expr:\n                                val = expr[\"$sum\"]\n                                inc = d.get(val.lstrip(\"$\"), 0) if isinstance(val, str) and val.startswith(\"$\") else val\n                                groups[gid][out_field] = groups[gid].get(out_field, 0) + inc\n                            elif \"$avg\" in expr:\n                                val = expr[\"$avg\"]\n                                inc = d.get(val.lstrip(\"$\"), 0) if isinstance(val, str) and val.startswith(\"$\") else 0\n                                prev = groups[gid].get(f\"__avg_sum_{out_field}\", 0)\n                                cnt = groups[gid].get(f\"__avg_cnt_{out_field}\", 0)\n                                groups[gid][f\"__avg_sum_{out_field}\"] = prev + inc\n                                groups[gid][f\"__avg_cnt_{out_field}\"] = cnt + 1\n                                groups[gid][out_field] = groups[gid][f\"__avg_sum_{out_field}\"] / groups[gid][f\"__avg_cnt_{out_field}\"]\n                            elif \"$push\" in expr:\n                                val = expr[\"$push\"]\n                                item = d.get(val.lstrip(\"$\"), None) if isinstance(val, str) and val.startswith(\"$\") else val\n                                groups[gid].setdefault(out_field, []).append(item)\n                            elif \"$first\" in expr:\n                                val = expr[\"$first\"]\n                                if out_field not in groups[gid]:\n                                    groups[gid][out_field] = d.get(val.lstrip(\"$\"), None) if isinstance(val, str) and val.startswith(\"$\") else val\n                # Clean up internal avg tracking keys\n                docs = []\n                for g in groups.values():\n                    docs.append({k: v for k, v in g.items() if not k.startswith(\"__avg_\")})\n\n        return {\"database\": database, \"collection\": collection, \"results\": docs, \"count\": len(docs)}\n\n    def insert_one(self, database: str, collection: str, document: Dict[str, Any]) -> dict:\n        \"\"\"Insert a single document into a collection.\"\"\"\n        key = f\"{database}.{collection}\"\n        if key not in self.documents:\n            self.documents[key] = []\n\n        # Ensure database exists\n        db_names = [d[\"name\"] for d in self.databases]\n        if database not in db_names:\n            self.databases.append({\"name\": database, \"sizeOnDisk\": 0, \"empty\": False})\n\n        # Ensure collection exists\n        if database not in self.collections:\n            self.collections[database] = []\n        col_names = [c[\"name\"] for c in self.collections[database]]\n        if collection not in col_names:\n            self.collections[database].append({\"name\": collection, \"type\": \"collection\", \"options\": {}})\n\n        # Assign _id if not provided\n        if \"_id\" not in document:\n            document = dict(document)\n            document[\"_id\"] = f\"gen_{self.next_id_counter}\"\n            self.next_id_counter += 1\n\n        self.documents[key].append(document)\n        return {\"acknowledged\": True, \"inserted_id\": str(document[\"_id\"]), \"document\": document}\n\n\n# Section 3: MCP Tools\n\nmcp = FastMCP(name=\"MongoDBServer\")\napi = MongoDBAPI()\n\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the MongoDB API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching MongoDBScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current MongoDB state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef list_databases() -> dict:\n    \"\"\"\n    List all MongoDB databases visible to the current connection.\n\n    Returns:\n        databases (list): List of databases with name (str), sizeOnDisk (int), and empty (bool).\n    \"\"\"\n    try:\n        return api.list_databases()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef list_collections(database: str) -> dict:\n    \"\"\"\n    List all collections within a specified MongoDB database.\n\n    Args:\n        database (str): The name of the MongoDB database whose collections will be listed.\n\n    Returns:\n        database (str): The database name provided in the request.\n        collections (list): List of collections with name (str), type (str), and options (dict).\n    \"\"\"\n    try:\n        if not database or not isinstance(database, str):\n            raise ValueError(\"database must be a non-empty string\")\n        return api.list_collections(database)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef find(\n    database: str,\n    collection: str,\n    filter: Optional[dict] = None,\n    projection: Optional[dict] = None,\n    sort: Optional[dict] = None,\n    limit: int = 10,\n    skip: int = 0,\n) -> dict:\n    \"\"\"\n    Query documents in a MongoDB collection with optional filtering, projection, sorting, and pagination.\n\n    Args:\n        database (str): The name of the MongoDB database containing the collection to query.\n        collection (str): The name of the MongoDB collection to query.\n        filter (dict): [Optional] MongoDB query predicate to filter documents. Defaults to {} (match all).\n        projection (dict): [Optional] Projection specification to include or exclude fields.\n        sort (dict): [Optional] Sort specification keyed by field names, with values 1 or -1.\n        limit (int): [Optional] Maximum number of documents to return. Defaults to 10.\n        skip (int): [Optional] Number of matching documents to skip. Defaults to 0.\n\n    Returns:\n        database (str): The database name provided in the request.\n        collection (str): The collection name provided in the request.\n        documents (list): List of documents matching the query criteria.\n        count (int): Number of documents returned in this response.\n    \"\"\"\n    try:\n        if not database or not isinstance(database, str):\n            raise ValueError(\"database must be a non-empty string\")\n        if not collection or not isinstance(collection, str):\n            raise ValueError(\"collection must be a non-empty string\")\n        return api.find(database, collection, filter or {}, projection, sort, limit, skip)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef aggregate(database: str, collection: str, pipeline: list) -> dict:\n    \"\"\"\n    Execute an aggregation pipeline against a MongoDB collection.\n\n    Args:\n        database (str): The name of the MongoDB database containing the collection to aggregate.\n        collection (str): The name of the MongoDB collection to aggregate.\n        pipeline (list): Ordered list of MongoDB aggregation pipeline stages.\n\n    Returns:\n        database (str): The database name provided in the request.\n        collection (str): The collection name provided in the request.\n        results (list): List of documents produced by the aggregation pipeline.\n        count (int): Number of documents returned by the aggregation pipeline.\n    \"\"\"\n    try:\n        if not database or not isinstance(database, str):\n            raise ValueError(\"database must be a non-empty string\")\n        if not collection or not isinstance(collection, str):\n            raise ValueError(\"collection must be a non-empty string\")\n        if not isinstance(pipeline, list):\n            raise ValueError(\"pipeline must be a list\")\n        return api.aggregate(database, collection, pipeline)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef insert_one(database: str, collection: str, document: dict) -> dict:\n    \"\"\"\n    Insert a single document into a MongoDB collection.\n\n    Args:\n        database (str): The name of the MongoDB database containing the collection to insert into.\n        collection (str): The name of the MongoDB collection to insert the document into.\n        document (dict): The JSON document to insert into the collection.\n\n    Returns:\n        acknowledged (bool): True if the insert operation was acknowledged by the server.\n        inserted_id (str): The unique identifier (_id) assigned to the inserted document.\n        document (dict): The full document as inserted, including the generated _id if applicable.\n    \"\"\"\n    try:\n        if not database or not isinstance(database, str):\n            raise ValueError(\"database must be a non-empty string\")\n        if not collection or not isinstance(collection, str):\n            raise ValueError(\"collection must be a non-empty string\")\n        if not isinstance(document, dict):\n            raise ValueError(\"document must be a dictionary\")\n        return api.insert_one(database, collection, document)\n    except Exception as e:\n        raise e\n\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n",
+      "timestamp": "2026-04-17T10:01:28.556561",
+      "revision_number": null
+    },
+    {
+      "version": 1,
+      "code": "\n\n```python\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\n\nclass DatabaseInfo(BaseModel):\n    \"\"\"Represents metadata for a MongoDB database.\"\"\"\n    name: str = Field(..., description=\"Name of the database.\")\n    sizeOnDisk: int = Field(..., ge=0, description=\"Approximate total size of the database on disk in bytes.\")\n    empty: bool = Field(..., description=\"True if the database contains no collections.\")\n\nclass CollectionInfo(BaseModel):\n    \"\"\"Represents metadata for a MongoDB collection.\"\"\"\n    name: str = Field(..., description=\"Name of the collection.\")\n    type: str = Field(..., description=\"Collection type (e.g., 'collection' or 'view').\")\n    options: Dict[str, Any] = Field(default={}, description=\"Additional collection options.\")\n\nclass Document(BaseModel):\n    \"\"\"Represents a MongoDB document.\"\"\"\n    id: str = Field(..., description=\"Document unique identifier (_id as string).\")\n    data: Dict[str, Any] = Field(default={}, description=\"Document fields.\")\n\nclass MongoDBScenario(BaseModel):\n    \"\"\"Main scenario model for MongoDB simulation.\"\"\"\n    databases: List[Dict[str, Any]] = Field(default=[\n        {\"name\": \"admin\", \"sizeOnDisk\": 40960, \"empty\": False},\n        {\"name\": \"config\", \"sizeOnDisk\": 73728, \"empty\": False},\n        {\"name\": \"local\", \"sizeOnDisk\": 40960, \"empty\": False},\n        {\"name\": \"testdb\", \"sizeOnDisk\": 204800, \"empty\": False},\n        {\"name\": \"analyticsdb\", \"sizeOnDisk\": 512000, \"empty\": False},\n        {\"name\": \"logsdb\", \"sizeOnDisk\": 1048576, \"empty\": False},\n    ], description=\"List of databases with metadata.\")\n    collections: Dict[str, List[Dict[str, Any]]] = Field(default={\n        \"testdb\": [\n            {\"name\": \"users\", \"type\": \"collection\", \"options\": {}},\n            {\"name\": \"orders\", \"type\": \"collection\", \"options\": {}},\n            {\"name\": \"products\", \"type\": \"collection\", \"options\": {}},\n        ],\n        \"analyticsdb\": [\n            {\"name\": \"events\", \"type\": \"collection\", \"options\": {}},\n            {\"name\": \"sessions\", \"type\": \"collection\", \"options\": {}},\n        ],\n        \"logsdb\": [\n            {\"name\": \"applogs\", \"type\": \"collection\", \"options\": {}},\n        ],\n    }, description=\"Collections keyed by database name.\")\n    documents: Dict[str, List[Dict[str, Any]]] = Field(default={\n        \"testdb.users\": [\n            {\"_id\": \"u001\", \"name\": \"Alice\", \"email\": \"alice@example.com\", \"age\": 30, \"role\": \"admin\"},\n            {\"_id\": \"u002\", \"name\": \"Bob\", \"email\": \"bob@example.com\", \"age\": 25, \"role\": \"user\"},\n            {\"_id\": \"u003\", \"name\": \"Carol\", \"email\": \"carol@example.com\", \"age\": 35, \"role\": \"user\"},\n        ],\n        \"testdb.orders\": [\n            {\"_id\": \"o001\", \"userId\": \"u001\", \"product\": \"Laptop\", \"amount\": 1200.0, \"status\": \"shipped\"},\n            {\"_id\": \"o002\", \"userId\": \"u002\", \"product\": \"Phone\", \"amount\": 800.0, \"status\": \"pending\"},\n            {\"_id\": \"o003\", \"userId\": \"u001\", \"product\": \"Tablet\", \"amount\": 500.0, \"status\": \"delivered\"},\n        ],\n        \"testdb.products\": [\n            {\"_id\": \"p001\", \"name\": \"Laptop\", \"price\": 1200.0, \"stock\": 50, \"category\": \"electronics\"},\n            {\"_id\": \"p002\", \"name\": \"Phone\", \"price\": 800.0, \"stock\": 100, \"category\": \"electronics\"},\n            {\"_id\": \"p003\", \"name\": \"Tablet\", \"price\": 500.0, \"stock\": 75, \"category\": \"electronics\"},\n        ],\n        \"analyticsdb.events\": [\n            {\"_id\": \"e001\", \"type\": \"click\", \"userId\": \"u001\", \"timestamp\": \"2026-04-17T00:00:00\"},\n            {\"_id\": \"e002\", \"type\": \"view\", \"userId\": \"u002\", \"timestamp\": \"2026-04-17T00:01:00\"},\n        ],\n        \"analyticsdb.sessions\": [\n            {\"_id\": \"s001\", \"userId\": \"u001\", \"duration\": 120, \"pages\": 5},\n        ],\n        \"logsdb.applogs\": [\n            {\"_id\": \"l001\", \"level\": \"INFO\", \"message\": \"Server started\", \"timestamp\": \"2026-04-17T00:00:00\"},\n            {\"_id\": \"l002\", \"level\": \"ERROR\", \"message\": \"Connection timeout\", \"timestamp\": \"2026-04-17T00:05:00\"},\n        ],\n    }, description=\"Documents keyed by 'database.collection'.\")\n    next_id_counter: int = Field(default=1000, ge=0, description=\"Counter for generating new document IDs.\")\n\nScenario_Schema = [DatabaseInfo, CollectionInfo, Document, MongoDBScenario]\n\n\n# Section 2: Class\n\nclass MongoDBAPI:\n    def __init__(self):\n        \"\"\"Initialize MongoDB API with empty state.\"\"\"\n        self.databases: List[Dict[str, Any]] = []\n        self.collections: Dict[str, List[Dict[str, Any]]] = {}\n        self.documents: Dict[str, List[Dict[str, Any]]] = {}\n        self.next_id_counter: int = 1000\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance, fully replacing all prior state.\"\"\"\n        model = MongoDBScenario(**scenario)\n        # Fully replace state — deep copy to avoid shared references across scenarios\n        self.databases = [dict(d) for d in model.databases]\n        self.collections = {k: [dict(c) for c in v] for k, v in model.collections.items()}\n        self.documents = {k: [dict(d) for d in v] for k, v in model.documents.items()}\n        self.next_id_counter = model.next_id_counter\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"databases\": self.databases,\n            \"collections\": self.collections,\n            \"documents\": self.documents,\n            \"next_id_counter\": self.next_id_counter,\n        }\n\n    def list_databases(self) -> dict:\n        \"\"\"List all MongoDB databases.\"\"\"\n        return {\"databases\": self.databases}\n\n    def list_collections(self, database: str) -> dict:\n        \"\"\"List all collections in a specified database.\"\"\"\n        cols = self.collections.get(database, [])\n        return {\"database\": database, \"collections\": cols}\n\n    def find(self, database: str, collection: str, filter: Optional[Dict[str, Any]], projection: Optional[Dict[str, Any]], sort: Optional[Dict[str, Any]], limit: int, skip: int) -> dict:\n        \"\"\"Query documents in a collection with optional filtering, projection, sorting, and pagination.\"\"\"\n        key = f\"{database}.{collection}\"\n        all_docs = self.documents.get(key, [])\n\n        # Apply filter\n        if filter:\n            all_docs = [d for d in all_docs if all(d.get(k) == v for k, v in filter.items())]\n\n        # Apply sort\n        if sort:\n            for field, direction in reversed(list(sort.items())):\n                all_docs = sorted(all_docs, key=lambda d: d.get(field, None), reverse=(direction == -1))\n\n        # Apply skip and limit\n        all_docs = all_docs[skip:skip + limit]\n\n        # Apply projection\n        if projection:\n            include = {k for k, v in projection.items() if v == 1}\n            exclude = {k for k, v in projection.items() if v == 0}\n            if include:\n                all_docs = [{k: d[k] for k in include if k in d} for d in all_docs]\n            elif exclude:\n                all_docs = [{k: v for k, v in d.items() if k not in exclude} for d in all_docs]\n\n        return {\"database\": database, \"collection\": collection, \"documents\": all_docs, \"count\": len(all_docs)}\n\n    def aggregate(self, database: str, collection: str, pipeline: List[Dict[str, Any]]) -> dict:\n        \"\"\"Execute an aggregation pipeline against a collection.\"\"\"\n        key = f\"{database}.{collection}\"\n        docs = list(self.documents.get(key, []))\n\n        for stage in pipeline:\n            if \"$match\" in stage:\n                match = stage[\"$match\"]\n                docs = [d for d in docs if all(d.get(k) == v for k, v in match.items())]\n            elif \"$sort\" in stage:\n                sort = stage[\"$sort\"]\n                for field, direction in reversed(list(sort.items())):\n                    docs = sorted(docs, key=lambda d: d.get(field, None), reverse=(direction == -1))\n            elif \"$limit\" in stage:\n                docs = docs[:stage[\"$limit\"]]\n            elif \"$skip\" in stage:\n                docs = docs[stage[\"$skip\"]:]\n            elif \"$project\" in stage:\n                proj = stage[\"$project\"]\n                include = {k for k, v in proj.items() if v == 1}\n                exclude = {k for k, v in proj.items() if v == 0}\n                if include:\n                    docs = [{k: d[k] for k in include if k in d} for d in docs]\n                elif exclude:\n                    docs = [{k: v for k, v in d.items() if k not in exclude} for d in docs]\n            elif \"$count\" in stage:\n                field = stage[\"$count\"]\n                docs = [{field: len(docs)}]\n            elif \"$group\" in stage:\n                group = stage[\"$group\"]\n                group_id_field = group.get(\"_id\")\n                groups: Dict[Any, Dict[str, Any]] = {}\n                for d in docs:\n                    gid = d.get(group_id_field.lstrip(\"$\"), None) if isinstance(group_id_field, str) and group_id_field.startswith(\"$\") else group_id_field\n                    if gid not in groups:\n                        groups[gid] = {\"_id\": gid}\n                    for out_field, expr in group.items():\n                        if out_field == \"_id\":\n                            continue\n                        if isinstance(expr, dict):\n                            if \"$sum\" in expr:\n                                val = expr[\"$sum\"]\n                                inc = d.get(val.lstrip(\"$\"), 0) if isinstance(val, str) and val.startswith(\"$\") else val\n                                groups[gid][out_field] = groups[gid].get(out_field, 0) + inc\n                            elif \"$avg\" in expr:\n                                val = expr[\"$avg\"]\n                                inc = d.get(val.lstrip(\"$\"), 0) if isinstance(val, str) and val.startswith(\"$\") else 0\n                                prev = groups[gid].get(f\"__avg_sum_{out_field}\", 0)\n                                cnt = groups[gid].get(f\"__avg_cnt_{out_field}\", 0)\n                                groups[gid][f\"__avg_sum_{out_field}\"] = prev + inc\n                                groups[gid][f\"__avg_cnt_{out_field}\"] = cnt + 1\n                                groups[gid][out_field] = groups[gid][f\"__avg_sum_{out_field}\"] / groups[gid][f\"__avg_cnt_{out_field}\"]\n                            elif \"$push\" in expr:\n                                val = expr[\"$push\"]\n                                item = d.get(val.lstrip(\"$\"), None) if isinstance(val, str) and val.startswith(\"$\") else val\n                                groups[gid].setdefault(out_field, []).append(item)\n                            elif \"$first\" in expr:\n                                val = expr[\"$first\"]\n                                if out_field not in groups[gid]:\n                                    groups[gid][out_field] = d.get(val.lstrip(\"$\"), None) if isinstance(val, str) and val.startswith(\"$\") else val\n                docs = []\n                for g in groups.values():\n                    docs.append({k: v for k, v in g.items() if not k.startswith(\"__avg_\")})\n\n        return {\"database\": database, \"collection\": collection, \"results\": docs, \"count\": len(docs)}\n\n    def insert_one(self, database: str, collection: str, document: Dict[str, Any]) -> dict:\n        \"\"\"Insert a single document into a collection.\"\"\"\n        key = f\"{database}.{collection}\"\n        if key not in self.documents:\n            self.documents[key] = []\n\n        db_names = [d[\"name\"] for d in self.databases]\n        if database not in db_names:\n            self.databases.append({\"name\": database, \"sizeOnDisk\": 0, \"empty\": False})\n\n        if database not in self.collections:\n            self.collections[database] = []\n        col_names = [c[\"name\"] for c in self.collections[database]]\n        if collection not in col_names:\n            self.collections[database].append({\"name\": collection, \"type\": \"collection\", \"options\": {}})\n\n        if \"_id\" not in document:\n            document = dict(document)\n            document[\"_id\"] = f\"gen_{self.next_id_counter}\"\n            self.next_id_counter += 1\n\n        self.documents[key].append(document)\n        return {\"acknowledged\": True, \"inserted_id\": str(document[\"_id\"]), \"document\": document}\n\n\n# Section 3: MCP Tools\n\nmcp = FastMCP(name=\"MongoDBServer\")\napi = MongoDBAPI()\n\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the MongoDB API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching MongoDBScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current MongoDB state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef list_databases() -> dict:\n    \"\"\"\n    List all MongoDB databases visible to the current connection.\n\n    Returns:\n        databases (list): List of databases with name (str), sizeOnDisk (int), and empty (bool).\n    \"\"\"\n    try:\n        return api.list_databases()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef list_collections(database: str) -> dict:\n    \"\"\"\n    List all collections within a specified MongoDB database.\n\n    Args:\n        database (str): The name of the MongoDB database whose collections will be listed.\n\n    Returns:\n        database (str): The database name provided in the request.\n        collections (list): List of collections with name (str), type (str), and options (dict).\n    \"\"\"\n    try:\n        if not database or not isinstance(database, str):\n            raise ValueError(\"database must be a non-empty string\")\n        return api.list_collections(database)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef find(\n    database: str,\n    collection: str,\n    filter: Optional[dict] = None,\n    projection: Optional[dict] = None,\n    sort: Optional[dict] = None,\n    limit: int = 10,\n    skip: int = 0,\n) -> dict:\n    \"\"\"\n    Query documents in a MongoDB collection with optional filtering, projection, sorting, and pagination.\n\n    Args:\n        database (str): The name of the MongoDB database containing the collection to query.\n        collection (str): The name of the MongoDB collection to query.\n        filter (dict): [Optional] MongoDB query predicate to filter documents. Defaults to {} (match all).\n        projection (dict): [Optional] Projection specification to include or exclude fields.\n        sort (dict): [Optional] Sort specification keyed by field names, with values 1 or -1.\n        limit (int): [Optional] Maximum number of documents to return. Defaults to 10.\n        skip (int): [Optional] Number of matching documents to skip. Defaults to 0.\n\n    Returns:\n        database (str): The database name provided in the request.\n        collection (str): The collection name provided in the request.\n        documents (list): List of documents matching the query criteria.\n        count (int): Number of documents returned in this response.\n    \"\"\"\n    try:\n        if not database or not isinstance(database, str):\n            raise ValueError(\"database must be a non-empty string\")\n        if not collection or not isinstance(collection, str):\n            raise ValueError(\"collection must be a non-empty string\")\n        return api.find(database, collection, filter or {}, projection, sort, limit, skip)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef aggregate(database: str, collection: str, pipeline: list) -> dict:\n    \"\"\"\n    Execute an aggregation pipeline against a MongoDB collection.\n\n    Args:\n        database (str): The name of the MongoDB database containing the collection to aggregate.\n        collection (str): The name of the MongoDB collection to aggregate.\n        pipeline (list): Ordered list of MongoDB aggregation pipeline stages.\n\n    Returns:\n        database (str): The database name provided in the request.\n        collection (str): The collection name provided in the request.\n        results (list): List of documents produced by the aggregation pipeline.\n        count (int): Number of documents returned by the aggregation pipeline.\n    \"\"\"\n    try:\n        if not database or not isinstance(database, str):\n            raise ValueError(\"database must be a non-empty string\")\n        if not collection or not isinstance(collection, str):\n            raise ValueError(\"collection must be a non-empty string\")\n        if not isinstance(pipeline, list):\n            raise ValueError(\"pipeline must be a list\")\n        return api.aggregate(database, collection, pipeline)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef insert_one(database: str, collection: str, document: dict) -> dict:\n    \"\"\"\n    Insert a single document into a MongoDB collection.\n\n    Args:\n        database (str): The name of the MongoDB database containing the collection to insert into.\n        collection (str): The name of the MongoDB collection to insert the document into.\n        document (dict): The JSON document to insert into the collection.\n\n    Returns:\n        acknowledged (bool): True if the insert operation was acknowledged by the server.\n        inserted_id (str): The unique identifier (_id) assigned to the inserted document.\n        document (dict): The full document as inserted, including the generated _id if applicable.\n    \"\"\"\n    try:\n        if not database or not isinstance(database, str):\n            raise ValueError(\"database must be a non-empty string\")\n        if not collection or not isinstance(collection, str):\n            raise ValueError(\"collection must be a non-empty string\")\n        if not isinstance(document, dict):\n            raise ValueError(\"document must be a dictionary\")\n        return api.insert_one(database, collection, document)\n    except Exception as e:\n        raise e\n\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n```\n",
+      "timestamp": "2026-04-17T10:01:28.556569",
+      "revision_number": 1
+    },
+    {
+      "version": 2,
+      "code": "\n\n```python\nfrom pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\nimport copy\n\n# Section 1: Schema\n\nclass DatabaseInfo(BaseModel):\n    name: str = Field(..., description=\"Name of the database.\")\n    sizeOnDisk: int = Field(..., ge=0, description=\"Approximate total size of the database on disk in bytes.\")\n    empty: bool = Field(..., description=\"True if the database contains no collections.\")\n\nclass CollectionInfo(BaseModel):\n    name: str = Field(..., description=\"Name of the collection.\")\n    type: str = Field(..., description=\"Collection type (e.g., 'collection' or 'view').\")\n    options: Dict[str, Any] = Field(default={}, description=\"Additional collection options.\")\n\nclass Document(BaseModel):\n    id: str = Field(..., description=\"Document unique identifier (_id as string).\")\n    data: Dict[str, Any] = Field(default={}, description=\"Document fields.\")\n\nclass MongoDBScenario(BaseModel):\n    databases: List[Dict[str, Any]] = Field(default=[\n        {\"name\": \"admin\", \"sizeOnDisk\": 40960, \"empty\": False},\n        {\"name\": \"config\", \"sizeOnDisk\": 73728, \"empty\": False},\n        {\"name\": \"local\", \"sizeOnDisk\": 40960, \"empty\": False},\n        {\"name\": \"testdb\", \"sizeOnDisk\": 204800, \"empty\": False},\n        {\"name\": \"analyticsdb\", \"sizeOnDisk\": 512000, \"empty\": False},\n        {\"name\": \"logsdb\", \"sizeOnDisk\": 1048576, \"empty\": False},\n    ], description=\"List of databases with metadata.\")\n    collections: Dict[str, List[Dict[str, Any]]] = Field(default={\n        \"testdb\": [\n            {\"name\": \"users\", \"type\": \"collection\", \"options\": {}},\n            {\"name\": \"orders\", \"type\": \"collection\", \"options\": {}},\n            {\"name\": \"products\", \"type\": \"collection\", \"options\": {}},\n        ],\n        \"analyticsdb\": [\n            {\"name\": \"events\", \"type\": \"collection\", \"options\": {}},\n            {\"name\": \"sessions\", \"type\": \"collection\", \"options\": {}},\n        ],\n        \"logsdb\": [\n            {\"name\": \"applogs\", \"type\": \"collection\", \"options\": {}},\n        ],\n    }, description=\"Collections keyed by database name.\")\n    documents: Dict[str, List[Dict[str, Any]]] = Field(default={\n        \"testdb.users\": [\n            {\"_id\": \"u001\", \"name\": \"Alice\", \"email\": \"alice@example.com\", \"age\": 30, \"role\": \"admin\"},\n            {\"_id\": \"u002\", \"name\": \"Bob\", \"email\": \"bob@example.com\", \"age\": 25, \"role\": \"user\"},\n            {\"_id\": \"u003\", \"name\": \"Carol\", \"email\": \"carol@example.com\", \"age\": 35, \"role\": \"user\"},\n        ],\n        \"testdb.orders\": [\n            {\"_id\": \"o001\", \"userId\": \"u001\", \"product\": \"Laptop\", \"amount\": 1200.0, \"status\": \"shipped\"},\n            {\"_id\": \"o002\", \"userId\": \"u002\", \"product\": \"Phone\", \"amount\": 800.0, \"status\": \"pending\"},\n            {\"_id\": \"o003\", \"userId\": \"u001\", \"product\": \"Tablet\", \"amount\": 500.0, \"status\": \"delivered\"},\n        ],\n        \"testdb.products\": [\n            {\"_id\": \"p001\", \"name\": \"Laptop\", \"price\": 1200.0, \"stock\": 50, \"category\": \"electronics\"},\n            {\"_id\": \"p002\", \"name\": \"Phone\", \"price\": 800.0, \"stock\": 100, \"category\": \"electronics\"},\n            {\"_id\": \"p003\", \"name\": \"Tablet\", \"price\": 500.0, \"stock\": 75, \"category\": \"electronics\"},\n        ],\n        \"analyticsdb.events\": [\n            {\"_id\": \"e001\", \"type\": \"click\", \"userId\": \"u001\", \"timestamp\": \"2026-04-17T00:00:00\"},\n            {\"_id\": \"e002\", \"type\": \"view\", \"userId\": \"u002\", \"timestamp\": \"2026-04-17T00:01:00\"},\n        ],\n        \"analyticsdb.sessions\": [\n            {\"_id\": \"s001\", \"userId\": \"u001\", \"duration\": 120, \"pages\": 5},\n        ],\n        \"logsdb.applogs\": [\n            {\"_id\": \"l001\", \"level\": \"INFO\", \"message\": \"Server started\", \"timestamp\": \"2026-04-17T00:00:00\"},\n            {\"_id\": \"l002\", \"level\": \"ERROR\", \"message\": \"Connection timeout\", \"timestamp\": \"2026-04-17T00:05:00\"},\n        ],\n    }, description=\"Documents keyed by 'database.collection'.\")\n    next_id_counter: int = Field(default=1000, ge=0, description=\"Counter for generating new document IDs.\")\n\nScenario_Schema = [DatabaseInfo, CollectionInfo, Document, MongoDBScenario]\n\n\n# Section 2: Class\n\nclass MongoDBAPI:\n    def __init__(self):\n        self.databases: List[Dict[str, Any]] = []\n        self.collections: Dict[str, List[Dict[str, Any]]] = {}\n        self.documents: Dict[str, List[Dict[str, Any]]] = {}\n        self.next_id_counter: int = 1000\n\n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance, fully replacing all prior state.\"\"\"\n        model = MongoDBScenario(**scenario)\n        # Use deepcopy to ensure complete isolation from scenario input and prior state\n        self.databases = copy.deepcopy([dict(d) for d in model.databases])\n        self.collections = copy.deepcopy({k: [dict(c) for c in v] for k, v in model.collections.items()})\n        self.documents = copy.deepcopy({k: [dict(d) for d in v] for k, v in model.documents.items()})\n        self.next_id_counter = model.next_id_counter\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"databases\": copy.deepcopy(self.databases),\n            \"collections\": copy.deepcopy(self.collections),\n            \"documents\": copy.deepcopy(self.documents),\n            \"next_id_counter\": self.next_id_counter,\n        }\n\n    def list_databases(self) -> dict:\n        return {\"databases\": self.databases}\n\n    def list_collections(self, database: str) -> dict:\n        cols = self.collections.get(database, [])\n        return {\"database\": database, \"collections\": cols}\n\n    def find(self, database: str, collection: str, filter: Optional[Dict[str, Any]], projection: Optional[Dict[str, Any]], sort: Optional[Dict[str, Any]], limit: int, skip: int) -> dict:\n        key = f\"{database}.{collection}\"\n        all_docs = list(self.documents.get(key, []))\n\n        if filter:\n            all_docs = [d for d in all_docs if all(d.get(k) == v for k, v in filter.items())]\n\n        if sort:\n            for field, direction in reversed(list(sort.items())):\n                all_docs = sorted(all_docs, key=lambda d, f=field: d.get(f, None), reverse=(direction == -1))\n\n        all_docs = all_docs[skip:skip + limit]\n\n        if projection:\n            include = {k for k, v in projection.items() if v == 1}\n            exclude = {k for k, v in projection.items() if v == 0}\n            if include:\n                all_docs = [{k: d[k] for k in include if k in d} for d in all_docs]\n            elif exclude:\n                all_docs = [{k: v for k, v in d.items() if k not in exclude} for d in all_docs]\n\n        return {\"database\": database, \"collection\": collection, \"documents\": all_docs, \"count\": len(all_docs)}\n\n    def aggregate(self, database: str, collection: str, pipeline: List[Dict[str, Any]]) -> dict:\n        key = f\"{database}.{collection}\"\n        docs = list(self.documents.get(key, []))\n\n        for stage in pipeline:\n            if \"$match\" in stage:\n                match = stage[\"$match\"]\n                docs = [d for d in docs if all(d.get(k) == v for k, v in match.items())]\n            elif \"$sort\" in stage:\n                sort = stage[\"$sort\"]\n                for field, direction in reversed(list(sort.items())):\n                    docs = sorted(docs, key=lambda d, f=field: d.get(f, None), reverse=(direction == -1))\n            elif \"$limit\" in stage:\n                docs = docs[:stage[\"$limit\"]]\n            elif \"$skip\" in stage:\n                docs = docs[stage[\"$skip\"]:]\n            elif \"$project\" in stage:\n                proj = stage[\"$project\"]\n                include = {k for k, v in proj.items() if v == 1}\n                exclude = {k for k, v in proj.items() if v == 0}\n                if include:\n                    docs = [{k: d[k] for k in include if k in d} for d in docs]\n                elif exclude:\n                    docs = [{k: v for k, v in d.items() if k not in exclude} for d in docs]\n            elif \"$count\" in stage:\n                field = stage[\"$count\"]\n                docs = [{field: len(docs)}]\n            elif \"$group\" in stage:\n                group = stage[\"$group\"]\n                group_id_field = group.get(\"_id\")\n                groups: Dict[Any, Dict[str, Any]] = {}\n                for d in docs:\n                    gid = d.get(group_id_field.lstrip(\"$\"), None) if isinstance(group_id_field, str) and group_id_field.startswith(\"$\") else group_id_field\n                    if gid not in groups:\n                        groups[gid] = {\"_id\": gid}\n                    for out_field, expr in group.items():\n                        if out_field == \"_id\":\n                            continue\n                        if isinstance(expr, dict):\n                            if \"$sum\" in expr:\n                                val = expr[\"$sum\"]\n                                inc = d.get(val.lstrip(\"$\"), 0) if isinstance(val, str) and val.startswith(\"$\") else val\n                                groups[gid][out_field] = groups[gid].get(out_field, 0) + inc\n                            elif \"$avg\" in expr:\n                                val = expr[\"$avg\"]\n                                inc = d.get(val.lstrip(\"$\"), 0) if isinstance(val, str) and val.startswith(\"$\") else 0\n                                prev = groups[gid].get(f\"__avg_sum_{out_field}\", 0)\n                                cnt = groups[gid].get(f\"__avg_cnt_{out_field}\", 0)\n                                groups[gid][f\"__avg_sum_{out_field}\"] = prev + inc\n                                groups[gid][f\"__avg_cnt_{out_field}\"] = cnt + 1\n                                groups[gid][out_field] = groups[gid][f\"__avg_sum_{out_field}\"] / groups[gid][f\"__avg_cnt_{out_field}\"]\n                            elif \"$push\" in expr:\n                                val = expr[\"$push\"]\n                                item = d.get(val.lstrip(\"$\"), None) if isinstance(val, str) and val.startswith(\"$\") else val\n                                groups[gid].setdefault(out_field, []).append(item)\n                            elif \"$first\" in expr:\n                                val = expr[\"$first\"]\n                                if out_field not in groups[gid]:\n                                    groups[gid][out_field] = d.get(val.lstrip(\"$\"), None) if isinstance(val, str) and val.startswith(\"$\") else val\n                docs = [{k: v for k, v in g.items() if not k.startswith(\"__avg_\")} for g in groups.values()]\n\n        return {\"database\": database, \"collection\": collection, \"results\": docs, \"count\": len(docs)}\n\n    def insert_one(self, database: str, collection: str, document: Dict[str, Any]) -> dict:\n        key = f\"{database}.{collection}\"\n        if key not in self.documents:\n            self.documents[key] = []\n\n        db_names = [d[\"name\"] for d in self.databases]\n        if database not in db_names:\n            self.databases.append({\"name\": database, \"sizeOnDisk\": 0, \"empty\": False})\n\n        if database not in self.collections:\n            self.collections[database] = []\n        col_names = [c[\"name\"] for c in self.collections[database]]\n        if collection not in col_names:\n            self.collections[database].append({\"name\": collection, \"type\": \"collection\", \"options\": {}})\n\n        document = copy.deepcopy(document)\n        if \"_id\" not in document:\n            document[\"_id\"] = f\"gen_{self.next_id_counter}\"\n            self.next_id_counter += 1\n\n        self.documents[key].append(document)\n        return {\"acknowledged\": True, \"inserted_id\": str(document[\"_id\"]), \"document\": document}\n\n\n# Section 3: MCP Tools\n\nmcp = FastMCP(name=\"MongoDBServer\")\napi = MongoDBAPI()\n\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the MongoDB API.\n\n    Args:\n        scenario (dict): Scenario dictionary matching MongoDBScenario schema.\n\n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current MongoDB state as scenario dictionary.\n\n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef list_databases() -> dict:\n    \"\"\"\n    List all MongoDB databases visible to the current connection.\n\n    Returns:\n        databases (list): List of databases with name (str), sizeOnDisk (int), and empty (bool).\n    \"\"\"\n    try:\n        return api.list_databases()\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef list_collections(database: str) -> dict:\n    \"\"\"\n    List all collections within a specified MongoDB database.\n\n    Args:\n        database (str): The name of the MongoDB database whose collections will be listed.\n\n    Returns:\n        database (str): The database name provided in the request.\n        collections (list): List of collections with name (str), type (str), and options (dict).\n    \"\"\"\n    try:\n        if not database or not isinstance(database, str):\n            raise ValueError(\"database must be a non-empty string\")\n        return api.list_collections(database)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef find(\n    database: str,\n    collection: str,\n    filter: Optional[dict] = None,\n    projection: Optional[dict] = None,\n    sort: Optional[dict] = None,\n    limit: int = 10,\n    skip: int = 0,\n) -> dict:\n    \"\"\"\n    Query documents in a MongoDB collection with optional filtering, projection, sorting, and pagination.\n\n    Args:\n        database (str): The name of the MongoDB database containing the collection to query.\n        collection (str): The name of the MongoDB collection to query.\n        filter (dict): [Optional] MongoDB query predicate to filter documents. Defaults to {} (match all).\n        projection (dict): [Optional] Projection specification to include or exclude fields.\n        sort (dict): [Optional] Sort specification keyed by field names, with values 1 or -1.\n        limit (int): [Optional] Maximum number of documents to return. Defaults to 10.\n        skip (int): [Optional] Number of matching documents to skip. Defaults to 0.\n\n    Returns:\n        database (str): The database name provided in the request.\n        collection (str): The collection name provided in the request.\n        documents (list): List of documents matching the query criteria.\n        count (int): Number of documents returned in this response.\n    \"\"\"\n    try:\n        if not database or not isinstance(database, str):\n            raise ValueError(\"database must be a non-empty string\")\n        if not collection or not isinstance(collection, str):\n            raise ValueError(\"collection must be a non-empty string\")\n        return api.find(database, collection, filter or {}, projection, sort, limit, skip)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef aggregate(database: str, collection: str, pipeline: list) -> dict:\n    \"\"\"\n    Execute an aggregation pipeline against a MongoDB collection.\n\n    Args:\n        database (str): The name of the MongoDB database containing the collection to aggregate.\n        collection (str): The name of the MongoDB collection to aggregate.\n        pipeline (list): Ordered list of MongoDB aggregation pipeline stages.\n\n    Returns:\n        database (str): The database name provided in the request.\n        collection (str): The collection name provided in the request.\n        results (list): List of documents produced by the aggregation pipeline.\n        count (int): Number of documents returned by the aggregation pipeline.\n    \"\"\"\n    try:\n        if not database or not isinstance(database, str):\n            raise ValueError(\"database must be a non-empty string\")\n        if not collection or not isinstance(collection, str):\n            raise ValueError(\"collection must be a non-empty string\")\n        if not isinstance(pipeline, list):\n            raise ValueError(\"pipeline must be a list\")\n        return api.aggregate(database, collection, pipeline)\n    except Exception as e:\n        raise e\n\n\n@mcp.tool()\ndef insert_one(database: str, collection: str, document: dict) -> dict:\n    \"\"\"\n    Insert a single document into a MongoDB collection.\n\n    Args:\n        database (str): The name of the MongoDB database containing the collection to insert into.\n        collection (str): The name of the MongoDB collection to insert the document into.\n        document (dict): The JSON document to insert into the collection.\n\n    Returns:\n        acknowledged (bool): True if the insert operation was acknowledged by the server.\n        inserted_id (str): The unique identifier (_id) assigned to the inserted document.\n        document (dict): The full document as inserted, including the generated _id if applicable.\n    \"\"\"\n    try:\n        if not database or not isinstance(database, str):\n            raise ValueError(\"database must be a non-empty string\")\n        if not collection or not isinstance(collection, str):\n            raise ValueError(\"collection must be a non-empty string\")\n        if not isinstance(document, dict):\n            raise ValueError(\"document must be a dictionary\")\n        return api.insert_one(database, collection, document)\n    except Exception as e:\n        raise e\n\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()\n```\n\n",
+      "timestamp": "2026-04-17T10:01:28.556572",
+      "revision_number": 2
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Minimal setup with a single database and one collection containing two documents",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "databases": [
+          {
+            "name": "admin",
+            "sizeOnDisk": 40960,
+            "empty": false
+          },
+          {
+            "name": "mydb",
+            "sizeOnDisk": 102400,
+            "empty": false
+          }
+        ],
+        "collections": {
+          "mydb": [
+            {
+              "name": "items",
+              "type": "collection",
+              "options": {}
+            }
+          ]
+        },
+        "documents": {
+          "mydb.items": [
+            {
+              "_id": "i001",
+              "name": "Widget",
+              "price": 9.99
+            },
+            {
+              "_id": "i002",
+              "name": "Gadget",
+              "price": 19.99
+            }
+          ]
+        },
+        "next_id_counter": 1000
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Two databases with multiple collections, mixed document types, and a view collection",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "databases": [
+          {
+            "name": "admin",
+            "sizeOnDisk": 40960,
+            "empty": false
+          },
+          {
+            "name": "shopdb",
+            "sizeOnDisk": 204800,
+            "empty": false
+          },
+          {
+            "name": "logsdb",
+            "sizeOnDisk": 81920,
+            "empty": false
+          }
+        ],
+        "collections": {
+          "shopdb": [
+            {
+              "name": "customers",
+              "type": "collection",
+              "options": {}
+            },
+            {
+              "name": "orders",
+              "type": "collection",
+              "options": {}
+            },
+            {
+              "name": "active_orders_view",
+              "type": "view",
+              "options": {
+                "viewOn": "orders",
+                "pipeline": [
+                  {
+                    "$match": {
+                      "status": "active"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "logsdb": [
+            {
+              "name": "applogs",
+              "type": "collection",
+              "options": {}
+            }
+          ]
+        },
+        "documents": {
+          "shopdb.customers": [
+            {
+              "_id": "c001",
+              "name": "Alice Smith",
+              "email": "alice@shop.com",
+              "tier": "gold"
+            },
+            {
+              "_id": "c002",
+              "name": "Bob Jones",
+              "email": "bob@shop.com",
+              "tier": "silver"
+            },
+            {
+              "_id": "c003",
+              "name": "Carol White",
+              "email": "carol@shop.com",
+              "tier": "bronze"
+            }
+          ],
+          "shopdb.orders": [
+            {
+              "_id": "o001",
+              "customerId": "c001",
+              "total": 250.0,
+              "status": "active"
+            },
+            {
+              "_id": "o002",
+              "customerId": "c002",
+              "total": 89.5,
+              "status": "completed"
+            },
+            {
+              "_id": "o003",
+              "customerId": "c001",
+              "total": 0.0,
+              "status": "cancelled"
+            }
+          ],
+          "logsdb.applogs": [
+            {
+              "_id": "l001",
+              "level": "INFO",
+              "message": "App boot",
+              "timestamp": "2026-04-17T08:00:00"
+            },
+            {
+              "_id": "l002",
+              "level": "WARN",
+              "message": "High memory usage",
+              "timestamp": "2026-04-17T08:30:00"
+            }
+          ]
+        },
+        "next_id_counter": 2000
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Full multi-database setup with analytics, user management, and logs; tests cross-collection queries and varied document shapes",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "databases": [
+          {
+            "name": "admin",
+            "sizeOnDisk": 40960,
+            "empty": false
+          },
+          {
+            "name": "config",
+            "sizeOnDisk": 73728,
+            "empty": false
+          },
+          {
+            "name": "userdb",
+            "sizeOnDisk": 204800,
+            "empty": false
+          },
+          {
+            "name": "analyticsdb",
+            "sizeOnDisk": 512000,
+            "empty": false
+          },
+          {
+            "name": "logsdb",
+            "sizeOnDisk": 1048576,
+            "empty": false
+          },
+          {
+            "name": "emptydb",
+            "sizeOnDisk": 0,
+            "empty": true
+          }
+        ],
+        "collections": {
+          "userdb": [
+            {
+              "name": "users",
+              "type": "collection",
+              "options": {}
+            },
+            {
+              "name": "sessions",
+              "type": "collection",
+              "options": {}
+            },
+            {
+              "name": "roles",
+              "type": "collection",
+              "options": {}
+            }
+          ],
+          "analyticsdb": [
+            {
+              "name": "events",
+              "type": "collection",
+              "options": {}
+            },
+            {
+              "name": "funnels",
+              "type": "collection",
+              "options": {}
+            }
+          ],
+          "logsdb": [
+            {
+              "name": "applogs",
+              "type": "collection",
+              "options": {}
+            },
+            {
+              "name": "audits",
+              "type": "collection",
+              "options": {}
+            }
+          ]
+        },
+        "documents": {
+          "userdb.users": [
+            {
+              "_id": "u001",
+              "name": "Alice",
+              "email": "alice@example.com",
+              "age": 30,
+              "role": "admin",
+              "active": true
+            },
+            {
+              "_id": "u002",
+              "name": "Bob",
+              "email": "bob@example.com",
+              "age": 25,
+              "role": "user",
+              "active": true
+            },
+            {
+              "_id": "u003",
+              "name": "Carol",
+              "email": "carol@example.com",
+              "age": 35,
+              "role": "user",
+              "active": false
+            },
+            {
+              "_id": "u004",
+              "name": "Dave",
+              "email": "dave@example.com",
+              "age": 28,
+              "role": "moderator",
+              "active": true
+            },
+            {
+              "_id": "u005",
+              "name": "Eve",
+              "email": "eve@example.com",
+              "age": 22,
+              "role": "user",
+              "active": true
+            }
+          ],
+          "userdb.sessions": [
+            {
+              "_id": "s001",
+              "userId": "u001",
+              "token": "tok_abc",
+              "expires": "2026-04-18T00:00:00"
+            },
+            {
+              "_id": "s002",
+              "userId": "u002",
+              "token": "tok_def",
+              "expires": "2026-04-17T12:00:00"
+            }
+          ],
+          "userdb.roles": [
+            {
+              "_id": "r001",
+              "name": "admin",
+              "permissions": [
+                "read",
+                "write",
+                "delete"
+              ]
+            },
+            {
+              "_id": "r002",
+              "name": "user",
+              "permissions": [
+                "read"
+              ]
+            },
+            {
+              "_id": "r003",
+              "name": "moderator",
+              "permissions": [
+                "read",
+                "write"
+              ]
+            }
+          ],
+          "analyticsdb.events": [
+            {
+              "_id": "e001",
+              "type": "click",
+              "userId": "u001",
+              "page": "/home",
+              "timestamp": "2026-04-17T00:00:00"
+            },
+            {
+              "_id": "e002",
+              "type": "view",
+              "userId": "u002",
+              "page": "/product/1",
+              "timestamp": "2026-04-17T00:01:00"
+            },
+            {
+              "_id": "e003",
+              "type": "purchase",
+              "userId": "u003",
+              "page": "/checkout",
+              "timestamp": "2026-04-17T00:05:00"
+            }
+          ],
+          "analyticsdb.funnels": [
+            {
+              "_id": "f001",
+              "name": "signup",
+              "steps": [
+                "view",
+                "register",
+                "confirm"
+              ],
+              "conversionRate": 0.42
+            }
+          ],
+          "logsdb.applogs": [
+            {
+              "_id": "l001",
+              "level": "INFO",
+              "message": "Server started",
+              "timestamp": "2026-04-17T00:00:00"
+            },
+            {
+              "_id": "l002",
+              "level": "ERROR",
+              "message": "DB connection lost",
+              "timestamp": "2026-04-17T00:10:00"
+            },
+            {
+              "_id": "l003",
+              "level": "INFO",
+              "message": "DB reconnected",
+              "timestamp": "2026-04-17T00:10:05"
+            }
+          ],
+          "logsdb.audits": [
+            {
+              "_id": "a001",
+              "userId": "u001",
+              "action": "DELETE",
+              "target": "u003",
+              "timestamp": "2026-04-17T01:00:00"
+            }
+          ]
+        },
+        "next_id_counter": 5000
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Empty databases list and empty collections/documents — tests tool behavior with a completely bare state",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "databases": [],
+        "collections": {},
+        "documents": {},
+        "next_id_counter": 0
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 1,
+      "failed_scenarios": 3,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": false,
+          "errors": [
+            {
+              "type": "State Inconsistency - CRITICAL",
+              "location": "load_scenario / MongoDBAPI.load_scenario",
+              "details": "load_scenario reported success but did not actually load the scenario data. The scenario contained databases 'admin' and 'mydb' with collections and documents (i001, i002), but after loading, list_databases returned 6 different databases (admin, config, local, testdb, analyticsdb, logsdb) and mydb.items was empty. The save_scenario confirms the original scenario documents (i001, i002) are missing and were replaced by pre-existing data.",
+              "expected_vs_actual": "Expected: databases=['admin', 'mydb'], collections={'mydb': ['items']}, documents={'mydb.items': [{'_id': 'i001', ...}, {'_id': 'i002', ...}]}. Actual: databases=['admin', 'config', 'local', 'testdb', 'analyticsdb', 'logsdb', 'mydb', 'shopdb'], mydb.items was empty initially, then contained only the inserted document 'gen_1000'. Original scenario documents i001 and i002 never existed in the loaded state.",
+              "root_cause": "The MongoDBAPI.load_scenario() method either (1) merges scenario data with pre-existing data instead of replacing it, (2) fails to properly load the scenario but doesn't raise an error, or (3) the API instance was not properly initialized/isolated for this scenario. The success message was returned despite the data not being loaded.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "list_databases",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_collections",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "find",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "aggregate",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "insert_one",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": false,
+              "error": "State inconsistency detected: loaded scenario data not preserved"
+            }
+          },
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "type": "State inconsistency / Scenario loading failure",
+              "location": "load_scenario → list_collections (shopdb), find (shopdb.customers, shopdb.orders)",
+              "details": "The scenario data included shopdb with customers, orders collections and 3 customers + 3 orders documents. However, list_collections('shopdb') returns empty array, and find() on shopdb.customers/shopdb.orders returns 0 documents. Meanwhile, logsdb.applogs works correctly (find returns documents).",
+              "expected_vs_actual": "Expected: shopdb should have 3 collections (customers, orders, active_orders_view) and documents. Actual: shopdb collections list is empty, documents not retrievable.",
+              "root_cause": "The load_scenario function reported success but did not properly load the shopdb database state. Possible causes: (1) database name collision with pre-existing state, (2) parsing error in the documents key format 'shopdb.customers', (3) the API maintains persistent state across scenarios that wasn't cleared.",
+              "expected_error": false
+            },
+            {
+              "type": "State pollution",
+              "location": "save_scenario",
+              "details": "The saved scenario contains databases not in the original scenario (config, local, testdb, analyticsdb, mydb) and is missing the shopdb.orders collection and all original shopdb documents.",
+              "expected_vs_actual": "Expected: Scenario should only contain admin, shopdb, logsdb with their original data plus our inserted documents. Actual: Contains multiple unrelated databases with different data.",
+              "root_cause": "The MongoDBAPI appears to maintain persistent state across different client sessions or scenario loads. The load_scenario function may merge rather than replace state, or the server is using a shared singleton instance.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "list_databases",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_collections",
+                "passed": false,
+                "error": "Inconsistent behavior: shopdb returns empty collections list when collections were defined in scenario; empty database validation correctly rejected"
+              },
+              {
+                "tool_name": "find",
+                "passed": false,
+                "error": "Documents not found: shopdb.customers and shopdb.orders return empty results despite documents being defined in scenario; empty database validation correctly rejected"
+              },
+              {
+                "tool_name": "aggregate",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "insert_one",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": false,
+              "error": "State inconsistency: Saved scenario does not match expected state. Original shopdb data (customers, orders) was not properly loaded. The inserted documents (gen_1001, gen_1002) are present but scenario data is missing."
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "type": "State Inconsistency",
+              "location": "save_scenario",
+              "details": "The saved scenario returned a completely different state than what was loaded. Original had databases: admin, config, userdb, analyticsdb, logsdb, emptydb with userdb containing users, sessions, roles collections. Saved returned: admin, config, local, testdb, analyticsdb, logsdb, mydb, shopdb with testdb containing users/orders/products.",
+              "expected_vs_actual": "Expected scenario with userdb.users containing 5 users, userdb.sessions with 2 sessions, userdb.roles with 3 roles. Instead got testdb.users with different 3 users, no sessions, no roles. The entire userdb structure was replaced.",
+              "root_cause": "The client_id isolation mechanism is not working properly. The load_scenario appears to execute successfully but the state is not being maintained per client. The save_scenario is returning a 'default' or shared state instead of the client-specific scenario that was loaded. This indicates a failure in the API's state management or session isolation.",
+              "expected_error": false
+            },
+            {
+              "type": "Data Loss",
+              "location": "find (userdb)",
+              "details": "Queries to userdb.users, userdb.sessions, and userdb.roles returned empty results despite the scenario containing 5 users, 2 sessions, and 3 roles respectively.",
+              "expected_vs_actual": "Expected 5 user documents in userdb.users but got 0. Expected 2 sessions in userdb.sessions but got 0. Expected 3 roles in userdb.roles but got 0.",
+              "root_cause": "The userdb collections appear to be empty after loading. This could be because: (1) the scenario data is not being properly parsed/loaded into the API's internal state, (2) there's a naming mismatch between the scenario structure and API's expected format, or (3) the API maintains separate default data that overrides the loaded scenario.",
+              "expected_error": false
+            },
+            {
+              "type": "Partial Data Mismatch",
+              "location": "find (analyticsdb.events, logsdb.applogs)",
+              "details": "analyticsdb.events returned only 2 of 3 documents (missing e003 purchase event). logsdb.applogs returned 3 documents but with modified data (l003 had different message content).",
+              "expected_vs_actual": "Expected e001, e002, e003 in analyticsdb.events but only got e001, e002. Expected l001, l002, l003 with specific messages but l003 had 'Test error log' instead of 'DB reconnected'.",
+              "root_cause": "The scenario data is being partially overwritten or merged with existing/default data in the API. The insert_one operations that returned gen_1001, gen_1003, gen_1004 suggest there may be pre-existing data in the state that is interfering with the loaded scenario.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "list_databases",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_collections",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "find",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "aggregate",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "insert_one",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": false,
+              "error": "Saved scenario does not match the loaded scenario. The returned state contains completely different databases (testdb, mydb, shopdb, local) that were not in the original scenario, and is missing critical data from userdb (users, sessions, roles collections). The original scenario data was lost or never properly stored."
+            }
+          },
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "list_databases",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_collections",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "find",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "aggregate",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "insert_one",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            }
+          },
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 0,
+      "failed_scenarios": 4,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "simple",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": false,
+          "errors": [
+            {
+              "type": "State Inconsistency",
+              "location": "load_scenario / api.load_scenario",
+              "details": "Scenario loaded successfully according to return message, but actual data state does not reflect scenario content. shopdb database exists but collections and documents are empty. logsdb has different documents than specified in scenario.",
+              "expected_vs_actual": "Expected: shopdb with customers (3 docs), orders (3 docs), active_orders_view; logsdb with applogs (2 docs: INFO 'App boot', WARN 'High memory usage'). Actual: shopdb has empty collections; logsdb has different applogs (INFO 'Server started', ERROR 'Connection timeout').",
+              "root_cause": "The api.load_scenario() method likely has a bug where it doesn't properly populate collections and documents into the database state. The 'Successfully loaded scenario' message is returned regardless of whether the data was actually loaded. The API may be maintaining state from previous scenarios instead of loading fresh data.",
+              "expected_error": false
+            },
+            {
+              "type": "Missing View Support",
+              "location": "save_scenario / api collections",
+              "details": "The 'active_orders_view' view collection defined in the scenario with type 'view' is missing from the saved state.",
+              "expected_vs_actual": "Expected: collections include {name: 'active_orders_view', type: 'view', options: {viewOn: 'orders', pipeline: [...]}}. Actual: shopdb.collections only has 'customers' and 'orders' in saved state.",
+              "root_cause": "The API implementation may not properly handle view-type collections during load_scenario or save_scenario operations. Views require special handling in MongoDB as they are not regular collections.",
+              "expected_error": false
+            },
+            {
+              "type": "ID Generation Mismatch",
+              "location": "save_scenario / next_id_counter",
+              "details": "The next_id_counter in saved scenario is 1003, but the scenario specified 2000.",
+              "expected_vs_actual": "Expected next_id_counter: 2000. Actual: 1003.",
+              "root_cause": "The api.load_scenario() does not properly set the next_id_counter from scenario data, or the API maintains its own counter state independently.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_execution": [
+              {
+                "tool_name": "list_databases",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "list_collections",
+                "passed": false,
+                "error": "shopdb collections returned empty list after load_scenario; expected customers, orders, and active_orders_view collections"
+              },
+              {
+                "tool_name": "find",
+                "passed": false,
+                "error": "shopdb.customers and shopdb.orders returned empty documents after load_scenario; expected customer and order documents from scenario data"
+              },
+              {
+                "tool_name": "aggregate",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "insert_one",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": false,
+              "error": "Loaded scenario data did not match saved scenario. Original shopdb.customers had 3 documents (c001, c002, c003) with specific fields, but saved has 1 document (gen_1000). Original shopdb.orders had 3 documents, saved has 1. logsdb.applogs had different content than loaded. Expected view collection 'active_orders_view' missing from saved collections."
+            }
+          },
+          "complexity_level": "medium",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "complex",
+          "execution_time": 0.0
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": false,
+          "errors": [
+            {
+              "type": "Validation Error",
+              "location": "validate_scenario",
+              "details": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later",
+              "expected_vs_actual": "",
+              "root_cause": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later"
+            }
+          ],
+          "tool_traces": {},
+          "complexity_level": "boundary",
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_001",
+        "scenario_002",
+        "scenario_003"
+      ],
+      "aggregated_errors": {
+        "total_failed": 3,
+        "scenario_ids": [
+          "scenario_001",
+          "scenario_002",
+          "scenario_003"
+        ],
+        "error_categories": {
+          "critical": [],
+          "high": [],
+          "medium": [],
+          "low": [
+            {
+              "scenario_id": "scenario_001",
+              "type": "State Inconsistency - CRITICAL",
+              "location": "load_scenario / MongoDBAPI.load_scenario",
+              "details": "load_scenario reported success but did not actually load the scenario data. The scenario contained databases 'admin' and 'mydb' with collections and documents (i001, i002), but after loading, list_databases returned 6 different databases (admin, config, local, testdb, analyticsdb, logsdb) and mydb.items was empty. The save_scenario confirms the original scenario documents (i001, i002) are missing and were replaced by pre-existing data.",
+              "root_cause": "The MongoDBAPI.load_scenario() method either (1) merges scenario data with pre-existing data instead of replacing it, (2) fails to properly load the scenario but doesn't raise an error, or (3) the API instance was not properly initialized/isolated for this scenario. The success message was returned despite the data not being loaded.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_002",
+              "type": "State inconsistency / Scenario loading failure",
+              "location": "load_scenario → list_collections (shopdb), find (shopdb.customers, shopdb.orders)",
+              "details": "The scenario data included shopdb with customers, orders collections and 3 customers + 3 orders documents. However, list_collections('shopdb') returns empty array, and find() on shopdb.customers/shopdb.orders returns 0 documents. Meanwhile, logsdb.applogs works correctly (find returns documents).",
+              "root_cause": "The load_scenario function reported success but did not properly load the shopdb database state. Possible causes: (1) database name collision with pre-existing state, (2) parsing error in the documents key format 'shopdb.customers', (3) the API maintains persistent state across scenarios that wasn't cleared.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_002",
+              "type": "State pollution",
+              "location": "save_scenario",
+              "details": "The saved scenario contains databases not in the original scenario (config, local, testdb, analyticsdb, mydb) and is missing the shopdb.orders collection and all original shopdb documents.",
+              "root_cause": "The MongoDBAPI appears to maintain persistent state across different client sessions or scenario loads. The load_scenario function may merge rather than replace state, or the server is using a shared singleton instance.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "State Inconsistency",
+              "location": "save_scenario",
+              "details": "The saved scenario returned a completely different state than what was loaded. Original had databases: admin, config, userdb, analyticsdb, logsdb, emptydb with userdb containing users, sessions, roles collections. Saved returned: admin, config, local, testdb, analyticsdb, logsdb, mydb, shopdb with testdb containing users/orders/products.",
+              "root_cause": "The client_id isolation mechanism is not working properly. The load_scenario appears to execute successfully but the state is not being maintained per client. The save_scenario is returning a 'default' or shared state instead of the client-specific scenario that was loaded. This indicates a failure in the API's state management or session isolation.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "Data Loss",
+              "location": "find (userdb)",
+              "details": "Queries to userdb.users, userdb.sessions, and userdb.roles returned empty results despite the scenario containing 5 users, 2 sessions, and 3 roles respectively.",
+              "root_cause": "The userdb collections appear to be empty after loading. This could be because: (1) the scenario data is not being properly parsed/loaded into the API's internal state, (2) there's a naming mismatch between the scenario structure and API's expected format, or (3) the API maintains separate default data that overrides the loaded scenario.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "Partial Data Mismatch",
+              "location": "find (analyticsdb.events, logsdb.applogs)",
+              "details": "analyticsdb.events returned only 2 of 3 documents (missing e003 purchase event). logsdb.applogs returned 3 documents but with modified data (l003 had different message content).",
+              "root_cause": "The scenario data is being partially overwritten or merged with existing/default data in the API. The insert_one operations that returned gen_1001, gen_1003, gen_1004 suggest there may be pre-existing data in the state that is interfering with the loaded scenario.",
+              "expected_error": false
+            }
+          ]
+        },
+        "error_patterns": [
+          {
+            "type": "State Inconsistency - CRITICAL",
+            "location": "load_scenario / MongoDBAPI.load_scenario",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_001"
+            ]
+          },
+          {
+            "type": "State inconsistency / Scenario loading failure",
+            "location": "load_scenario → list_collections (shopdb), find (shopdb.customers, shopdb.orders)",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_002"
+            ]
+          },
+          {
+            "type": "State pollution",
+            "location": "save_scenario",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_002"
+            ]
+          },
+          {
+            "type": "State Inconsistency",
+            "location": "save_scenario",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_003"
+            ]
+          },
+          {
+            "type": "Data Loss",
+            "location": "find (userdb)",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_003"
+            ]
+          },
+          {
+            "type": "Partial Data Mismatch",
+            "location": "find (analyticsdb.events, logsdb.applogs)",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_003"
+            ]
+          }
+        ],
+        "severity_summary": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 6
+        }
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 1,
+        "failed_scenarios": 3,
+        "all_passed": false,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": false,
+            "errors": [
+              {
+                "type": "State inconsistency",
+                "location": "load_scenario / save_scenario comparison",
+                "details": "The scenario was reported as 'Successfully loaded scenario' but the saved state does not contain the original scenario data. Expected databases: admin, mydb. Actual databases from save_scenario: admin, config, local, testdb, analyticsdb, logsdb, mydb, shopdb. Original documents with _id 'i001' and 'i002' are completely missing. The only document in mydb.items is the one inserted during testing (gen_1000).",
+                "expected_vs_actual": "Expected: scenario_001 data with databases=[admin, mydb], collections={mydb: [items]}, documents={mydb.items: [{_id: i001...}, {_id: i002...}]}. Actual: Different database set with testdb, analyticsdb, logsdb present. mydb exists but contains only the test-inserted document, not the original scenario documents.",
+                "root_cause": "The load_scenario function reports success but does not actually load the scenario data into the API state. The message 'Client already loaded. Skipping...' on subsequent calls suggests the API maintains persistent state across calls and either (1) ignores new scenario data when a client already exists, or (2) the scenario loading logic in the underlying MongoDBAPI class is not properly replacing/merging the state. The API appears to have default/demo data that persists regardless of load_scenario calls.",
+                "expected_error": false
+              },
+              {
+                "type": "Tool execution error",
+                "location": "aggregate",
+                "details": "Initial aggregate call failed with 'Extra data: line 1 column 147 (char 146)' - JSON parsing error due to extra closing bracket in pipeline array. This was a test input error, not a tool bug.",
+                "expected_vs_actual": "User error in test input - malformed JSON. Corrected syntax worked successfully.",
+                "root_cause": "Test case had syntax error in JSON (extra ]), not a tool implementation issue.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "list_databases",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "list_collections",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "find",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "aggregate",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "insert_one",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": false,
+                "error": "Scenario state does not match expected loaded data. Original scenario documents (i001, i002) are missing from saved state."
+              }
+            },
+            "complexity_level": "simple",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": false,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {},
+              "tool_execution": [],
+              "save_scenario": {}
+            },
+            "complexity_level": "medium",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": false,
+            "errors": [
+              {
+                "type": "State Persistence Failure",
+                "location": "load_scenario and internal MongoDBAPI state",
+                "details": "load_scenario reported 'Successfully loaded scenario' but the scenario data was not actually persisted to the API's internal state. All subsequent tool calls returned data from a different scenario that existed prior to loading.",
+                "expected_vs_actual": "Expected: scenario_003 data with 6 databases (userdb, analyticsdb, logsdb, etc.) and their collections/documents. Actual: Different scenario with databases like testdb, mydb, shopdb that were not in the loaded scenario.",
+                "root_cause": "The MongoDBAPI.load_scenario() method likely does not properly replace the existing state when loading a new scenario. It may be appending to or ignoring the new data, or there may be a global singleton state that persists across scenario loads. The API appears to be maintaining state from a previous test scenario rather than the newly loaded one.",
+                "expected_error": false
+              },
+              {
+                "type": "State Inconsistency",
+                "location": "save_scenario",
+                "details": "save_scenario returned a completely different scenario structure than what was loaded. The saved data includes testdb with users/orders/products, mydb with items, shopdb with customers - none of which were in the loaded scenario_003.",
+                "expected_vs_actual": "Expected: scenario_003 structure with userdb (users, sessions, roles), analyticsdb (events, funnels), logsdb (applogs, audits), etc. Actual: A different scenario with testdb, mydb, shopdb and their respective collections.",
+                "root_cause": "The API maintains persistent state that is not being properly cleared or replaced when load_scenario is called. This suggests either: 1) The load_scenario implementation is incomplete and doesn't actually load data, 2) There's a singleton pattern causing state leakage between scenarios, or 3) The API has hardcoded default data that overrides loaded scenarios.",
+                "expected_error": false
+              },
+              {
+                "type": "Data Integrity Issue",
+                "location": "find on logsdb.applogs",
+                "details": "Query for ERROR level logs returned a document with '_id': 'l002' and 'message': 'Connection timeout', but the loaded scenario specified 'message': 'DB connection lost' for that _id.",
+                "expected_vs_actual": "Expected: {_id: 'l002', level: 'ERROR', message: 'DB connection lost', timestamp: '2026-04-17T00:10:00'}. Actual: {_id: 'l002', level: 'ERROR', message: 'Connection timeout', timestamp: '2026-04-17T00:05:00'}.",
+                "root_cause": "The API is returning data from a different scenario or default dataset, not from the loaded scenario_003. The document IDs match but content differs, indicating document ID collision with existing data.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "list_databases",
+                  "passed": false,
+                  "error": "Returned databases do not match loaded scenario. Expected: admin, config, userdb, analyticsdb, logsdb, emptydb. Got: admin, config, local, testdb, analyticsdb, logsdb, mydb, shopdb. Missing userdb and emptydb from loaded scenario."
+                },
+                {
+                  "tool_name": "list_collections",
+                  "passed": false,
+                  "error": "Multiple failures: userdb returned empty collections (expected users, sessions, roles); analyticsdb returned wrong collections (got events, sessions instead of events, funnels); nonexistentdb should error but returned empty array."
+                },
+                {
+                  "tool_name": "find",
+                  "passed": false,
+                  "error": "Failed to find documents from loaded scenario. userdb.users returned empty (expected 5 documents). analyticsdb.events returned empty (expected 3 documents). logsdb.applogs returned mismatched data (message was 'Connection timeout' instead of 'DB connection lost'). Only newly inserted documents were found."
+                },
+                {
+                  "tool_name": "aggregate",
+                  "passed": false,
+                  "error": "Aggregation on userdb.users returned empty results (expected grouping by role). Aggregation on analyticsdb.events returned partial/incorrect data (only 2 types instead of 3: click, view, purchase)."
+                },
+                {
+                  "tool_name": "insert_one",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": false,
+                "error": "Saved scenario does not match loaded scenario. The saved data contains a completely different scenario (testdb, mydb, shopdb with different documents) rather than the loaded scenario_003 data. The original scenario data was not persisted correctly."
+              }
+            },
+            "complexity_level": "complex",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "list_databases",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "list_collections",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "find",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "aggregate",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "insert_one",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              }
+            },
+            "complexity_level": "boundary",
+            "execution_time": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "revision_number": 2,
+      "failed_scenario_ids": [
+        "scenario_001",
+        "scenario_002",
+        "scenario_003"
+      ],
+      "aggregated_errors": {
+        "total_failed": 3,
+        "scenario_ids": [
+          "scenario_001",
+          "scenario_002",
+          "scenario_003"
+        ],
+        "error_categories": {
+          "critical": [],
+          "high": [],
+          "medium": [],
+          "low": [
+            {
+              "scenario_id": "scenario_001",
+              "type": "State inconsistency",
+              "location": "load_scenario / save_scenario comparison",
+              "details": "The scenario was reported as 'Successfully loaded scenario' but the saved state does not contain the original scenario data. Expected databases: admin, mydb. Actual databases from save_scenario: admin, config, local, testdb, analyticsdb, logsdb, mydb, shopdb. Original documents with _id 'i001' and 'i002' are completely missing. The only document in mydb.items is the one inserted during testing (gen_1000).",
+              "root_cause": "The load_scenario function reports success but does not actually load the scenario data into the API state. The message 'Client already loaded. Skipping...' on subsequent calls suggests the API maintains persistent state across calls and either (1) ignores new scenario data when a client already exists, or (2) the scenario loading logic in the underlying MongoDBAPI class is not properly replacing/merging the state. The API appears to have default/demo data that persists regardless of load_scenario calls.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_001",
+              "type": "Tool execution error",
+              "location": "aggregate",
+              "details": "Initial aggregate call failed with 'Extra data: line 1 column 147 (char 146)' - JSON parsing error due to extra closing bracket in pipeline array. This was a test input error, not a tool bug.",
+              "root_cause": "Test case had syntax error in JSON (extra ]), not a tool implementation issue.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "State Persistence Failure",
+              "location": "load_scenario and internal MongoDBAPI state",
+              "details": "load_scenario reported 'Successfully loaded scenario' but the scenario data was not actually persisted to the API's internal state. All subsequent tool calls returned data from a different scenario that existed prior to loading.",
+              "root_cause": "The MongoDBAPI.load_scenario() method likely does not properly replace the existing state when loading a new scenario. It may be appending to or ignoring the new data, or there may be a global singleton state that persists across scenario loads. The API appears to be maintaining state from a previous test scenario rather than the newly loaded one.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "State Inconsistency",
+              "location": "save_scenario",
+              "details": "save_scenario returned a completely different scenario structure than what was loaded. The saved data includes testdb with users/orders/products, mydb with items, shopdb with customers - none of which were in the loaded scenario_003.",
+              "root_cause": "The API maintains persistent state that is not being properly cleared or replaced when load_scenario is called. This suggests either: 1) The load_scenario implementation is incomplete and doesn't actually load data, 2) There's a singleton pattern causing state leakage between scenarios, or 3) The API has hardcoded default data that overrides loaded scenarios.",
+              "expected_error": false
+            },
+            {
+              "scenario_id": "scenario_003",
+              "type": "Data Integrity Issue",
+              "location": "find on logsdb.applogs",
+              "details": "Query for ERROR level logs returned a document with '_id': 'l002' and 'message': 'Connection timeout', but the loaded scenario specified 'message': 'DB connection lost' for that _id.",
+              "root_cause": "The API is returning data from a different scenario or default dataset, not from the loaded scenario_003. The document IDs match but content differs, indicating document ID collision with existing data.",
+              "expected_error": false
+            }
+          ]
+        },
+        "error_patterns": [
+          {
+            "type": "State inconsistency",
+            "location": "load_scenario / save_scenario comparison",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_001"
+            ]
+          },
+          {
+            "type": "Tool execution error",
+            "location": "aggregate",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_001"
+            ]
+          },
+          {
+            "type": "State Persistence Failure",
+            "location": "load_scenario and internal MongoDBAPI state",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_003"
+            ]
+          },
+          {
+            "type": "State Inconsistency",
+            "location": "save_scenario",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_003"
+            ]
+          },
+          {
+            "type": "Data Integrity Issue",
+            "location": "find on logsdb.applogs",
+            "count": 1,
+            "scenario_ids": [
+              "scenario_003"
+            ]
+          }
+        ],
+        "severity_summary": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 5
+        }
+      },
+      "revised_code_version": 2,
+      "validation_report": {
+        "total_scenarios": 4,
+        "passed_scenarios": 0,
+        "failed_scenarios": 4,
+        "all_passed": false,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "simple",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_002",
+            "passed": false,
+            "errors": [
+              {
+                "type": "State Inconsistency",
+                "location": "load_scenario / api.load_scenario",
+                "details": "Scenario loaded successfully according to return message, but actual data state does not reflect scenario content. shopdb database exists but collections and documents are empty. logsdb has different documents than specified in scenario.",
+                "expected_vs_actual": "Expected: shopdb with customers (3 docs), orders (3 docs), active_orders_view; logsdb with applogs (2 docs: INFO 'App boot', WARN 'High memory usage'). Actual: shopdb has empty collections; logsdb has different applogs (INFO 'Server started', ERROR 'Connection timeout').",
+                "root_cause": "The api.load_scenario() method likely has a bug where it doesn't properly populate collections and documents into the database state. The 'Successfully loaded scenario' message is returned regardless of whether the data was actually loaded. The API may be maintaining state from previous scenarios instead of loading fresh data.",
+                "expected_error": false
+              },
+              {
+                "type": "Missing View Support",
+                "location": "save_scenario / api collections",
+                "details": "The 'active_orders_view' view collection defined in the scenario with type 'view' is missing from the saved state.",
+                "expected_vs_actual": "Expected: collections include {name: 'active_orders_view', type: 'view', options: {viewOn: 'orders', pipeline: [...]}}. Actual: shopdb.collections only has 'customers' and 'orders' in saved state.",
+                "root_cause": "The API implementation may not properly handle view-type collections during load_scenario or save_scenario operations. Views require special handling in MongoDB as they are not regular collections.",
+                "expected_error": false
+              },
+              {
+                "type": "ID Generation Mismatch",
+                "location": "save_scenario / next_id_counter",
+                "details": "The next_id_counter in saved scenario is 1003, but the scenario specified 2000.",
+                "expected_vs_actual": "Expected next_id_counter: 2000. Actual: 1003.",
+                "root_cause": "The api.load_scenario() does not properly set the next_id_counter from scenario data, or the API maintains its own counter state independently.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_execution": [
+                {
+                  "tool_name": "list_databases",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "list_collections",
+                  "passed": false,
+                  "error": "shopdb collections returned empty list after load_scenario; expected customers, orders, and active_orders_view collections"
+                },
+                {
+                  "tool_name": "find",
+                  "passed": false,
+                  "error": "shopdb.customers and shopdb.orders returned empty documents after load_scenario; expected customer and order documents from scenario data"
+                },
+                {
+                  "tool_name": "aggregate",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "insert_one",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": false,
+                "error": "Loaded scenario data did not match saved scenario. Original shopdb.customers had 3 documents (c001, c002, c003) with specific fields, but saved has 1 document (gen_1000). Original shopdb.orders had 3 documents, saved has 1. logsdb.applogs had different content than loaded. Expected view collection 'active_orders_view' missing from saved collections."
+              }
+            },
+            "complexity_level": "medium",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_003",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "complex",
+            "execution_time": 0.0
+          },
+          {
+            "scenario_id": "scenario_004",
+            "passed": false,
+            "errors": [
+              {
+                "type": "Validation Error",
+                "location": "validate_scenario",
+                "details": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later",
+                "expected_vs_actual": "",
+                "root_cause": "litellm.RateLimitError: RateLimitError: MoonshotException - The engine is currently overloaded, please try again later"
+              }
+            ],
+            "tool_traces": {},
+            "complexity_level": "boundary",
+            "execution_time": 0.0
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 2,
+    "total_time": 0.0,
+    "success": false,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/MongoDBServer.py"
+  }
+}

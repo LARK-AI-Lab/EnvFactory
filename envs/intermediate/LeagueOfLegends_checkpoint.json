@@ -1,0 +1,2267 @@
+{
+  "metadata": {
+    "class_name": "LeagueOfLegends",
+    "metadata_path": "envs\\metadata\\LeagueOfLegends_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-03T23:01:44.433683",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "LeagueOfLegends",
+    "description": "Comprehensive League of Legends data service providing champion analytics, summoner profiles, match history, game resources, pro player information, and esports schedules and standings.",
+    "tools": [
+      {
+        "name": "lol_get_champion_analysis",
+        "description": "Retrieve detailed champion statistics including win/pick/ban rates, optimal builds (items, runes, skills, summoner spells), counter matchups, and team synergies.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "champion_name": {
+              "type": "string",
+              "description": "The name of the League of Legends champion to analyze (e.g., 'Aatrox', 'Ahri')."
+            },
+            "lane": {
+              "type": "string",
+              "description": "The lane position to filter analysis by (e.g., 'top', 'jungle', 'mid', 'adc', 'support')."
+            },
+            "region": {
+              "type": "string",
+              "description": "The server region code to filter statistics by (e.g., 'kr', 'na', 'euw')."
+            }
+          },
+          "required": [
+            "champion_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "champion_name": {
+              "type": "string",
+              "description": "The name of the analyzed champion."
+            },
+            "win_rate": {
+              "type": "number",
+              "description": "The champion's win rate as a percentage value."
+            },
+            "pick_rate": {
+              "type": "number",
+              "description": "The champion's pick rate indicating how often the champion is selected in games."
+            },
+            "ban_rate": {
+              "type": "number",
+              "description": "The champion's ban rate indicating how often the champion is banned in draft phase."
+            },
+            "builds": {
+              "type": "array",
+              "description": "List of optimal build configurations including items, runes, skill orders, and summoner spells.",
+              "items": {
+                "type": "object"
+              }
+            },
+            "counters": {
+              "type": "array",
+              "description": "List of champions that counter this champion in lane or teamfights.",
+              "items": {
+                "type": "object"
+              }
+            },
+            "synergies": {
+              "type": "array",
+              "description": "List of champions that synergize well with this champion in team compositions.",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "lol_get_champion_synergies",
+        "description": "Retrieve champion synergy information showing which champions pair well together in team compositions.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "champion_name": {
+              "type": "string",
+              "description": "The name of the League of Legends champion to analyze (e.g., 'Aatrox', 'Ahri')."
+            },
+            "lane": {
+              "type": "string",
+              "description": "The lane position to filter analysis by (e.g., 'top', 'jungle', 'mid', 'adc', 'support')."
+            }
+          },
+          "required": [
+            "champion_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "champion_name": {
+              "type": "string",
+              "description": "The name of the analyzed champion."
+            },
+            "synergies": {
+              "type": "array",
+              "description": "List of champions that synergize well with this champion in team compositions.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "champion": {
+                    "type": "string",
+                    "description": "The name of the synergistic champion."
+                  },
+                  "synergy_score": {
+                    "type": "number",
+                    "description": "Numerical score indicating the strength of synergy between the two champions."
+                  },
+                  "win_rate": {
+                    "type": "number",
+                    "description": "The combined win rate when both champions are on the same team."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "lol_get_lane_matchup_guide",
+        "description": "Retrieve lane matchup guide providing win rates and difficulty ratings against enemy champions in a specific lane.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "lane": {
+              "type": "string",
+              "description": "The lane position to filter analysis by (e.g., 'top', 'jungle', 'mid', 'adc', 'support')."
+            },
+            "champion_name": {
+              "type": "string",
+              "description": "The name of the League of Legends champion to analyze (e.g., 'Aatrox', 'Ahri')."
+            },
+            "enemy_champion": {
+              "type": "string",
+              "description": "The name of a specific enemy champion to analyze the matchup against."
+            }
+          },
+          "required": [
+            "lane",
+            "champion_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "lane": {
+              "type": "string",
+              "description": "The lane position for the matchup analysis."
+            },
+            "champion_name": {
+              "type": "string",
+              "description": "The name of the analyzed champion."
+            },
+            "matchups": {
+              "type": "array",
+              "description": "List of matchup details against enemy champions in the specified lane.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "enemy_champion": {
+                    "type": "string",
+                    "description": "The name of the enemy champion in the matchup."
+                  },
+                  "win_rate": {
+                    "type": "number",
+                    "description": "The win rate against this specific enemy champion."
+                  },
+                  "difficulty": {
+                    "type": "string",
+                    "description": "The difficulty rating of the matchup (e.g., 'Easy', 'Medium', 'Hard')."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "lol_list_champion_details",
+        "description": "Retrieve detailed champion information including abilities, gameplay tips, lore, and base statistics for up to 10 champions.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "champion_names": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of champion names to retrieve details for (maximum 10 champions)."
+            }
+          },
+          "required": [
+            "champion_names"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "champions": {
+              "type": "array",
+              "description": "List of detailed champion information objects.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name of the champion."
+                  },
+                  "abilities": {
+                    "type": "array",
+                    "description": "List of the champion's abilities with descriptions and stats.",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "tips": {
+                    "type": "array",
+                    "description": "Gameplay tips for playing as or against this champion.",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "lore": {
+                    "type": "string",
+                    "description": "The champion's background story and lore."
+                  },
+                  "stats": {
+                    "type": "object",
+                    "description": "Base statistics and scaling values for the champion."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "lol_list_champion_leaderboard",
+        "description": "Retrieve champion leaderboard rankings with win/pick/ban rates, optionally filtered by lane, region, and competitive tier.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "lane": {
+              "type": "string",
+              "description": "The lane position to filter analysis by (e.g., 'top', 'jungle', 'mid', 'adc', 'support')."
+            },
+            "region": {
+              "type": "string",
+              "description": "The server region code to filter statistics by (e.g., 'kr', 'na', 'euw')."
+            },
+            "tier": {
+              "type": "string",
+              "description": "The competitive tier to filter statistics by (e.g., 'challenger', 'grandmaster', 'master')."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of results to return."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "leaderboard": {
+              "type": "array",
+              "description": "Ranked list of champions based on performance metrics.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "rank": {
+                    "type": "integer",
+                    "description": "The champion's position in the leaderboard."
+                  },
+                  "champion_name": {
+                    "type": "string",
+                    "description": "The name of the champion."
+                  },
+                  "win_rate": {
+                    "type": "number",
+                    "description": "The champion's win rate as a percentage value."
+                  },
+                  "pick_rate": {
+                    "type": "number",
+                    "description": "The champion's pick rate indicating how often the champion is selected in games."
+                  },
+                  "ban_rate": {
+                    "type": "number",
+                    "description": "The champion's ban rate indicating how often the champion is banned in draft phase."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "lol_list_champions",
+        "description": "Retrieve a list of all League of Legends champions with basic metadata including title, roles, and difficulty rating.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of results to return."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "champions": {
+              "type": "array",
+              "description": "List of champion metadata objects.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name of the champion."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The champion's title or epithet."
+                  },
+                  "roles": {
+                    "type": "array",
+                    "description": "List of roles the champion can fulfill (e.g., 'Fighter', 'Mage', 'Assassin').",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "difficulty": {
+                    "type": "integer",
+                    "description": "Difficulty rating for playing the champion (1-10 scale)."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "lol_list_lane_meta_champions",
+        "description": "Retrieve current meta champions for a specific lane with tier rankings, win/pick/ban rates, and KDA statistics.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "lane": {
+              "type": "string",
+              "description": "The lane position to filter analysis by (e.g., 'top', 'jungle', 'mid', 'adc', 'support')."
+            },
+            "region": {
+              "type": "string",
+              "description": "The server region code to filter statistics by (e.g., 'kr', 'na', 'euw')."
+            },
+            "tier": {
+              "type": "string",
+              "description": "The competitive tier to filter statistics by (e.g., 'challenger', 'grandmaster', 'master')."
+            }
+          },
+          "required": [
+            "lane"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "lane": {
+              "type": "string",
+              "description": "The lane position for the meta analysis."
+            },
+            "champions": {
+              "type": "array",
+              "description": "List of meta champions for the specified lane with performance metrics.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "champion_name": {
+                    "type": "string",
+                    "description": "The name of the champion."
+                  },
+                  "tier": {
+                    "type": "string",
+                    "description": "The meta tier ranking of the champion (e.g., 'S', 'A', 'B', 'C')."
+                  },
+                  "win_rate": {
+                    "type": "number",
+                    "description": "The champion's win rate as a percentage value."
+                  },
+                  "pick_rate": {
+                    "type": "number",
+                    "description": "The champion's pick rate indicating how often the champion is selected in games."
+                  },
+                  "ban_rate": {
+                    "type": "number",
+                    "description": "The champion's ban rate indicating how often the champion is banned in draft phase."
+                  },
+                  "kda": {
+                    "type": "number",
+                    "description": "Average Kill/Death/Assist ratio for the champion in this lane."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "lol_get_summoner_game_detail",
+        "description": "Retrieve detailed information for a specific game including all players' champions, KDA, items, and runes.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "summoner_name": {
+              "type": "string",
+              "description": "The summoner's in-game display name."
+            },
+            "game_id": {
+              "type": "string",
+              "description": "The unique identifier of the game match."
+            },
+            "region": {
+              "type": "string",
+              "description": "The server region code where the summoner's account is registered (e.g., 'kr', 'na', 'euw')."
+            }
+          },
+          "required": [
+            "summoner_name",
+            "game_id",
+            "region"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "game_id": {
+              "type": "string",
+              "description": "The unique identifier of the game match."
+            },
+            "game_mode": {
+              "type": "string",
+              "description": "The game mode type (e.g., 'Ranked Solo', 'Normal', 'ARAM')."
+            },
+            "duration": {
+              "type": "integer",
+              "description": "The game duration in seconds."
+            },
+            "players": {
+              "type": "array",
+              "description": "List of all players in the game with their performance details.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "summoner_name": {
+                    "type": "string",
+                    "description": "The player's summoner name."
+                  },
+                  "champion": {
+                    "type": "string",
+                    "description": "The champion played by this player."
+                  },
+                  "kda": {
+                    "type": "string",
+                    "description": "The player's Kill/Death/Assist score formatted as a string (e.g., '5/2/10')."
+                  },
+                  "items": {
+                    "type": "array",
+                    "description": "List of items purchased by the player during the game.",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "runes": {
+                    "type": "object",
+                    "description": "The rune configuration used by the player."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "lol_get_summoner_profile",
+        "description": "Retrieve summoner profile information including rank, tier, LP, win rate, and most played champions.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "summoner_name": {
+              "type": "string",
+              "description": "The summoner's in-game display name."
+            },
+            "region": {
+              "type": "string",
+              "description": "The server region code where the summoner's account is registered (e.g., 'kr', 'na', 'euw')."
+            }
+          },
+          "required": [
+            "summoner_name",
+            "region"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "summoner_name": {
+              "type": "string",
+              "description": "The summoner's in-game display name."
+            },
+            "rank": {
+              "type": "string",
+              "description": "The summoner's current rank division (e.g., 'I', 'II', 'III', 'IV')."
+            },
+            "tier": {
+              "type": "string",
+              "description": "The summoner's current competitive tier (e.g., 'Diamond', 'Platinum', 'Gold')."
+            },
+            "lp": {
+              "type": "integer",
+              "description": "The summoner's current League Points within their division."
+            },
+            "win_rate": {
+              "type": "number",
+              "description": "The summoner's overall win rate as a percentage value."
+            },
+            "champion_pool": {
+              "type": "array",
+              "description": "List of the summoner's most played champions with performance statistics.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "champion_name": {
+                    "type": "string",
+                    "description": "The name of the champion."
+                  },
+                  "games": {
+                    "type": "integer",
+                    "description": "Total number of games played with this champion."
+                  },
+                  "win_rate": {
+                    "type": "number",
+                    "description": "Win rate with this specific champion as a percentage value."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "lol_list_summoner_matches",
+        "description": "Retrieve recent match history for a summoner with per-game statistics including champion, result, KDA, and duration.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "summoner_name": {
+              "type": "string",
+              "description": "The summoner's in-game display name."
+            },
+            "region": {
+              "type": "string",
+              "description": "The server region code where the summoner's account is registered (e.g., 'kr', 'na', 'euw')."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of results to return."
+            }
+          },
+          "required": [
+            "summoner_name",
+            "region"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "matches": {
+              "type": "array",
+              "description": "List of recent matches played by the summoner.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "game_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the game match."
+                  },
+                  "champion": {
+                    "type": "string",
+                    "description": "The champion played in this match."
+                  },
+                  "result": {
+                    "type": "string",
+                    "description": "The match outcome (e.g., 'Victory', 'Defeat')."
+                  },
+                  "kda": {
+                    "type": "string",
+                    "description": "The player's Kill/Death/Assist score formatted as a string (e.g., '5/2/10')."
+                  },
+                  "duration": {
+                    "type": "integer",
+                    "description": "The game duration in seconds."
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "description": "The timestamp when the match was played in ISO 8601 format."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "lol_list_discounted_skins",
+        "description": "Retrieve a list of currently discounted champion skins with pricing information.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of results to return."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "skins": {
+              "type": "array",
+              "description": "List of currently discounted skins with pricing details.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "skin_name": {
+                    "type": "string",
+                    "description": "The name of the skin."
+                  },
+                  "champion": {
+                    "type": "string",
+                    "description": "The champion this skin belongs to."
+                  },
+                  "discount_percent": {
+                    "type": "integer",
+                    "description": "The discount percentage applied to the skin."
+                  },
+                  "original_price": {
+                    "type": "number",
+                    "description": "The original price of the skin in RP (Riot Points)."
+                  },
+                  "discounted_price": {
+                    "type": "number",
+                    "description": "The discounted price of the skin in RP (Riot Points)."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "lol_list_items",
+        "description": "Retrieve a list of all in-game items with metadata including name, description, cost, and stat bonuses.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of results to return."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "description": "List of in-game item metadata objects.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "item_id": {
+                    "type": "integer",
+                    "description": "The unique identifier of the item."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The display name of the item."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "The item's description including passive and active effects."
+                  },
+                  "gold": {
+                    "type": "integer",
+                    "description": "The gold cost to purchase the item."
+                  },
+                  "stats": {
+                    "type": "object",
+                    "description": "The stat bonuses provided by the item."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "lol_get_pro_player_riot_id",
+        "description": "Retrieve the Riot ID and team information for a professional League of Legends player.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "pro_player_name": {
+              "type": "string",
+              "description": "The professional player's known name or gamertag (e.g., 'Faker', 'Caps')."
+            }
+          },
+          "required": [
+            "pro_player_name"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "pro_player_name": {
+              "type": "string",
+              "description": "The professional player's known name or gamertag."
+            },
+            "riot_id": {
+              "type": "string",
+              "description": "The player's Riot ID used for in-game identification."
+            },
+            "team": {
+              "type": "string",
+              "description": "The esports team the player currently belongs to."
+            },
+            "region": {
+              "type": "string",
+              "description": "The competitive region where the player competes."
+            }
+          }
+        }
+      },
+      {
+        "name": "lol_esports_list_schedules",
+        "description": "Retrieve upcoming League of Legends esports match schedules with teams, leagues, and match times.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "league": {
+              "type": "string",
+              "description": "The esports league to filter schedules by (e.g., 'LCK', 'LCS', 'LEC', 'LPL')."
+            },
+            "region": {
+              "type": "string",
+              "description": "The server region code to filter statistics by (e.g., 'kr', 'na', 'euw')."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of results to return."
+            }
+          },
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "schedules": {
+              "type": "array",
+              "description": "List of upcoming esports match schedules.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "match_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the esports match."
+                  },
+                  "league": {
+                    "type": "string",
+                    "description": "The esports league hosting the match."
+                  },
+                  "team1": {
+                    "type": "string",
+                    "description": "The name of the first competing team."
+                  },
+                  "team2": {
+                    "type": "string",
+                    "description": "The name of the second competing team."
+                  },
+                  "scheduled_time": {
+                    "type": "string",
+                    "description": "The scheduled start time of the match in ISO 8601 format."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "The current status of the match (e.g., 'Scheduled', 'Live', 'Completed')."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "lol_esports_list_team_standings",
+        "description": "Retrieve team standings for a League of Legends esports league including wins, losses, and win rates.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "league": {
+              "type": "string",
+              "description": "The esports league to filter schedules by (e.g., 'LCK', 'LCS', 'LEC', 'LPL')."
+            },
+            "region": {
+              "type": "string",
+              "description": "The server region code to filter statistics by (e.g., 'kr', 'na', 'euw')."
+            }
+          },
+          "required": [
+            "league"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "standings": {
+              "type": "array",
+              "description": "Ranked list of teams in the league standings.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "rank": {
+                    "type": "integer",
+                    "description": "The team's position in the league standings."
+                  },
+                  "team_name": {
+                    "type": "string",
+                    "description": "The name of the esports team."
+                  },
+                  "wins": {
+                    "type": "integer",
+                    "description": "Total number of match wins in the current season."
+                  },
+                  "losses": {
+                    "type": "integer",
+                    "description": "Total number of match losses in the current season."
+                  },
+                  "win_rate": {
+                    "type": "number",
+                    "description": "The team's win rate as a percentage value."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Union, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Champion(BaseModel):\n    \"\"\"Represents a League of Legends champion.\"\"\"\n    name: str = Field(..., description=\"Champion name\")\n    title: str = Field(..., description=\"Champion title\")\n    roles: List[str] = Field(default=[], description=\"Champion roles\")\n    difficulty: int = Field(..., ge=1, le=10, description=\"Difficulty rating 1-10\")\n\nclass Item(BaseModel):\n    \"\"\"Represents an in-game item.\"\"\"\n    item_id: int = Field(..., ge=0, description=\"Item ID\")\n    name: str = Field(..., description=\"Item name\")\n    description: str = Field(..., description=\"Item description\")\n    gold: int = Field(..., ge=0, description=\"Gold cost\")\n    stats: Dict[str, Any] = Field(default={}, description=\"Item stats\")\n\nclass ProPlayer(BaseModel):\n    \"\"\"Represents a professional player.\"\"\"\n    pro_player_name: str = Field(..., description=\"Player name\")\n    riot_id: str = Field(..., description=\"Riot ID\")\n    team: str = Field(..., description=\"Team name\")\n    region: str = Field(..., description=\"Competitive region\")\n\nclass EsportsMatch(BaseModel):\n    \"\"\"Represents an esports match.\"\"\"\n    match_id: str = Field(..., description=\"Match ID\")\n    league: str = Field(..., description=\"League name\")\n    team1: str = Field(..., description=\"First team\")\n    team2: str = Field(..., description=\"Second team\")\n    scheduled_time: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"Scheduled time in ISO format\")\n    status: str = Field(..., description=\"Match status\")\n\nclass TeamStanding(BaseModel):\n    \"\"\"Represents team standings.\"\"\"\n    rank: int = Field(..., ge=1, description=\"Team rank\")\n    team_name: str = Field(..., description=\"Team name\")\n    wins: int = Field(..., ge=0, description=\"Number of wins\")\n    losses: int = Field(..., ge=0, description=\"Number of losses\")\n    win_rate: float = Field(..., ge=0, le=100, description=\"Win rate percentage\")\n\nclass LeagueScenario(BaseModel):\n    \"\"\"Main scenario model for League of Legends data.\"\"\"\n    champions: Dict[str, Champion] = Field(default={}, description=\"Champion data\")\n    items: Dict[int, Item] = Field(default={}, description=\"Item data\")\n    pro_players: Dict[str, ProPlayer] = Field(default={}, description=\"Pro player data\")\n    esports_schedule: List[EsportsMatch] = Field(default=[], description=\"Esports schedule\")\n    team_standings: Dict[str, List[TeamStanding]] = Field(default={}, description=\"Team standings by league\")\n    champion_stats: Dict[str, Dict[str, Any]] = Field(default={}, description=\"Champion statistics\")\n    summoner_profiles: Dict[str, Dict[str, Any]] = Field(default={}, description=\"Summoner profiles\")\n    match_history: Dict[str, List[Dict[str, Any]]] = Field(default={}, description=\"Match history\")\n    discounted_skins: List[Dict[str, Any]] = Field(default=[], description=\"Discounted skins\")\n    regionMap: Dict[str, str] = Field(default={\n        \"kr\": \"Korea\", \"na\": \"North America\", \"euw\": \"Europe West\", \"eune\": \"Europe Nordic\",\n        \"br\": \"Brazil\", \"lan\": \"Latin America North\", \"las\": \"Latin America South\", \"oce\": \"Oceania\",\n        \"ru\": \"Russia\", \"tr\": \"Turkey\", \"jp\": \"Japan\", \"sg\": \"Singapore\", \"th\": \"Thailand\",\n        \"vn\": \"Vietnam\", \"ph\": \"Philippines\", \"tw\": \"Taiwan\", \"default\": \"North America\"\n    }, description=\"Region mapping\")\n\nScenario_Schema = [Champion, Item, ProPlayer, EsportsMatch, TeamStanding, LeagueScenario]\n\n# Section 2: Class\nclass LeagueOfLegendsAPI:\n    def __init__(self):\n        \"\"\"Initialize League of Legends API with empty state.\"\"\"\n        self.champions: Dict[str, Champion] = {}\n        self.items: Dict[int, Item] = {}\n        self.pro_players: Dict[str, ProPlayer] = {}\n        self.esports_schedule: List[EsportsMatch] = []\n        self.team_standings: Dict[str, List[TeamStanding]] = {}\n        self.champion_stats: Dict[str, Dict[str, Any]] = {}\n        self.summoner_profiles: Dict[str, Dict[str, Any]] = {}\n        self.match_history: Dict[str, List[Dict[str, Any]]] = {}\n        self.discounted_skins: List[Dict[str, Any]] = []\n        self.regionMap: Dict[str, str] = {}\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = LeagueScenario(**scenario)\n        self.champions = model.champions\n        self.items = model.items\n        self.pro_players = model.pro_players\n        self.esports_schedule = model.esports_schedule\n        self.team_standings = model.team_standings\n        self.champion_stats = model.champion_stats\n        self.summoner_profiles = model.summoner_profiles\n        self.match_history = model.match_history\n        self.discounted_skins = model.discounted_skins\n        self.regionMap = model.regionMap\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"champions\": {name: champ.dict() for name, champ in self.champions.items()},\n            \"items\": {item_id: item.dict() for item_id, item in self.items.items()},\n            \"pro_players\": {name: player.dict() for name, player in self.pro_players.items()},\n            \"esports_schedule\": [match.dict() for match in self.esports_schedule],\n            \"team_standings\": {league: [team.dict() for team in teams] for league, teams in self.team_standings.items()},\n            \"champion_stats\": self.champion_stats,\n            \"summoner_profiles\": self.summoner_profiles,\n            \"match_history\": self.match_history,\n            \"discounted_skins\": self.discounted_skins,\n            \"regionMap\": self.regionMap\n        }\n\n    def lol_get_champion_analysis(self, champion_name: str, lane: Optional[str] = None, region: Optional[str] = None) -> dict:\n        \"\"\"Retrieve detailed champion statistics and analysis.\"\"\"\n        if champion_name not in self.champion_stats:\n            return {\"champion_name\": champion_name, \"win_rate\": 0, \"pick_rate\": 0, \"ban_rate\": 0, \"builds\": [], \"counters\": [], \"synergies\": []}\n        \n        stats = self.champion_stats[champion_name]\n        return {\n            \"champion_name\": champion_name,\n            \"win_rate\": stats.get(\"win_rate\", 0),\n            \"pick_rate\": stats.get(\"pick_rate\", 0),\n            \"ban_rate\": stats.get(\"ban_rate\", 0),\n            \"builds\": stats.get(\"builds\", []),\n            \"counters\": stats.get(\"counters\", []),\n            \"synergies\": stats.get(\"synergies\", [])\n        }\n\n    def lol_get_champion_synergies(self, champion_name: str, lane: Optional[str] = None) -> dict:\n        \"\"\"Retrieve champion synergy information.\"\"\"\n        if champion_name not in self.champion_stats:\n            return {\"champion_name\": champion_name, \"synergies\": []}\n        \n        stats = self.champion_stats[champion_name]\n        return {\n            \"champion_name\": champion_name,\n            \"synergies\": stats.get(\"synergies\", [])\n        }\n\n    def lol_get_lane_matchup_guide(self, lane: str, champion_name: str, enemy_champion: Optional[str] = None) -> dict:\n        \"\"\"Retrieve lane matchup guide.\"\"\"\n        if champion_name not in self.champion_stats:\n            return {\"lane\": lane, \"champion_name\": champion_name, \"matchups\": []}\n        \n        stats = self.champion_stats[champion_name]\n        return {\n            \"lane\": lane,\n            \"champion_name\": champion_name,\n            \"matchups\": stats.get(\"matchups\", {}).get(lane, [])\n        }\n\n    def lol_list_champion_details(self, champion_names: List[str]) -> dict:\n        \"\"\"Retrieve detailed champion information.\"\"\"\n        champions = []\n        for name in champion_names[:10]:\n            if name in self.champions:\n                champ = self.champions[name]\n                champions.append({\n                    \"name\": champ.name,\n                    \"title\": champ.title,\n                    \"roles\": champ.roles,\n                    \"difficulty\": champ.difficulty,\n                    \"abilities\": self.champion_stats.get(name, {}).get(\"abilities\", []),\n                    \"tips\": self.champion_stats.get(name, {}).get(\"tips\", []),\n                    \"lore\": self.champion_stats.get(name, {}).get(\"lore\", \"\"),\n                    \"stats\": self.champion_stats.get(name, {}).get(\"stats\", {})\n                })\n        return {\"champions\": champions}\n\n    def lol_list_champion_leaderboard(self, lane: Optional[str] = None, region: Optional[str] = None, tier: Optional[str] = None, limit: Optional[int] = None) -> dict:\n        \"\"\"Retrieve champion leaderboard rankings.\"\"\"\n        leaderboard = []\n        for name, stats in self.champion_stats.items():\n            if \"leaderboard\" in stats:\n                entry = {\n                    \"rank\": stats[\"leaderboard\"].get(\"rank\", 0),\n                    \"champion_name\": name,\n                    \"win_rate\": stats.get(\"win_rate\", 0),\n                    \"pick_rate\": stats.get(\"pick_rate\", 0),\n                    \"ban_rate\": stats.get(\"ban_rate\", 0)\n                }\n                leaderboard.append(entry)\n        \n        leaderboard.sort(key=lambda x: x[\"rank\"])\n        if limit:\n            leaderboard = leaderboard[:limit]\n        \n        return {\"leaderboard\": leaderboard}\n\n    def lol_list_champions(self, limit: Optional[int] = None) -> dict:\n        \"\"\"Retrieve list of all champions.\"\"\"\n        champions = []\n        for name, champ in self.champions.items():\n            champions.append({\n                \"name\": champ.name,\n                \"title\": champ.title,\n                \"roles\": champ.roles,\n                \"difficulty\": champ.difficulty\n            })\n        \n        if limit:\n            champions = champions[:limit]\n        \n        return {\"champions\": champions}\n\n    def lol_list_lane_meta_champions(self, lane: str, region: Optional[str] = None, tier: Optional[str] = None) -> dict:\n        \"\"\"Retrieve current meta champions for a specific lane.\"\"\"\n        meta_champions = []\n        for name, stats in self.champion_stats.items():\n            if \"meta\" in stats and lane in stats[\"meta\"]:\n                meta_champions.append({\n                    \"champion_name\": name,\n                    \"tier\": stats[\"meta\"][lane].get(\"tier\", \"C\"),\n                    \"win_rate\": stats.get(\"win_rate\", 0),\n                    \"pick_rate\": stats.get(\"pick_rate\", 0),\n                    \"ban_rate\": stats.get(\"ban_rate\", 0),\n                    \"kda\": stats[\"meta\"][lane].get(\"kda\", 0)\n                })\n        \n        return {\"lane\": lane, \"champions\": meta_champions}\n\n    def lol_get_summoner_game_detail(self, summoner_name: str, game_id: str, region: str) -> dict:\n        \"\"\"Retrieve detailed game information.\"\"\"\n        key = f\"{summoner_name}:{region}\"\n        if key not in self.match_history:\n            return {\"game_id\": game_id, \"game_mode\": \"\", \"duration\": 0, \"players\": []}\n        \n        for match in self.match_history[key]:\n            if match.get(\"game_id\") == game_id:\n                return {\n                    \"game_id\": game_id,\n                    \"game_mode\": match.get(\"game_mode\", \"\"),\n                    \"duration\": match.get(\"duration\", 0),\n                    \"players\": match.get(\"players\", [])\n                }\n        \n        return {\"game_id\": game_id, \"game_mode\": \"\", \"duration\": 0, \"players\": []}\n\n    def lol_get_summoner_profile(self, summoner_name: str, region: str) -> dict:\n        \"\"\"Retrieve summoner profile information.\"\"\"\n        key = f\"{summoner_name}:{region}\"\n        if key not in self.summoner_profiles:\n            return {\n                \"summoner_name\": summoner_name,\n                \"rank\": \"\",\n                \"tier\": \"\",\n                \"lp\": 0,\n                \"win_rate\": 0,\n                \"champion_pool\": []\n            }\n        \n        return self.summoner_profiles[key]\n\n    def lol_list_summoner_matches(self, summoner_name: str, region: str, limit: Optional[int] = None) -> dict:\n        \"\"\"Retrieve recent match history for a summoner.\"\"\"\n        key = f\"{summoner_name}:{region}\"\n        if key not in self.match_history:\n            return {\"matches\": []}\n        \n        matches = self.match_history[key]\n        if limit:\n            matches = matches[:limit]\n        \n        return {\"matches\": matches}\n\n    def lol_list_discounted_skins(self, limit: Optional[int] = None) -> dict:\n        \"\"\"Retrieve currently discounted champion skins.\"\"\"\n        skins = self.discounted_skins\n        if limit:\n            skins = skins[:limit]\n        \n        return {\"skins\": skins}\n\n    def lol_list_items(self, limit: Optional[int] = None) -> dict:\n        \"\"\"Retrieve list of all in-game items.\"\"\"\n        items = []\n        for item_id, item in self.items.items():\n            items.append({\n                \"item_id\": item.item_id,\n                \"name\": item.name,\n                \"description\": item.description,\n                \"gold\": item.gold,\n                \"stats\": item.stats\n            })\n        \n        if limit:\n            items = items[:limit]\n        \n        return {\"items\": items}\n\n    def lol_get_pro_player_riot_id(self, pro_player_name: str) -> dict:\n        \"\"\"Retrieve Riot ID and team information for a professional player.\"\"\"\n        if pro_player_name not in self.pro_players:\n            return {\n                \"pro_player_name\": pro_player_name,\n                \"riot_id\": \"\",\n                \"team\": \"\",\n                \"region\": \"\"\n            }\n        \n        player = self.pro_players[pro_player_name]\n        return {\n            \"pro_player_name\": player.pro_player_name,\n            \"riot_id\": player.riot_id,\n            \"team\": player.team,\n            \"region\": player.region\n        }\n\n    def lol_esports_list_schedules(self, league: Optional[str] = None, region: Optional[str] = None, limit: Optional[int] = None) -> dict:\n        \"\"\"Retrieve upcoming esports match schedules.\"\"\"\n        schedules = []\n        for match in self.esports_schedule:\n            if league and match.league != league:\n                continue\n            if region and match.region != region:\n                continue\n            \n            schedules.append({\n                \"match_id\": match.match_id,\n                \"league\": match.league,\n                \"team1\": match.team1,\n                \"team2\": match.team2,\n                \"scheduled_time\": match.scheduled_time,\n                \"status\": match.status\n            })\n        \n        if limit:\n            schedules = schedules[:limit]\n        \n        return {\"schedules\": schedules}\n\n    def lol_esports_list_team_standings(self, league: str, region: Optional[str] = None) -> dict:\n        \"\"\"Retrieve team standings for an esports league.\"\"\"\n        if league not in self.team_standings:\n            return {\"standings\": []}\n        \n        standings = []\n        for team in self.team_standings[league]:\n            standings.append({\n                \"rank\": team.rank,\n                \"team_name\": team.team_name,\n                \"wins\": team.wins,\n                \"losses\": team.losses,\n                \"win_rate\": team.win_rate\n            })\n        \n        return {\"standings\": standings}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"LeagueOfLegends\")\napi = LeagueOfLegendsAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the League of Legends API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching LeagueScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current League of Legends state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef lol_get_champion_analysis(champion_name: str, lane: Optional[str] = None, region: Optional[str] = None) -> dict:\n    \"\"\"\n    Retrieve detailed champion statistics including win/pick/ban rates, optimal builds, counters, and synergies.\n    \n    Args:\n        champion_name (str): The name of the champion to analyze.\n        lane (str) [Optional]: The lane position to filter by.\n        region (str) [Optional]: The server region code to filter by.\n    \n    Returns:\n        champion_analysis (dict): Detailed champion statistics and analysis.\n    \"\"\"\n    try:\n        if not champion_name or not isinstance(champion_name, str):\n            raise ValueError(\"Champion name must be a non-empty string\")\n        return api.lol_get_champion_analysis(champion_name, lane, region)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef lol_get_champion_synergies(champion_name: str, lane: Optional[str] = None) -> dict:\n    \"\"\"\n    Retrieve champion synergy information showing which champions pair well together.\n    \n    Args:\n        champion_name (str): The name of the champion to analyze.\n        lane (str) [Optional]: The lane position to filter by.\n    \n    Returns:\n        synergies (dict): Champion synergy information.\n    \"\"\"\n    try:\n        if not champion_name or not isinstance(champion_name, str):\n            raise ValueError(\"Champion name must be a non-empty string\")\n        return api.lol_get_champion_synergies(champion_name, lane)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef lol_get_lane_matchup_guide(lane: str, champion_name: str, enemy_champion: Optional[str] = None) -> dict:\n    \"\"\"\n    Retrieve lane matchup guide providing win rates and difficulty ratings.\n    \n    Args:\n        lane (str): The lane position for the matchup analysis.\n        champion_name (str): The name of the champion to analyze.\n        enemy_champion (str) [Optional]: Specific enemy champion to analyze against.\n    \n    Returns:\n        matchup_guide (dict): Lane matchup information.\n    \"\"\"\n    try:\n        if not lane or not isinstance(lane, str):\n            raise ValueError(\"Lane must be a non-empty string\")\n        if not champion_name or not isinstance(champion_name, str):\n            raise ValueError(\"Champion name must be a non-empty string\")\n        return api.lol_get_lane_matchup_guide(lane, champion_name, enemy_champion)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef lol_list_champion_details(champion_names: List[str]) -> dict:\n    \"\"\"\n    Retrieve detailed champion information including abilities, tips, lore, and stats.\n    \n    Args:\n        champion_names (List[str]): List of champion names to retrieve details for (max 10).\n    \n    Returns:\n        champion_details (dict): Detailed information for requested champions.\n    \"\"\"\n    try:\n        if not isinstance(champion_names, list) or len(champion_names) == 0:\n            raise ValueError(\"Champion names must be a non-empty list\")\n        if len(champion_names) > 10:\n            raise ValueError(\"Maximum 10 champions can be requested at once\")\n        return api.lol_list_champion_details(champion_names)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef lol_list_champion_leaderboard(lane: Optional[str] = None, region: Optional[str] = None, tier: Optional[str] = None, limit: Optional[int] = None) -> dict:\n    \"\"\"\n    Retrieve champion leaderboard rankings with performance metrics.\n    \n    Args:\n        lane (str) [Optional]: Lane position to filter by.\n        region (str) [Optional]: Server region code to filter by.\n        tier (str) [Optional]: Competitive tier to filter by.\n        limit (int) [Optional]: Maximum number of results.\n    \n    Returns:\n        leaderboard (dict): Ranked list of champions.\n    \"\"\"\n    try:\n        if limit is not None and (not isinstance(limit, int) or limit <= 0):\n            raise ValueError(\"Limit must be a positive integer\")\n        return api.lol_list_champion_leaderboard(lane, region, tier, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef lol_list_champions(limit: Optional[int] = None) -> dict:\n    \"\"\"\n    Retrieve list of all League of Legends champions with basic metadata.\n    \n    Args:\n        limit (int) [Optional]: Maximum number of results.\n    \n    Returns:\n        champions (dict): List of champion metadata.\n    \"\"\"\n    try:\n        if limit is not None and (not isinstance(limit, int) or limit <= 0):\n            raise ValueError(\"Limit must be a positive integer\")\n        return api.lol_list_champions(limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef lol_list_lane_meta_champions(lane: str, region: Optional[str] = None, tier: Optional[str] = None) -> dict:\n    \"\"\"\n    Retrieve current meta champions for a specific lane with tier rankings and statistics.\n    \n    Args:\n        lane (str): The lane position to analyze.\n        region (str) [Optional]: Server region code to filter by.\n        tier (str) [Optional]: Competitive tier to filter by.\n    \n    Returns:\n        meta_champions (dict): Meta champions for the specified lane.\n    \"\"\"\n    try:\n        if not lane or not isinstance(lane, str):\n            raise ValueError(\"Lane must be a non-empty string\")\n        return api.lol_list_lane_meta_champions(lane, region, tier)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef lol_get_summoner_game_detail(summoner_name: str, game_id: str, region: str) -> dict:\n    \"\"\"\n    Retrieve detailed information for a specific game including all players' data.\n    \n    Args:\n        summoner_name (str): The summoner's display name.\n        game_id (str): The unique game match identifier.\n        region (str): The server region code.\n    \n    Returns:\n        game_details (dict): Detailed game information.\n    \"\"\"\n    try:\n        if not summoner_name or not isinstance(summoner_name, str):\n            raise ValueError(\"Summoner name must be a non-empty string\")\n        if not game_id or not isinstance(game_id, str):\n            raise ValueError(\"Game ID must be a non-empty string\")\n        if not region or not isinstance(region, str):\n            raise ValueError(\"Region must be a non-empty string\")\n        return api.lol_get_summoner_game_detail(summoner_name, game_id, region)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef lol_get_summoner_profile(summoner_name: str, region: str) -> dict:\n    \"\"\"\n    Retrieve summoner profile information including rank, tier, and champion pool.\n    \n    Args:\n        summoner_name (str): The summoner's display name.\n        region (str): The server region code.\n    \n    Returns:\n        profile (dict): Summoner profile information.\n    \"\"\"\n    try:\n        if not summoner_name or not isinstance(summoner_name, str):\n            raise ValueError(\"Summoner name must be a non-empty string\")\n        if not region or not isinstance(region, str):\n            raise ValueError(\"Region must be a non-empty string\")\n        return api.lol_get_summoner_profile(summoner_name, region)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef lol_list_summoner_matches(summoner_name: str, region: str, limit: Optional[int] = None) -> dict:\n    \"\"\"\n    Retrieve recent match history for a summoner with per-game statistics.\n    \n    Args:\n        summoner_name (str): The summoner's display name.\n        region (str): The server region code.\n        limit (int) [Optional]: Maximum number of results.\n    \n    Returns:\n        matches (dict): List of recent matches.\n    \"\"\"\n    try:\n        if not summoner_name or not isinstance(summoner_name, str):\n            raise ValueError(\"Summoner name must be a non-empty string\")\n        if not region or not isinstance(region, str):\n            raise ValueError(\"Region must be a non-empty string\")\n        if limit is not None and (not isinstance(limit, int) or limit <= 0):\n            raise ValueError(\"Limit must be a positive integer\")\n        return api.lol_list_summoner_matches(summoner_name, region, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef lol_list_discounted_skins(limit: Optional[int] = None) -> dict:\n    \"\"\"\n    Retrieve currently discounted champion skins with pricing information.\n    \n    Args:\n        limit (int) [Optional]: Maximum number of results.\n    \n    Returns:\n        skins (dict): List of discounted skins.\n    \"\"\"\n    try:\n        if limit is not None and (not isinstance(limit, int) or limit <= 0):\n            raise ValueError(\"Limit must be a positive integer\")\n        return api.lol_list_discounted_skins(limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef lol_list_items(limit: Optional[int] = None) -> dict:\n    \"\"\"\n    Retrieve list of all in-game items with metadata and stats.\n    \n    Args:\n        limit (int) [Optional]: Maximum number of results.\n    \n    Returns:\n        items (dict): List of item metadata.\n    \"\"\"\n    try:\n        if limit is not None and (not isinstance(limit, int) or limit <= 0):\n            raise ValueError(\"Limit must be a positive integer\")\n        return api.lol_list_items(limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef lol_get_pro_player_riot_id(pro_player_name: str) -> dict:\n    \"\"\"\n    Retrieve Riot ID and team information for a professional player.\n    \n    Args:\n        pro_player_name (str): The professional player's name or gamertag.\n    \n    Returns:\n        player_info (dict): Professional player information.\n    \"\"\"\n    try:\n        if not pro_player_name or not isinstance(pro_player_name, str):\n            raise ValueError(\"Pro player name must be a non-empty string\")\n        return api.lol_get_pro_player_riot_id(pro_player_name)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef lol_esports_list_schedules(league: Optional[str] = None, region: Optional[str] = None, limit: Optional[int] = None) -> dict:\n    \"\"\"\n    Retrieve upcoming League of Legends esports match schedules.\n    \n    Args:\n        league (str) [Optional]: Esports league to filter by.\n        region (str) [Optional]: Server region code to filter by.\n        limit (int) [Optional]: Maximum number of results.\n    \n    Returns:\n        schedules (dict): List of upcoming esports matches.\n    \"\"\"\n    try:\n        if limit is not None and (not isinstance(limit, int) or limit <= 0):\n            raise ValueError(\"Limit must be a positive integer\")\n        return api.lol_esports_list_schedules(league, region, limit)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef lol_esports_list_team_standings(league: str, region: Optional[str] = None) -> dict:\n    \"\"\"\n    Retrieve team standings for a League of Legends esports league.\n    \n    Args:\n        league (str): The esports league to get standings for.\n        region (str) [Optional]: Server region code to filter by.\n    \n    Returns:\n        standings (dict): Ranked list of teams in the league.\n    \"\"\"\n    try:\n        if not league or not isinstance(league, str):\n            raise ValueError(\"League must be a non-empty string\")\n        return api.lol_esports_list_team_standings(league, region)\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-03T23:01:44.433683",
+      "revision_number": null
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic scenario with minimal champion and item data",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "champions": {
+          "Ahri": {
+            "name": "Ahri",
+            "title": "The Nine-Tailed Fox",
+            "roles": [
+              "Mage",
+              "Assassin"
+            ],
+            "difficulty": 5
+          }
+        },
+        "items": {
+          "1001": {
+            "item_id": 1001,
+            "name": "Boots of Speed",
+            "description": "Slightly increases Movement Speed",
+            "gold": 300,
+            "stats": {
+              "movespeed": 25
+            }
+          }
+        },
+        "pro_players": {},
+        "esports_schedule": [],
+        "team_standings": {},
+        "champion_stats": {},
+        "summoner_profiles": {},
+        "match_history": {},
+        "discounted_skins": [],
+        "regionMap": {
+          "kr": "Korea",
+          "na": "North America",
+          "euw": "Europe West",
+          "eune": "Europe Nordic",
+          "br": "Brazil",
+          "lan": "Latin America North",
+          "las": "Latin America South",
+          "oce": "Oceania",
+          "ru": "Russia",
+          "tr": "Turkey",
+          "jp": "Japan",
+          "sg": "Singapore",
+          "th": "Thailand",
+          "vn": "Vietnam",
+          "ph": "Philippines",
+          "tw": "Taiwan",
+          "default": "North America"
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Moderate scenario with champions, items, pro players and esports matches",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "champions": {
+          "Yasuo": {
+            "name": "Yasuo",
+            "title": "The Unforgiven",
+            "roles": [
+              "Fighter",
+              "Assassin"
+            ],
+            "difficulty": 8
+          },
+          "Jinx": {
+            "name": "Jinx",
+            "title": "The Loose Cannon",
+            "roles": [
+              "Marksman"
+            ],
+            "difficulty": 6
+          },
+          "Thresh": {
+            "name": "Thresh",
+            "title": "The Chain Warden",
+            "roles": [
+              "Support",
+              "Tank"
+            ],
+            "difficulty": 7
+          }
+        },
+        "items": {
+          "3006": {
+            "item_id": 3006,
+            "name": "Berserker's Greaves",
+            "description": "Increases attack speed and movement speed",
+            "gold": 1100,
+            "stats": {
+              "attackspeed": 35,
+              "movespeed": 45
+            }
+          },
+          "3078": {
+            "item_id": 3078,
+            "name": "Trinity Force",
+            "description": "Well-rounded item with multiple stats",
+            "gold": 3333,
+            "stats": {
+              "attackdamage": 35,
+              "attackspeed": 30,
+              "health": 200
+            }
+          },
+          "1055": {
+            "item_id": 1055,
+            "name": "Doran's Blade",
+            "description": "Starting item for marksmen",
+            "gold": 450,
+            "stats": {
+              "attackdamage": 8,
+              "health": 80
+            }
+          }
+        },
+        "pro_players": {
+          "Faker": {
+            "pro_player_name": "Faker",
+            "riot_id": "SKT T1 Faker",
+            "team": "T1",
+            "region": "Korea"
+          },
+          "Caps": {
+            "pro_player_name": "Caps",
+            "riot_id": "G2 Caps",
+            "team": "G2 Esports",
+            "region": "Europe West"
+          }
+        },
+        "esports_schedule": [
+          {
+            "match_id": "LCK2024001",
+            "league": "LCK",
+            "team1": "T1",
+            "team2": "Gen.G",
+            "scheduled_time": "2024-03-15T14:00:00",
+            "status": "scheduled"
+          },
+          {
+            "match_id": "LEC2024001",
+            "league": "LEC",
+            "team1": "G2 Esports",
+            "team2": "Fnatic",
+            "scheduled_time": "2024-03-16T17:00:00",
+            "status": "scheduled"
+          }
+        ],
+        "team_standings": {
+          "LCK": [
+            {
+              "rank": 1,
+              "team_name": "T1",
+              "wins": 15,
+              "losses": 3,
+              "win_rate": 83.3
+            },
+            {
+              "rank": 2,
+              "team_name": "Gen.G",
+              "wins": 14,
+              "losses": 4,
+              "win_rate": 77.8
+            }
+          ]
+        },
+        "champion_stats": {
+          "Yasuo": {
+            "pick_rate": 12.5,
+            "ban_rate": 8.3,
+            "win_rate": 51.2
+          },
+          "Jinx": {
+            "pick_rate": 8.7,
+            "ban_rate": 2.1,
+            "win_rate": 53.8
+          }
+        },
+        "summoner_profiles": {
+          "Summoner1": {
+            "level": 150,
+            "rank": "Diamond II",
+            "lp": 75
+          },
+          "Summoner2": {
+            "level": 89,
+            "rank": "Gold I",
+            "lp": 42
+          }
+        },
+        "match_history": {
+          "Summoner1": [
+            {
+              "champion": "Yasuo",
+              "result": "win",
+              "kda": "8/2/5"
+            },
+            {
+              "champion": "Jinx",
+              "result": "loss",
+              "kda": "3/4/7"
+            }
+          ]
+        },
+        "discounted_skins": [
+          {
+            "skin_name": "PROJECT: Yasuo",
+            "original_price": 1350,
+            "sale_price": 975
+          },
+          {
+            "skin_name": "Star Guardian Jinx",
+            "original_price": 1820,
+            "sale_price": 1350
+          }
+        ],
+        "regionMap": {
+          "kr": "Korea",
+          "na": "North America",
+          "euw": "Europe West",
+          "eune": "Europe Nordic",
+          "br": "Brazil",
+          "lan": "Latin America North",
+          "las": "Latin America South",
+          "oce": "Oceania",
+          "ru": "Russia",
+          "tr": "Turkey",
+          "jp": "Japan",
+          "sg": "Singapore",
+          "th": "Thailand",
+          "vn": "Vietnam",
+          "ph": "Philippines",
+          "tw": "Taiwan",
+          "default": "North America"
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Comprehensive scenario with diverse data across all categories",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "champions": {
+          "Akali": {
+            "name": "Akali",
+            "title": "The Rogue Assassin",
+            "roles": [
+              "Assassin"
+            ],
+            "difficulty": 7
+          },
+          "Ashe": {
+            "name": "Ashe",
+            "title": "The Frost Archer",
+            "roles": [
+              "Marksman",
+              "Support"
+            ],
+            "difficulty": 4
+          },
+          "Azir": {
+            "name": "Azir",
+            "title": "The Emperor of the Sands",
+            "roles": [
+              "Mage",
+              "Marksman"
+            ],
+            "difficulty": 9
+          },
+          "Bard": {
+            "name": "Bard",
+            "title": "The Wandering Caretaker",
+            "roles": [
+              "Support",
+              "Mage"
+            ],
+            "difficulty": 8
+          },
+          "Darius": {
+            "name": "Darius",
+            "title": "The Hand of Noxus",
+            "roles": [
+              "Fighter",
+              "Tank"
+            ],
+            "difficulty": 5
+          }
+        },
+        "items": {
+          "1038": {
+            "item_id": 1038,
+            "name": "B. F. Sword",
+            "description": "Massive boost to attack damage",
+            "gold": 1300,
+            "stats": {
+              "attackdamage": 40
+            }
+          },
+          "3089": {
+            "item_id": 3089,
+            "name": "Rabadon's Deathcap",
+            "description": "Massive increase to ability power",
+            "gold": 3600,
+            "stats": {
+              "abilitypower": 120,
+              "passive": "Increases ability power by 35%"
+            }
+          },
+          "3111": {
+            "item_id": 3111,
+            "name": "Mercury's Treads",
+            "description": "Increases movement speed and provides tenacity",
+            "gold": 1100,
+            "stats": {
+              "movespeed": 45,
+              "tenacity": 30
+            }
+          },
+          "3065": {
+            "item_id": 3065,
+            "name": "Spirit Visage",
+            "description": "Increases healing and provides magic resistance",
+            "gold": 2900,
+            "stats": {
+              "health": 450,
+              "magicresist": 55,
+              "cooldownreduction": 10
+            }
+          }
+        },
+        "pro_players": {
+          "Rookie": {
+            "pro_player_name": "Rookie",
+            "riot_id": "V5 Rookie",
+            "team": "Victory Five",
+            "region": "China"
+          },
+          "Uzi": {
+            "pro_player_name": "Uzi",
+            "riot_id": "BLG Uzi",
+            "team": "Bilibili Gaming",
+            "region": "China"
+          },
+          "Perkz": {
+            "pro_player_name": "Perkz",
+            "riot_id": "VIT Perkz",
+            "team": "Team Vitality",
+            "region": "Europe West"
+          },
+          "CoreJJ": {
+            "pro_player_name": "CoreJJ",
+            "riot_id": "TL CoreJJ",
+            "team": "Team Liquid",
+            "region": "North America"
+          }
+        },
+        "esports_schedule": [
+          {
+            "match_id": "LPL2024001",
+            "league": "LPL",
+            "team1": "Victory Five",
+            "team2": "Bilibili Gaming",
+            "scheduled_time": "2024-03-20T11:00:00",
+            "status": "completed"
+          },
+          {
+            "match_id": "LEC2024002",
+            "league": "LEC",
+            "team1": "Team Vitality",
+            "team2": "MAD Lions",
+            "scheduled_time": "2024-03-21T18:00:00",
+            "status": "scheduled"
+          },
+          {
+            "match_id": "LCS2024001",
+            "league": "LCS",
+            "team1": "Team Liquid",
+            "team2": "Cloud9",
+            "scheduled_time": "2024-03-22T20:00:00",
+            "status": "scheduled"
+          }
+        ],
+        "team_standings": {
+          "LPL": [
+            {
+              "rank": 1,
+              "team_name": "Victory Five",
+              "wins": 12,
+              "losses": 2,
+              "win_rate": 85.7
+            },
+            {
+              "rank": 2,
+              "team_name": "Bilibili Gaming",
+              "wins": 11,
+              "losses": 3,
+              "win_rate": 78.6
+            },
+            {
+              "rank": 3,
+              "team_name": "EDG",
+              "wins": 10,
+              "losses": 4,
+              "win_rate": 71.4
+            }
+          ],
+          "LEC": [
+            {
+              "rank": 1,
+              "team_name": "G2 Esports",
+              "wins": 13,
+              "losses": 1,
+              "win_rate": 92.9
+            },
+            {
+              "rank": 2,
+              "team_name": "Team Vitality",
+              "wins": 9,
+              "losses": 5,
+              "win_rate": 64.3
+            }
+          ]
+        },
+        "champion_stats": {
+          "Akali": {
+            "pick_rate": 15.2,
+            "ban_rate": 22.1,
+            "win_rate": 48.7,
+            "avg_kda": "6.8/5.2/4.1"
+          },
+          "Ashe": {
+            "pick_rate": 11.3,
+            "ban_rate": 1.2,
+            "win_rate": 52.4,
+            "avg_kda": "4.2/3.8/8.9"
+          },
+          "Azir": {
+            "pick_rate": 6.7,
+            "ban_rate": 3.4,
+            "win_rate": 49.8,
+            "avg_kda": "5.1/4.3/6.7"
+          },
+          "Bard": {
+            "pick_rate": 8.9,
+            "ban_rate": 0.8,
+            "win_rate": 54.2,
+            "avg_kda": "2.1/4.2/11.5"
+          },
+          "Darius": {
+            "pick_rate": 13.8,
+            "ban_rate": 18.5,
+            "win_rate": 51.3,
+            "avg_kda": "7.2/5.8/3.4"
+          }
+        },
+        "summoner_profiles": {
+          "ProPlayer1": {
+            "level": 347,
+            "rank": "Master",
+            "lp": 225,
+            "main_role": "Mid",
+            "favorite_champions": [
+              "Akali",
+              "Azir"
+            ]
+          },
+          "CasualPlayer1": {
+            "level": 82,
+            "rank": "Silver II",
+            "lp": 64,
+            "main_role": "ADC",
+            "favorite_champions": [
+              "Ashe",
+              "Jinx"
+            ]
+          },
+          "SupportMain": {
+            "level": 156,
+            "rank": "Platinum I",
+            "lp": 92,
+            "main_role": "Support",
+            "favorite_champions": [
+              "Bard",
+              "Thresh"
+            ]
+          }
+        },
+        "match_history": {
+          "ProPlayer1": [
+            {
+              "match_id": "12345",
+              "champion": "Akali",
+              "result": "win",
+              "kda": "12/3/7",
+              "game_duration": "28:45"
+            },
+            {
+              "match_id": "12346",
+              "champion": "Azir",
+              "result": "loss",
+              "kda": "5/7/9",
+              "game_duration": "35:12"
+            }
+          ],
+          "CasualPlayer1": [
+            {
+              "match_id": "23456",
+              "champion": "Ashe",
+              "result": "win",
+              "kda": "8/2/11",
+              "game_duration": "32:18"
+            },
+            {
+              "match_id": "23457",
+              "champion": "Jinx",
+              "result": "win",
+              "kda": "11/4/8",
+              "game_duration": "29:54"
+            }
+          ]
+        },
+        "discounted_skins": [
+          {
+            "skin_name": "PROJECT: Akali",
+            "original_price": 1820,
+            "sale_price": 1350,
+            "discount_percentage": 25.8
+          },
+          {
+            "skin_name": "Cosmic Queen Ashe",
+            "original_price": 1350,
+            "sale_price": 975,
+            "discount_percentage": 27.8
+          },
+          {
+            "skin_name": "Elderwood Bard",
+            "original_price": 1350,
+            "sale_price": 975,
+            "discount_percentage": 27.8
+          }
+        ],
+        "regionMap": {
+          "kr": "Korea",
+          "na": "North America",
+          "euw": "Europe West",
+          "eune": "Europe Nordic",
+          "br": "Brazil",
+          "lan": "Latin America North",
+          "las": "Latin America South",
+          "oce": "Oceania",
+          "ru": "Russia",
+          "tr": "Turkey",
+          "jp": "Japan",
+          "sg": "Singapore",
+          "th": "Thailand",
+          "vn": "Vietnam",
+          "ph": "Philippines",
+          "tw": "Taiwan",
+          "default": "North America"
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Test edge cases with difficulty 10, zero gold items, and invalid date format (should be rejected)",
+      "expected_behavior": "validation_error",
+      "scenario_data": {
+        "champions": {
+          "Aphelios": {
+            "name": "Aphelios",
+            "title": "The Weapon of the Faithful",
+            "roles": [
+              "Marksman"
+            ],
+            "difficulty": 10
+          },
+          "Kalista": {
+            "name": "Kalista",
+            "title": "The Spear of Vengeance",
+            "roles": [
+              "Marksman"
+            ],
+            "difficulty": 7
+          }
+        },
+        "items": {
+          "9999": {
+            "item_id": 9999,
+            "name": "Test Item",
+            "description": "Free item with zero cost",
+            "gold": 0,
+            "stats": {
+              "test_stat": "invalid"
+            }
+          }
+        },
+        "pro_players": {
+          "TestPlayer": {
+            "pro_player_name": "TestPlayer",
+            "riot_id": "TEST123",
+            "team": "Test Team",
+            "region": "Invalid Region!"
+          }
+        },
+        "esports_schedule": [
+          {
+            "match_id": "TEST001",
+            "league": "TEST",
+            "team1": "Team A",
+            "team2": "Team B",
+            "scheduled_time": "2024-13-45T25:70:90",
+            "status": "invalid"
+          }
+        ],
+        "team_standings": {
+          "TEST": [
+            {
+              "rank": 0,
+              "team_name": "Invalid Rank Team",
+              "wins": -5,
+              "losses": -3,
+              "win_rate": 150.5
+            }
+          ]
+        },
+        "champion_stats": {},
+        "summoner_profiles": {},
+        "match_history": {},
+        "discounted_skins": [],
+        "regionMap": {
+          "kr": "Korea",
+          "na": "North America",
+          "euw": "Europe West",
+          "eune": "Europe Nordic",
+          "br": "Brazil",
+          "lan": "Latin America North",
+          "las": "Latin America South",
+          "oce": "Oceania",
+          "ru": "Russia",
+          "tr": "Turkey",
+          "jp": "Japan",
+          "sg": "Singapore",
+          "th": "Thailand",
+          "vn": "Vietnam",
+          "ph": "Philippines",
+          "tw": "Taiwan",
+          "default": "North America"
+        }
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "lol_get_champion_analysis",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_champion_synergies",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_lane_matchup_guide",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_champion_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_champion_leaderboard",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_champions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_lane_meta_champions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_summoner_game_detail",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_summoner_profile",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_summoner_matches",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_pro_player_riot_id",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_esports_list_schedules",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_esports_list_team_standings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_discounted_skins",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 52.295722246170044
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "lol_list_champions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_champion_analysis",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_champion_synergies",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_lane_matchup_guide",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_champion_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_champion_leaderboard",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_lane_meta_champions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_summoner_profile",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_summoner_matches",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_summoner_game_detail",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_discounted_skins",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_pro_player_riot_id",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_esports_list_schedules",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_esports_list_team_standings",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 91.29344987869263
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "lol_get_champion_analysis",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_champion_synergies",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_lane_matchup_guide",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_champion_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_champion_leaderboard",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_champions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_lane_meta_champions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_summoner_game_detail",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_summoner_profile",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_summoner_matches",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_discounted_skins",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_pro_player_riot_id",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_esports_list_schedules",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_esports_list_team_standings",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 67.62657833099365
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "error_type": "Validation Error",
+              "error_location": "load_scenario",
+              "error_details": "4 validation errors for LeagueScenario: team_standings.TEST.0.rank (Input should be greater than or equal to 1), team_standings.TEST.0.wins (Input should be greater than or equal to 0), team_standings.TEST.0.losses (Input should be greater than or equal to 0), team_standings.TEST.0.win_rate (Input should be less than or equal to 100)",
+              "expected_vs_actual": "Expected validation error due to invalid data (rank=0, wins=-5, losses=-3, win_rate=150.5) vs Actual validation error occurred",
+              "root_cause": "The scenario contains boundary/invalid values that violate the schema constraints: rank must be >= 1, wins/losses must be >= 0, win_rate must be <= 100",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "4 validation errors for LeagueScenario: team_standings.TEST.0.rank (Input should be greater than or equal to 1), team_standings.TEST.0.wins (Input should be greater than or equal to 0), team_standings.TEST.0.losses (Input should be greater than or equal to 0), team_standings.TEST.0.win_rate (Input should be less than or equal to 100)"
+            },
+            "tool_executions": [
+              {
+                "tool_name": "lol_list_champions",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "lol_get_champion_analysis",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "lol_list_items",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "lol_esports_list_schedules",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "lol_esports_list_team_standings",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "lol_get_pro_player_riot_id",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 61.42972207069397
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 4,
+      "passed_scenarios": 4,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "lol_get_champion_analysis",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_champion_synergies",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_lane_matchup_guide",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_champion_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_champion_leaderboard",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_champions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_lane_meta_champions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_summoner_game_detail",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_summoner_profile",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_summoner_matches",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_pro_player_riot_id",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_esports_list_schedules",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_esports_list_team_standings",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_discounted_skins",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 52.295722246170044
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "lol_list_champions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_champion_analysis",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_champion_synergies",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_lane_matchup_guide",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_champion_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_champion_leaderboard",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_lane_meta_champions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_summoner_profile",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_summoner_matches",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_summoner_game_detail",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_discounted_skins",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_pro_player_riot_id",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_esports_list_schedules",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_esports_list_team_standings",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 91.29344987869263
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "lol_get_champion_analysis",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_champion_synergies",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_lane_matchup_guide",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_champion_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_champion_leaderboard",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_champions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_lane_meta_champions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_summoner_game_detail",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_summoner_profile",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_summoner_matches",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_discounted_skins",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_list_items",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_get_pro_player_riot_id",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_esports_list_schedules",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "lol_esports_list_team_standings",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 67.62657833099365
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "error_type": "Validation Error",
+              "error_location": "load_scenario",
+              "error_details": "4 validation errors for LeagueScenario: team_standings.TEST.0.rank (Input should be greater than or equal to 1), team_standings.TEST.0.wins (Input should be greater than or equal to 0), team_standings.TEST.0.losses (Input should be greater than or equal to 0), team_standings.TEST.0.win_rate (Input should be less than or equal to 100)",
+              "expected_vs_actual": "Expected validation error due to invalid data (rank=0, wins=-5, losses=-3, win_rate=150.5) vs Actual validation error occurred",
+              "root_cause": "The scenario contains boundary/invalid values that violate the schema constraints: rank must be >= 1, wins/losses must be >= 0, win_rate must be <= 100",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "4 validation errors for LeagueScenario: team_standings.TEST.0.rank (Input should be greater than or equal to 1), team_standings.TEST.0.wins (Input should be greater than or equal to 0), team_standings.TEST.0.losses (Input should be greater than or equal to 0), team_standings.TEST.0.win_rate (Input should be less than or equal to 100)"
+            },
+            "tool_executions": [
+              {
+                "tool_name": "lol_list_champions",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "lol_get_champion_analysis",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "lol_list_items",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "lol_esports_list_schedules",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "lol_esports_list_team_standings",
+                "passed": true,
+                "error": ""
+              },
+              {
+                "tool_name": "lol_get_pro_player_riot_id",
+                "passed": true,
+                "error": ""
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": ""
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 61.42972207069397
+        }
+      ]
+    }
+  },
+  "revision_history": [],
+  "statistics": {
+    "total_revisions": 0,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/LeagueOfLegends.py"
+  }
+}

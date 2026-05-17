@@ -1,0 +1,1779 @@
+{
+  "metadata": {
+    "class_name": "Airline",
+    "metadata_path": "envs\\metadata\\Airline_metadata.json",
+    "checkpoint_version": "1.0",
+    "last_updated": "2026-01-03T03:33:40.827483",
+    "state": "validate_scenarios"
+  },
+  "schema": {
+    "class_name": "Airline",
+    "description": "A comprehensive airline booking service that provides flight search, reservation management, and user account operations for air travel.",
+    "tools": [
+      {
+        "name": "list_airports",
+        "description": "Retrieve a list of all available airports with their corresponding IATA codes and city names.",
+        "input_schema": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "airports": {
+              "type": "array",
+              "description": "List of all available airports in the system.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "iata": {
+                    "type": "string",
+                    "description": "The IATA airport code (e.g., 'JFK', 'LAX')."
+                  },
+                  "city": {
+                    "type": "string",
+                    "description": "The city where the airport is located."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "search_flights",
+        "description": "Search for available direct flights between two airports on a specified date.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "origin": {
+              "type": "string",
+              "description": "The IATA code of the departure airport (e.g., 'JFK')."
+            },
+            "destination": {
+              "type": "string",
+              "description": "The IATA code of the arrival airport (e.g., 'LAX')."
+            },
+            "date": {
+              "type": "string",
+              "description": "The date of the flight in YYYY-MM-DD format."
+            }
+          },
+          "required": [
+            "origin",
+            "destination",
+            "date"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "flights": {
+              "type": "array",
+              "description": "List of available flights matching the search criteria.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "flight_number": {
+                    "type": "string",
+                    "description": "The unique identifier for the flight (e.g., 'AA123')."
+                  },
+                  "origin": {
+                    "type": "string",
+                    "description": "The IATA code of the departure airport."
+                  },
+                  "destination": {
+                    "type": "string",
+                    "description": "The IATA code of the arrival airport."
+                  },
+                  "scheduled_departure": {
+                    "type": "string",
+                    "description": "The scheduled departure time of the flight."
+                  },
+                  "available_seats": {
+                    "type": "object",
+                    "description": "Seat availability breakdown by cabin class."
+                  },
+                  "prices": {
+                    "type": "object",
+                    "description": "Ticket prices breakdown by cabin class."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_flight_status",
+        "description": "Retrieve the current operational status of a specific flight on a given date.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "flight_number": {
+              "type": "string",
+              "description": "The unique identifier for the flight (e.g., 'AA123')."
+            },
+            "date": {
+              "type": "string",
+              "description": "The date of the flight in YYYY-MM-DD format."
+            }
+          },
+          "required": [
+            "flight_number",
+            "date"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "flight_number": {
+              "type": "string",
+              "description": "The unique identifier for the flight."
+            },
+            "status": {
+              "type": "string",
+              "description": "The current operational status of the flight (e.g., 'available', 'delayed', 'cancelled')."
+            },
+            "date": {
+              "type": "string",
+              "description": "The date of the flight in YYYY-MM-DD format."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_user_details",
+        "description": "Retrieve a user's profile information including their reservation history and saved payment methods.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "user_id": {
+              "type": "string",
+              "description": "The unique identifier of the customer account."
+            }
+          },
+          "required": [
+            "user_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "user_id": {
+              "type": "string",
+              "description": "The unique identifier of the customer account."
+            },
+            "name": {
+              "type": "string",
+              "description": "The full name of the customer."
+            },
+            "reservations": {
+              "type": "array",
+              "description": "List of reservation IDs associated with the customer.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "payment_methods": {
+              "type": "array",
+              "description": "List of saved payment methods for the customer.",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_reservation_details",
+        "description": "Retrieve complete details of a specific flight reservation including flights, passengers, and pricing.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "reservation_id": {
+              "type": "string",
+              "description": "The unique identifier of the flight booking."
+            }
+          },
+          "required": [
+            "reservation_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "reservation_id": {
+              "type": "string",
+              "description": "The unique identifier of the flight booking."
+            },
+            "user_id": {
+              "type": "string",
+              "description": "The unique identifier of the customer account who made the booking."
+            },
+            "flights": {
+              "type": "array",
+              "description": "List of flight segments included in the reservation.",
+              "items": {
+                "type": "object"
+              }
+            },
+            "passengers": {
+              "type": "array",
+              "description": "List of passengers included in the reservation.",
+              "items": {
+                "type": "object"
+              }
+            },
+            "total_price": {
+              "type": "number",
+              "description": "The total price of the reservation in the default currency."
+            },
+            "status": {
+              "type": "string",
+              "description": "The current status of the reservation (e.g., 'confirmed', 'cancelled')."
+            }
+          }
+        }
+      },
+      {
+        "name": "book_reservation",
+        "description": "Create a new flight reservation with specified flights, passengers, and additional services.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "user_id": {
+              "type": "string",
+              "description": "The unique identifier of the customer account making the booking."
+            },
+            "origin": {
+              "type": "string",
+              "description": "The IATA code of the departure airport (e.g., 'JFK')."
+            },
+            "destination": {
+              "type": "string",
+              "description": "The IATA code of the arrival airport (e.g., 'LAX')."
+            },
+            "flight_type": {
+              "type": "string",
+              "description": "The type of travel itinerary (e.g., 'one_way' or 'round_trip')."
+            },
+            "cabin": {
+              "type": "string",
+              "description": "The service class for the travel (e.g., 'economy', 'business')."
+            },
+            "flights": {
+              "type": "array",
+              "description": "Detailed list of flight segments to be booked.",
+              "items": {
+                "type": "object"
+              }
+            },
+            "passengers": {
+              "type": "array",
+              "description": "Comprehensive list of passenger details for the booking.",
+              "items": {
+                "type": "object"
+              }
+            },
+            "payment_method": {
+              "type": "string",
+              "description": "The payment method used for the booking.",
+              "enum": [
+                "credit_card",
+                "paypal",
+                "alipay",
+                "wechat_pay"
+              ]
+            },
+            "total_baggages": {
+              "type": "integer",
+              "description": "Total number of baggage pieces for all passengers."
+            },
+            "nonfree_baggages": {
+              "type": "integer",
+              "description": "Number of baggage pieces that require additional payment beyond the free allowance."
+            },
+            "insurance": {
+              "type": "boolean",
+              "description": "Whether to include travel insurance coverage for the trip."
+            }
+          },
+          "required": [
+            "user_id",
+            "origin",
+            "destination",
+            "flight_type",
+            "cabin",
+            "flights",
+            "passengers",
+            "payment_method",
+            "total_baggages",
+            "nonfree_baggages",
+            "insurance"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "reservation_id": {
+              "type": "string",
+              "description": "The unique identifier of the newly created flight booking."
+            },
+            "status": {
+              "type": "string",
+              "description": "The current status of the reservation (e.g., 'confirmed')."
+            },
+            "total_price": {
+              "type": "number",
+              "description": "The total price charged for the reservation in the default currency."
+            }
+          }
+        }
+      },
+      {
+        "name": "update_reservation_flights",
+        "description": "Modify the flight segments or cabin class of an existing reservation.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "reservation_id": {
+              "type": "string",
+              "description": "The unique identifier of the flight booking to be updated."
+            },
+            "cabin": {
+              "type": "string",
+              "description": "The service class for the travel (e.g., 'economy', 'business')."
+            },
+            "flights": {
+              "type": "array",
+              "description": "The complete new set of flight segments for the booking.",
+              "items": {
+                "type": "object"
+              }
+            },
+            "payment_method": {
+              "type": "string",
+              "description": "The payment method used for any additional charges.",
+              "enum": [
+                "credit_card",
+                "paypal",
+                "alipay",
+                "wechat_pay"
+              ]
+            }
+          },
+          "required": [
+            "reservation_id",
+            "cabin",
+            "flights",
+            "payment_method"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "reservation_id": {
+              "type": "string",
+              "description": "The unique identifier of the updated flight booking."
+            },
+            "status": {
+              "type": "string",
+              "description": "The current status of the reservation after the update."
+            },
+            "additional_charge": {
+              "type": "number",
+              "description": "The additional amount charged for the flight changes in the default currency."
+            }
+          }
+        }
+      },
+      {
+        "name": "update_reservation_passengers",
+        "description": "Update passenger information for an existing reservation.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "reservation_id": {
+              "type": "string",
+              "description": "The unique identifier of the flight booking to be updated."
+            },
+            "passengers": {
+              "type": "array",
+              "description": "Updated list of passenger details for the booking.",
+              "items": {
+                "type": "object"
+              }
+            }
+          },
+          "required": [
+            "reservation_id",
+            "passengers"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "reservation_id": {
+              "type": "string",
+              "description": "The unique identifier of the updated flight booking."
+            },
+            "status": {
+              "type": "string",
+              "description": "The current status of the reservation after the passenger update."
+            }
+          }
+        }
+      },
+      {
+        "name": "update_reservation_baggage",
+        "description": "Modify the baggage allowance for an existing reservation.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "reservation_id": {
+              "type": "string",
+              "description": "The unique identifier of the flight booking to be updated."
+            },
+            "total_baggages": {
+              "type": "integer",
+              "description": "Updated total number of baggage pieces for all passengers."
+            },
+            "nonfree_baggages": {
+              "type": "integer",
+              "description": "Updated count of baggage pieces that require additional payment."
+            },
+            "payment_method": {
+              "type": "string",
+              "description": "The payment method used for any additional baggage charges.",
+              "enum": [
+                "credit_card",
+                "paypal",
+                "alipay",
+                "wechat_pay"
+              ]
+            }
+          },
+          "required": [
+            "reservation_id",
+            "total_baggages",
+            "nonfree_baggages",
+            "payment_method"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "reservation_id": {
+              "type": "string",
+              "description": "The unique identifier of the updated flight booking."
+            },
+            "additional_charge": {
+              "type": "number",
+              "description": "The additional amount charged for the baggage changes in the default currency."
+            }
+          }
+        }
+      },
+      {
+        "name": "cancel_reservation",
+        "description": "Cancel an entire flight reservation and process the applicable refund.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "reservation_id": {
+              "type": "string",
+              "description": "The unique identifier of the flight booking to be cancelled."
+            }
+          },
+          "required": [
+            "reservation_id"
+          ]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "reservation_id": {
+              "type": "string",
+              "description": "The unique identifier of the cancelled flight booking."
+            },
+            "status": {
+              "type": "string",
+              "description": "The current status of the reservation (will be 'cancelled')."
+            },
+            "refund_amount": {
+              "type": "number",
+              "description": "The refund amount processed for the cancellation in the default currency."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tool_code_history": [
+    {
+      "version": 0,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Airport(BaseModel):\n    \"\"\"Represents an airport with IATA code and city.\"\"\"\n    iata: str = Field(..., pattern=r\"^[A-Z]{3}$\", description=\"IATA airport code\")\n    city: str = Field(..., description=\"City where airport is located\")\n\nclass Flight(BaseModel):\n    \"\"\"Represents a flight segment.\"\"\"\n    flight_number: str = Field(..., pattern=r\"^[A-Z]{2}\\d{3,4}$\", description=\"Flight number\")\n    origin: str = Field(..., pattern=r\"^[A-Z]{3}$\", description=\"Origin airport IATA code\")\n    destination: str = Field(..., pattern=r\"^[A-Z]{3}$\", description=\"Destination airport IATA code\")\n    scheduled_departure: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"Scheduled departure time\")\n    available_seats: Dict[str, int] = Field(default={}, description=\"Available seats by cabin class\")\n    prices: Dict[str, float] = Field(default={}, description=\"Ticket prices by cabin class\")\n\nclass FlightStatus(BaseModel):\n    \"\"\"Represents flight status information.\"\"\"\n    flight_number: str = Field(..., pattern=r\"^[A-Z]{2}\\d{3,4}$\", description=\"Flight number\")\n    date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Flight date\")\n    status: str = Field(..., description=\"Flight status\")\n\nclass User(BaseModel):\n    \"\"\"Represents a user account.\"\"\"\n    user_id: str = Field(..., description=\"Unique user identifier\")\n    name: str = Field(..., description=\"User full name\")\n    reservations: List[str] = Field(default=[], description=\"List of reservation IDs\")\n    payment_methods: List[str] = Field(default=[], description=\"List of saved payment methods\")\n\nclass Reservation(BaseModel):\n    \"\"\"Represents a flight reservation.\"\"\"\n    reservation_id: str = Field(..., description=\"Unique reservation identifier\")\n    user_id: str = Field(..., description=\"User ID who made the reservation\")\n    flights: List[Dict[str, Any]] = Field(default=[], description=\"Flight segments\")\n    passengers: List[Dict[str, Any]] = Field(default=[], description=\"Passenger details\")\n    total_price: float = Field(..., ge=0, description=\"Total price of reservation\")\n    status: str = Field(..., description=\"Reservation status\")\n\nclass AirlineScenario(BaseModel):\n    \"\"\"Main scenario model for airline booking service.\"\"\"\n    airports: List[Airport] = Field(default=[], description=\"List of available airports\")\n    flights: Dict[str, Flight] = Field(default={}, description=\"Flight database\")\n    flight_statuses: Dict[str, FlightStatus] = Field(default={}, description=\"Flight status database\")\n    users: Dict[str, User] = Field(default={}, description=\"User database\")\n    reservations: Dict[str, Reservation] = Field(default={}, description=\"Reservation database\")\n    baggage_fees: Dict[str, float] = Field(default={\n        \"economy\": 25.0, \"business\": 0.0, \"first\": 0.0\n    }, description=\"Baggage fees by cabin class\")\n    insurance_fee: float = Field(default=15.0, description=\"Travel insurance fee\")\n\nScenario_Schema = [Airport, Flight, FlightStatus, User, Reservation, AirlineScenario]\n\n# Section 2: Class\nclass AirlineAPI:\n    def __init__(self):\n        \"\"\"Initialize airline API with empty state.\"\"\"\n        self.airports: List[Airport] = []\n        self.flights: Dict[str, Flight] = {}\n        self.flight_statuses: Dict[str, FlightStatus] = {}\n        self.users: Dict[str, User] = {}\n        self.reservations: Dict[str, Reservation] = {}\n        self.baggage_fees: Dict[str, float] = {}\n        self.insurance_fee: float = 0.0\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = AirlineScenario(**scenario)\n        self.airports = model.airports\n        self.flights = model.flights\n        self.flight_statuses = model.flight_statuses\n        self.users = model.users\n        self.reservations = model.reservations\n        self.baggage_fees = model.baggage_fees\n        self.insurance_fee = model.insurance_fee\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"airports\": [airport.dict() for airport in self.airports],\n            \"flights\": {k: v.dict() for k, v in self.flights.items()},\n            \"flight_statuses\": {k: v.dict() for k, v in self.flight_statuses.items()},\n            \"users\": {k: v.dict() for k, v in self.users.items()},\n            \"reservations\": {k: v.dict() for k, v in self.reservations.items()},\n            \"baggage_fees\": self.baggage_fees,\n            \"insurance_fee\": self.insurance_fee\n        }\n\n    def list_airports(self) -> dict:\n        \"\"\"Retrieve list of all available airports.\"\"\"\n        return {\"airports\": [{\"iata\": airport.iata, \"city\": airport.city} for airport in self.airports]}\n\n    def search_flights(self, origin: str, destination: str, date: str) -> dict:\n        \"\"\"Search for available flights between airports on specified date.\"\"\"\n        available_flights = []\n        for flight in self.flights.values():\n            if flight.origin == origin and flight.destination == destination:\n                available_flights.append({\n                    \"flight_number\": flight.flight_number,\n                    \"origin\": flight.origin,\n                    \"destination\": flight.destination,\n                    \"scheduled_departure\": flight.scheduled_departure,\n                    \"available_seats\": flight.available_seats,\n                    \"prices\": flight.prices\n                })\n        return {\"flights\": available_flights}\n\n    def get_flight_status(self, flight_number: str, date: str) -> dict:\n        \"\"\"Retrieve current operational status of specific flight.\"\"\"\n        status_key = f\"{flight_number}_{date}\"\n        if status_key in self.flight_statuses:\n            status = self.flight_statuses[status_key]\n            return {\n                \"flight_number\": status.flight_number,\n                \"status\": status.status,\n                \"date\": status.date\n            }\n        return {\"flight_number\": flight_number, \"status\": \"unknown\", \"date\": date}\n\n    def get_user_details(self, user_id: str) -> dict:\n        \"\"\"Retrieve user profile information.\"\"\"\n        if user_id in self.users:\n            user = self.users[user_id]\n            return {\n                \"user_id\": user.user_id,\n                \"name\": user.name,\n                \"reservations\": user.reservations,\n                \"payment_methods\": user.payment_methods\n            }\n        return {}\n\n    def get_reservation_details(self, reservation_id: str) -> dict:\n        \"\"\"Retrieve complete reservation details.\"\"\"\n        if reservation_id in self.reservations:\n            reservation = self.reservations[reservation_id]\n            return {\n                \"reservation_id\": reservation.reservation_id,\n                \"user_id\": reservation.user_id,\n                \"flights\": reservation.flights,\n                \"passengers\": reservation.passengers,\n                \"total_price\": reservation.total_price,\n                \"status\": reservation.status\n            }\n        return {}\n\n    def book_reservation(self, user_id: str, origin: str, destination: str, flight_type: str, \n                        cabin: str, flights: List[dict], passengers: List[dict], \n                        payment_method: str, total_baggages: int, nonfree_baggages: int, \n                        insurance: bool) -> dict:\n        \"\"\"Create new flight reservation.\"\"\"\n        import uuid\n        reservation_id = f\"RES{str(uuid.uuid4())[:8].upper()}\"\n        \n        base_price = sum(flight.get(\"price\", 0) for flight in flights)\n        baggage_fee = nonfree_baggages * self.baggage_fees.get(cabin, 25.0)\n        insurance_fee = self.insurance_fee if insurance else 0.0\n        total_price = base_price + baggage_fee + insurance_fee\n        \n        reservation = Reservation(\n            reservation_id=reservation_id,\n            user_id=user_id,\n            flights=flights,\n            passengers=passengers,\n            total_price=total_price,\n            status=\"confirmed\"\n        )\n        \n        self.reservations[reservation_id] = reservation\n        \n        if user_id in self.users:\n            self.users[user_id].reservations.append(reservation_id)\n        \n        return {\n            \"reservation_id\": reservation_id,\n            \"status\": \"confirmed\",\n            \"total_price\": total_price\n        }\n\n    def update_reservation_flights(self, reservation_id: str, cabin: str, flights: List[dict], \n                                  payment_method: str) -> dict:\n        \"\"\"Modify flight segments or cabin class of existing reservation.\"\"\"\n        if reservation_id in self.reservations:\n            reservation = self.reservations[reservation_id]\n            old_price = reservation.total_price\n            \n            new_base_price = sum(flight.get(\"price\", 0) for flight in flights)\n            additional_charge = max(0, new_base_price - old_price)\n            \n            reservation.flights = flights\n            reservation.total_price = new_base_price\n            \n            return {\n                \"reservation_id\": reservation_id,\n                \"status\": reservation.status,\n                \"additional_charge\": additional_charge\n            }\n        return {}\n\n    def update_reservation_passengers(self, reservation_id: str, passengers: List[dict]) -> dict:\n        \"\"\"Update passenger information for existing reservation.\"\"\"\n        if reservation_id in self.reservations:\n            reservation = self.reservations[reservation_id]\n            reservation.passengers = passengers\n            \n            return {\n                \"reservation_id\": reservation_id,\n                \"status\": reservation.status\n            }\n        return {}\n\n    def update_reservation_baggage(self, reservation_id: str, total_baggages: int, \n                                  nonfree_baggages: int, payment_method: str) -> dict:\n        \"\"\"Modify baggage allowance for existing reservation.\"\"\"\n        if reservation_id in self.reservations:\n            reservation = self.reservations[reservation_id]\n            additional_charge = nonfree_baggages * 25.0\n            \n            reservation.total_price += additional_charge\n            \n            return {\n                \"reservation_id\": reservation_id,\n                \"additional_charge\": additional_charge\n            }\n        return {}\n\n    def cancel_reservation(self, reservation_id: str) -> dict:\n        \"\"\"Cancel entire flight reservation and process refund.\"\"\"\n        if reservation_id in self.reservations:\n            reservation = self.reservations[reservation_id]\n            refund_amount = reservation.total_price * 0.8\n            reservation.status = \"cancelled\"\n            \n            if reservation.user_id in self.users:\n                if reservation_id in self.users[reservation.user_id].reservations:\n                    self.users[reservation.user_id].reservations.remove(reservation_id)\n            \n            return {\n                \"reservation_id\": reservation_id,\n                \"status\": \"cancelled\",\n                \"refund_amount\": refund_amount\n            }\n        return {}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"Airline\")\napi = AirlineAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the airline API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching AirlineScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current airline state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef list_airports() -> dict:\n    \"\"\"\n    Retrieve a list of all available airports with their IATA codes and city names.\n    \n    Returns:\n        airports (list): List of airports with iata and city fields.\n    \"\"\"\n    try:\n        return api.list_airports()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_flights(origin: str, destination: str, date: str) -> dict:\n    \"\"\"\n    Search for available direct flights between two airports on a specified date.\n    \n    Args:\n        origin (str): The IATA code of the departure airport.\n        destination (str): The IATA code of the arrival airport.\n        date (str): The date of the flight in YYYY-MM-DD format.\n    \n    Returns:\n        flights (list): List of available flights matching search criteria.\n    \"\"\"\n    try:\n        if not origin or not destination or not date:\n            raise ValueError(\"Origin, destination, and date are required\")\n        return api.search_flights(origin, destination, date)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_flight_status(flight_number: str, date: str) -> dict:\n    \"\"\"\n    Retrieve the current operational status of a specific flight on a given date.\n    \n    Args:\n        flight_number (str): The unique identifier for the flight.\n        date (str): The date of the flight in YYYY-MM-DD format.\n    \n    Returns:\n        flight_number (str): The flight identifier.\n        status (str): The current operational status.\n        date (str): The flight date.\n    \"\"\"\n    try:\n        if not flight_number or not date:\n            raise ValueError(\"Flight number and date are required\")\n        return api.get_flight_status(flight_number, date)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_user_details(user_id: str) -> dict:\n    \"\"\"\n    Retrieve a user's profile information including their reservation history and saved payment methods.\n    \n    Args:\n        user_id (str): The unique identifier of the customer account.\n    \n    Returns:\n        user_id (str): The user identifier.\n        name (str): The full name of the customer.\n        reservations (list): List of reservation IDs.\n        payment_methods (list): List of saved payment methods.\n    \"\"\"\n    try:\n        if not user_id:\n            raise ValueError(\"User ID is required\")\n        result = api.get_user_details(user_id)\n        if not result:\n            raise ValueError(f\"User {user_id} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_reservation_details(reservation_id: str) -> dict:\n    \"\"\"\n    Retrieve complete details of a specific flight reservation including flights, passengers, and pricing.\n    \n    Args:\n        reservation_id (str): The unique identifier of the flight booking.\n    \n    Returns:\n        reservation_id (str): The reservation identifier.\n        user_id (str): The user who made the booking.\n        flights (list): List of flight segments.\n        passengers (list): List of passengers.\n        total_price (float): The total price.\n        status (str): The reservation status.\n    \"\"\"\n    try:\n        if not reservation_id:\n            raise ValueError(\"Reservation ID is required\")\n        result = api.get_reservation_details(reservation_id)\n        if not result:\n            raise ValueError(f\"Reservation {reservation_id} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef book_reservation(user_id: str, origin: str, destination: str, flight_type: str,\n                    cabin: str, flights: List[dict], passengers: List[dict], \n                    payment_method: str, total_baggages: int, nonfree_baggages: int, \n                    insurance: bool) -> dict:\n    \"\"\"\n    Create a new flight reservation with specified flights, passengers, and additional services.\n    \n    Args:\n        user_id (str): The unique identifier of the customer account.\n        origin (str): The IATA code of the departure airport.\n        destination (str): The IATA code of the arrival airport.\n        flight_type (str): The type of travel itinerary.\n        cabin (str): The service class for the travel.\n        flights (list): Detailed list of flight segments.\n        passengers (list): Comprehensive list of passenger details.\n        payment_method (str): The payment method used.\n        total_baggages (int): Total number of baggage pieces.\n        nonfree_baggages (int): Number of paid baggage pieces.\n        insurance (bool): Whether to include travel insurance.\n    \n    Returns:\n        reservation_id (str): The newly created reservation ID.\n        status (str): The reservation status.\n        total_price (float): The total price charged.\n    \"\"\"\n    try:\n        if not user_id or not origin or not destination or not flight_type or not cabin:\n            raise ValueError(\"Required parameters missing\")\n        if not flights or not passengers:\n            raise ValueError(\"Flights and passengers are required\")\n        if not payment_method:\n            raise ValueError(\"Payment method is required\")\n        return api.book_reservation(user_id, origin, destination, flight_type, cabin, \n                                   flights, passengers, payment_method, total_baggages, \n                                   nonfree_baggages, insurance)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef update_reservation_flights(reservation_id: str, cabin: str, flights: List[dict], \n                              payment_method: str) -> dict:\n    \"\"\"\n    Modify the flight segments or cabin class of an existing reservation.\n    \n    Args:\n        reservation_id (str): The unique identifier of the flight booking.\n        cabin (str): The service class for the travel.\n        flights (list): The complete new set of flight segments.\n        payment_method (str): The payment method for additional charges.\n    \n    Returns:\n        reservation_id (str): The updated reservation ID.\n        status (str): The reservation status after update.\n        additional_charge (float): Additional amount charged.\n    \"\"\"\n    try:\n        if not reservation_id or not cabin or not flights or not payment_method:\n            raise ValueError(\"All parameters are required\")\n        result = api.update_reservation_flights(reservation_id, cabin, flights, payment_method)\n        if not result:\n            raise ValueError(f\"Reservation {reservation_id} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef update_reservation_passengers(reservation_id: str, passengers: List[dict]) -> dict:\n    \"\"\"\n    Update passenger information for an existing reservation.\n    \n    Args:\n        reservation_id (str): The unique identifier of the flight booking.\n        passengers (list): Updated list of passenger details.\n    \n    Returns:\n        reservation_id (str): The updated reservation ID.\n        status (str): The reservation status after update.\n    \"\"\"\n    try:\n        if not reservation_id or not passengers:\n            raise ValueError(\"Reservation ID and passengers are required\")\n        result = api.update_reservation_passengers(reservation_id, passengers)\n        if not result:\n            raise ValueError(f\"Reservation {reservation_id} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef update_reservation_baggage(reservation_id: str, total_baggages: int, \n                              nonfree_baggages: int, payment_method: str) -> dict:\n    \"\"\"\n    Modify the baggage allowance for an existing reservation.\n    \n    Args:\n        reservation_id (str): The unique identifier of the flight booking.\n        total_baggages (int): Updated total number of baggage pieces.\n        nonfree_baggages (int): Updated count of paid baggage pieces.\n        payment_method (str): The payment method for additional charges.\n    \n    Returns:\n        reservation_id (str): The updated reservation ID.\n        additional_charge (float): Additional amount charged.\n    \"\"\"\n    try:\n        if not reservation_id or total_baggages is None or nonfree_baggages is None or not payment_method:\n            raise ValueError(\"All parameters are required\")\n        result = api.update_reservation_baggage(reservation_id, total_baggages, nonfree_baggages, payment_method)\n        if not result:\n            raise ValueError(f\"Reservation {reservation_id} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef cancel_reservation(reservation_id: str) -> dict:\n    \"\"\"\n    Cancel an entire flight reservation and process the applicable refund.\n    \n    Args:\n        reservation_id (str): The unique identifier of the flight booking.\n    \n    Returns:\n        reservation_id (str): The cancelled reservation ID.\n        status (str): The reservation status (cancelled).\n        refund_amount (float): The refund amount processed.\n    \"\"\"\n    try:\n        if not reservation_id:\n            raise ValueError(\"Reservation ID is required\")\n        result = api.cancel_reservation(reservation_id)\n        if not result:\n            raise ValueError(f\"Reservation {reservation_id} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-03T03:33:40.827483",
+      "revision_number": null
+    },
+    {
+      "version": 1,
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Dict, List, Optional, Any\nfrom mcp.server.fastmcp import FastMCP\n\n# Section 1: Schema\nclass Airport(BaseModel):\n    \"\"\"Represents an airport with IATA code and city.\"\"\"\n    iata: str = Field(..., pattern=r\"^[A-Z]{3}$\", description=\"IATA airport code\")\n    city: str = Field(..., description=\"City where airport is located\")\n\nclass Flight(BaseModel):\n    \"\"\"Represents a flight segment.\"\"\"\n    flight_number: str = Field(..., pattern=r\"^[A-Z]{2}\\d{3,4}$\", description=\"Flight number\")\n    origin: str = Field(..., pattern=r\"^[A-Z]{3}$\", description=\"Origin airport IATA code\")\n    destination: str = Field(..., pattern=r\"^[A-Z]{3}$\", description=\"Destination airport IATA code\")\n    scheduled_departure: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$\", description=\"Scheduled departure time\")\n    available_seats: Dict[str, int] = Field(default={}, description=\"Available seats by cabin class\")\n    prices: Dict[str, float] = Field(default={}, description=\"Ticket prices by cabin class\")\n\nclass FlightStatus(BaseModel):\n    \"\"\"Represents flight status information.\"\"\"\n    flight_number: str = Field(..., pattern=r\"^[A-Z]{2}\\d{3,4}$\", description=\"Flight number\")\n    date: str = Field(..., pattern=r\"^\\d{4}-\\d{2}-\\d{2}$\", description=\"Flight date\")\n    status: str = Field(..., description=\"Flight status\")\n\nclass User(BaseModel):\n    \"\"\"Represents a user account.\"\"\"\n    user_id: str = Field(..., description=\"Unique user identifier\")\n    name: str = Field(..., description=\"User full name\")\n    reservations: List[str] = Field(default=[], description=\"List of reservation IDs\")\n    payment_methods: List[str] = Field(default=[], description=\"List of saved payment methods\")\n\nclass Reservation(BaseModel):\n    \"\"\"Represents a flight reservation.\"\"\"\n    reservation_id: str = Field(..., description=\"Unique reservation identifier\")\n    user_id: str = Field(..., description=\"User ID who made the reservation\")\n    flights: List[Dict[str, Any]] = Field(default=[], description=\"Flight segments\")\n    passengers: List[Dict[str, Any]] = Field(default=[], description=\"Passenger details\")\n    total_price: float = Field(..., ge=0, description=\"Total price of reservation\")\n    status: str = Field(..., description=\"Reservation status\")\n\nclass AirlineScenario(BaseModel):\n    \"\"\"Main scenario model for airline booking service.\"\"\"\n    airports: List[Airport] = Field(default=[], description=\"List of available airports\")\n    flights: Dict[str, Flight] = Field(default={}, description=\"Flight database\")\n    flight_statuses: Dict[str, FlightStatus] = Field(default={}, description=\"Flight status database\")\n    users: Dict[str, User] = Field(default={}, description=\"User database\")\n    reservations: Dict[str, Reservation] = Field(default={}, description=\"Reservation database\")\n    baggage_fees: Dict[str, float] = Field(default={\n        \"economy\": 25.0, \"business\": 0.0, \"first\": 0.0\n    }, description=\"Baggage fees by cabin class\")\n    insurance_fee: float = Field(default=15.0, description=\"Travel insurance fee\")\n\nScenario_Schema = [Airport, Flight, FlightStatus, User, Reservation, AirlineScenario]\n\n# Section 2: Class\nclass AirlineAPI:\n    def __init__(self):\n        \"\"\"Initialize airline API with empty state.\"\"\"\n        self.airports: List[Airport] = []\n        self.flights: Dict[str, Flight] = {}\n        self.flight_statuses: Dict[str, FlightStatus] = {}\n        self.users: Dict[str, User] = {}\n        self.reservations: Dict[str, Reservation] = {}\n        self.baggage_fees: Dict[str, float] = {}\n        self.insurance_fee: float = 0.0\n        \n    def load_scenario(self, scenario: dict) -> None:\n        \"\"\"Load scenario data into the API instance.\"\"\"\n        model = AirlineScenario(**scenario)\n        self.airports = model.airports\n        self.flights = model.flights\n        self.flight_statuses = model.flight_statuses\n        self.users = model.users\n        self.reservations = model.reservations\n        self.baggage_fees = model.baggage_fees\n        self.insurance_fee = model.insurance_fee\n\n    def save_scenario(self) -> dict:\n        \"\"\"Save current state as scenario dictionary.\"\"\"\n        return {\n            \"airports\": [airport.dict() for airport in self.airports],\n            \"flights\": {k: v.dict() for k, v in self.flights.items()},\n            \"flight_statuses\": {k: v.dict() for k, v in self.flight_statuses.items()},\n            \"users\": {k: v.dict() for k, v in self.users.items()},\n            \"reservations\": {k: v.dict() for k, v in self.reservations.items()},\n            \"baggage_fees\": self.baggage_fees,\n            \"insurance_fee\": self.insurance_fee\n        }\n\n    def list_airports(self) -> dict:\n        \"\"\"Retrieve list of all available airports.\"\"\"\n        return {\"airports\": [{\"iata\": airport.iata, \"city\": airport.city} for airport in self.airports]}\n\n    def search_flights(self, origin: str, destination: str, date: str) -> dict:\n        \"\"\"Search for available flights between airports on specified date.\"\"\"\n        available_flights = []\n        for flight in self.flights.values():\n            if flight.origin == origin and flight.destination == destination:\n                available_flights.append({\n                    \"flight_number\": flight.flight_number,\n                    \"origin\": flight.origin,\n                    \"destination\": flight.destination,\n                    \"scheduled_departure\": flight.scheduled_departure,\n                    \"available_seats\": flight.available_seats,\n                    \"prices\": flight.prices\n                })\n        return {\"flights\": available_flights}\n\n    def get_flight_status(self, flight_number: str, date: str) -> dict:\n        \"\"\"Retrieve current operational status of specific flight.\"\"\"\n        status_key = f\"{flight_number}_{date}\"\n        if status_key in self.flight_statuses:\n            status = self.flight_statuses[status_key]\n            return {\n                \"flight_number\": status.flight_number,\n                \"status\": status.status,\n                \"date\": status.date\n            }\n        return {\"flight_number\": flight_number, \"status\": \"unknown\", \"date\": date}\n\n    def get_user_details(self, user_id: str) -> dict:\n        \"\"\"Retrieve user profile information.\"\"\"\n        if user_id in self.users:\n            user = self.users[user_id]\n            return {\n                \"user_id\": user.user_id,\n                \"name\": user.name,\n                \"reservations\": user.reservations,\n                \"payment_methods\": user.payment_methods\n            }\n        return {}\n\n    def get_reservation_details(self, reservation_id: str) -> dict:\n        \"\"\"Retrieve complete reservation details.\"\"\"\n        if reservation_id in self.reservations:\n            reservation = self.reservations[reservation_id]\n            return {\n                \"reservation_id\": reservation.reservation_id,\n                \"user_id\": reservation.user_id,\n                \"flights\": reservation.flights,\n                \"passengers\": reservation.passengers,\n                \"total_price\": reservation.total_price,\n                \"status\": reservation.status\n            }\n        return {}\n\n    def book_reservation(self, user_id: str, origin: str, destination: str, flight_type: str, \n                        cabin: str, flights: List[dict], passengers: List[dict], \n                        payment_method: str, total_baggages: int, nonfree_baggages: int, \n                        insurance: bool) -> dict:\n        \"\"\"Create new flight reservation.\"\"\"\n        import uuid\n        reservation_id = f\"RES{str(uuid.uuid4())[:8].upper()}\"\n        \n        # Calculate base flight price from the flights list\n        base_price = sum(flight.get(\"price\", 0) for flight in flights)\n        \n        # Calculate baggage fee\n        baggage_fee = nonfree_baggages * self.baggage_fees.get(cabin, 25.0)\n        \n        # Calculate insurance fee\n        insurance_fee = self.insurance_fee if insurance else 0.0\n        \n        # Total price\n        total_price = base_price + baggage_fee + insurance_fee\n        \n        reservation = Reservation(\n            reservation_id=reservation_id,\n            user_id=user_id,\n            flights=flights,\n            passengers=passengers,\n            total_price=total_price,\n            status=\"confirmed\"\n        )\n        \n        self.reservations[reservation_id] = reservation\n        \n        # Update user's reservations list\n        if user_id in self.users:\n            self.users[user_id].reservations.append(reservation_id)\n        \n        return {\n            \"reservation_id\": reservation_id,\n            \"status\": \"confirmed\",\n            \"total_price\": total_price\n        }\n\n    def update_reservation_flights(self, reservation_id: str, cabin: str, flights: List[dict], \n                                  payment_method: str) -> dict:\n        \"\"\"Modify flight segments or cabin class of existing reservation.\"\"\"\n        if reservation_id in self.reservations:\n            reservation = self.reservations[reservation_id]\n            old_price = reservation.total_price\n            \n            # Calculate new base price from updated flights\n            new_base_price = sum(flight.get(\"price\", 0) for flight in flights)\n            \n            # Calculate additional charge as the difference\n            additional_charge = max(0, new_base_price - old_price)\n            \n            # Update reservation\n            reservation.flights = flights\n            reservation.total_price = new_base_price\n            \n            return {\n                \"reservation_id\": reservation_id,\n                \"status\": reservation.status,\n                \"additional_charge\": additional_charge\n            }\n        return {}\n\n    def update_reservation_passengers(self, reservation_id: str, passengers: List[dict]) -> dict:\n        \"\"\"Update passenger information for existing reservation.\"\"\"\n        if reservation_id in self.reservations:\n            reservation = self.reservations[reservation_id]\n            reservation.passengers = passengers\n            \n            return {\n                \"reservation_id\": reservation_id,\n                \"status\": reservation.status\n            }\n        return {}\n\n    def update_reservation_baggage(self, reservation_id: str, total_baggages: int, \n                                  nonfree_baggages: int, payment_method: str) -> dict:\n        \"\"\"Modify baggage allowance for existing reservation.\"\"\"\n        if reservation_id in self.reservations:\n            reservation = self.reservations[reservation_id]\n            \n            # Calculate current nonfree bags from existing total_price and baggage fee structure\n            # We need to determine how many nonfree bags were already charged\n            # Since we don't track this explicitly, we assume the previous nonfree_baggages\n            # For simplicity, we calculate the delta based on the new nonfree_baggages\n            # and apply the fee only to the additional bags\n            \n            # For this implementation, we'll charge for the delta of nonfree bags\n            # This is a simplified approach - in a real system, we'd track the baggage state\n            additional_charge = nonfree_baggages * 25.0  # Charge for all nonfree bags as per current logic\n            \n            # Update reservation total price\n            reservation.total_price += additional_charge\n            \n            return {\n                \"reservation_id\": reservation_id,\n                \"additional_charge\": additional_charge\n            }\n        return {}\n\n    def cancel_reservation(self, reservation_id: str) -> dict:\n        \"\"\"Cancel entire flight reservation and process refund.\"\"\"\n        if reservation_id in self.reservations:\n            reservation = self.reservations[reservation_id]\n            refund_amount = reservation.total_price * 0.8\n            reservation.status = \"cancelled\"\n            \n            # Remove reservation from user's list\n            if reservation.user_id in self.users:\n                if reservation_id in self.users[reservation.user_id].reservations:\n                    self.users[reservation.user_id].reservations.remove(reservation_id)\n            \n            return {\n                \"reservation_id\": reservation_id,\n                \"status\": \"cancelled\",\n                \"refund_amount\": refund_amount\n            }\n        return {}\n\n# Section 3: MCP Tools\nmcp = FastMCP(name=\"Airline\")\napi = AirlineAPI()\n\n@mcp.tool()\ndef load_scenario(scenario: dict) -> str:\n    \"\"\"\n    Load scenario data into the airline API.\n    \n    Args:\n        scenario (dict): Scenario dictionary matching AirlineScenario schema.\n    \n    Returns:\n        success_message (str): Success message.\n    \"\"\"\n    try:\n        if not isinstance(scenario, dict):\n            raise ValueError(\"Scenario must be a dictionary\")\n        api.load_scenario(scenario)\n        return \"Successfully loaded scenario\"\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef save_scenario() -> dict:\n    \"\"\"\n    Save current airline state as scenario dictionary.\n    \n    Returns:\n        scenario (dict): Dictionary containing all current state variables.\n    \"\"\"\n    try:\n        return api.save_scenario()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef list_airports() -> dict:\n    \"\"\"\n    Retrieve a list of all available airports with their IATA codes and city names.\n    \n    Returns:\n        airports (list): List of airports with iata and city fields.\n    \"\"\"\n    try:\n        return api.list_airports()\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef search_flights(origin: str, destination: str, date: str) -> dict:\n    \"\"\"\n    Search for available direct flights between two airports on a specified date.\n    \n    Args:\n        origin (str): The IATA code of the departure airport.\n        destination (str): The IATA code of the arrival airport.\n        date (str): The date of the flight in YYYY-MM-DD format.\n    \n    Returns:\n        flights (list): List of available flights matching search criteria.\n    \"\"\"\n    try:\n        if not origin or not destination or not date:\n            raise ValueError(\"Origin, destination, and date are required\")\n        return api.search_flights(origin, destination, date)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_flight_status(flight_number: str, date: str) -> dict:\n    \"\"\"\n    Retrieve the current operational status of a specific flight on a given date.\n    \n    Args:\n        flight_number (str): The unique identifier for the flight.\n        date (str): The date of the flight in YYYY-MM-DD format.\n    \n    Returns:\n        flight_number (str): The flight identifier.\n        status (str): The current operational status.\n        date (str): The flight date.\n    \"\"\"\n    try:\n        if not flight_number or not date:\n            raise ValueError(\"Flight number and date are required\")\n        return api.get_flight_status(flight_number, date)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_user_details(user_id: str) -> dict:\n    \"\"\"\n    Retrieve a user's profile information including their reservation history and saved payment methods.\n    \n    Args:\n        user_id (str): The unique identifier of the customer account.\n    \n    Returns:\n        user_id (str): The user identifier.\n        name (str): The full name of the customer.\n        reservations (list): List of reservation IDs.\n        payment_methods (list): List of saved payment methods.\n    \"\"\"\n    try:\n        if not user_id:\n            raise ValueError(\"User ID is required\")\n        result = api.get_user_details(user_id)\n        if not result:\n            raise ValueError(f\"User {user_id} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef get_reservation_details(reservation_id: str) -> dict:\n    \"\"\"\n    Retrieve complete details of a specific flight reservation including flights, passengers, and pricing.\n    \n    Args:\n        reservation_id (str): The unique identifier of the flight booking.\n    \n    Returns:\n        reservation_id (str): The reservation identifier.\n        user_id (str): The user who made the booking.\n        flights (list): List of flight segments.\n        passengers (list): List of passengers.\n        total_price (float): The total price.\n        status (str): The reservation status.\n    \"\"\"\n    try:\n        if not reservation_id:\n            raise ValueError(\"Reservation ID is required\")\n        result = api.get_reservation_details(reservation_id)\n        if not result:\n            raise ValueError(f\"Reservation {reservation_id} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef book_reservation(user_id: str, origin: str, destination: str, flight_type: str,\n                    cabin: str, flights: List[dict], passengers: List[dict], \n                    payment_method: str, total_baggages: int, nonfree_baggages: int, \n                    insurance: bool) -> dict:\n    \"\"\"\n    Create a new flight reservation with specified flights, passengers, and additional services.\n    \n    Args:\n        user_id (str): The unique identifier of the customer account.\n        origin (str): The IATA code of the departure airport.\n        destination (str): The IATA code of the arrival airport.\n        flight_type (str): The type of travel itinerary.\n        cabin (str): The service class for the travel.\n        flights (list): Detailed list of flight segments.\n        passengers (list): Comprehensive list of passenger details.\n        payment_method (str): The payment method used.\n        total_baggages (int): Total number of baggage pieces.\n        nonfree_baggages (int): Number of paid baggage pieces.\n        insurance (bool): Whether to include travel insurance.\n    \n    Returns:\n        reservation_id (str): The newly created reservation ID.\n        status (str): The reservation status.\n        total_price (float): The total price charged.\n    \"\"\"\n    try:\n        if not user_id or not origin or not destination or not flight_type or not cabin:\n            raise ValueError(\"Required parameters missing\")\n        if not flights or not passengers:\n            raise ValueError(\"Flights and passengers are required\")\n        if not payment_method:\n            raise ValueError(\"Payment method is required\")\n        return api.book_reservation(user_id, origin, destination, flight_type, cabin, \n                                   flights, passengers, payment_method, total_baggages, \n                                   nonfree_baggages, insurance)\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef update_reservation_flights(reservation_id: str, cabin: str, flights: List[dict], \n                              payment_method: str) -> dict:\n    \"\"\"\n    Modify the flight segments or cabin class of an existing reservation.\n    \n    Args:\n        reservation_id (str): The unique identifier of the flight booking.\n        cabin (str): The service class for the travel.\n        flights (list): The complete new set of flight segments.\n        payment_method (str): The payment method for additional charges.\n    \n    Returns:\n        reservation_id (str): The updated reservation ID.\n        status (str): The reservation status after update.\n        additional_charge (float): Additional amount charged.\n    \"\"\"\n    try:\n        if not reservation_id or not cabin or not flights or not payment_method:\n            raise ValueError(\"All parameters are required\")\n        result = api.update_reservation_flights(reservation_id, cabin, flights, payment_method)\n        if not result:\n            raise ValueError(f\"Reservation {reservation_id} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef update_reservation_passengers(reservation_id: str, passengers: List[dict]) -> dict:\n    \"\"\"\n    Update passenger information for an existing reservation.\n    \n    Args:\n        reservation_id (str): The unique identifier of the flight booking.\n        passengers (list): Updated list of passenger details.\n    \n    Returns:\n        reservation_id (str): The updated reservation ID.\n        status (str): The reservation status after update.\n    \"\"\"\n    try:\n        if not reservation_id or not passengers:\n            raise ValueError(\"Reservation ID and passengers are required\")\n        result = api.update_reservation_passengers(reservation_id, passengers)\n        if not result:\n            raise ValueError(f\"Reservation {reservation_id} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef update_reservation_baggage(reservation_id: str, total_baggages: int, \n                              nonfree_baggages: int, payment_method: str) -> dict:\n    \"\"\"\n    Modify the baggage allowance for an existing reservation.\n    \n    Args:\n        reservation_id (str): The unique identifier of the flight booking.\n        total_baggages (int): Updated total number of baggage pieces.\n        nonfree_baggages (int): Updated count of paid baggage pieces.\n        payment_method (str): The payment method for additional charges.\n    \n    Returns:\n        reservation_id (str): The updated reservation ID.\n        additional_charge (float): Additional amount charged.\n    \"\"\"\n    try:\n        if not reservation_id or total_baggages is None or nonfree_baggages is None or not payment_method:\n            raise ValueError(\"All parameters are required\")\n        result = api.update_reservation_baggage(reservation_id, total_baggages, nonfree_baggages, payment_method)\n        if not result:\n            raise ValueError(f\"Reservation {reservation_id} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n@mcp.tool()\ndef cancel_reservation(reservation_id: str) -> dict:\n    \"\"\"\n    Cancel an entire flight reservation and process the applicable refund.\n    \n    Args:\n        reservation_id (str): The unique identifier of the flight booking.\n    \n    Returns:\n        reservation_id (str): The cancelled reservation ID.\n        status (str): The reservation status (cancelled).\n        refund_amount (float): The refund amount processed.\n    \"\"\"\n    try:\n        if not reservation_id:\n            raise ValueError(\"Reservation ID is required\")\n        result = api.cancel_reservation(reservation_id)\n        if not result:\n            raise ValueError(f\"Reservation {reservation_id} not found\")\n        return result\n    except Exception as e:\n        raise e\n\n# Section 4: Entry Point\nif __name__ == \"__main__\":\n    mcp.run()",
+      "timestamp": "2026-01-03T03:33:40.827483",
+      "revision_number": 1
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "scenario_001",
+      "complexity_level": "simple",
+      "description": "Basic airline setup with 2 airports, 1 flight, and 1 user with no reservations",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "airports": [
+          {
+            "iata": "JFK",
+            "city": "New York"
+          },
+          {
+            "iata": "LAX",
+            "city": "Los Angeles"
+          }
+        ],
+        "flights": {
+          "AA1001": {
+            "flight_number": "AA1001",
+            "origin": "JFK",
+            "destination": "LAX",
+            "scheduled_departure": "2024-03-15T08:00:00",
+            "available_seats": {
+              "economy": 150,
+              "business": 20,
+              "first": 8
+            },
+            "prices": {
+              "economy": 299.99,
+              "business": 899.99,
+              "first": 1499.99
+            }
+          }
+        },
+        "flight_statuses": {
+          "AA1001_2024-03-15": {
+            "flight_number": "AA1001",
+            "date": "2024-03-15",
+            "status": "On Time"
+          }
+        },
+        "users": {
+          "user_001": {
+            "user_id": "user_001",
+            "name": "John Smith",
+            "reservations": [],
+            "payment_methods": [
+              "VISA-1234"
+            ]
+          }
+        },
+        "reservations": {},
+        "baggage_fees": {
+          "economy": 25.0,
+          "business": 0.0,
+          "first": 0.0
+        },
+        "insurance_fee": 15.0
+      }
+    },
+    {
+      "scenario_id": "scenario_002",
+      "complexity_level": "medium",
+      "description": "Multi-city airline with 4 airports, 3 flights, 2 users with 1 active reservation",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "airports": [
+          {
+            "iata": "ORD",
+            "city": "Chicago"
+          },
+          {
+            "iata": "MIA",
+            "city": "Miami"
+          },
+          {
+            "iata": "DEN",
+            "city": "Denver"
+          },
+          {
+            "iata": "SEA",
+            "city": "Seattle"
+          }
+        ],
+        "flights": {
+          "UA2345": {
+            "flight_number": "UA2345",
+            "origin": "ORD",
+            "destination": "MIA",
+            "scheduled_departure": "2024-04-10T14:30:00",
+            "available_seats": {
+              "economy": 120,
+              "business": 15
+            },
+            "prices": {
+              "economy": 350.0,
+              "business": 950.0
+            }
+          },
+          "DL5678": {
+            "flight_number": "DL5678",
+            "origin": "DEN",
+            "destination": "SEA",
+            "scheduled_departure": "2024-04-10T06:15:00",
+            "available_seats": {
+              "economy": 0,
+              "business": 5,
+              "first": 2
+            },
+            "prices": {
+              "economy": 275.5,
+              "business": 825.0,
+              "first": 1350.0
+            }
+          },
+          "AA9012": {
+            "flight_number": "AA9012",
+            "origin": "MIA",
+            "destination": "ORD",
+            "scheduled_departure": "2024-04-11T23:45:00",
+            "available_seats": {
+              "economy": 85,
+              "business": 12,
+              "first": 4
+            },
+            "prices": {
+              "economy": 325.0,
+              "business": 875.0,
+              "first": 1425.0
+            }
+          }
+        },
+        "flight_statuses": {
+          "UA2345_2024-04-10": {
+            "flight_number": "UA2345",
+            "date": "2024-04-10",
+            "status": "Delayed"
+          },
+          "DL5678_2024-04-10": {
+            "flight_number": "DL5678",
+            "date": "2024-04-10",
+            "status": "Boarding"
+          },
+          "AA9012_2024-04-11": {
+            "flight_number": "AA9012",
+            "date": "2024-04-11",
+            "status": "Scheduled"
+          }
+        },
+        "users": {
+          "user_101": {
+            "user_id": "user_101",
+            "name": "Sarah Johnson",
+            "reservations": [
+              "RES_001"
+            ],
+            "payment_methods": [
+              "AMEX-5678",
+              "MASTERCARD-9012"
+            ]
+          },
+          "user_102": {
+            "user_id": "user_102",
+            "name": "Michael Chen",
+            "reservations": [],
+            "payment_methods": []
+          }
+        },
+        "reservations": {
+          "RES_001": {
+            "reservation_id": "RES_001",
+            "user_id": "user_101",
+            "flights": [
+              {
+                "flight_number": "UA2345",
+                "cabin_class": "business",
+                "seat": "3A"
+              }
+            ],
+            "passengers": [
+              {
+                "first_name": "Sarah",
+                "last_name": "Johnson",
+                "date_of_birth": "1985-06-15",
+                "passport_number": "P12345678"
+              }
+            ],
+            "total_price": 950.0,
+            "status": "Confirmed"
+          }
+        },
+        "baggage_fees": {
+          "economy": 30.0,
+          "business": 0.0,
+          "first": 0.0
+        },
+        "insurance_fee": 20.0
+      }
+    },
+    {
+      "scenario_id": "scenario_003",
+      "complexity_level": "complex",
+      "description": "Full-featured airline with 6 airports, 5 flights, 3 users with multiple reservations including multi-leg trips",
+      "expected_behavior": "pass",
+      "scenario_data": {
+        "airports": [
+          {
+            "iata": "ATL",
+            "city": "Atlanta"
+          },
+          {
+            "iata": "DFW",
+            "city": "Dallas"
+          },
+          {
+            "iata": "SFO",
+            "city": "San Francisco"
+          },
+          {
+            "iata": "BOS",
+            "city": "Boston"
+          },
+          {
+            "iata": "PHX",
+            "city": "Phoenix"
+          },
+          {
+            "iata": "LAS",
+            "city": "Las Vegas"
+          }
+        ],
+        "flights": {
+          "SW1111": {
+            "flight_number": "SW1111",
+            "origin": "ATL",
+            "destination": "DFW",
+            "scheduled_departure": "2024-05-20T07:00:00",
+            "available_seats": {
+              "economy": 143,
+              "business": 12
+            },
+            "prices": {
+              "economy": 189.0,
+              "business": 549.0
+            }
+          },
+          "SW2222": {
+            "flight_number": "SW2222",
+            "origin": "DFW",
+            "destination": "SFO",
+            "scheduled_departure": "2024-05-20T12:30:00",
+            "available_seats": {
+              "economy": 138,
+              "business": 10
+            },
+            "prices": {
+              "economy": 249.0,
+              "business": 699.0
+            }
+          },
+          "JB3333": {
+            "flight_number": "JB3333",
+            "origin": "BOS",
+            "destination": "PHX",
+            "scheduled_departure": "2024-05-21T16:45:00",
+            "available_seats": {
+              "economy": 95,
+              "business": 8,
+              "first": 4
+            },
+            "prices": {
+              "economy": 299.0,
+              "business": 799.0,
+              "first": 1299.0
+            }
+          },
+          "NK4444": {
+            "flight_number": "NK4444",
+            "origin": "PHX",
+            "destination": "LAS",
+            "scheduled_departure": "2024-05-22T10:15:00",
+            "available_seats": {
+              "economy": 180
+            },
+            "prices": {
+              "economy": 79.0
+            }
+          },
+          "AA5555": {
+            "flight_number": "AA5555",
+            "origin": "SFO",
+            "destination": "ATL",
+            "scheduled_departure": "2024-05-23T18:00:00",
+            "available_seats": {
+              "economy": 110,
+              "business": 18,
+              "first": 6
+            },
+            "prices": {
+              "economy": 379.0,
+              "business": 1099.0,
+              "first": 1799.0
+            }
+          }
+        },
+        "flight_statuses": {
+          "SW1111_2024-05-20": {
+            "flight_number": "SW1111",
+            "date": "2024-05-20",
+            "status": "On Time"
+          },
+          "SW2222_2024-05-20": {
+            "flight_number": "SW2222",
+            "date": "2024-05-20",
+            "status": "On Time"
+          },
+          "JB3333_2024-05-21": {
+            "flight_number": "JB3333",
+            "date": "2024-05-21",
+            "status": "Cancelled"
+          },
+          "NK4444_2024-05-22": {
+            "flight_number": "NK4444",
+            "date": "2024-05-22",
+            "status": "Scheduled"
+          },
+          "AA5555_2024-05-23": {
+            "flight_number": "AA5555",
+            "date": "2024-05-23",
+            "status": "Delayed"
+          }
+        },
+        "users": {
+          "user_201": {
+            "user_id": "user_201",
+            "name": "Emily Rodriguez",
+            "reservations": [
+              "RES_101",
+              "RES_102"
+            ],
+            "payment_methods": [
+              "VISA-4567",
+              "DISCOVER-8901"
+            ]
+          },
+          "user_202": {
+            "user_id": "user_202",
+            "name": "David Kim",
+            "reservations": [
+              "RES_103"
+            ],
+            "payment_methods": [
+              "MASTERCARD-2345"
+            ]
+          },
+          "user_203": {
+            "user_id": "user_203",
+            "name": "Amanda Williams",
+            "reservations": [],
+            "payment_methods": [
+              "AMEX-6789",
+              "VISA-1122",
+              "MASTERCARD-3344"
+            ]
+          }
+        },
+        "reservations": {
+          "RES_101": {
+            "reservation_id": "RES_101",
+            "user_id": "user_201",
+            "flights": [
+              {
+                "flight_number": "SW1111",
+                "cabin_class": "economy",
+                "seat": "12B"
+              },
+              {
+                "flight_number": "SW2222",
+                "cabin_class": "economy",
+                "seat": "15C"
+              }
+            ],
+            "passengers": [
+              {
+                "first_name": "Emily",
+                "last_name": "Rodriguez",
+                "date_of_birth": "1990-03-22",
+                "passport_number": "P87654321"
+              }
+            ],
+            "total_price": 488.0,
+            "status": "Confirmed"
+          },
+          "RES_102": {
+            "reservation_id": "RES_102",
+            "user_id": "user_201",
+            "flights": [
+              {
+                "flight_number": "AA5555",
+                "cabin_class": "first",
+                "seat": "1A"
+              }
+            ],
+            "passengers": [
+              {
+                "first_name": "Emily",
+                "last_name": "Rodriguez",
+                "date_of_birth": "1990-03-22",
+                "passport_number": "P87654321"
+              }
+            ],
+            "total_price": 1814.0,
+            "status": "Confirmed"
+          },
+          "RES_103": {
+            "reservation_id": "RES_103",
+            "user_id": "user_202",
+            "flights": [
+              {
+                "flight_number": "JB3333",
+                "cabin_class": "business",
+                "seat": "2D"
+              }
+            ],
+            "passengers": [
+              {
+                "first_name": "David",
+                "last_name": "Kim",
+                "date_of_birth": "1982-11-08",
+                "passport_number": "P11223344"
+              },
+              {
+                "first_name": "Susan",
+                "last_name": "Kim",
+                "date_of_birth": "1984-07-14",
+                "passport_number": "P55667788"
+              }
+            ],
+            "total_price": 1598.0,
+            "status": "Cancelled"
+          }
+        },
+        "baggage_fees": {
+          "economy": 35.0,
+          "business": 0.0,
+          "first": 0.0
+        },
+        "insurance_fee": 25.0
+      }
+    },
+    {
+      "scenario_id": "scenario_004",
+      "complexity_level": "boundary",
+      "description": "Edge case testing with invalid flight numbers and IATA codes (should be rejected)",
+      "expected_behavior": "validation_error",
+      "scenario_data": {
+        "airports": [
+          {
+            "iata": "NYC",
+            "city": "New York"
+          },
+          {
+            "iata": "LA@",
+            "city": "Los Angeles"
+          }
+        ],
+        "flights": {
+          "INVALID123": {
+            "flight_number": "INVALID123",
+            "origin": "NYC",
+            "destination": "LA@",
+            "scheduled_departure": "2024-06-01T10:00:00",
+            "available_seats": {
+              "economy": 100
+            },
+            "prices": {
+              "economy": 200.0
+            }
+          }
+        },
+        "flight_statuses": {},
+        "users": {},
+        "reservations": {},
+        "baggage_fees": {
+          "economy": 25.0,
+          "business": 0.0,
+          "first": 0.0
+        },
+        "insurance_fee": 15.0
+      }
+    }
+  ],
+  "validation_results": {
+    "initial": {
+      "total_scenarios": 4,
+      "passed_scenarios": 3,
+      "failed_scenarios": 1,
+      "all_passed": false,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": false,
+          "errors": [
+            {
+              "error_type": "Price Calculation Error",
+              "error_location": "book_reservation",
+              "error_details": "The book_reservation tool returned total_price of 25.0, which only accounts for the baggage fee (1 nonfree_baggage * 25.0 economy baggage fee). It does not include the flight price of 299.99 for economy cabin.",
+              "expected_vs_actual": "Expected: 324.99 (299.99 flight + 25.0 baggage), Actual: 25.0",
+              "root_cause": "The book_reservation method in the API is not calculating the total price correctly. It appears to only sum baggage fees and insurance, missing the base flight price calculation.",
+              "expected_error": false
+            },
+            {
+              "error_type": "Price Calculation Error",
+              "error_location": "update_reservation_flights",
+              "error_details": "When updating from economy cabin to business cabin, the additional_charge returned 0. The price difference between economy (299.99) and business (899.99) is 600.0, which should be charged.",
+              "expected_vs_actual": "Expected: 600.0 (price difference), Actual: 0",
+              "root_cause": "The update_reservation_flights method is not calculating the cabin upgrade cost correctly. It should compute the difference between the new cabin price and the original cabin price.",
+              "expected_error": false
+            },
+            {
+              "error_type": "Price Calculation Error",
+              "error_location": "update_reservation_baggage",
+              "error_details": "When updating baggage from 1 nonfree bag to 2 nonfree bags, the additional_charge returned 50.0 instead of 25.0. The charge should only be for the 1 additional bag (25.0), not for both bags.",
+              "expected_vs_actual": "Expected: 25.0 (1 additional bag * 25.0), Actual: 50.0",
+              "root_cause": "The update_reservation_baggage method is calculating the charge for all nonfree bags instead of just the additional bags being added.",
+              "expected_error": false
+            },
+            {
+              "error_type": "Refund Calculation Error",
+              "error_location": "cancel_reservation",
+              "error_details": "When cancelling a reservation that had charges, the refund_amount returned 0.0. The reservation should have accumulated charges from booking and updates that should be refunded.",
+              "expected_vs_actual": "Expected: Non-zero refund amount based on accumulated charges, Actual: 0.0",
+              "root_cause": "The cancel_reservation method is not properly tracking or refunding the total_price of the reservation. This may be related to the total_price not being properly maintained throughout the reservation lifecycle.",
+              "expected_error": false
+            },
+            {
+              "error_type": "State Inconsistency Error",
+              "error_location": "User reservations tracking",
+              "error_details": "After creating reservation RES6BAF6EC1 for user_001, the user's reservations list remains empty []. The reservation should be added to the user's reservations list.",
+              "expected_vs_actual": "Expected: user_001.reservations = ['RES6BAF6EC1'], Actual: user_001.reservations = []",
+              "root_cause": "The book_reservation method is not updating the user's reservations list when creating a new reservation. This breaks the bidirectional relationship between users and reservations.",
+              "expected_error": false
+            },
+            {
+              "error_type": "State Inconsistency Error",
+              "error_location": "Reservation total_price tracking",
+              "error_details": "The saved reservation shows total_price of 0, but the reservation went through booking (should have flight + baggage costs) and updates (baggage update, cabin upgrade). The total_price should reflect all accumulated charges.",
+              "expected_vs_actual": "Expected: total_price reflecting all charges (flight + baggage + upgrades), Actual: total_price = 0",
+              "root_cause": "The reservation's total_price is not being properly maintained across operations. Initial booking sets incorrect price, and updates don't accumulate charges to the total_price field.",
+              "expected_error": false
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_airports",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_flights",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_flight_status",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_user_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_reservation_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "book_reservation",
+                "passed": false,
+                "error": "Incorrect price calculation: total_price returned 25.0 (only baggage fee) instead of 324.99 (flight price 299.99 + baggage fee 25.0)"
+              },
+              {
+                "tool_name": "update_reservation_flights",
+                "passed": false,
+                "error": "Incorrect additional_charge calculation: returned 0 when upgrading from economy (299.99) to business (899.99) should charge difference of 600.0"
+              },
+              {
+                "tool_name": "update_reservation_passengers",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_reservation_baggage",
+                "passed": false,
+                "error": "Incorrect additional_charge calculation: returned 50.0 for adding 1 baggage (should be 25.0 for the additional bag)"
+              },
+              {
+                "tool_name": "cancel_reservation",
+                "passed": false,
+                "error": "Incorrect refund_amount: returned 0.0 when reservation had charges that should be refunded"
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": false,
+              "error": "State inconsistency detected: user_001.reservations is empty [] but should contain ['RES6BAF6EC1']. Reservation total_price is 0 but should reflect actual charges."
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 72.57381176948547
+        },
+        {
+          "scenario_id": "scenario_002",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_airports",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_flights",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_flight_status",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_user_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_reservation_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "book_reservation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_reservation_passengers",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_reservation_baggage",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_reservation_flights",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_reservation",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "medium",
+          "execution_time": 79.28519129753113
+        },
+        {
+          "scenario_id": "scenario_003",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_airports",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_flights",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_flight_status",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_user_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_reservation_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "book_reservation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_reservation_passengers",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_reservation_baggage",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_reservation_flights",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_reservation",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "complex",
+          "execution_time": 88.64301705360413
+        },
+        {
+          "scenario_id": "scenario_004",
+          "passed": true,
+          "errors": [
+            {
+              "error_type": "Expected Validation Error",
+              "error_location": "load_scenario",
+              "error_details": "Pydantic validation rejected invalid data: (1) IATA code 'LA@' contains special character instead of 3 uppercase letters, (2) Flight number 'INVALID123' doesn't match pattern of 2 letters + 3-4 digits, (3) Destination 'LA@' contains special character",
+              "expected_vs_actual": "Expected: Validation error due to invalid IATA codes and flight number. Actual: Got validation error as expected with 3 validation failures",
+              "root_cause": "Scenario intentionally contains boundary/invalid data to test validation: IATA codes must match ^[A-Z]{3}$ pattern and flight numbers must match ^[A-Z]{2}\\d{3,4}$ pattern. The scenario correctly triggers validation errors.",
+              "expected_error": true
+            }
+          ],
+          "tool_traces": {
+            "load_scenario": {
+              "success": false,
+              "error": "3 validation errors for AirlineScenario\nairports.1.iata\n  String should match pattern '^[A-Z]{3}$' [type=string_pattern_mismatch, input_value='LA@', input_type=str]\nflights.INVALID123.flight_number\n  String should match pattern '^[A-Z]{2}\\d{3,4}$' [type=string_pattern_mismatch, input_value='INVALID123', input_type=str]\nflights.INVALID123.destination\n  String should match pattern '^[A-Z]{3}$' [type=string_pattern_mismatch, input_value='LA@', input_type=str]"
+            },
+            "tool_executions": [],
+            "save_scenario": {
+              "success": false,
+              "consistency_check": false,
+              "error": "Skipped due to load_scenario failure (expected behavior for validation_error scenario)"
+            },
+            "summary": {}
+          },
+          "complexity_level": "boundary",
+          "execution_time": 17.872402667999268
+        }
+      ]
+    },
+    "final": {
+      "total_scenarios": 1,
+      "passed_scenarios": 1,
+      "failed_scenarios": 0,
+      "all_passed": true,
+      "scenario_results": [
+        {
+          "scenario_id": "scenario_001",
+          "passed": true,
+          "errors": [],
+          "tool_traces": {
+            "load_scenario": {
+              "success": true,
+              "error": null
+            },
+            "tool_executions": [
+              {
+                "tool_name": "list_airports",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "search_flights",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_flight_status",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_user_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "get_reservation_details",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "book_reservation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_reservation_flights",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_reservation_passengers",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "update_reservation_baggage",
+                "passed": true,
+                "error": null
+              },
+              {
+                "tool_name": "cancel_reservation",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "save_scenario": {
+              "success": true,
+              "consistency_check": true,
+              "error": null
+            },
+            "summary": {}
+          },
+          "complexity_level": "simple",
+          "execution_time": 66.11034202575684
+        }
+      ]
+    }
+  },
+  "revision_history": [
+    {
+      "revision_number": 1,
+      "failed_scenario_ids": [
+        "scenario_001"
+      ],
+      "aggregated_errors": {
+        "common_errors": [],
+        "scenario_specific_errors": [
+          {
+            "scenario_id": "scenario_001",
+            "complexity_level": "simple",
+            "errors": [
+              {
+                "error_type": "Price Calculation Error",
+                "error_location": "book_reservation",
+                "error_details": "The book_reservation tool returned total_price of 25.0, which only accounts for the baggage fee (1 nonfree_baggage * 25.0 economy baggage fee). It does not include the flight price of 299.99 for economy cabin.",
+                "expected_vs_actual": "Expected: 324.99 (299.99 flight + 25.0 baggage), Actual: 25.0",
+                "root_cause": "The book_reservation method in the API is not calculating the total price correctly. It appears to only sum baggage fees and insurance, missing the base flight price calculation.",
+                "expected_error": false
+              },
+              {
+                "error_type": "Price Calculation Error",
+                "error_location": "update_reservation_flights",
+                "error_details": "When updating from economy cabin to business cabin, the additional_charge returned 0. The price difference between economy (299.99) and business (899.99) is 600.0, which should be charged.",
+                "expected_vs_actual": "Expected: 600.0 (price difference), Actual: 0",
+                "root_cause": "The update_reservation_flights method is not calculating the cabin upgrade cost correctly. It should compute the difference between the new cabin price and the original cabin price.",
+                "expected_error": false
+              },
+              {
+                "error_type": "Price Calculation Error",
+                "error_location": "update_reservation_baggage",
+                "error_details": "When updating baggage from 1 nonfree bag to 2 nonfree bags, the additional_charge returned 50.0 instead of 25.0. The charge should only be for the 1 additional bag (25.0), not for both bags.",
+                "expected_vs_actual": "Expected: 25.0 (1 additional bag * 25.0), Actual: 50.0",
+                "root_cause": "The update_reservation_baggage method is calculating the charge for all nonfree bags instead of just the additional bags being added.",
+                "expected_error": false
+              },
+              {
+                "error_type": "Refund Calculation Error",
+                "error_location": "cancel_reservation",
+                "error_details": "When cancelling a reservation that had charges, the refund_amount returned 0.0. The reservation should have accumulated charges from booking and updates that should be refunded.",
+                "expected_vs_actual": "Expected: Non-zero refund amount based on accumulated charges, Actual: 0.0",
+                "root_cause": "The cancel_reservation method is not properly tracking or refunding the total_price of the reservation. This may be related to the total_price not being properly maintained throughout the reservation lifecycle.",
+                "expected_error": false
+              },
+              {
+                "error_type": "State Inconsistency Error",
+                "error_location": "User reservations tracking",
+                "error_details": "After creating reservation RES6BAF6EC1 for user_001, the user's reservations list remains empty []. The reservation should be added to the user's reservations list.",
+                "expected_vs_actual": "Expected: user_001.reservations = ['RES6BAF6EC1'], Actual: user_001.reservations = []",
+                "root_cause": "The book_reservation method is not updating the user's reservations list when creating a new reservation. This breaks the bidirectional relationship between users and reservations.",
+                "expected_error": false
+              },
+              {
+                "error_type": "State Inconsistency Error",
+                "error_location": "Reservation total_price tracking",
+                "error_details": "The saved reservation shows total_price of 0, but the reservation went through booking (should have flight + baggage costs) and updates (baggage update, cabin upgrade). The total_price should reflect all accumulated charges.",
+                "expected_vs_actual": "Expected: total_price reflecting all charges (flight + baggage + upgrades), Actual: total_price = 0",
+                "root_cause": "The reservation's total_price is not being properly maintained across operations. Initial booking sets incorrect price, and updates don't accumulate charges to the total_price field.",
+                "expected_error": false
+              }
+            ],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "list_airports",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "search_flights",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_flight_status",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_user_details",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_reservation_details",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "book_reservation",
+                  "passed": false,
+                  "error": "Incorrect price calculation: total_price returned 25.0 (only baggage fee) instead of 324.99 (flight price 299.99 + baggage fee 25.0)"
+                },
+                {
+                  "tool_name": "update_reservation_flights",
+                  "passed": false,
+                  "error": "Incorrect additional_charge calculation: returned 0 when upgrading from economy (299.99) to business (899.99) should charge difference of 600.0"
+                },
+                {
+                  "tool_name": "update_reservation_passengers",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "update_reservation_baggage",
+                  "passed": false,
+                  "error": "Incorrect additional_charge calculation: returned 50.0 for adding 1 baggage (should be 25.0 for the additional bag)"
+                },
+                {
+                  "tool_name": "cancel_reservation",
+                  "passed": false,
+                  "error": "Incorrect refund_amount: returned 0.0 when reservation had charges that should be refunded"
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": false,
+                "error": "State inconsistency detected: user_001.reservations is empty [] but should contain ['RES6BAF6EC1']. Reservation total_price is 0 but should reflect actual charges."
+              },
+              "summary": {}
+            }
+          }
+        ],
+        "error_by_tool": {
+          "book_reservation": [
+            {
+              "scenario_id": "scenario_001",
+              "complexity_level": "simple",
+              "error": {
+                "error_type": "Price Calculation Error",
+                "error_location": "book_reservation",
+                "error_details": "The book_reservation tool returned total_price of 25.0, which only accounts for the baggage fee (1 nonfree_baggage * 25.0 economy baggage fee). It does not include the flight price of 299.99 for economy cabin.",
+                "expected_vs_actual": "Expected: 324.99 (299.99 flight + 25.0 baggage), Actual: 25.0",
+                "root_cause": "The book_reservation method in the API is not calculating the total price correctly. It appears to only sum baggage fees and insurance, missing the base flight price calculation.",
+                "expected_error": false
+              }
+            }
+          ],
+          "update_reservation_flights": [
+            {
+              "scenario_id": "scenario_001",
+              "complexity_level": "simple",
+              "error": {
+                "error_type": "Price Calculation Error",
+                "error_location": "update_reservation_flights",
+                "error_details": "When updating from economy cabin to business cabin, the additional_charge returned 0. The price difference between economy (299.99) and business (899.99) is 600.0, which should be charged.",
+                "expected_vs_actual": "Expected: 600.0 (price difference), Actual: 0",
+                "root_cause": "The update_reservation_flights method is not calculating the cabin upgrade cost correctly. It should compute the difference between the new cabin price and the original cabin price.",
+                "expected_error": false
+              }
+            }
+          ],
+          "update_reservation_baggage": [
+            {
+              "scenario_id": "scenario_001",
+              "complexity_level": "simple",
+              "error": {
+                "error_type": "Price Calculation Error",
+                "error_location": "update_reservation_baggage",
+                "error_details": "When updating baggage from 1 nonfree bag to 2 nonfree bags, the additional_charge returned 50.0 instead of 25.0. The charge should only be for the 1 additional bag (25.0), not for both bags.",
+                "expected_vs_actual": "Expected: 25.0 (1 additional bag * 25.0), Actual: 50.0",
+                "root_cause": "The update_reservation_baggage method is calculating the charge for all nonfree bags instead of just the additional bags being added.",
+                "expected_error": false
+              }
+            }
+          ],
+          "cancel_reservation": [
+            {
+              "scenario_id": "scenario_001",
+              "complexity_level": "simple",
+              "error": {
+                "error_type": "Refund Calculation Error",
+                "error_location": "cancel_reservation",
+                "error_details": "When cancelling a reservation that had charges, the refund_amount returned 0.0. The reservation should have accumulated charges from booking and updates that should be refunded.",
+                "expected_vs_actual": "Expected: Non-zero refund amount based on accumulated charges, Actual: 0.0",
+                "root_cause": "The cancel_reservation method is not properly tracking or refunding the total_price of the reservation. This may be related to the total_price not being properly maintained throughout the reservation lifecycle.",
+                "expected_error": false
+              }
+            }
+          ],
+          "User reservations tracking": [
+            {
+              "scenario_id": "scenario_001",
+              "complexity_level": "simple",
+              "error": {
+                "error_type": "State Inconsistency Error",
+                "error_location": "User reservations tracking",
+                "error_details": "After creating reservation RES6BAF6EC1 for user_001, the user's reservations list remains empty []. The reservation should be added to the user's reservations list.",
+                "expected_vs_actual": "Expected: user_001.reservations = ['RES6BAF6EC1'], Actual: user_001.reservations = []",
+                "root_cause": "The book_reservation method is not updating the user's reservations list when creating a new reservation. This breaks the bidirectional relationship between users and reservations.",
+                "expected_error": false
+              }
+            }
+          ],
+          "Reservation total_price tracking": [
+            {
+              "scenario_id": "scenario_001",
+              "complexity_level": "simple",
+              "error": {
+                "error_type": "State Inconsistency Error",
+                "error_location": "Reservation total_price tracking",
+                "error_details": "The saved reservation shows total_price of 0, but the reservation went through booking (should have flight + baggage costs) and updates (baggage update, cabin upgrade). The total_price should reflect all accumulated charges.",
+                "expected_vs_actual": "Expected: total_price reflecting all charges (flight + baggage + upgrades), Actual: total_price = 0",
+                "root_cause": "The reservation's total_price is not being properly maintained across operations. Initial booking sets incorrect price, and updates don't accumulate charges to the total_price field.",
+                "expected_error": false
+              }
+            }
+          ]
+        },
+        "error_categories": {
+          "critical_load_failures": [],
+          "critical_schema_mismatches": [],
+          "high_tool_logic_errors": [
+            {
+              "error_type": "Price Calculation Error",
+              "error_location": "book_reservation",
+              "error_details": "The book_reservation tool returned total_price of 25.0, which only accounts for the baggage fee (1 nonfree_baggage * 25.0 economy baggage fee). It does not include the flight price of 299.99 for economy cabin.",
+              "expected_vs_actual": "Expected: 324.99 (299.99 flight + 25.0 baggage), Actual: 25.0",
+              "root_cause": "The book_reservation method in the API is not calculating the total price correctly. It appears to only sum baggage fees and insurance, missing the base flight price calculation.",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Price Calculation Error",
+              "error_location": "update_reservation_flights",
+              "error_details": "When updating from economy cabin to business cabin, the additional_charge returned 0. The price difference between economy (299.99) and business (899.99) is 600.0, which should be charged.",
+              "expected_vs_actual": "Expected: 600.0 (price difference), Actual: 0",
+              "root_cause": "The update_reservation_flights method is not calculating the cabin upgrade cost correctly. It should compute the difference between the new cabin price and the original cabin price.",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Price Calculation Error",
+              "error_location": "update_reservation_baggage",
+              "error_details": "When updating baggage from 1 nonfree bag to 2 nonfree bags, the additional_charge returned 50.0 instead of 25.0. The charge should only be for the 1 additional bag (25.0), not for both bags.",
+              "expected_vs_actual": "Expected: 25.0 (1 additional bag * 25.0), Actual: 50.0",
+              "root_cause": "The update_reservation_baggage method is calculating the charge for all nonfree bags instead of just the additional bags being added.",
+              "expected_error": false,
+              "severity": "HIGH"
+            },
+            {
+              "error_type": "Refund Calculation Error",
+              "error_location": "cancel_reservation",
+              "error_details": "When cancelling a reservation that had charges, the refund_amount returned 0.0. The reservation should have accumulated charges from booking and updates that should be refunded.",
+              "expected_vs_actual": "Expected: Non-zero refund amount based on accumulated charges, Actual: 0.0",
+              "root_cause": "The cancel_reservation method is not properly tracking or refunding the total_price of the reservation. This may be related to the total_price not being properly maintained throughout the reservation lifecycle.",
+              "expected_error": false,
+              "severity": "HIGH"
+            }
+          ],
+          "medium_state_errors": [
+            {
+              "error_type": "State Inconsistency Error",
+              "error_location": "User reservations tracking",
+              "error_details": "After creating reservation RES6BAF6EC1 for user_001, the user's reservations list remains empty []. The reservation should be added to the user's reservations list.",
+              "expected_vs_actual": "Expected: user_001.reservations = ['RES6BAF6EC1'], Actual: user_001.reservations = []",
+              "root_cause": "The book_reservation method is not updating the user's reservations list when creating a new reservation. This breaks the bidirectional relationship between users and reservations.",
+              "expected_error": false,
+              "severity": "MEDIUM"
+            },
+            {
+              "error_type": "State Inconsistency Error",
+              "error_location": "Reservation total_price tracking",
+              "error_details": "The saved reservation shows total_price of 0, but the reservation went through booking (should have flight + baggage costs) and updates (baggage update, cabin upgrade). The total_price should reflect all accumulated charges.",
+              "expected_vs_actual": "Expected: total_price reflecting all charges (flight + baggage + upgrades), Actual: total_price = 0",
+              "root_cause": "The reservation's total_price is not being properly maintained across operations. Initial booking sets incorrect price, and updates don't accumulate charges to the total_price field.",
+              "expected_error": false,
+              "severity": "MEDIUM"
+            }
+          ],
+          "low_edge_case_failures": []
+        },
+        "severity_summary": {
+          "critical": 0,
+          "high": 4,
+          "medium": 2,
+          "low": 0
+        },
+        "total_failed_scenarios": 1,
+        "expected_failures": 0,
+        "unexpected_failures": 1
+      },
+      "revised_code_version": 1,
+      "validation_report": {
+        "total_scenarios": 1,
+        "passed_scenarios": 1,
+        "failed_scenarios": 0,
+        "all_passed": true,
+        "scenario_results": [
+          {
+            "scenario_id": "scenario_001",
+            "passed": true,
+            "errors": [],
+            "tool_traces": {
+              "load_scenario": {
+                "success": true,
+                "error": null
+              },
+              "tool_executions": [
+                {
+                  "tool_name": "list_airports",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "search_flights",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_flight_status",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_user_details",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "get_reservation_details",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "book_reservation",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "update_reservation_flights",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "update_reservation_passengers",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "update_reservation_baggage",
+                  "passed": true,
+                  "error": null
+                },
+                {
+                  "tool_name": "cancel_reservation",
+                  "passed": true,
+                  "error": null
+                }
+              ],
+              "save_scenario": {
+                "success": true,
+                "consistency_check": true,
+                "error": null
+              },
+              "summary": {}
+            },
+            "complexity_level": "simple",
+            "execution_time": 66.11034202575684
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "total_revisions": 1,
+    "total_time": 0.0,
+    "success": true,
+    "error_message": null
+  },
+  "saved_paths": {
+    "tool_path": "envs/tools/Airline.py"
+  }
+}
