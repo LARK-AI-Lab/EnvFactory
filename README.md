@@ -63,7 +63,40 @@ SGLANG_MODEL=Qwen/Qwen3-30B-A3B-Thinking-2507
 - Use [`src/serve/sglang.sh`](src/serve/sglang.sh) and [`src/serve/vllm.sh`](src/serve/vllm.sh) to serve local models.
 
 ## Environment Construction
-TODO (@Zilin)
+Environment construction follows a discovery-to-validation pipeline:
+
+1. Discover new schema sketches with [`mcp-sketch-discovery`](mcp-sketch-discovery/SKILL.md). The workflow scans existing sketches, searches for non-AI utility APIs, and drafts new candidates under [`envs/schema_sketch`](envs/schema_sketch).
+
+2. Generate standardized MCP metadata from a schema sketch:
+
+```bash
+python -m src.gen.mcp_schema_gen envs/schema_sketch/calendar_server.py \
+  --output envs/metadata/Calendar_metadata.json
+```
+
+If `--output` is omitted, the metadata is saved to `envs/metadata/{class_name}_metadata.json`.
+
+3. Generate and validate the executable MCP environment:
+
+```bash
+python -m src.gen.env_gen envs/metadata/Calendar_metadata.json
+```
+
+This step generates the MCP tool implementation, creates validation scenarios, registers the server in [`configs/mcp_server.json`](configs/mcp_server.json), and runs a validation-revision loop.
+
+Generated artifacts are saved under:
+
+- [`envs/schema_sketch`](envs/schema_sketch): schema sketches and discovery notes.
+- [`envs/metadata`](envs/metadata): standardized MCP metadata.
+- [`envs/tools`](envs/tools): executable MCP tool servers.
+- [`envs/intermediate`](envs/intermediate): checkpoints for resume and debugging.
+
+For batch generation or recovery:
+
+```bash
+python -m src.gen.env_gen envs/metadata/*.json --max-concurrent-files 5
+python -m src.gen.env_gen --resume envs/intermediate/Calendar_checkpoint.json
+```
 
 ## Tool-use Trajectories Synthesis
 1. Follow the example in [`examples/load_tool_graph.ipynb`](examples/load_tool_graph.ipynb) to save `graph.pkl` locally.
@@ -102,3 +135,14 @@ We use the forked [VeRL](https://github.com/RolandXMR/verl) for RL training. Ple
 
 ## Citation
 If you find our work helpful, please consider citing:
+```
+@misc{xu2026envfactoryscalingtooluseagents,
+  title         = {EnvFactory: Scaling Tool-Use Agents via Executable Environments Synthesis and Robust RL},
+  author        = {Minrui Xu and Zilin Wang and Mengyi Deng and Zhiwei Li and Zhicheng Yang and Xiao Zhu and Yinhong Liu and Boyu Zhu and Baiyu Huang and Chao Chen and Heyuan Deng and Fei Mi and Lifeng Shang and Xingshan Zeng and Zhijiang Guo},
+  year          = {2026},
+  eprint        = {todo},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG},
+  url           = {todo}
+}
+```
