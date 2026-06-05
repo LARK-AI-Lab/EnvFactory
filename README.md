@@ -41,8 +41,9 @@ conda activate EnvFactory
 git clone https://github.com/LARK-AI-Lab/EnvFactory
 cd EnvFactory
 
-pip install -e ".[sglang]"
+pip install -e ".[sglang]" # or pip install -e ".[vllm]"
 ```
+* Note that if you want to host models locally, you may use `SGLang` or `vLLM` depends on your settings. In our experiments, we use `SGLang==0.5.9` and serve models through [`src/serve/sglang.sh`](src/serve/sglang.sh). Any version of SGLang and vLLM are supported as long as it can successfully serve your local models.
 
 ### Environment Variables
 
