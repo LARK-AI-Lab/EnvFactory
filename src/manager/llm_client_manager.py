@@ -1,4 +1,5 @@
 import itertools
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
@@ -11,6 +12,10 @@ from requests.adapters import HTTPAdapter
 from tqdm import tqdm
 
 load_dotenv()
+
+
+class LLMConfigurationError(RuntimeError):
+    """Raised when chat or embedding model configuration is incomplete."""
 
 
 def _retry_with_backoff(func, *args, max_retries: int = 3, base_delay: float = 1.0, **kwargs):
@@ -47,25 +52,67 @@ class LLMClientManager:
         self._embedding_api_key = os.environ.get("EMBEDDING_API_KEY")
         self._embedding_url = os.environ.get("EMBEDDING_URL")
 
-        self.chat_client = OpenAI(
-            api_key=self._chat_api_key,
-            base_url=self._chat_url,
-        )
-
         pool_size = max(self.inference_workers, 4)
-        self._session = requests.Session()
-        adapter = HTTPAdapter(
-            pool_connections=pool_size,
-            pool_maxsize=pool_size,
-        )
-        self._session.mount("http://", adapter)
-        self._session.mount("https://", adapter)
+        self._pool_size = pool_size
+        self._resource_lock = threading.Lock()
+        self.chat_client = None
+        self._session = None
+        self._executor = None
         self._embed_headers = {
             "Authorization": f"Bearer {self._embedding_api_key}",
             "Content-Type": "application/json",
         }
 
-        self._executor = ThreadPoolExecutor(max_workers=pool_size)
+    @staticmethod
+    def _require_config(values: dict[str, str | None], operation: str) -> None:
+        missing = [name for name, value in values.items() if not value]
+        if missing:
+            raise LLMConfigurationError(
+                f"Cannot use {operation}; missing required environment variables: "
+                f"{', '.join(missing)}"
+            )
+
+    def _ensure_executor(self) -> None:
+        with self._resource_lock:
+            if self._executor is None:
+                self._executor = ThreadPoolExecutor(max_workers=self._pool_size)
+
+    def _ensure_chat_client(self) -> None:
+        self._require_config(
+            {
+                "CHAT_API_KEY": self._chat_api_key,
+                "CHAT_URL": self._chat_url,
+                "CHAT_MODEL": self._chat_model,
+            },
+            "chat inference",
+        )
+        with self._resource_lock:
+            if self.chat_client is None:
+                self.chat_client = OpenAI(
+                    api_key=self._chat_api_key,
+                    base_url=self._chat_url,
+                )
+        self._ensure_executor()
+
+    def _ensure_embedding_client(self) -> None:
+        self._require_config(
+            {
+                "EMBEDDING_API_KEY": self._embedding_api_key,
+                "EMBEDDING_URL": self._embedding_url,
+                "EMBEDDING_MODEL": self._embedding_model,
+            },
+            "embedding generation",
+        )
+        with self._resource_lock:
+            if self._session is None:
+                self._session = requests.Session()
+                adapter = HTTPAdapter(
+                    pool_connections=self._pool_size,
+                    pool_maxsize=self._pool_size,
+                )
+                self._session.mount("http://", adapter)
+                self._session.mount("https://", adapter)
+        self._ensure_executor()
 
     def _batch_inference(self, messages: list[dict], **kwargs) -> str:
         result, exc = _retry_with_backoff(
@@ -87,6 +134,7 @@ class LLMClientManager:
         **kwargs,
     ) -> list[str]:
         """Perform batch inference on a list of prompts."""
+        self._ensure_chat_client()
         if isinstance(prompts, str):
             prompts = [prompts]
 
@@ -145,6 +193,8 @@ class LLMClientManager:
         if not batches:
             return np.array([])
 
+        self._ensure_embedding_client()
+
         batch_embeddings = list(
             tqdm(
                 self._executor.map(self._batch_encode, batches),
@@ -185,8 +235,16 @@ class LLMClientManager:
 
     def shutdown(self):
         """Release thread pool and HTTP session resources."""
-        self._executor.shutdown(wait=False)
-        self._session.close()
+        with self._resource_lock:
+            executor = self._executor
+            session = self._session
+            self._executor = None
+            self._session = None
+            self.chat_client = None
+        if executor is not None:
+            executor.shutdown(wait=False)
+        if session is not None:
+            session.close()
 
     def __del__(self):
         try:

@@ -13,9 +13,15 @@ setup(
     packages=find_packages(),
     install_requires=requirements,
     extras_require={
+        'dev': ['pytest>=8,<10', 'psutil>=7,<8'],
+        'mini': ['sentence-transformers>=3'],
         'sglang': ['sglang==0.5.9'],
-        'vllm': ['vllm==0.8.5'],
+        # CUDA/PyTorch wheels must be selected against the live driver. Keep
+        # this convenience extra unpinned; MoLab uses requirements-molab.txt
+        # with uv --torch-backend=auto instead.
+        'vllm': ['vllm'],
     },
+    python_requires='>=3.12',
     author='Roland Xu',
     author_email='mxubh@connect.hkust-gz.edu.cn',
     url='https://github.com/RolandXMR/MCPFactory',

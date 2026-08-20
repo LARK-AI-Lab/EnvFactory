@@ -1,0 +1,75 @@
+schema_version = 1
+run_seed = 42
+artifact_root = "artifacts/mini"
+
+[catalog]
+mcp_config = "configs/mini/mcp_server.json"
+metadata_dir = "envs/metadata"
+servers = [
+  "Calculator", "Calendar", "CampusCard", "HotelBooking",
+  "MovieRecommender", "Retail", "Telecom", "Weather"
+]
+
+[graph]
+path = "artifacts/mini/graph/graph.pkl"
+manifest_path = "artifacts/mini/graph/manifest.json"
+embedding_backend = "sentence_transformers"
+embedding_model = "BAAI/bge-small-en-v1.5"
+embedding_device = "cpu"
+embedding_batch_size = 64
+embedding_cache = "artifacts/mini/cache/embeddings.sqlite3"
+enable_parameter_merge = false
+enable_llm_edges = false
+classify_user_provided = true
+user_provided_classifier = "teacher"
+user_provided_cache = "artifacts/mini/cache/user_provided.sqlite3"
+
+[teacher]
+provider = "vllm"
+model = "Qwen/Qwen3-14B"
+fallback_model = "Qwen/Qwen3-8B"
+base_url = "http://127.0.0.1:8000/v1"
+api_key_env = "VLLM_API_KEY"
+max_model_len = 16384
+gpu_memory_utilization = 0.85
+max_num_seqs = 4
+
+[generation]
+mode = "sft_non_conv"
+target_trajectories = 2000
+workers = 4
+pass_k = 2
+max_nodes = 6
+max_servers = 2
+max_iterations = 8
+max_solve_iterations = 8
+max_attempts_per_seed = 2
+enable_query_refinement = false
+enable_user_interaction = false
+enable_user_tool_use = false
+enable_filteration = false
+manifest_flush_every = 10
+
+[dataset]
+train_ratio = 0.90
+validation_ratio = 0.10
+split_seed = 42
+minimum_tool_calls = 1
+maximum_sequence_tokens = 8192
+tokenizer_model = "Qwen/Qwen3-8B"
+tokenizer_revision = "main"
+allow_server_imbalance = false
+
+[evaluation]
+held_out_trajectories = 100
+workers = 2
+max_turns = 8
+temperature = 0.0
+top_p = 1.0
+presence_penalty = 0.0
+max_tokens = 2048
+seed = 42
+request_timeout_seconds = 120.0
+bootstrap_samples = 2000
+bootstrap_confidence = 0.95
+enable_thinking = false

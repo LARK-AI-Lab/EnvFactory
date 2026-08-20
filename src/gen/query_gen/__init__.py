@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+from typing import Optional
 
 from src.gen import GenConfig
 from src.graph.tool_chain import ToolQueryChain
@@ -46,6 +47,9 @@ class QueryGenConfig(GenConfig):
     save_folder: str = "data/"
     """Folder to save tool chain"""
 
+    persist_trajectory: bool = True
+    """Let legacy generators save directly; production orchestration disables this."""
+
     def __post_init__(self):
         if self.enable_user_tool_use:
             self.enable_user_interaction = True
@@ -74,7 +78,8 @@ class QueryGenState(Enum):
 
 class QueryGen:
     """Router class for query generation"""
-    def __init__(self, tool_graph: ToolGraph, config: QueryGenConfig = QueryGenConfig()):
+    def __init__(self, tool_graph: ToolGraph, config: Optional[QueryGenConfig] = None):
+        config = config or QueryGenConfig()
         self.config = config
         self.tool_graph = tool_graph
 

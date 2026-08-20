@@ -18,6 +18,7 @@ from src.gen.env_gen.prompts import (
 )
 from src.gen.env_gen.mcp_tool_gen import extract_mcp_tools
 from src.utils.agent_tools import execute_mcp_tool
+from src.manager.mcp_client_manager import MCPManager
 from src.manager.mcp_client_manager import MCPClientManager
 
 
@@ -47,7 +48,6 @@ class ValidateReviseGen(Gen):
         """
         super().__init__(config, logger=logger)
         self.client_manager = client_manager
-        self.load_agents()
 
     def load_agents(self) -> None:
         """Load scenario validator and tool reviser agents."""
@@ -185,6 +185,8 @@ class ValidateReviseGen(Gen):
                 complexity_level=complexity_level
             )
             return error_result, turn_idx
+        finally:
+            await MCPManager.aclose_client(f"{mcp_server_name}-{request_id}")
 
     async def validate_revise_loop(
         self,

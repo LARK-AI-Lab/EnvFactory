@@ -70,6 +70,9 @@ class ToolGraph:
             metadata: list[dict],
             enable_merge: bool = False,
             enable_build_edge_with_llm: bool = True,
+            embedding_backend=None,
+            user_provided_classifier=None,
+            classify_user_provided: bool = True,
         ):
         """
         Build the tool graph from a list of tool metadata.
@@ -78,6 +81,11 @@ class ToolGraph:
             metadata: List of dictionaries, each containing 'class_name' and 'tools'.
             enable_merge: Whether to merge similar parameters.
             enable_build_edge_with_llm: Whether to build edges within the same servers using LLM.
+            embedding_backend: Optional injectable embedding backend.
+            user_provided_classifier: Optional injectable classifier with a
+                ``classify(parameters, mapping)`` method.
+            classify_user_provided: Disable classification for input-only dry
+                construction and tests. Existing callers keep the old default.
         """
         self.graph.clear()
 
@@ -87,7 +95,9 @@ class ToolGraph:
         for data in metadata:
             class_name = data["class_name"]
 
-            for tool in data["tools"]:
+            for raw_tool in data["tools"]:
+                # Never mutate catalog metadata owned by the caller.
+                tool = dict(raw_tool)
                 tool['server'] = class_name
                 if not self.ignore_tool_class:
                     tool["name"] = f"{class_name}-{tool['name']}"
@@ -131,7 +141,11 @@ class ToolGraph:
                 params.append(param)
 
         # Embed the parameters
-        batch_embedding(params)
+        batch_embedding(
+            params,
+            backend=embedding_backend,
+            include_merge_embeddings=enable_merge,
+        )
 
         # Build parameter-to-tool mapping for better context in user_provided inference
         param_to_tool_map = {}
@@ -144,7 +158,12 @@ class ToolGraph:
                 param_to_tool_map[param] = node
 
         # Get user_provided in batch with tool context
-        batch_get_user_provided(params, param_to_tool_map=param_to_tool_map)
+        if classify_user_provided:
+            batch_get_user_provided(
+                params,
+                param_to_tool_map=param_to_tool_map,
+                classifier=user_provided_classifier,
+            )
 
         # Merge similar parameters
         if enable_merge:
@@ -305,6 +324,9 @@ class ToolGraph:
                 params_temp = node_to.input_schema["parameters"]
                 params_to.extend(params_temp)
                 params_to_pos.extend([idx] * len(params_temp))
+
+        if not params_to:
+            return
 
         # Compute similarity matrix [len(params_from) x len(params_to)]
         params_sim = LLMClient.similarity(
@@ -540,11 +562,14 @@ class ToolGraph:
         Returns:
             A sampled tool chain.
         """
-        random.seed(seed)
+        rng = random.Random(seed)
 
         # Select a starting node
         if start_node is None or start_node not in self.graph or not isinstance(start_node, Tool):
-            start_node = random.choice([n for n in self.graph.nodes() if isinstance(n, Tool)])
+            tool_nodes = [n for n in self.graph.nodes() if isinstance(n, Tool)]
+            if not tool_nodes:
+                raise ValueError("Cannot sample from a tool graph with no tool nodes")
+            start_node = rng.choice(tool_nodes)
 
         # Perform BFS to sample nodes
         visited = []
@@ -555,7 +580,7 @@ class ToolGraph:
 
             # Sample priors (dependencies)
             sampled_priors = sampler.sample_prior(
-                self, current_node, visited_nodes=visited
+                self, current_node, visited_nodes=visited, rng=rng
             )
             for prior in sampled_priors:
                 if prior not in visited:
@@ -565,12 +590,12 @@ class ToolGraph:
 
             # Sample neighbors
             sampled_neighbors = sampler.sample(
-                self, current_node, visited_nodes=visited
+                self, current_node, visited_nodes=visited, rng=rng
             )
 
             # Randomly sample another nodes in the same server
             if not sampled_neighbors:
-                next_node = random.choice(
+                next_node = rng.choice(
                     self.server_to_tools[current_node.server]
                 )
                 queue.append(next_node)

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import re
@@ -34,6 +35,10 @@ PROVIDER_MAPPING = {
     "mimo": ("MIMO_MODEL", "MIMO_API_KEY", "MIMO_BASE_URL"),
     "minimax": ("MINIMAX_MODEL", "MINIMAX_API_KEY", "MINIMAX_BASE_URL"),
 }
+
+
+class ModelConfigurationError(ValueError):
+    """Raised when a requested model provider is not fully configured."""
 
 
 @dataclass
@@ -139,6 +144,17 @@ class GenContextManager:
                     pass
                 del self.sessions[agent_name][session_id]
 
+    def reset(self) -> None:
+        """Close every retained session and discard per-generation prompts."""
+        for agent_sessions in self.sessions.values():
+            for session in agent_sessions.values():
+                try:
+                    session.close()
+                except Exception:
+                    pass
+        self.sessions.clear()
+        self.prompts.clear()
+
 
 class Gen(ABC):
     """
@@ -187,7 +203,7 @@ class Gen(ABC):
         model = os.environ.get(f"{base_name.upper()}_MODEL{suffix}")
         
         if not all([base_url, api_key, model]):
-            raise ValueError(
+            raise ModelConfigurationError(
                 f"Missing environment variables for {model_name}. "
                 f"Expected: {base_name.upper()}_BASE_URL{suffix}, "
                 f"{base_name.upper()}_API_KEY{suffix}, "
@@ -209,7 +225,10 @@ class Gen(ABC):
             return self.host_local_model(model_name)
 
         if model_name not in PROVIDER_MAPPING:
-            raise ValueError(f"Unknown model: {model_name}. Available: {list(PROVIDER_MAPPING.keys())}")
+            raise ModelConfigurationError(
+                f"Unknown model provider '{model_name}'. "
+                f"Available providers: {list(PROVIDER_MAPPING.keys())}"
+            )
 
         model_env, api_key_env, base_url_env = PROVIDER_MAPPING[model_name]
         model = os.environ.get(model_env)
@@ -217,8 +236,19 @@ class Gen(ABC):
         base_url = os.environ.get(base_url_env)
 
         if not all([model, api_key, base_url]):
-            missing = [name for name, val in [("model", model), ("api_key", api_key), ("base_url", base_url)] if not val]
-            raise ValueError(f"Missing environment variables for {model_name}: {missing}")
+            missing_env = [
+                env_name
+                for env_name, value in (
+                    (model_env, model),
+                    (api_key_env, api_key),
+                    (base_url_env, base_url),
+                )
+                if not value
+            ]
+            raise ModelConfigurationError(
+                f"Model provider '{model_name}' is missing required environment "
+                f"variables: {', '.join(missing_env)}"
+            )
 
         return LitellmModel(
             model=model,
@@ -312,6 +342,44 @@ class Gen(ABC):
         # Parse and return structured output
         return output_json
 
+    async def avalidate(self, initial_scenario: dict, tool_calls: list[dict]) -> dict:
+        """Validate a tool sequence without blocking the caller's event loop."""
+        tool_trace = {"tool_calls": [], "tool_responses": [], "final_scenario": {}}
+        if not tool_calls:
+            return tool_trace
+
+        request_id = uuid4().hex
+        client_ids = [
+            f"{mcp_server}-{request_id}" for mcp_server in initial_scenario
+        ]
+        scenarios_by_client = {
+            f"{mcp_server}-{request_id}": scenario
+            for mcp_server, scenario in initial_scenario.items()
+        }
+        try:
+            responses = await MCPManager.aload_scenarios(scenarios_by_client)
+            assert all("Successfully" in response for response in responses.values())
+
+            for tool_call in tool_calls:
+                tool_class = tool_call["name"].split("-")[0]
+                response = await MCPManager.acall_tool(
+                    tool_name=tool_call["name"],
+                    tool_args=tool_call["arguments"],
+                    client_id=f"{tool_class}-{request_id}",
+                )
+                tool_trace["tool_calls"].append(tool_call)
+                tool_trace["tool_responses"].append(response)
+
+            tool_trace["final_scenario"] = await MCPManager.asave_all_scenarios(
+                client_ids
+            )
+            return tool_trace
+        finally:
+            await asyncio.gather(
+                *(MCPManager.aclose_client(client_id) for client_id in client_ids),
+                return_exceptions=True,
+            )
+
     def validate(self, initial_scenario: dict, tool_calls: list[dict]) -> dict:
         """
         Validate tool call sequence (used by QueryGen).
@@ -399,6 +467,29 @@ class Gen(ABC):
                 err_msg = f"Invalid tool: {tool_call}: {repr(e)}.\n"
                 tool_responses.append(err_msg)
 
+        return tool_responses
+
+    async def aexecute(
+        self, tool_calls: list[dict] | dict, request_id: str
+    ) -> list:
+        """Execute tool calls sequentially through the non-blocking MCP API."""
+        if isinstance(tool_calls, dict):
+            tool_calls = [tool_calls]
+
+        tool_responses = []
+        for tool_call in tool_calls:
+            try:
+                tool_class = tool_call["name"].split("-")[0]
+                tool_response = await MCPManager.acall_tool(
+                    tool_name=tool_call["name"],
+                    tool_args=tool_call["arguments"],
+                    client_id=f"{tool_class}-{request_id}",
+                )
+                tool_responses.append(tool_response)
+            except Exception as exc:
+                tool_responses.append(
+                    f"Invalid tool: {tool_call}: {repr(exc)}.\n"
+                )
         return tool_responses
 
 

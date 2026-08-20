@@ -5,12 +5,16 @@ import random
 from typing import List, Dict, Any, Tuple
 from collections import Counter
 from src.manager.mcp_client_manager import MCPManager
-from src.utils.utils import SYSTEM_PROMPT
 from src.utils.plot import generate_plots
+from src.utils.data_conversion import (
+    INPUT_ROLES,
+    OUTPUT_ROLES,
+    format_step,
+    is_failed_tool_call,
+    iter_sft_samples,
+    validate_steps,
+)
 import traceback
-
-INPUT_ROLES = {"user", "tool_response"}
-OUTPUT_ROLES = {"assistant", "tool_call"}
 
 
 def parse_args():
@@ -173,49 +177,6 @@ def calculate_tool_chain_stats(tool_chains: List[Dict[str, Any]]) -> Dict[str, A
     
     return stats
 
-def format_step(step: Dict[str, Any]) -> str:
-    """Format a single step into text representation."""
-    role, content = step['role'], step.get('content', '')
-    assert content is not None, f"Got None content for role {role}"
-    
-    if role == 'user' or role == 'assistant':
-        return str(content)
-    elif role == 'tool_response':
-        return ''.join(f"<tool_response>\n{tr}\n</tool_response>\n" for tr in content)
-    elif role == 'tool_call':
-        tool_calls = []
-        for tc in content:
-            tool_call = {"name": tc["name"], "arguments": tc["arguments"]}
-            tool_calls.append(f"<tool_call>\n{json.dumps(tool_call)}\n</tool_call>\n")
-        return ''.join(tool_calls)
-    else:
-        raise ValueError
-
-def validate_steps(steps: List[Dict], node_idx: int) -> None:
-    """Validate step alternation and roles."""
-    for i, step in enumerate(steps):
-        expected_roles = INPUT_ROLES if i % 2 == 0 else OUTPUT_ROLES
-        if step['role'] not in expected_roles:
-            raise ValueError(f"Node {node_idx} Step {i}: Expected {expected_roles}, got '{step['role']}'")
-
-def is_failed_tool_call(steps: List[Dict], output_idx: int) -> bool:
-    cur_step = steps[output_idx]
-    if cur_step.get('role') != 'tool_call':
-        return False
-
-    if output_idx + 1 >= len(steps):
-        return False
-    
-    next_step = steps[output_idx + 1]
-    if next_step.get('role') != 'tool_response':
-        return False
-    
-    # Check tool_response content for "Fail" or "Error" or is user tool
-    content = next_step.get('content', [])
-    if any('Fail' in tr or 'Error' in tr for tr in content):
-        return True
-    return False
-
 def convert_to_sft_data(tool_chains: List[Dict[str, Any]], output_path: str, shuffle: bool = False, seed: int = 42, enable_think: bool = True) -> None:
     """Convert tool chains to SFT format (one sample per step pair)."""
     all_samples, valid_count, invalid_count = [], 0, 0
@@ -227,57 +188,9 @@ def convert_to_sft_data(tool_chains: List[Dict[str, Any]], output_path: str, shu
             user_tool_names = [t["name"] for t in user_tools]
             assistant_tools = [t for t in tools if t["function"]["name"] not in user_tool_names]
 
-            # Prepare system prompt
-            system = SYSTEM_PROMPT
-            if user_tools:
-                user_tools_text = "- Here are the actions you may instruct the user to do:\n"
-                user_tools_text += "\n".join(f"{t['name']}: {t['description']}" for t in user_tools)
-                system = system.replace("{user_tools}", user_tools_text)
-            else:
-                system = system.replace("{user_tools}", "")
-            system = system.replace("{tools}", "\n".join(json.dumps(t) for t in assistant_tools))
-
-            history = []
-            for node_idx, node in enumerate(chain["nodes"]):
-                if not node.get("decision") or not node.get("steps"):
-                    break
-
-                steps = node["steps"]
-                validate_steps(steps, node_idx)
-
-                # Skip this turn if no tool calls in this turn
-                if not any(step["role"] == "tool_call" for step in node["steps"]):
-                    continue
-
-                # Process step pairs
-                for i in range(0, len(steps)-1, 2):  # Skip last if odd
-                    input_step, output_step = steps[i], steps[i + 1]
-                    
-                    input_text = format_step(input_step)
-                    output_text = format_step(output_step)
-                    output_step_type = output_step.get("type", "KEEP")
-
-                    if enable_think:
-                        think = f"<think>{output_step.get('think', '')}</think>\n\n" if 'think' in output_step else ""
-                    else:
-                        think = ""
-
-                    if output_step_type == "REMOVE":
-                        continue
-
-                    # Filter out failed tool calls
-                    if (not is_failed_tool_call(steps, i+1)) and (output_step_type == "KEEP"):
-                        all_samples.append({
-                            "instruction": input_text.strip(),
-                            "input": "",
-                            "output": think + output_text,
-                            "system": system,
-                            "history": [h.copy() for h in history],
-                        })
-                    
-                    history.append([input_text, output_text])
-            
-            if history:
+            samples = list(iter_sft_samples(chain, assistant_tools, enable_think=enable_think))
+            all_samples.extend(samples)
+            if samples:
                 valid_count += 1
 
         except Exception as e:

@@ -60,7 +60,6 @@ class EnvGen(Gen):
 
         super().__init__(config)
         self.config: EnvGenConfig = config  # Type hint for IDE
-        self.load_agents()
 
         # Initialize sub-generators with shared logger instance
         # This ensures all logs are collected in the same logger instance
@@ -186,7 +185,7 @@ class EnvGen(Gen):
 
             client_manager = MCPClientManager()
             try:
-                client_manager.register_MCP_server(
+                client_manager.register_mcp_server(
                     server_name=metadata_info['class_name'],
                     tool_path=normalize_path(tool_path),
                     is_stateless=False
@@ -599,7 +598,7 @@ class EnvGen(Gen):
 
             client_manager = MCPClientManager()
             try:
-                client_manager.register_MCP_server(
+                client_manager.register_mcp_server(
                     server_name=result.class_name,
                     tool_path=tool_path_str,
                     is_stateless=False

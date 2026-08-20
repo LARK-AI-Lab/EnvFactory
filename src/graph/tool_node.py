@@ -68,7 +68,10 @@ class Parameter:
         return f"Parameter({self.name})"
 
     def __hash__(self):
-        return hash(self.name)
+        # Parameters intentionally use object identity for equality. Identity
+        # hashing keeps distinct same-named parameters valid dictionary/set
+        # keys until an explicit graph merge occurs.
+        return object.__hash__(self)
 
 class Tool:
     def __init__(self, tool: dict):
@@ -182,94 +185,76 @@ class Tool:
         return result.rstrip()
 
     
-def batch_embedding(parameters: list[Parameter], batch_size: int = 64) -> None:
+def batch_embedding(
+    parameters: list[Parameter],
+    batch_size: int = 64,
+    *,
+    backend=None,
+    include_merge_embeddings: bool = True,
+) -> None:
     """
-    Batch-compute embeddings for a list of Parameter.
-    Computes both name_embedding and description_embedding for weighted similarity calculation.
+    Batch-compute only the embeddings required by the selected graph mode.
+
+    Legacy graph edges use ``_embedding``. Name and description vectors are
+    additionally needed only when parameter merging is enabled. ``backend`` is
+    optional so existing callers retain the global HTTP-client behavior.
     """
-    # Filter parameters that need embeddings
-    params_needing_name = [p for p in parameters if p._name_embedding is None]
-    params_needing_desc = [p for p in parameters if p._description_embedding is None]
-    
-    # Batch compute name embeddings: "{name} ({data_type})"
-    if params_needing_name:
-        name_texts = [f"{p.name} ({p.data_type})" for p in params_needing_name]
-        name_embeddings = []
-        for i in range(0, len(name_texts), batch_size):
-            batch = name_texts[i:i + batch_size]
-            batch_embeddings = LLMClient.encode(batch, disable_progress_bar=True)
-            name_embeddings.extend(batch_embeddings)
-        
-        for param, emb in zip(params_needing_name, name_embeddings):
-            param._name_embedding = emb
-    
-    # Batch compute description embeddings
-    if params_needing_desc:
-        # Separate parameters with empty and non-empty descriptions
-        params_with_desc = []
-        params_empty_desc = []
-        desc_texts = []
-        
-        for p in params_needing_desc:
-            desc = p.description if p.description else ""
-            if desc.strip():
-                # Has description, will compute embedding
-                params_with_desc.append(p)
-                desc_texts.append(desc)
-            else:
-                # Empty description, will set to zero vector
-                params_empty_desc.append(p)
-        
-        # Note: Parameters with empty descriptions will get zero vectors
-        # This is intentional - empty descriptions should not contribute to similarity
-        
-        # Compute embeddings only for parameters with descriptions
-        desc_embeddings = []
-        if desc_texts:
-            for i in range(0, len(desc_texts), batch_size):
-                batch = desc_texts[i:i + batch_size]
-                batch_embeddings = LLMClient.encode(batch, disable_progress_bar=True)
-                desc_embeddings.extend(batch_embeddings)
-        
-        # Determine embedding dimension
-        if desc_embeddings:
-            # Use dimension from computed embeddings
-            emb_dim = len(desc_embeddings[0])
-        elif params_empty_desc:
-            # All descriptions are empty, need to get dimension from a dummy call
-            dummy_emb = LLMClient.encode(["dummy"], disable_progress_bar=True)[0]
-            emb_dim = len(dummy_emb)
-        else:
-            # No empty descriptions, skip assignment
-            emb_dim = None
-        
-        # Assign embeddings: non-empty descriptions get computed embeddings, empty ones get zero vectors
-        if emb_dim is not None:
-            desc_emb_idx = 0
-            for p in params_needing_desc:
-                if p in params_empty_desc:
-                    # Set to zero vector
-                    p._description_embedding = np.zeros(emb_dim)
-                else:
-                    # Use computed embedding
-                    p._description_embedding = desc_embeddings[desc_emb_idx]
-                    desc_emb_idx += 1
-    
-    # Also compute legacy embedding for backward compatibility
+    def encode(texts: list[str]) -> np.ndarray:
+        if not texts:
+            return np.empty((0, 0), dtype=np.float32)
+        if backend is not None:
+            return np.asarray(backend.encode(texts))
+        chunks = []
+        for start in range(0, len(texts), batch_size):
+            chunks.append(
+                np.asarray(
+                    LLMClient.encode(
+                        texts[start : start + batch_size], disable_progress_bar=True
+                    )
+                )
+            )
+        return np.concatenate(chunks, axis=0)
+
     params_needing_legacy = [p for p in parameters if p._embedding is None]
     if params_needing_legacy:
         legacy_texts = [str(p) for p in params_needing_legacy]
-        legacy_embeddings = []
-        for i in range(0, len(legacy_texts), batch_size):
-            batch = legacy_texts[i:i + batch_size]
-            batch_embeddings = LLMClient.encode(batch, disable_progress_bar=True)
-            legacy_embeddings.extend(batch_embeddings)
-        
-        for param, emb in zip(params_needing_legacy, legacy_embeddings):
+        legacy_embeddings = encode(legacy_texts)
+        for param, emb in zip(params_needing_legacy, legacy_embeddings, strict=True):
             param._embedding = emb
 
+    if not include_merge_embeddings:
+        return
 
-def batch_get_user_provided(parameters: list[Parameter], param_to_tool_map: dict[Parameter, Tool] = None, batch_size: int = 32, max_retry: int = 3) -> None:
+    params_needing_name = [p for p in parameters if p._name_embedding is None]
+    if params_needing_name:
+        name_embeddings = encode([f"{p.name} ({p.data_type})" for p in params_needing_name])
+        for param, emb in zip(params_needing_name, name_embeddings, strict=True):
+            param._name_embedding = emb
+
+    params_needing_desc = [p for p in parameters if p._description_embedding is None]
+    params_with_desc = [p for p in params_needing_desc if p.description.strip()]
+    if params_with_desc:
+        desc_embeddings = encode([p.description for p in params_with_desc])
+        for param, emb in zip(params_with_desc, desc_embeddings, strict=True):
+            param._description_embedding = emb
+    if params_needing_desc:
+        known = next((p._embedding for p in parameters if p._embedding is not None), None)
+        if known is None:
+            raise ValueError("cannot determine embedding dimension for empty descriptions")
+        dimension = len(known)
+        for param in params_needing_desc:
+            if not param.description.strip():
+                param._description_embedding = np.zeros(dimension, dtype=np.float32)
+
+
+def batch_get_user_provided(
+    parameters: list[Parameter],
+    param_to_tool_map: dict[Parameter, Tool] = None,
+    batch_size: int = 32,
+    max_retry: int = 3,
+    *,
+    classifier=None,
+) -> None:
     """
     Batch-inference and check user-provided for a list of Parameter.
     
@@ -280,6 +265,14 @@ def batch_get_user_provided(parameters: list[Parameter], param_to_tool_map: dict
         max_retry: Maximum retry attempts for each batch
     """
     params = [p for p in parameters if p._user_provided is None]
+
+    if classifier is not None:
+        values = classifier.classify(params, param_to_tool_map)
+        if len(values) != len(params) or any(type(value) is not bool for value in values):
+            raise ValueError("user-provided classifier returned invalid values")
+        for parameter, value in zip(params, values, strict=True):
+            parameter.set_user_provided(value)
+        return
 
     for i in tqdm(range(0, len(params), batch_size), desc="Getting user_provided using LLM..."):
         batch = params[i:i + batch_size]

@@ -57,13 +57,14 @@ class RandomWalkSampler(Sampler):
             list[Tool]: A list containing one randomly chosen successor (or empty).
         """
         visited_nodes = kwargs.get('visited_nodes', [])
+        rng = kwargs.get('rng') or random.Random()
         candidates = [
             succ for succ in graph.graph.successors(node)
             if isinstance(succ, Tool) and succ not in visited_nodes
         ]
         if not candidates:
             return []
-        return [random.choice(candidates)]
+        return [rng.choice(candidates)]
 
 
 class TopologySampler(Sampler):
@@ -108,7 +109,12 @@ class TopologySampler(Sampler):
                         priors.append(pre2)
         return priors
 
-    def choice(self, visited_nodes: list[Tool], candidate_nodes: list[Tool]) -> Tool | None:
+    def choice(
+        self,
+        visited_nodes: list[Tool],
+        candidate_nodes: list[Tool],
+        rng: random.Random | None = None,
+    ) -> Tool | None:
         """
         Choose a tool from candidates, respecting the max_servers constraint.
 
@@ -119,6 +125,7 @@ class TopologySampler(Sampler):
         Returns:
             Tool: The chosen tool, or None if no valid candidate exists.
         """
+        rng = rng or random.Random()
         servers = self._get_servers(visited_nodes)
 
         # If we reached the server limit, filter candidates to only allow tools from existing servers
@@ -128,7 +135,7 @@ class TopologySampler(Sampler):
         if not candidate_nodes:
             return None
 
-        return random.choice(candidate_nodes)
+        return rng.choice(candidate_nodes)
 
     def sample_prior(self, graph: ToolGraph, node: Tool, *args, **kwargs) -> list[Tool]:
         """
@@ -136,6 +143,7 @@ class TopologySampler(Sampler):
         """
         visited_nodes = kwargs.get('visited_nodes', [])
         recursion_depth = kwargs.get('recursion_depth', 0)
+        rng = kwargs.get('rng') or random.Random()
         if recursion_depth >= self.max_recursion_depth:
             return []
 
@@ -149,19 +157,19 @@ class TopologySampler(Sampler):
             is_required = edge_data.get("required", False) if edge_data else False
 
             # Skip optional parameter with 60% chance
-            if not is_required and random.random() < 0.6:
+            if not is_required and rng.random() < 0.6:
                 continue
 
             # Check if parameter is valid
             is_valid = graph.validate_parameter(param_in, list(current_visited_set))
 
             # Skip valid parameter with 90% chance
-            if is_valid and random.random() < 0.9:
+            if is_valid and rng.random() < 0.9:
                 continue
 
             # Sample a prior for current parameter
             priors = self._get_priors(graph, param_in, node)
-            prior = self.choice(list(current_visited_set), priors)
+            prior = self.choice(list(current_visited_set), priors, rng)
 
             # Recursively sample the prior for the prior
             if prior and prior not in current_visited_set:
@@ -170,6 +178,7 @@ class TopologySampler(Sampler):
                     prior,
                     visited_nodes=list(current_visited_set),
                     recursion_depth=recursion_depth + 1,
+                    rng=rng,
                 )
 
                 for prior_of_prior in priors_of_prior:
@@ -196,6 +205,7 @@ class TopologySampler(Sampler):
             list[Tool]: A list of chosen neighbors.
         """
         visited_nodes = kwargs.get('visited_nodes', [])
+        rng = kwargs.get('rng') or random.Random()
         candidate_nodes = []
 
         # Identify successors in the graph
@@ -212,5 +222,5 @@ class TopologySampler(Sampler):
             return []
 
         # Sample 1 to all outgoing neighbors uniformly
-        num_to_sample = random.randint(1, len(candidate_nodes))
-        return random.sample(candidate_nodes, num_to_sample)
+        num_to_sample = rng.randint(1, len(candidate_nodes))
+        return rng.sample(candidate_nodes, num_to_sample)

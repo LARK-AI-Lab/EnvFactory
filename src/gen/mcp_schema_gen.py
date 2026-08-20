@@ -26,7 +26,6 @@ class SchemaGen(Gen):
         """
         config = config or EnvGenConfig()
         super().__init__(config, logger=logger)
-        self.load_agents()
     
     def load_agents(self) -> None:
         """Load schema generator and designer agents."""

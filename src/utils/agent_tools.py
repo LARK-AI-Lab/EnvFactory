@@ -51,7 +51,7 @@ def get_current_datetime() -> str:
 from src.manager.mcp_client_manager import MCPManager
 
 @function_tool
-def execute_mcp_tool(tool_name: str, tool_args: str, client_id: str) -> str:
+async def execute_mcp_tool(tool_name: str, tool_args: str, client_id: str) -> str:
     """
     Execute an MCP tool with proper error handling and client management.
 
@@ -63,7 +63,7 @@ def execute_mcp_tool(tool_name: str, tool_args: str, client_id: str) -> str:
     Returns:
         str: The execution result from the MCP tool as a string.
     """
-    tool_response = MCPManager.call_tool(
+    tool_response = await MCPManager.acall_tool(
         tool_name = tool_name,
         tool_args = tool_args,
         client_id = client_id,

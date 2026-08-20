@@ -1,7 +1,9 @@
 # Query generation framework for conversational environment.
 # The conversation will stop if the user stops the conversation.
+import asyncio
 import json
 import traceback
+from typing import Optional
 
 from agents import Agent, Runner, set_tracing_disabled
 
@@ -21,7 +23,7 @@ set_tracing_disabled(True)
 
 
 class QueryGenConv(QueryGenNonConv):
-    def __init__(self, tool_graph: ToolGraph, config: QueryGenConfig = QueryGenConfig()):
+    def __init__(self, tool_graph: ToolGraph, config: Optional[QueryGenConfig] = None):
         super().__init__(tool_graph=tool_graph, config=config)
 
     def load_agents(self):
@@ -102,7 +104,7 @@ class QueryGenConv(QueryGenNonConv):
                         if tool["name"] not in self.user_tools:
                             tool_response = f"Error: {tool["name"]} is not a valid user tool. You can not use it."
                         else:
-                            tool_response = self.execute(tool, request_id)[0]
+                            tool_response = (await self.aexecute(tool, request_id))[0]
                             final_user_response += f"I do:\n<tool_call>\n{tool}\n</tool_call>\n"
                             final_user_response += f"I observe:\n<tool_response>\n{tool_response}\n</tool_response>\n"
 
@@ -154,91 +156,103 @@ class QueryGenConv(QueryGenNonConv):
             {"role": "user", "content": context.tool_chain[context.idx].query}
         ]
 
-        # Load scenario
-        for mcp_server, scenario in initial_scenario.items():
-            client_id = f"{mcp_server}-{request_id_k}"
-            MCPManager.load_scenario(scenario=scenario, client_id=client_id)
+        # Load independent servers concurrently. Tool calls below remain ordered.
+        scenarios_by_client = {
+            f"{mcp_server}-{request_id_k}": scenario
+            for mcp_server, scenario in initial_scenario.items()
+        }
+        client_ids = list(scenarios_by_client)
+        try:
+            await MCPManager.aload_scenarios(scenarios_by_client)
 
-        # Solve query
-        for _ in range(self.config.max_solve_iterations):
-            try:
-                prompt = self.context_manager.get_prompt(agent_name, request_id_k)
-                if prompt is None:
-                    prompt = context.tool_chain[context.idx].query
+            # Solve query. Calls from a single model response stay ordered.
+            for _ in range(self.config.max_solve_iterations):
+                try:
+                    prompt = self.context_manager.get_prompt(agent_name, request_id_k)
+                    if prompt is None:
+                        prompt = context.tool_chain[context.idx].query
 
-                output = await Runner.run(agent, input=prompt, session=session, context=context)
-                output_json = await self.log(
-                    conversation_id=context.conversation_id, 
-                    idx=context.idx, 
-                    agent=agent, 
-                    output=output,
-                    context=context,
-                )
+                    output = await Runner.run(
+                        agent, input=prompt, session=session, context=context
+                    )
+                    output_json = await self.log(
+                        conversation_id=context.conversation_id,
+                        idx=context.idx,
+                        agent=agent,
+                        output=output,
+                        context=context,
+                    )
 
-                if "tool_call" in output_json: # call tools
-                    tools = output_json['tool_call']
-                    if not isinstance(tools, list):
-                        tools = [tools]
+                    if "tool_call" in output_json:
+                        tools = output_json["tool_call"]
+                        if not isinstance(tools, list):
+                            tools = [tools]
 
-                    tool_responses = []
-                    tool_responses_text = ""
-                    for tool in tools:
-                        if tool["name"] in self.user_tools:
-                            tool_response = f"Error: Tool {tool["name"]} is not found."
-                        else:
-                            tool_response = self.execute(tool, request_id_k)[0]
+                        tool_responses = []
+                        tool_responses_text = ""
+                        for tool in tools:
+                            if tool["name"] in self.user_tools:
+                                tool_response = (
+                                    f"Error: Tool {tool['name']} is not found."
+                                )
+                            else:
+                                tool_response = (
+                                    await self.aexecute(tool, request_id_k)
+                                )[0]
+                            tool_responses.append(tool_response)
+                            tool_responses_text += (
+                                f"<tool_response>\n{tool_response}\n</tool_response>\n"
+                            )
 
-                        tool_responses.append(tool_response)
-                        tool_responses_text += f"<tool_response>\n{tool_response}\n</tool_response>\n"
+                        context.tool_chain[context.idx].pass_k_trace[context.k].append({
+                            "role": "tool_call",
+                            "content": tools,
+                            "think": output_json.get("think"),
+                        })
+                        context.tool_chain[context.idx].pass_k_trace[context.k].append({
+                            "role": "tool_response",
+                            "content": tool_responses,
+                        })
+                        self.context_manager.add_prompt(
+                            agent_name, request_id_k, tool_responses_text
+                        )
+                    else:
+                        user_response = await self.interact(
+                            context=context,
+                            message=output_json.get("non_think"),
+                        )
+                        context.tool_chain[context.idx].pass_k_trace[context.k].append({
+                            "role": "assistant",
+                            "content": output_json.get("non_think"),
+                            "think": output_json.get("think"),
+                        })
 
-                    context.tool_chain[context.idx].pass_k_trace[context.k].append({
-                        "role": "tool_call", 
-                        "content": tools,
-                        "think": output_json.get("think"),
-                    })
-                    context.tool_chain[context.idx].pass_k_trace[context.k].append({
-                        "role": "tool_response", 
-                        "content": tool_responses,
-                    })
-                    self.context_manager.add_prompt(agent_name, request_id_k, tool_responses_text)
+                        if STOP_TOKEN in user_response:
+                            context.tool_chain[context.idx].pass_k_decision[
+                                context.k
+                            ] = True
+                            break
 
-                else: # interact with the user
-                    user_response = await self.interact(context=context, message=output_json.get("non_think"))
-                    context.tool_chain[context.idx].pass_k_trace[context.k].append({
-                        "role": "assistant", 
-                        "content": output_json.get("non_think"),
-                        "think": output_json.get("think"),
-                    })
+                        context.tool_chain[context.idx].pass_k_trace[context.k].append({
+                            "role": "user",
+                            "content": user_response,
+                        })
+                        self.context_manager.add_prompt(
+                            agent_name, request_id_k, user_response
+                        )
 
-                    if STOP_TOKEN in user_response: # stop conversation
-                        context.tool_chain[context.idx].pass_k_decision[context.k] = True
-                        break
+                except Exception as exc:
+                    traceback.print_exc()
+                    err_msg = f"Error attempt: {repr(exc)}. Please retry...\n"
+                    self.context_manager.add_prompt(agent_name, request_id_k, err_msg)
 
-                    context.tool_chain[context.idx].pass_k_trace[context.k].append({
-                        "role": "user", 
-                        "content": user_response,
-                    })
-                    self.context_manager.add_prompt(agent_name, request_id_k, user_response)
-
-            except Exception as e:
-                traceback.print_exc()
-                err_msg = f"Error attempt: {repr(e)}. Please retry...\n"
-                self.context_manager.add_prompt(agent_name, request_id_k, err_msg)
-        
-        # Save scenario
-        final_scenario = {}
-        for mcp_server, scenario in initial_scenario.items():
-            client_id = f"{mcp_server}-{request_id_k}"
-            tool_response = MCPManager.call_tool(
-                client_id=client_id,
-                tool_name="save_scenario",
-                tool_args={},
+            final_scenario = await MCPManager.asave_all_scenarios(client_ids)
+            context.tool_chain[context.idx].pass_k_scenario[
+                context.k
+            ] = final_scenario
+        finally:
+            self.context_manager.close_session(request_id_k)
+            await asyncio.gather(
+                *(MCPManager.aclose_client(client_id) for client_id in client_ids),
+                return_exceptions=True,
             )
-            final_scenario[mcp_server] = json.loads(tool_response)
-        context.tool_chain[context.idx].pass_k_scenario[context.k] = final_scenario
-
-        # Close sessions and clients
-        self.context_manager.close_session(request_id_k)
-        for mcp_server, scenario in initial_scenario.items():
-            client_id = f"{mcp_server}-{request_id_k}"
-            MCPManager.close_client(client_id=client_id)

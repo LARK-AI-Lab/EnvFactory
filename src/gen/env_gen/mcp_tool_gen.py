@@ -39,7 +39,6 @@ class MCPToolGen(Gen):
         os.environ['LITELLM_TIMEOUT'] = str(timeout)
         litellm.request_timeout = timeout
 
-        self.load_agents()
 
     def load_agents(self) -> None:
         """Load tool generator agent."""
@@ -302,7 +301,6 @@ class ScenarioGen(Gen):
             logger: Optional shared logger instance
         """
         super().__init__(config, logger=logger)
-        self.load_agents()
 
     def load_agents(self) -> None:
         """Load scenario generator agent."""
