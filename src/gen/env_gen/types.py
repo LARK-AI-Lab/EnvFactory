@@ -87,6 +87,16 @@ class EnvGenResult:
     # Time statistics
     total_time: float = 0.0
 
+    def finalize_validation(self, total_time: float) -> None:
+        """Set a consistent terminal result after scenario validation."""
+        self.success = bool(
+            self.final_validation and self.final_validation.all_passed
+        )
+        self.state = (
+            EnvGenState.COMPLETED if self.success else EnvGenState.FAILED
+        )
+        self.total_time = total_time
+
 
 @dataclass
 class CheckpointData:
