@@ -255,6 +255,8 @@ class EnvGen(Gen):
                 result.saved_paths['tool_path'] = normalize_path(tool_path)
                 print(f"\n  Final tool code saved to: {normalize_path(tool_path)}")
 
+            result.finalize_validation(time.time() - start_time)
+
             # Save final checkpoint if configured
             if self.config.save_intermediate:
                 checkpoint_path = self.save_checkpoint(result, metadata_info)
@@ -263,12 +265,10 @@ class EnvGen(Gen):
 
             # Print summary
             print(f"\n{'='*60}")
-            if result.success and result.final_validation:
-                result.state = EnvGenState.COMPLETED
+            if result.state == EnvGenState.COMPLETED:
                 print(f"✓ Environment generation COMPLETED")
                 print(f"  All {result.final_validation.total_scenarios} scenarios passed")
             else:
-                result.state = EnvGenState.FAILED
                 print(f"⚠ Environment generation INCOMPLETE")
                 if result.final_validation:
                     print(f"  Passed: {result.final_validation.passed_scenarios}/{result.final_validation.total_scenarios}")
@@ -662,6 +662,8 @@ class EnvGen(Gen):
                 result.saved_paths['tool_path'] = normalize_path(tool_path)
                 print(f"\n  Final tool code saved to: {normalize_path(tool_path)}")
 
+            result.finalize_validation(time.time() - start_time)
+
             # Save final checkpoint
             if self.config.save_intermediate:
                 checkpoint_path = self.save_checkpoint(result, checkpoint.schema)
@@ -669,12 +671,10 @@ class EnvGen(Gen):
 
             # Print summary
             print(f"\n{'='*60}")
-            if result.success and result.final_validation:
-                result.state = EnvGenState.COMPLETED
+            if result.state == EnvGenState.COMPLETED:
                 print(f"✓ Resume COMPLETED")
                 print(f"  All {result.final_validation.total_scenarios} scenarios passed")
             else:
-                result.state = EnvGenState.FAILED
                 print(f"⚠ Resume INCOMPLETE")
                 if result.final_validation:
                     print(f"  Passed: {result.final_validation.passed_scenarios}/{result.final_validation.total_scenarios}")
@@ -683,7 +683,6 @@ class EnvGen(Gen):
             if result.total_revisions > 0:
                 print(f"  Revisions: {result.total_revisions}")
 
-            result.total_time = time.time() - start_time
             print(f"  Total time: {result.total_time:.2f}s")
             print(f"{'='*60}\n")
 
