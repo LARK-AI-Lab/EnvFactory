@@ -149,6 +149,8 @@ python -m src.utils.data_process --folders '[]' --verl_rl_path data/env_factory_
   --train_val_split_ratio 0.95 --shuffle
 ```
 
+With a separate held-out verl file, pass `--verl_rl_val_path data/env_factory_rl_val.json` instead of `--train_val_split_ratio`; all of `--verl_rl_path` then becomes training data.
+
 To visualize the generation pipeline, run [`src/app/app.py`](src/app/app.py).
 
 ---
