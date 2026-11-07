@@ -339,7 +339,6 @@ def load_from_file(file_path: str, target_name: str) -> Optional[Any]:
     
 
 import inspect
-from src.manager.mcp_client_manager import MCPManager
 
 def read_scenario_schema(mcp_servers: str | list[str], mode: str = "JSON") -> str:
     """
@@ -349,6 +348,8 @@ def read_scenario_schema(mcp_servers: str | list[str], mode: str = "JSON") -> st
         mcp_servers (str or list of str): Target MCP servers.
         mode (str): "JSON" or "Pydantic".
     """
+    from src.manager.mcp_client_manager import MCPManager
+
     if isinstance(mcp_servers, str):
         mcp_servers = [mcp_servers]
 

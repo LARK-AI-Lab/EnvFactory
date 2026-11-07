@@ -5,7 +5,6 @@ import random
 from typing import List, Dict, Any, Tuple
 from collections import Counter
 from src.utils.utils import SYSTEM_PROMPT, RL_SYSTEM_PROMPT
-from src.utils.plot import generate_plots
 import traceback
 
 INPUT_ROLES = {"user", "tool_response"}
@@ -19,6 +18,7 @@ def parse_args():
     parser.add_argument('--rl_output_train_path', type=str)
     parser.add_argument('--rl_output_val_path', type=str)
     parser.add_argument('--verl_rl_path', type=str, help='Convert a verl-format RL json (e.g. LARK-Lab/EnvFactory-RL) instead of --folders.')
+    parser.add_argument('--verl_rl_val_path', type=str, help='Held-out verl-format RL json; when set, --verl_rl_path is not split and all of it is training data.')
     parser.add_argument('--rl_exclude_envs', type=json.loads, default=["ClinicalTrialsGov"], help='Drop RL rows using these environments (network-bound).')
     parser.add_argument('--max_num', type=int)
     parser.add_argument('--train_val_split_ratio', type=float, default=0.9)
@@ -398,6 +398,7 @@ def main():
     
     if args.enable_plot:
         print("📊 Generating plots...")
+        from src.utils.plot import generate_plots
         stats = calculate_tool_chain_stats(tool_chains)
         generate_plots(stats, args.plot_dir, plot_types=['turns_steps', 'tool_calls_user_interactions', 'sunburst'])
         print(f"✅ Plots saved to {args.plot_dir}")
@@ -408,7 +409,11 @@ def main():
     if args.rl_output_train_path and args.rl_output_val_path:
         if args.verl_rl_path:
             rows = load_verl_rl_data(args.verl_rl_path, args.rl_exclude_envs)
-            train_rows, val_rows = split_tool_chains(rows, args.train_val_split_ratio, shuffle=args.shuffle, seed=args.seed)
+            if args.verl_rl_val_path:
+                train_rows, _ = split_tool_chains(rows, 1.0, shuffle=args.shuffle, seed=args.seed)
+                val_rows = load_verl_rl_data(args.verl_rl_val_path, args.rl_exclude_envs)
+            else:
+                train_rows, val_rows = split_tool_chains(rows, args.train_val_split_ratio, shuffle=args.shuffle, seed=args.seed)
             _save_jsonl(train_rows, args.rl_output_train_path, len(train_rows), 0, "RL")
             _save_jsonl(val_rows, args.rl_output_val_path, len(val_rows), 0, "RL")
         else:

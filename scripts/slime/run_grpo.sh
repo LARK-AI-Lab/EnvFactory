@@ -168,16 +168,21 @@ CUSTOM_ARGS=(
 export PYTHONUNBUFFERED=1 HF_HUB_OFFLINE=1
 PYTHONPATH_RUNTIME="${PROJECT_DIR}:${SLIME_DIR}:${MEGATRON_LM_DIR}"
 NVLINKS=$(nvidia-smi topo -m 2>/dev/null | grep -c 'NV[0-9]' || true)
-RUNTIME_ENV_JSON=$(python3 - "$PROJECT_DIR" "$PYTHONPATH_RUNTIME" "$TENSORBOARD_DIR" "$(( ${NVLINKS:-0} > 0 ? 1 : 0 ))" <<'PY'
-import json, sys
+RUNTIME_ENV_JSON=$(python3 - "$PROJECT_DIR" "$PYTHONPATH_RUNTIME" "$TENSORBOARD_DIR" "${NCCL_NVLS_ENABLE:-$(( ${NVLINKS:-0} > 0 ? 1 : 0 ))}" <<'PY'
+import json, os, sys
 root, pythonpath, tensorboard_dir, nvls = sys.argv[1:]
+env_vars = {
+    "PYTHONPATH": pythonpath, "CUDA_DEVICE_MAX_CONNECTIONS": "1", "NCCL_NVLS_ENABLE": nvls,
+    "HF_HUB_OFFLINE": "1", "PYTHONUNBUFFERED": "1", "TENSORBOARD_DIR": tensorboard_dir,
+}
+# Toolchain settings from SLIME_ACTIVATE_SCRIPT (CUDA libs, JIT compilers) must reach every worker.
+for name in ("CUDA_HOME", "LD_LIBRARY_PATH", "CPATH", "SSL_CERT_FILE", "TORCH_CUDA_ARCH_LIST", "CC", "CXX", "NVCC_CCBIN", "TRITON_CACHE_DIR"):
+    if name in os.environ:
+        env_vars[name] = os.environ[name]
 print(json.dumps({
     "working_dir": root,
     "excludes": ["/.git", "/slime", "/data", "/checkpoints_slime", "/tensorboard_log", "/log*", "**/__pycache__"],
-    "env_vars": {
-        "PYTHONPATH": pythonpath, "CUDA_DEVICE_MAX_CONNECTIONS": "1", "NCCL_NVLS_ENABLE": nvls,
-        "HF_HUB_OFFLINE": "1", "PYTHONUNBUFFERED": "1", "TENSORBOARD_DIR": tensorboard_dir,
-    },
+    "env_vars": env_vars,
 }))
 PY
 )
