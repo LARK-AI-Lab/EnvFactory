@@ -261,10 +261,12 @@ def update_mcp_server_config(
 
 import inspect
 from functools import wraps
-from typing import Any, Callable, Type
-from mcp.server.fastmcp import FastMCP
+from typing import TYPE_CHECKING, Any, Callable, Type
 
-def register_mcp_tools(tool_class: Type, mcp: FastMCP, tool_instance: Any = None):
+if TYPE_CHECKING:
+    from mcp.server.fastmcp import FastMCP
+
+def register_mcp_tools(tool_class: Type, mcp: "FastMCP", tool_instance: Any = None):
     """Register all public methods of a class as MCP tools."""
     if tool_instance is None:
         tool_instance = tool_class()
