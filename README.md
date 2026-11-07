@@ -141,6 +141,14 @@ After generation, convert the data into SFT and RL training formats:
 bash examples/process_data.sh
 ```
 
+RL rows are slime JSONL (`prompt` messages, `label` = reference tool calls, `metadata` = `envs`, `initial_state`, `final_state`). To convert the released [EnvFactory-RL](https://huggingface.co/datasets/LARK-Lab/EnvFactory-RL) (verl format):
+
+```bash
+python -m src.utils.data_process --folders '[]' --verl_rl_path data/env_factory_rl.json \
+  --rl_output_train_path data/rl_train.jsonl --rl_output_val_path data/rl_val.jsonl \
+  --train_val_split_ratio 0.95 --shuffle
+```
+
 To visualize the generation pipeline, run [`src/app/app.py`](src/app/app.py).
 
 ---
@@ -169,7 +177,23 @@ The SFT configuration is provided in [`configs/llamafactory_sft.yaml`](configs/l
 
 ## 🚄 RL
 
-We use the forked [VeRL](https://github.com/RolandXMR/verl) for RL training. Please refer to the [README](https://github.com/RolandXMR/verl/tree/main/EnvFactory) for files we modified.
+We use [slime](https://github.com/RolandXMR/slime) (our fork, included as the `slime` submodule) with Megatron training and SGLang rollouts:
+
+```bash
+git submodule update --init slime
+export MEGATRON_LM_DIR=/path/to/Megatron-LM MODEL_SIZE=4B MODEL_PATH=/path/to/EnvFactory-4B
+bash scripts/slime/convert_ckpt.sh   # HF -> Megatron reference checkpoint (${MODEL_PATH}_torch_dist)
+bash scripts/slime/run_grpo.sh       # TRAIN_FILE / VAL_FILE default to data/rl_{train,val}.jsonl
+```
+
+| File | Role |
+|------|------|
+| [`src/rollout/slime/generate.py`](src/rollout/slime/generate.py) | Multi-turn rollout: trains on the policy's own tokens, appends tool observations as masked tokens |
+| [`src/tools/tool_manager.py`](src/tools/tool_manager.py) | Runs `envs/tools` in-process (no MCP server/client); one isolated environment instance per rollout |
+| [`src/rollout/slime/reward.py`](src/rollout/slime/reward.py) | `max(0, τ·trace + (1-τ)·state − penalties)` from [`src/rewards/tool_reward.py`](src/rewards/tool_reward.py) |
+| [`configs/slime/envfactory.yaml`](configs/slime/envfactory.yaml) | Rollout and reward knobs (tool format, turns, observation length, τ) |
+
+The slime runtime additionally needs `mcp` (the environment files import its FastMCP registry for tool schemas).
 
 ---
 

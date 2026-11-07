@@ -28,6 +28,14 @@ For each function call, return a json object with function name and arguments wi
 </tool_call>
 '''
 
+# RL rollouts render tool schemas through the chat template, so this prompt omits the tool block.
+RL_SYSTEM_PROMPT = '''You are a helpful assistant. Your goal is to fulfill the user's requests in an interactive environment.
+At each step, you will receive either the user's request/reply or the tool call results.
+- Choose the appropriate tool from the available set and provide complete, valid parameters.
+- Strictly follow the format `<server_name>-<tool_name>` when calling a tool.
+- When you believe the task is completed, provide a direct, concise response to the user's original request.
+'''
+
 def to_JSON(text: str, force_return_dict: bool = False) -> dict:
     # Convert to JSON directly
     try:

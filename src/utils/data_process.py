@@ -4,8 +4,7 @@ import argparse
 import random
 from typing import List, Dict, Any, Tuple
 from collections import Counter
-from src.manager.mcp_client_manager import MCPManager
-from src.utils.utils import SYSTEM_PROMPT
+from src.utils.utils import SYSTEM_PROMPT, RL_SYSTEM_PROMPT
 from src.utils.plot import generate_plots
 import traceback
 
@@ -19,6 +18,8 @@ def parse_args():
     parser.add_argument('--sft_output_path', type=str)
     parser.add_argument('--rl_output_train_path', type=str)
     parser.add_argument('--rl_output_val_path', type=str)
+    parser.add_argument('--verl_rl_path', type=str, help='Convert a verl-format RL json (e.g. LARK-Lab/EnvFactory-RL) instead of --folders.')
+    parser.add_argument('--rl_exclude_envs', type=json.loads, default=["ClinicalTrialsGov"], help='Drop RL rows using these environments (network-bound).')
     parser.add_argument('--max_num', type=int)
     parser.add_argument('--train_val_split_ratio', type=float, default=0.9)
     parser.add_argument('--shuffle', action='store_true', default=False)
@@ -218,6 +219,8 @@ def is_failed_tool_call(steps: List[Dict], output_idx: int) -> bool:
 
 def convert_to_sft_data(tool_chains: List[Dict[str, Any]], output_path: str, shuffle: bool = False, seed: int = 42, enable_think: bool = True) -> None:
     """Convert tool chains to SFT format (one sample per step pair)."""
+    from src.manager.mcp_client_manager import MCPManager
+
     all_samples, valid_count, invalid_count = [], 0, 0
     
     for chain in tool_chains:
@@ -287,8 +290,24 @@ def convert_to_sft_data(tool_chains: List[Dict[str, Any]], output_path: str, shu
 
     _save_json(all_samples, output_path, valid_count, invalid_count, "SFT", shuffle=shuffle, seed=seed)
 
-def convert_to_rl_data(tool_chains: List[Dict[str, Any]], output_path: str, shuffle: bool = False, seed: int = 42) -> None:
-    """Convert tool chains to RL format (one sample per node)."""
+def _rl_row(prompt: List[Dict], tool_calls: List[Dict], envs: List[str], initial_state: Dict, final_state: Dict) -> Dict:
+    """One slime RL row; see src/rollout/slime/generate.py for the consumer."""
+    return {
+        "prompt": [{"role": "system", "content": RL_SYSTEM_PROMPT}] + prompt,
+        "label": json.dumps(tool_calls, ensure_ascii=False),
+        "metadata": {"envs": envs, "initial_state": initial_state, "final_state": final_state},
+    }
+
+def _keep_rl_row(row: Dict, exclude_envs: List[str]) -> bool:
+    metadata = row["metadata"]
+    return (
+        json.loads(row["label"]) != []
+        and all(env in metadata["initial_state"] for env in metadata["envs"])
+        and not set(metadata["envs"]) & set(exclude_envs)
+    )
+
+def convert_to_rl_data(tool_chains: List[Dict[str, Any]], output_path: str, shuffle: bool = False, seed: int = 42, exclude_envs: List[str] = ()) -> None:
+    """Convert tool chains to slime RL rows (one sample per node)."""
     all_samples, valid_count, invalid_count = [], 0, 0
 
     QWEN3_ROLE_MAPPING = {
@@ -313,26 +332,12 @@ def convert_to_rl_data(tool_chains: List[Dict[str, Any]], output_path: str, shuf
                     if step['role'] == "tool_call" 
                     for tool_call in step['content']
                 ] # tool calls for this turn
-                
-                rl_sample = {
-                    "prompt": json.dumps(prompt),
-                    "data_source": "EnvFactory",
-                    "agent_name": "tool_agent",
-                    "ability": "tool_use",
-                    "reward_model": {
-                        "ground_truth": json.dumps(tool_calls),
-                        "style": "rule"
-                    },
-                    "extra_info": {
-                        "mcp_factory_kwargs": {
-                            "mcp_servers": json.dumps(node.get("mcp_servers", [])),
-                            "initial_config": json.dumps(node.get("initial_scenario", {})),
-                            "final_config": json.dumps(node.get("final_scenario", {})),
-                        }
-                    }
-                }
 
-                if tool_calls and all(server in node.get("initial_scenario", {}) for server in node.get("mcp_servers", [])):
+                rl_sample = _rl_row(
+                    prompt, tool_calls, node.get("mcp_servers", []),
+                    node.get("initial_scenario", {}), node.get("final_scenario", {}),
+                )
+                if _keep_rl_row(rl_sample, exclude_envs):
                     all_samples.append(rl_sample)
                 
                 for step in node["steps"]:
@@ -348,7 +353,23 @@ def convert_to_rl_data(tool_chains: List[Dict[str, Any]], output_path: str, shuf
             traceback.print_exc()
             print(f"⚠️ RL conversion error (seed {chain.get('seed')}): {e}")
     
-    _save_json(all_samples, output_path, valid_count, invalid_count, "RL", shuffle=shuffle, seed=seed)
+    _save_jsonl(all_samples, output_path, valid_count, invalid_count, "RL", shuffle=shuffle, seed=seed)
+
+def load_verl_rl_data(path: str, exclude_envs: List[str] = ()) -> List[Dict]:
+    """Convert the previous verl RL format (e.g. LARK-Lab/EnvFactory-RL) to slime rows."""
+    with open(path, 'r', encoding='utf-8') as f:
+        rows = json.load(f)
+    samples = []
+    for row in rows:
+        kwargs = row["extra_info"]["mcp_factory_kwargs"]
+        sample = _rl_row(
+            json.loads(row["prompt"]), json.loads(row["reward_model"]["ground_truth"]),
+            json.loads(kwargs["mcp_servers"]), json.loads(kwargs["initial_config"]), json.loads(kwargs["final_config"]),
+        )
+        if _keep_rl_row(sample, exclude_envs):
+            samples.append(sample)
+    print(f"✅ Converted {len(samples)} / {len(rows)} verl RL rows from {path}")
+    return samples
 
 def _save_json(data: List[Dict], path: str, valid: int, invalid: int, label: str, shuffle: bool = False, seed: int = 42) -> None:
     if shuffle:
@@ -357,6 +378,17 @@ def _save_json(data: List[Dict], path: str, valid: int, invalid: int, label: str
 
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
+
+    print(f"✅ Saved {len(data)} {label} samples to {path} (valid: {valid}, invalid: {invalid})")
+
+def _save_jsonl(data: List[Dict], path: str, valid: int, invalid: int, label: str, shuffle: bool = False, seed: int = 42) -> None:
+    if shuffle:
+        random.seed(seed)
+        random.shuffle(data)
+
+    with open(path, 'w', encoding='utf-8') as f:
+        for row in data:
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
     print(f"✅ Saved {len(data)} {label} samples to {path} (valid: {valid}, invalid: {invalid})")
 
@@ -374,9 +406,15 @@ def main():
         convert_to_sft_data(tool_chains, args.sft_output_path, shuffle=args.shuffle, seed=args.seed, enable_think=args.enable_think)
 
     if args.rl_output_train_path and args.rl_output_val_path:
-        train_chains, val_chains = split_tool_chains(tool_chains, args.train_val_split_ratio, shuffle=args.shuffle, seed=args.seed)
-        convert_to_rl_data(train_chains, args.rl_output_train_path, shuffle=args.shuffle, seed=args.seed)
-        convert_to_rl_data(val_chains, args.rl_output_val_path, shuffle=args.shuffle, seed=args.seed)
+        if args.verl_rl_path:
+            rows = load_verl_rl_data(args.verl_rl_path, args.rl_exclude_envs)
+            train_rows, val_rows = split_tool_chains(rows, args.train_val_split_ratio, shuffle=args.shuffle, seed=args.seed)
+            _save_jsonl(train_rows, args.rl_output_train_path, len(train_rows), 0, "RL")
+            _save_jsonl(val_rows, args.rl_output_val_path, len(val_rows), 0, "RL")
+        else:
+            train_chains, val_chains = split_tool_chains(tool_chains, args.train_val_split_ratio, shuffle=args.shuffle, seed=args.seed)
+            convert_to_rl_data(train_chains, args.rl_output_train_path, shuffle=args.shuffle, seed=args.seed, exclude_envs=args.rl_exclude_envs)
+            convert_to_rl_data(val_chains, args.rl_output_val_path, shuffle=args.shuffle, seed=args.seed, exclude_envs=args.rl_exclude_envs)
 
 if __name__ == "__main__":
     main()
