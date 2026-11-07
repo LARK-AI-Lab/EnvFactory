@@ -193,8 +193,15 @@ bash scripts/slime/run_grpo.sh  # TRAIN_FILE / VAL_FILE default to data/rl_{trai
 | [`src/tools/tool_manager.py`](src/tools/tool_manager.py) | Runs `envs/tools` in-process (no MCP server/client); one isolated environment instance per rollout |
 | [`src/rollout/slime/reward.py`](src/rollout/slime/reward.py) | `max(0, τ·trace + (1-τ)·state − penalties)` from [`src/rewards/tool_reward.py`](src/rewards/tool_reward.py) |
 | [`configs/slime/envfactory.yaml`](configs/slime/envfactory.yaml) | Rollout and reward knobs (turns, observation length, τ) |
+| [`src/eval/bfcl_v3/bfcl.py`](src/eval/bfcl_v3/bfcl.py) | BFCL v3 multi-turn evaluation (ported from ToolAgent): scripted user turns, upstream state/response checkers |
 
 Environments run in-process without the `mcp` package: `src/tools/tool_manager.py` records each file's `@mcp.tool()` functions with FastMCP-identical schemas and argument validation, so the slime runtime only needs `pydantic`.
+
+Evaluation runs every `eval_interval` rollouts on two sets, both greedy: the held-out EnvFactory split (`eval/envfactory`, training reward and budgets) and, when `data/bfcl_v3_val.jsonl` exists, all 800 BFCL v3 multi-turn tasks (`eval/bfcl_v3`, task accuracy; 8k tokens per model call, 40k-token session). Build the BFCL file once:
+
+```bash
+python -m src.eval.bfcl_v3.bfcl data/bfcl_v3_val.jsonl  # base, miss_func, miss_param, long_context
+```
 
 ---
 
