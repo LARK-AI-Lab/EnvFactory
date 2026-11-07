@@ -17,8 +17,9 @@ MODEL_SIZE=${MODEL_SIZE:-4B}  # 1.7B | 4B | 8B
 MODEL_PATH=${MODEL_PATH:?Set MODEL_PATH to the HF checkpoint (e.g. the EnvFactory SFT model).}
 REF_LOAD=${REF_LOAD:-$MODEL_PATH}  # slime loads the HF checkpoint directly; a torch_dist copy also works.
 TRAIN_FILE=${TRAIN_FILE:-$PROJECT_DIR/data/rl_train.jsonl}
-VAL_FILE=${VAL_FILE:-$PROJECT_DIR/data/rl_val.jsonl}
-BFCL_FILE=${BFCL_FILE:-$PROJECT_DIR/data/bfcl_v3_val.jsonl}  # python -m src.eval.bfcl_v3.bfcl data/bfcl_v3_val.jsonl
+# Validation sets; set either to an empty string to skip it.
+VAL_FILE=${VAL_FILE-$PROJECT_DIR/data/rl_val.jsonl}
+BFCL_FILE=${BFCL_FILE-$PROJECT_DIR/data/bfcl_v3_val.jsonl}  # python -m src.eval.bfcl_v3.bfcl data/bfcl_v3_val.jsonl
 CUSTOM_CONFIG=${CUSTOM_CONFIG:-$PROJECT_DIR/configs/slime/envfactory.yaml}
 CKPT_DIR=${CKPT_DIR:-$PROJECT_DIR/checkpoints_slime}
 NNODES=${NNODES:-1}
@@ -44,7 +45,7 @@ rollout_temperature=0.7
 
 num_epoch=10
 save_interval=20
-eval_interval=5
+eval_interval=10
 
 case ${MODEL_SIZE} in
     1.7B) TP_SIZE=1; ROLLOUT_GPUS_PER_ENGINE=1; MEM_FRACTION=0.8 ;;

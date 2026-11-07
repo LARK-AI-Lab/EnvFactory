@@ -197,7 +197,7 @@ bash scripts/slime/run_grpo.sh  # TRAIN_FILE / VAL_FILE default to data/rl_{trai
 
 Environments run in-process without the `mcp` package: `src/tools/tool_manager.py` records each file's `@mcp.tool()` functions with FastMCP-identical schemas and argument validation, so the slime runtime only needs `pydantic`.
 
-Evaluation runs every `eval_interval` rollouts on two sets, both greedy: the held-out EnvFactory split (`eval/envfactory`, training reward and budgets) and, when `data/bfcl_v3_val.jsonl` exists, all 800 BFCL v3 multi-turn tasks (`eval/bfcl_v3`, task accuracy; 8k tokens per model call, 40k-token session). Build the BFCL file once:
+Evaluation runs every `eval_interval` (10) rollouts on two sets (set `VAL_FILE=` or `BFCL_FILE=` empty to skip one), both greedy: the held-out EnvFactory split (`eval/envfactory`, training reward and budgets) and, when `data/bfcl_v3_val.jsonl` exists, all 800 BFCL v3 multi-turn tasks (`eval/bfcl_v3`, task accuracy; 8k tokens per model call, 40k-token session). Build the BFCL file once:
 
 ```bash
 python -m src.eval.bfcl_v3.bfcl data/bfcl_v3_val.jsonl  # base, miss_func, miss_param, long_context
