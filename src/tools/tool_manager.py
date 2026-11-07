@@ -49,11 +49,6 @@ def _text_blocks(result: Any) -> list[str]:
     return [pydantic_core.to_json(result, fallback=str, indent=2).decode()]
 
 
-def format_tool_result(result: Any) -> str:
-    """Render a tool result as the text MCPClientManager produced during data synthesis."""
-    return ",".join(_text_blocks(result))
-
-
 def _rebind(fn: types.FunctionType, namespace: dict) -> types.FunctionType:
     clone = types.FunctionType(fn.__code__, namespace, fn.__name__, fn.__defaults__, fn.__closure__)
     clone.__kwdefaults__ = fn.__kwdefaults__
@@ -128,9 +123,6 @@ class ToolRegistry:
             return fn
 
         return register
-
-    def run(self, *args: Any, **kwargs: Any) -> None:
-        raise RuntimeError("EnvFactory environments run in-process through src.tools.tool_manager; there is no server.")
 
 
 _FASTMCP_MODULE = "mcp.server.fastmcp"
@@ -213,14 +205,14 @@ class EnvClient:
         return self._fns[tool_name](**self.server.tools[tool_name].parse_arguments(arguments))
 
     def call_tool(self, tool_name: str, arguments: dict) -> str:
-        """Execute one policy tool call; failures become the observation, as with an MCP server."""
+        """Execute one policy tool call; failures read as MCPClientManager reported them during synthesis."""
         full_name = f"{self.server.name}-{tool_name}"
         if tool_name not in self._fns or tool_name in SCENARIO_TOOLS:
             return f"Unknown tool '{full_name}'."
         try:
-            return format_tool_result(self._invoke(tool_name, arguments))
+            return ",".join(_text_blocks(self._invoke(tool_name, arguments)))
         except Exception as e:
-            return f"Error executing tool {full_name}: {e}"
+            return f"{full_name} failed: Error executing tool {tool_name}: {e}"
 
     def state(self) -> dict:
         """The scenario as JSON data, matching the synthesized ``final_scenario`` encoding."""
@@ -236,10 +228,6 @@ class ToolManager:
         self._paths = {name: _resolve(cfg["tool_path"]) for name, cfg in config["mcpServers"].items()}
         self._servers: dict[str, EnvServer] = {}
         self._lock = threading.Lock()
-
-    @property
-    def servers(self) -> list[str]:
-        return list(self._paths)
 
     def server(self, name: str) -> EnvServer:
         with self._lock:

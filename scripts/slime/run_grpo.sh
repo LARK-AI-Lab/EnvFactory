@@ -25,19 +25,19 @@ NGPUS_PER_NODE=${NGPUS_PER_NODE:-8}
 MASTER_ADDR=${MASTER_ADDR:-127.0.0.1}
 
 project_name=${PROJECT_NAME:-EnvFactory}
+# Rerunning with the same EXPERIMENT_NAME resumes from its latest checkpoint.
 experiment_name=${EXPERIMENT_NAME:-${project_name}-Qwen3-${MODEL_SIZE}-grpo-$(date +%Y%m%d-%H%M)}
 
 ########################### user-adjustable ###########################
 rollout_batch_size=256
 n_samples_per_prompt=8
 global_batch_size=512  # 4 optimizer steps per rollout.
-max_prompt_length=16384
+max_prompt_length=16384  # Longer prompts are skipped (masked out), as verl's filter_overlong_prompts did.
 max_response_length=8192  # Generated tokens per trajectory; observations only consume context.
 max_context_length=$((max_prompt_length + max_response_length))
 
 actor_lr=1e-6
 kl_loss_coef=0.001
-entropy_coef=0.0
 rollout_temperature=0.7
 
 num_epoch=10
@@ -50,8 +50,6 @@ case ${MODEL_SIZE} in
     8B)   TP_SIZE=4; ROLLOUT_GPUS_PER_ENGINE=2; MEM_FRACTION=0.7 ;;
     *) die "Unknown MODEL_SIZE: ${MODEL_SIZE} (expected 1.7B, 4B or 8B)." ;;
 esac
-CP_SIZE=1
-MAX_TOKENS_PER_GPU=${max_context_length}  # One full trajectory must fit a CP group.
 ########################### end user-adjustable ###########################
 
 [ -f "$SLIME_DIR/train.py" ] || die "Slime submodule missing at $SLIME_DIR; run: git submodule update --init."
@@ -60,6 +58,12 @@ MAX_TOKENS_PER_GPU=${max_context_length}  # One full trajectory must fit a CP gr
 [ -d "$REF_LOAD" ] || die "Megatron checkpoint not found at $REF_LOAD; run scripts/slime/convert_ckpt.sh."
 [ -f "$TRAIN_FILE" ] || die "Training data not found at $TRAIN_FILE; run examples/process_data.sh."
 [ -f "$CUSTOM_CONFIG" ] || die "Custom config not found at $CUSTOM_CONFIG."
+
+# The Ray job runs from an uploaded copy of the repo, so every path it reads must be absolute.
+mkdir -p "$CKPT_DIR"
+MODEL_PATH=$(realpath "$MODEL_PATH") REF_LOAD=$(realpath "$REF_LOAD") TRAIN_FILE=$(realpath "$TRAIN_FILE")
+CUSTOM_CONFIG=$(realpath "$CUSTOM_CONFIG") CKPT_DIR=$(realpath "$CKPT_DIR")
+[ -f "$VAL_FILE" ] && VAL_FILE=$(realpath "$VAL_FILE")
 
 source "${SLIME_DIR}/scripts/models/qwen3-${MODEL_SIZE}.sh"
 
@@ -75,7 +79,6 @@ ROLLOUT_ARGS=(
    --prompt-data "${TRAIN_FILE}"
    --input-key prompt
    --label-key label
-   --metadata-key metadata
    --rollout-shuffle
    --num-epoch ${num_epoch}
    --rollout-batch-size ${rollout_batch_size}
@@ -94,7 +97,7 @@ if [ -f "$VAL_FILE" ]; then
    EVAL_ARGS=(
       --eval-interval ${eval_interval}
       --eval-prompt-data envfactory "${VAL_FILE}"
-      --n-samples-per-eval-prompt 1
+      --eval-temperature 0  # Greedy, as verl's validation.
       --eval-max-response-len ${max_response_length}
       --eval-max-context-len ${max_context_length}
    )
@@ -103,15 +106,11 @@ fi
 PERF_ARGS=(
    --tensor-model-parallel-size ${TP_SIZE}
    --sequence-parallel
-   --pipeline-model-parallel-size 1
-   --context-parallel-size ${CP_SIZE}
-   --expert-model-parallel-size 1
-   --expert-tensor-parallel-size 1
    --recompute-granularity full
    --recompute-method uniform
    --recompute-num-layers 1
    --use-dynamic-batch-size
-   --max-tokens-per-gpu ${MAX_TOKENS_PER_GPU}
+   --max-tokens-per-gpu ${max_context_length}  # One full trajectory must fit a GPU.
    --log-probs-chunk-size 2048
 )
 
@@ -121,19 +120,12 @@ GRPO_ARGS=(
    --use-kl-loss
    --kl-loss-coef ${kl_loss_coef}
    --kl-loss-type low_var_kl
-   --kl-coef 0.0
-   --entropy-coef ${entropy_coef}
-   --eps-clip 0.2
-   --eps-clip-high 0.2
 )
 
 OPTIMIZER_ARGS=(
    --optimizer adam
    --lr ${actor_lr}
    --lr-decay-style constant
-   --weight-decay 0.01
-   --adam-beta1 0.9
-   --adam-beta2 0.98
 )
 
 SGLANG_ARGS=(
@@ -165,7 +157,6 @@ CUSTOM_ARGS=(
    --reward-key score
 )
 
-export PYTHONUNBUFFERED=1 HF_HUB_OFFLINE=1
 PYTHONPATH_RUNTIME="${PROJECT_DIR}:${SLIME_DIR}:${MEGATRON_LM_DIR}"
 NVLINKS=$(nvidia-smi topo -m 2>/dev/null | grep -c 'NV[0-9]' || true)
 RUNTIME_ENV_JSON=$(python3 - "$PROJECT_DIR" "$PYTHONPATH_RUNTIME" "$TENSORBOARD_DIR" "${NCCL_NVLS_ENABLE:-$(( ${NVLINKS:-0} > 0 ? 1 : 0 ))}" <<'PY'
@@ -181,7 +172,7 @@ for name in ("CUDA_HOME", "LD_LIBRARY_PATH", "CPATH", "SSL_CERT_FILE", "TORCH_CU
         env_vars[name] = os.environ[name]
 print(json.dumps({
     "working_dir": root,
-    "excludes": ["/.git", "/slime", "/data", "/checkpoints_slime", "/tensorboard_log", "/log*", "**/__pycache__"],
+    "excludes": ["/slime"],  # Ray already skips .git and .gitignore'd data, checkpoints, and logs.
     "env_vars": env_vars,
 }))
 PY

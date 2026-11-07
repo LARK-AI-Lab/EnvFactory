@@ -31,7 +31,8 @@ class ToolManagerTest(unittest.TestCase):
     def test_arguments_are_validated_like_fastmcp(self):
         client = self.manager.create_client("Calendar", {})
         self.assertIn('"event_id"', client.call_tool("list_events", {"max_results": "1"}))
-        self.assertTrue(client.call_tool("create_event", {"summary": "x"}).startswith("Error executing tool Calendar-create_event"))
+        error = client.call_tool("create_event", {"summary": "x"})
+        self.assertTrue(error.startswith("Calendar-create_event failed: Error executing tool create_event:"), error)
 
     def test_scenario_tools_are_hidden_from_the_policy(self):
         names = {schema["function"]["name"] for schema in self.manager.filter_tools(["Calendar"])}

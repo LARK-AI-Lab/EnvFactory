@@ -3,8 +3,9 @@
 Adapted from ToolAgent's slime rollout. The policy's own SGLang tokens are trainable;
 tool observations are rendered with the chat template and appended as masked tokens.
 Environments run in-process through ``src.tools.tool_manager`` (no MCP transport).
+Rollout knobs come from ``configs/slime/envfactory.yaml`` (``--custom-config-path``).
 
-Dataset row (``--input-key prompt --label-key label --metadata-key metadata``)::
+Dataset row (``--input-key prompt --label-key label``)::
 
     {"prompt": [{"role": "system", ...}, {"role": "user", ...}],
      "label": "<JSON list of reference tool calls>",
@@ -14,13 +15,9 @@ Dataset row (``--input-key prompt --label-key label --metadata-key metadata``)::
 from __future__ import annotations
 
 import asyncio
-import copy
-import functools
-import json
 import logging
 import time
 import uuid
-from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from slime.rollout.sglang_rollout import GenerateState
@@ -28,34 +25,9 @@ from slime.utils.http_utils import post
 from slime.utils.types import Sample
 
 from src.tools.tool_manager import get_tool_manager
-from src.tools.tool_parser import get_tool_parser
+from src.tools.tool_parser import extract_tool_calls
 
 logger = logging.getLogger(__name__)
-
-# Overridable through the slime custom config (--custom-config-path).
-DEFAULTS = {
-    "environment_config_path": "configs/mcp_server.json",
-    "tool_format": "qwen3",
-    "max_interaction_turns": 10,
-    "max_tool_response_length": 512,  # Characters; 0 keeps observations whole.
-    "truncate_side": "middle",  # left | right | middle
-    "tool_max_workers": 64,
-}
-
-_EXECUTOR: ThreadPoolExecutor | None = None
-
-
-def _cfg(args, name: str) -> Any:
-    value = getattr(args, name, None)
-    return DEFAULTS[name] if value is None else value
-
-
-async def _offload(args, fn, *fn_args):
-    """Run blocking work (chat templates, tool calls) off the rollout event loop."""
-    global _EXECUTOR
-    if _EXECUTOR is None:
-        _EXECUTOR = ThreadPoolExecutor(int(_cfg(args, "tool_max_workers")), thread_name_prefix="envfactory-tools")
-    return await asyncio.get_running_loop().run_in_executor(_EXECUTOR, functools.partial(fn, *fn_args))
 
 
 def _truncate(text: str, max_length: int, side: str) -> str:
@@ -127,84 +99,58 @@ def _mark_failed(sample: Sample, reason: str) -> Sample:
     # Slime validates top-p replay on every row, including masked placeholders.
     sample.rollout_top_p_token_ids = []
     sample.rollout_top_p_token_offsets = [0] * (sample.response_length + 1)
-    sample.metadata["failure_reason"] = reason
     return sample
 
 
 async def generate(args, sample: Sample, sampling_params: dict, evaluation: bool = False) -> Sample:
     """Run one multi-turn tool-agent rollout and return the trainable sample."""
     assert not args.partial_rollout, "Partial rollout cannot resume a stateful tool environment."
-    assert not getattr(args, "use_rollout_routing_replay", False), (
-        "Rollout routing replay cannot stitch routed experts across tool turns."
-    )
-    if isinstance(sample.metadata, str):
-        sample.metadata = json.loads(sample.metadata)
+    # Outside the try: a missing custom config must stop training, not fail every sample.
+    tool_manager = get_tool_manager(args.environment_config_path)
     try:
-        return await _generate(args, sample, sampling_params, evaluation)
+        return await _generate(args, tool_manager, sample, sampling_params, evaluation)
     except Exception as e:
         logger.exception(f"⚠️ Tool-agent rollout failed for sample {sample.index}: {e}")
         return _mark_failed(sample, f"{type(e).__name__}: {e}")
 
 
-async def _generate(args, sample: Sample, sampling_params: dict, evaluation: bool) -> Sample:
-    # Slime may retry an aborted sample; start from a clean response.
-    sample.tokens = []
-    sample.response = ""
-    sample.response_length = 0
-    sample.loss_mask = []
-    sample.rollout_log_probs = None
-    sample.rollout_top_p_token_ids = None
-    sample.rollout_top_p_token_offsets = None
-    sample.status = Sample.Status.PENDING
-    sample.remove_sample = False
-    sample.reward = None
-
+async def _generate(args, tool_manager, sample: Sample, sampling_params: dict, evaluation: bool) -> Sample:
+    # Slime hands every rollout its own deep copy of the row, so metadata may be used in place.
     metadata = sample.metadata
-    envs = metadata["envs"]
-    initial_state = copy.deepcopy(metadata["initial_state"])
+    envs, initial_state = metadata["envs"], metadata["initial_state"]
     missing = [env for env in envs if env not in initial_state]
     if not envs or missing:
         raise ValueError(f"Row needs nonempty metadata.envs, each with an initial_state; missing {missing}.")
-    messages = copy.deepcopy(json.loads(sample.prompt) if isinstance(sample.prompt, str) else sample.prompt)
+    messages = list(sample.prompt)
 
-    tool_manager = get_tool_manager(_cfg(args, "environment_config_path"))
-    tool_schemas = await _offload(args, tool_manager.filter_tools, envs)
+    tool_schemas = await asyncio.to_thread(tool_manager.filter_tools, envs)
     allowed = {schema["function"]["name"] for schema in tool_schemas}
-    tool_parser = get_tool_parser(_cfg(args, "tool_format"))
-    max_turns = int(_cfg(args, "max_interaction_turns"))
-    max_tool_response_length = int(_cfg(args, "max_tool_response_length"))
-    truncate_side = _cfg(args, "truncate_side")
 
     state = GenerateState(args)
     tokenizer = state.tokenizer
     eos = tokenizer.eos_token
-    template_kwargs = getattr(args, "apply_chat_template_kwargs", None) or {}
-
-    max_context_len = int(
-        (evaluation and getattr(args, "eval_max_context_len", None))
-        or args.rollout_max_context_len
-        or args.context_parallel_size * args.max_tokens_per_gpu
-    )
-    max_response_len = int(
-        (evaluation and getattr(args, "eval_max_response_len", None)) or args.rollout_max_response_len or max_context_len
-    )
+    template_kwargs = args.apply_chat_template_kwargs or {}
+    max_context_len = args.eval_max_context_len if evaluation else args.rollout_max_context_len
+    max_response_len = (evaluation and args.eval_max_response_len) or args.rollout_max_response_len
+    max_prompt_len = min(args.rollout_max_prompt_len or max_context_len, max_context_len - 1)
 
     # Pin the session to one engine so its growing prefix stays cached.
     sample.session_id = sample.session_id or str(uuid.uuid4())
     url = f"http://{args.sglang_router_ip}:{args.sglang_router_port}/generate"
-    headers = {"X-SMG-Routing-Key": sample.session_id} if getattr(args, "router_policy", None) == "consistent_hashing" else None
+    routed = getattr(args, "router_policy", None) == "consistent_hashing"  # Router args exist only with the router.
+    headers = {"X-SMG-Routing-Key": sample.session_id} if routed else None
 
-    prompt_text = await _offload(args, _render, tokenizer, messages, tool_schemas, True, template_kwargs)
+    prompt_text = await asyncio.to_thread(_render, tokenizer, messages, tool_schemas, True, template_kwargs)
     sample.tokens = tokenizer(prompt_text, add_special_tokens=False)["input_ids"]
-    if len(sample.tokens) >= max_context_len:
-        return _mark_failed(sample, f"Prompt ({len(sample.tokens)} tokens) exceeds the context budget ({max_context_len}).")
+    if len(sample.tokens) > max_prompt_len:
+        return _mark_failed(sample, f"Prompt ({len(sample.tokens)} tokens) exceeds {max_prompt_len} tokens.")
 
     clients: dict[str, Any] = {}
     solution_calls: list[dict] = []
     num_failed_calls = 0
     num_turns = 0
 
-    for turn in range(max_turns):
+    for turn in range(args.max_interaction_turns):
         if state.aborted:
             sample.status = Sample.Status.ABORTED
             return sample
@@ -242,32 +188,29 @@ async def _generate(args, sample: Sample, sampling_params: dict, evaluation: boo
         )
         num_turns += 1
 
-        if meta_info["finish_reason"]["type"] == "length":
-            sample.status = Sample.Status.TRUNCATED
-            break
-
         content = gen_text.removesuffix(eos)
-        tool_calls = tool_parser.extract_tool_calls(content, tool_schemas)
+        tool_calls = extract_tool_calls(content)
         messages.append({"role": "assistant", "content": content})
+        # Calls of a truncated or final turn count for the reward but are never executed.
         solution_calls.extend({"name": call.name, "arguments": call.arguments} for call in tool_calls if call.error is None)
         num_failed_calls += sum(call.error is not None for call in tool_calls)
 
+        if meta_info["finish_reason"]["type"] == "length" or (tool_calls and turn == args.max_interaction_turns - 1):
+            sample.status = Sample.Status.TRUNCATED
+            break
         if not tool_calls:
             sample.status = Sample.Status.COMPLETED
             break
-        if turn == max_turns - 1:
-            # The final turn's calls are recorded for the reward but never executed.
-            sample.status = Sample.Status.TRUNCATED
-            break
 
         tool_start = time.perf_counter()
-        results = await _offload(args, call_tools, tool_manager, tool_calls, allowed, clients, initial_state)
+        results = await asyncio.to_thread(call_tools, tool_manager, tool_calls, allowed, clients, initial_state)
         sample.non_generation_time += time.perf_counter() - tool_start
 
         tool_messages = [
-            {"role": "tool", "content": _truncate(result, max_tool_response_length, truncate_side)} for result in results
+            {"role": "tool", "content": _truncate(result, args.max_tool_response_length, args.truncate_side)}
+            for result in results
         ]
-        text = await _offload(args, _render_observation, tokenizer, messages, tool_messages, tool_schemas, eos, template_kwargs)
+        text = await asyncio.to_thread(_render_observation, tokenizer, messages, tool_messages, tool_schemas, eos, template_kwargs)
         messages.extend(tool_messages)
         ids = tokenizer(text, add_special_tokens=False)["input_ids"]
         overflow = len(sample.tokens) + len(ids) - max_context_len

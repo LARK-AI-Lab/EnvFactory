@@ -1,7 +1,7 @@
 import unittest
 
 from src.rewards.tool_reward import compute_score
-from src.tools.tool_parser import get_tool_parser
+from src.tools.tool_parser import extract_tool_calls
 
 REFERENCE = [
     {"name": "Calendar-search_events", "arguments": {"query": "sync", "max_results": 10}, "masked_arguments": ["max_results"]},
@@ -44,21 +44,10 @@ class ToolParserTest(unittest.TestCase):
             '<tool_call>\n{bad}\n</tool_call>\n'
             '<tool_call>\n{"name": "Calendar-list_events", "arguments": {"max_results": 2}}\n</tool_call>'
         )
-        calls = get_tool_parser("qwen3").extract_tool_calls(text)
+        calls = extract_tool_calls(text)
         self.assertEqual(len(calls), 2)
         self.assertIsNotNone(calls[0].error)
         self.assertEqual((calls[1].name, calls[1].arguments, calls[1].error), ("Calendar-list_events", {"max_results": 2}, None))
-
-    def test_xml_values_follow_the_schema_types(self):
-        tools = [{"type": "function", "function": {"name": "Calendar-list_events", "parameters": {"properties": {
-            "max_results": {"anyOf": [{"type": "integer"}, {"type": "null"}]}, "calendar_id": {"type": "string"},
-        }}}}]
-        text = (
-            "<tool_call>\n<function=Calendar-list_events>\n<parameter=max_results>\n5\n</parameter>\n"
-            "<parameter=calendar_id>\n007\n</parameter>\n</function>\n</tool_call>"
-        )
-        [call] = get_tool_parser("qwen3_coder").extract_tool_calls(text, tools)
-        self.assertEqual(call.arguments, {"max_results": 5, "calendar_id": "007"})
 
 
 if __name__ == "__main__":

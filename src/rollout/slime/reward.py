@@ -12,30 +12,27 @@ from src.rewards.tool_reward import compute_score
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_TAU = 0.5  # Weight of the trace score; the state score gets 1 - tau.
 ZERO_REWARD = {"score": 0.0, "trace_score": 0.0, "state_score": 0.0, "penalty": 0.0}
 
 
 async def reward(args, sample: Sample, **kwargs) -> dict:
     """Score a rollout against its reference calls and reference final state (``--reward-key score``)."""
-    if sample.remove_sample or sample.status is Sample.Status.FAILED:
+    if sample.status is Sample.Status.FAILED:
         return dict(ZERO_REWARD)
+    tau = float(args.reward_tau)  # From --custom-config-path; a missing key must fail loudly.
     metadata = sample.metadata
     try:
-        label = json.loads(sample.label) if isinstance(sample.label, str) else sample.label
-        tau = getattr(args, "reward_tau", None)
         return compute_score(
             solution_calls=metadata["tool_calls"],
             num_failed_calls=metadata["num_failed_tool_calls"],
             solution_state=metadata["rollout_state"],
-            reference_calls=label,
-            reference_state=metadata.get("final_state") or {},
-            tau=DEFAULT_TAU if tau is None else float(tau),
+            reference_calls=json.loads(sample.label),
+            reference_state=metadata["final_state"],
+            tau=tau,
         )
     except Exception as e:
         logger.warning(f"⚠️ Reward failed for sample {sample.index}: {type(e).__name__}: {e}")
         sample.remove_sample = True
-        metadata["reward_error"] = f"{type(e).__name__}: {e}"
         return dict(ZERO_REWARD)
 
 

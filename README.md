@@ -144,9 +144,9 @@ bash examples/process_data.sh
 RL rows are slime JSONL (`prompt` messages, `label` = reference tool calls, `metadata` = `envs`, `initial_state`, `final_state`). To convert the released [EnvFactory-RL](https://huggingface.co/datasets/LARK-Lab/EnvFactory-RL) (verl format):
 
 ```bash
-python -m src.utils.data_process --folders '[]' --verl_rl_path data/env_factory_rl.json \
+python -m src.utils.data_process --verl_rl_path data/env_factory_rl.json \
   --rl_output_train_path data/rl_train.jsonl --rl_output_val_path data/rl_val.jsonl \
-  --train_val_split_ratio 0.95 --shuffle
+  --train_val_split_ratio 0.95 --shuffle  # Split by conversation.
 ```
 
 With a separate held-out verl file, pass `--verl_rl_val_path data/env_factory_rl_val.json` instead of `--train_val_split_ratio`; all of `--verl_rl_path` then becomes training data.
@@ -193,7 +193,7 @@ bash scripts/slime/run_grpo.sh       # TRAIN_FILE / VAL_FILE default to data/rl_
 | [`src/rollout/slime/generate.py`](src/rollout/slime/generate.py) | Multi-turn rollout: trains on the policy's own tokens, appends tool observations as masked tokens |
 | [`src/tools/tool_manager.py`](src/tools/tool_manager.py) | Runs `envs/tools` in-process (no MCP server/client); one isolated environment instance per rollout |
 | [`src/rollout/slime/reward.py`](src/rollout/slime/reward.py) | `max(0, τ·trace + (1-τ)·state − penalties)` from [`src/rewards/tool_reward.py`](src/rewards/tool_reward.py) |
-| [`configs/slime/envfactory.yaml`](configs/slime/envfactory.yaml) | Rollout and reward knobs (tool format, turns, observation length, τ) |
+| [`configs/slime/envfactory.yaml`](configs/slime/envfactory.yaml) | Rollout and reward knobs (turns, observation length, τ) |
 
 Environments run in-process without the `mcp` package: `src/tools/tool_manager.py` records each file's `@mcp.tool()` functions with FastMCP-identical schemas and argument validation, so the slime runtime only needs `pydantic`.
 

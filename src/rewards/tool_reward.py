@@ -72,7 +72,7 @@ def compute_score(
     solution_state: dict,
     reference_calls: list[dict],
     reference_state: dict,
-    tau: float = 0.5,
+    tau: float,
 ) -> dict:
     """``max(0, tau * trace + (1 - tau) * state - penalties)`` with its components."""
     servers = {call["name"].split("-", 1)[0] for call in reference_calls}

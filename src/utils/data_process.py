@@ -306,7 +306,7 @@ def _keep_rl_row(row: Dict, exclude_envs: List[str]) -> bool:
         and not set(metadata["envs"]) & set(exclude_envs)
     )
 
-def convert_to_rl_data(tool_chains: List[Dict[str, Any]], output_path: str, shuffle: bool = False, seed: int = 42, exclude_envs: List[str] = ()) -> None:
+def convert_to_rl_data(tool_chains: List[Dict[str, Any]], output_path: str, exclude_envs: List[str] = ()) -> None:
     """Convert tool chains to slime RL rows (one sample per node)."""
     all_samples, valid_count, invalid_count = [], 0, 0
 
@@ -353,7 +353,7 @@ def convert_to_rl_data(tool_chains: List[Dict[str, Any]], output_path: str, shuf
             traceback.print_exc()
             print(f"⚠️ RL conversion error (seed {chain.get('seed')}): {e}")
     
-    _save_jsonl(all_samples, output_path, valid_count, invalid_count, "RL", shuffle=shuffle, seed=seed)
+    _save_jsonl(all_samples, output_path, valid_count, invalid_count, "RL")
 
 def load_verl_rl_data(path: str, exclude_envs: List[str] = ()) -> List[Dict]:
     """Convert the previous verl RL format (e.g. LARK-Lab/EnvFactory-RL) to slime rows."""
@@ -371,6 +371,14 @@ def load_verl_rl_data(path: str, exclude_envs: List[str] = ()) -> List[Dict]:
     print(f"✅ Converted {len(samples)} / {len(rows)} verl RL rows from {path}")
     return samples
 
+def split_rl_rows(rows: List[Dict], split_ratio: float, shuffle: bool = False, seed: int = 42) -> Tuple[List[Dict], List[Dict]]:
+    """Split RL rows by conversation: rows of one conversation share their opening user message."""
+    conversations = {}
+    for row in rows:
+        conversations.setdefault(json.dumps(row["prompt"][1], sort_keys=True), []).append(row)
+    train, val = split_tool_chains(list(conversations.values()), split_ratio, shuffle=shuffle, seed=seed)
+    return [row for conv in train for row in conv], [row for conv in val for row in conv]
+
 def _save_json(data: List[Dict], path: str, valid: int, invalid: int, label: str, shuffle: bool = False, seed: int = 42) -> None:
     if shuffle:
         random.seed(seed)
@@ -381,11 +389,7 @@ def _save_json(data: List[Dict], path: str, valid: int, invalid: int, label: str
 
     print(f"✅ Saved {len(data)} {label} samples to {path} (valid: {valid}, invalid: {invalid})")
 
-def _save_jsonl(data: List[Dict], path: str, valid: int, invalid: int, label: str, shuffle: bool = False, seed: int = 42) -> None:
-    if shuffle:
-        random.seed(seed)
-        random.shuffle(data)
-
+def _save_jsonl(data: List[Dict], path: str, valid: int, invalid: int, label: str) -> None:
     with open(path, 'w', encoding='utf-8') as f:
         for row in data:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
@@ -394,6 +398,17 @@ def _save_jsonl(data: List[Dict], path: str, valid: int, invalid: int, label: st
 
 def main():
     args = parse_args()
+    if args.verl_rl_path:
+        # Rows are already RL samples; slime reshuffles them every epoch (--rollout-shuffle).
+        rows = load_verl_rl_data(args.verl_rl_path, args.rl_exclude_envs)
+        if args.verl_rl_val_path:
+            train_rows, val_rows = rows, load_verl_rl_data(args.verl_rl_val_path, args.rl_exclude_envs)
+        else:
+            train_rows, val_rows = split_rl_rows(rows, args.train_val_split_ratio, shuffle=args.shuffle, seed=args.seed)
+        _save_jsonl(train_rows, args.rl_output_train_path, len(train_rows), 0, "RL")
+        _save_jsonl(val_rows, args.rl_output_val_path, len(val_rows), 0, "RL")
+        return
+
     tool_chains = load_tool_chains(args.folders, args.max_num, args.enable_skip)
     
     if args.enable_plot:
@@ -407,19 +422,9 @@ def main():
         convert_to_sft_data(tool_chains, args.sft_output_path, shuffle=args.shuffle, seed=args.seed, enable_think=args.enable_think)
 
     if args.rl_output_train_path and args.rl_output_val_path:
-        if args.verl_rl_path:
-            rows = load_verl_rl_data(args.verl_rl_path, args.rl_exclude_envs)
-            if args.verl_rl_val_path:
-                train_rows, _ = split_tool_chains(rows, 1.0, shuffle=args.shuffle, seed=args.seed)
-                val_rows = load_verl_rl_data(args.verl_rl_val_path, args.rl_exclude_envs)
-            else:
-                train_rows, val_rows = split_tool_chains(rows, args.train_val_split_ratio, shuffle=args.shuffle, seed=args.seed)
-            _save_jsonl(train_rows, args.rl_output_train_path, len(train_rows), 0, "RL")
-            _save_jsonl(val_rows, args.rl_output_val_path, len(val_rows), 0, "RL")
-        else:
-            train_chains, val_chains = split_tool_chains(tool_chains, args.train_val_split_ratio, shuffle=args.shuffle, seed=args.seed)
-            convert_to_rl_data(train_chains, args.rl_output_train_path, shuffle=args.shuffle, seed=args.seed, exclude_envs=args.rl_exclude_envs)
-            convert_to_rl_data(val_chains, args.rl_output_val_path, shuffle=args.shuffle, seed=args.seed, exclude_envs=args.rl_exclude_envs)
+        train_chains, val_chains = split_tool_chains(tool_chains, args.train_val_split_ratio, shuffle=args.shuffle, seed=args.seed)
+        convert_to_rl_data(train_chains, args.rl_output_train_path, exclude_envs=args.rl_exclude_envs)
+        convert_to_rl_data(val_chains, args.rl_output_val_path, exclude_envs=args.rl_exclude_envs)
 
 if __name__ == "__main__":
     main()
