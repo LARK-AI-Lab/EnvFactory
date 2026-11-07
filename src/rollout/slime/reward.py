@@ -1,13 +1,15 @@
-"""Slime reward hooks for the EnvFactory tool-agent rollout."""
+"""Slime reward hooks for the EnvFactory tool-agent rollout and its BFCL v3 evaluation."""
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import statistics
 
 from slime.utils.types import Sample
 
+from src.eval.bfcl_v3.bfcl import BENCHMARK, grade as grade_bfcl
 from src.rewards.tool_reward import compute_score
 
 logger = logging.getLogger(__name__)
@@ -16,12 +18,14 @@ ZERO_REWARD = {"score": 0.0, "trace_score": 0.0, "state_score": 0.0, "penalty": 
 
 
 async def reward(args, sample: Sample, **kwargs) -> dict:
-    """Score a rollout against its reference calls and reference final state (``--reward-key score``)."""
+    """Score a rollout (``--reward-key score``): EnvFactory trace + state reward, or BFCL task success."""
     if sample.status is Sample.Status.FAILED:
         return dict(ZERO_REWARD)
     tau = float(args.reward_tau)  # From --custom-config-path; a missing key must fail loudly.
     metadata = sample.metadata
     try:
+        if metadata.get("benchmark") == BENCHMARK:
+            return {"score": await asyncio.to_thread(grade_bfcl, metadata, sample.label)}
         return compute_score(
             solution_calls=metadata["tool_calls"],
             num_failed_calls=metadata["num_failed_tool_calls"],

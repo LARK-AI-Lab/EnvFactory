@@ -18,6 +18,7 @@ MODEL_PATH=${MODEL_PATH:?Set MODEL_PATH to the HF checkpoint (e.g. the EnvFactor
 REF_LOAD=${REF_LOAD:-$MODEL_PATH}  # slime loads the HF checkpoint directly; a torch_dist copy also works.
 TRAIN_FILE=${TRAIN_FILE:-$PROJECT_DIR/data/rl_train.jsonl}
 VAL_FILE=${VAL_FILE:-$PROJECT_DIR/data/rl_val.jsonl}
+BFCL_FILE=${BFCL_FILE:-$PROJECT_DIR/data/bfcl_v3_val.jsonl}  # python -m src.eval.bfcl_v3.bfcl data/bfcl_v3_val.jsonl
 CUSTOM_CONFIG=${CUSTOM_CONFIG:-$PROJECT_DIR/configs/slime/envfactory.yaml}
 CKPT_DIR=${CKPT_DIR:-$PROJECT_DIR/checkpoints_slime}
 NNODES=${NNODES:-1}
@@ -35,6 +36,7 @@ global_batch_size=512  # 4 optimizer steps per rollout.
 max_prompt_length=16384  # Longer prompts are skipped (masked out), as verl's filter_overlong_prompts did.
 max_response_length=8192  # Generated tokens per trajectory; observations only consume context.
 max_context_length=$((max_prompt_length + max_response_length))
+eval_max_context_length=40960  # BFCL sessions span several user turns; Qwen3's full window.
 
 actor_lr=1e-6
 kl_loss_coef=0.001
@@ -63,7 +65,6 @@ esac
 mkdir -p "$CKPT_DIR"
 MODEL_PATH=$(realpath "$MODEL_PATH") REF_LOAD=$(realpath "$REF_LOAD") TRAIN_FILE=$(realpath "$TRAIN_FILE")
 CUSTOM_CONFIG=$(realpath "$CUSTOM_CONFIG") CKPT_DIR=$(realpath "$CKPT_DIR")
-[ -f "$VAL_FILE" ] && VAL_FILE=$(realpath "$VAL_FILE")
 
 source "${SLIME_DIR}/scripts/models/qwen3-${MODEL_SIZE}.sh"
 
@@ -92,14 +93,18 @@ ROLLOUT_ARGS=(
    --router-policy consistent_hashing
 )
 
+# EnvFactory validation runs under the training budgets; BFCL bounds each model call and the whole session.
+EVAL_DATA=()
+[ -f "$VAL_FILE" ] && EVAL_DATA+=(envfactory "$(realpath "$VAL_FILE")")
+[ -f "$BFCL_FILE" ] && EVAL_DATA+=(bfcl_v3 "$(realpath "$BFCL_FILE")")
 EVAL_ARGS=()
-if [ -f "$VAL_FILE" ]; then
+if [ ${#EVAL_DATA[@]} -gt 0 ]; then
    EVAL_ARGS=(
       --eval-interval ${eval_interval}
-      --eval-prompt-data envfactory "${VAL_FILE}"
+      --eval-prompt-data "${EVAL_DATA[@]}"
       --eval-temperature 0  # Greedy, as verl's validation.
       --eval-max-response-len ${max_response_length}
-      --eval-max-context-len ${max_context_length}
+      --eval-max-context-len ${eval_max_context_length}
    )
 fi
 
