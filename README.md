@@ -184,8 +184,7 @@ We use [slime](https://github.com/RolandXMR/slime) (our fork, included as the `s
 ```bash
 git submodule update --init slime
 export MEGATRON_LM_DIR=/path/to/Megatron-LM MODEL_SIZE=4B MODEL_PATH=/path/to/EnvFactory-4B
-bash scripts/slime/convert_ckpt.sh   # HF -> Megatron reference checkpoint (${MODEL_PATH}_torch_dist)
-bash scripts/slime/run_grpo.sh       # TRAIN_FILE / VAL_FILE default to data/rl_{train,val}.jsonl
+bash scripts/slime/run_grpo.sh  # TRAIN_FILE / VAL_FILE default to data/rl_{train,val}.jsonl
 ```
 
 | File | Role |

@@ -15,7 +15,7 @@ SLIME_DIR=${SLIME_DIR:-$PROJECT_DIR/slime}
 MEGATRON_LM_DIR=${MEGATRON_LM_DIR:?Set MEGATRON_LM_DIR to a Megatron-LM checkout compatible with slime.}
 MODEL_SIZE=${MODEL_SIZE:-4B}  # 1.7B | 4B | 8B
 MODEL_PATH=${MODEL_PATH:?Set MODEL_PATH to the HF checkpoint (e.g. the EnvFactory SFT model).}
-REF_LOAD=${REF_LOAD:-${MODEL_PATH}_torch_dist}  # Create with scripts/slime/convert_ckpt.sh.
+REF_LOAD=${REF_LOAD:-$MODEL_PATH}  # slime loads the HF checkpoint directly; a torch_dist copy also works.
 TRAIN_FILE=${TRAIN_FILE:-$PROJECT_DIR/data/rl_train.jsonl}
 VAL_FILE=${VAL_FILE:-$PROJECT_DIR/data/rl_val.jsonl}
 CUSTOM_CONFIG=${CUSTOM_CONFIG:-$PROJECT_DIR/configs/slime/envfactory.yaml}
@@ -55,7 +55,7 @@ esac
 [ -f "$SLIME_DIR/train.py" ] || die "Slime submodule missing at $SLIME_DIR; run: git submodule update --init."
 [ -d "$MEGATRON_LM_DIR" ] || die "Megatron-LM not found at $MEGATRON_LM_DIR."
 [ -d "$MODEL_PATH" ] || die "HF checkpoint not found at $MODEL_PATH."
-[ -d "$REF_LOAD" ] || die "Megatron checkpoint not found at $REF_LOAD; run scripts/slime/convert_ckpt.sh."
+[ -d "$REF_LOAD" ] || die "Reference checkpoint not found at $REF_LOAD."
 [ -f "$TRAIN_FILE" ] || die "Training data not found at $TRAIN_FILE; run examples/process_data.sh."
 [ -f "$CUSTOM_CONFIG" ] || die "Custom config not found at $CUSTOM_CONFIG."
 
@@ -157,6 +157,7 @@ CUSTOM_ARGS=(
    --reward-key score
 )
 
+export PYTHONUNBUFFERED=1  # `ray job submit` streams the job log to this script's stdout.
 PYTHONPATH_RUNTIME="${PROJECT_DIR}:${SLIME_DIR}:${MEGATRON_LM_DIR}"
 NVLINKS=$(nvidia-smi topo -m 2>/dev/null | grep -c 'NV[0-9]' || true)
 RUNTIME_ENV_JSON=$(python3 - "$PROJECT_DIR" "$PYTHONPATH_RUNTIME" "$TENSORBOARD_DIR" "${NCCL_NVLS_ENABLE:-$(( ${NVLINKS:-0} > 0 ? 1 : 0 ))}" <<'PY'
