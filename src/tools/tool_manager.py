@@ -1,9 +1,10 @@
 """In-process execution of EnvFactory environments for RL rollouts.
 
 Each environment file under ``envs/tools`` defines a backend class, one module-level
-backend instance, and FastMCP-decorated wrapper functions. FastMCP serves here only
-as the tool registry (names, descriptions, and argument schemas the policy saw in
-SFT); no MCP server, client, or transport is started.
+backend instance, and ``@mcp.tool()`` wrapper functions on ``mcp = FastMCP(...)``.
+No MCP package is used: while an environment file is imported, ``mcp.server.fastmcp``
+resolves to ``ToolRegistry``, which records the wrappers with the argument models,
+schemas, and validation FastMCP (mcp 1.x) applied when the SFT data was synthesized.
 
 Every rollout gets its own ``EnvClient``: a fresh backend plus the wrapper functions
 rebound to a private copy of the module globals. Module-level rebinding inside the
@@ -14,15 +15,19 @@ per rollout, without re-importing the module.
 from __future__ import annotations
 
 import importlib.util
+import inspect
 import json
 import sys
 import threading
 import types
+from contextlib import contextmanager
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any, Callable
 
 import pydantic_core
+from pydantic import BaseModel, ConfigDict, Field, WithJsonSchema, create_model
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SCENARIO_TOOLS = frozenset({"load_scenario", "save_scenario"})
@@ -55,6 +60,98 @@ def _rebind(fn: types.FunctionType, namespace: dict) -> types.FunctionType:
     return clone
 
 
+class ArgModelBase(BaseModel):
+    """Validated tool arguments (FastMCP's ``ArgModelBase``)."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    def model_dump_one_level(self) -> dict[str, Any]:
+        """Field values by call name; nested models stay models."""
+        return {info.alias or name: getattr(self, name) for name, info in type(self).model_fields.items()}
+
+
+def _arg_model(fn: Callable) -> type[ArgModelBase]:
+    """Pydantic model of ``fn``'s parameters, built exactly as FastMCP's ``func_metadata``."""
+    fields: dict[str, Any] = {}
+    for param in inspect.signature(fn, eval_str=True).parameters.values():
+        annotation = Any if param.annotation is inspect.Parameter.empty else param.annotation
+        metadata = [WithJsonSchema({"title": param.name, "type": "string"})] if param.annotation is inspect.Parameter.empty else []
+        name, field_kwargs = param.name, {}
+        if callable(getattr(BaseModel, name, None)):  # Avoid shadowing BaseModel methods.
+            name, field_kwargs = f"field_{name}", {"alias": name}
+        typed = Annotated[(annotation, *metadata, Field(**field_kwargs))]
+        fields[name] = typed if param.default is inspect.Parameter.empty else (typed, param.default)
+    return create_model(f"{fn.__name__}Arguments", __base__=ArgModelBase, **fields)
+
+
+@dataclass(frozen=True)
+class ToolSpec:
+    name: str
+    fn: types.FunctionType
+    description: str
+    parameters: dict
+    arg_model: type[ArgModelBase]
+
+    def parse_arguments(self, arguments: dict) -> dict:
+        """FastMCP's argument handling: JSON-decode non-string fields given as strings, then validate."""
+        fields = {info.alias or name: info for name, info in self.arg_model.model_fields.items()}
+        decoded = dict(arguments)
+        for key, value in arguments.items():
+            if key in fields and isinstance(value, str) and fields[key].annotation is not str:
+                try:
+                    parsed = json.loads(value)
+                except json.JSONDecodeError:
+                    continue
+                if not isinstance(parsed, (str, int, float)):
+                    decoded[key] = parsed
+        return self.arg_model.model_validate(decoded).model_dump_one_level()
+
+
+class ToolRegistry:
+    """Stands in for ``FastMCP(name=...)`` while an environment file is imported."""
+
+    def __init__(self, name: str | None = None, *args: Any, **kwargs: Any):
+        self.name = name
+        self.tools: dict[str, ToolSpec] = {}
+
+    def tool(self, name: str | None = None, description: str | None = None, **kwargs: Any) -> Callable:
+        def register(fn: types.FunctionType) -> types.FunctionType:
+            arg_model = _arg_model(fn)
+            spec = ToolSpec(
+                name=name or fn.__name__,
+                fn=fn,
+                description=description or fn.__doc__ or "",
+                parameters=arg_model.model_json_schema(by_alias=True),
+                arg_model=arg_model,
+            )
+            self.tools[spec.name] = spec
+            return fn
+
+        return register
+
+    def run(self, *args: Any, **kwargs: Any) -> None:
+        raise RuntimeError("EnvFactory environments run in-process through src.tools.tool_manager; there is no server.")
+
+
+_FASTMCP_MODULE = "mcp.server.fastmcp"
+
+
+@contextmanager
+def _local_fastmcp():
+    """Resolve ``from mcp.server.fastmcp import FastMCP`` to ``ToolRegistry`` for one import."""
+    stub = types.ModuleType(_FASTMCP_MODULE)
+    stub.FastMCP = ToolRegistry
+    previous = sys.modules.get(_FASTMCP_MODULE)
+    sys.modules[_FASTMCP_MODULE] = stub
+    try:
+        yield
+    finally:
+        if previous is None:
+            sys.modules.pop(_FASTMCP_MODULE, None)
+        else:
+            sys.modules[_FASTMCP_MODULE] = previous
+
+
 class EnvServer:
     """One environment module, imported once and shared read-only by its clients."""
 
@@ -64,12 +161,13 @@ class EnvServer:
             raise ImportError(f"Cannot load environment {name} from {path}.")
         module = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = module  # Pydantic resolves model annotations through sys.modules.
-        spec.loader.exec_module(module)
+        with _local_fastmcp():
+            spec.loader.exec_module(module)
 
         registry = getattr(module, "mcp", None)
-        if registry is None:
-            raise AttributeError(f"Environment {name} ({path}) defines no FastMCP registry named 'mcp'.")
-        self.tools = {tool.name: tool for tool in registry._tool_manager.list_tools()}
+        if not isinstance(registry, ToolRegistry):
+            raise AttributeError(f"Environment {name} ({path}) defines no tool registry 'mcp = FastMCP(...)'.")
+        self.tools: dict[str, ToolSpec] = registry.tools
         missing = SCENARIO_TOOLS - self.tools.keys()
         if missing:
             raise ValueError(f"Environment {name} lacks scenario tools: {sorted(missing)}.")
@@ -112,9 +210,7 @@ class EnvClient:
 
     def _invoke(self, tool_name: str, arguments: dict) -> Any:
         """Validate and coerce arguments the way FastMCP does, then call the rebound wrapper."""
-        metadata = self.server.tools[tool_name].fn_metadata
-        parsed = metadata.arg_model.model_validate(metadata.pre_parse_json(arguments))
-        return self._fns[tool_name](**parsed.model_dump_one_level())
+        return self._fns[tool_name](**self.server.tools[tool_name].parse_arguments(arguments))
 
     def call_tool(self, tool_name: str, arguments: dict) -> str:
         """Execute one policy tool call; failures become the observation, as with an MCP server."""

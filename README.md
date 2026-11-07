@@ -193,7 +193,7 @@ bash scripts/slime/run_grpo.sh       # TRAIN_FILE / VAL_FILE default to data/rl_
 | [`src/rollout/slime/reward.py`](src/rollout/slime/reward.py) | `max(0, τ·trace + (1-τ)·state − penalties)` from [`src/rewards/tool_reward.py`](src/rewards/tool_reward.py) |
 | [`configs/slime/envfactory.yaml`](configs/slime/envfactory.yaml) | Rollout and reward knobs (tool format, turns, observation length, τ) |
 
-The slime runtime additionally needs `mcp` (the environment files import its FastMCP registry for tool schemas).
+Environments run in-process without the `mcp` package: `src/tools/tool_manager.py` records each file's `@mcp.tool()` functions with FastMCP-identical schemas and argument validation, so the slime runtime only needs `pydantic`.
 
 ---
 
