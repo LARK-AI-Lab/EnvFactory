@@ -187,8 +187,26 @@ print(json.dumps({
 PY
 )
 
+# Job submission fails ("no available agent") on shared nodes when the dashboard agent keeps its
+# default port; give it a free port above Ray's worker range.
+RAY_AGENT_PORT=${RAY_AGENT_PORT:-$(python3 - <<'PY'
+import random, socket
+for port in random.sample(range(60000, 65000), 256):
+    with socket.socket() as probe:
+        try:
+            probe.bind(("0.0.0.0", port))
+        except OSError:
+            continue
+        print(port)
+        break
+else:
+    raise SystemExit("No free port in 60000-65000 for the Ray dashboard agent.")
+PY
+)}
+
 ray start --head --node-ip-address "${MASTER_ADDR}" --num-gpus "${NGPUS_PER_NODE}" \
-   --disable-usage-stats --dashboard-host=0.0.0.0 --dashboard-port=8265
+   --disable-usage-stats --dashboard-host=0.0.0.0 --dashboard-port=8265 \
+   --dashboard-agent-listen-port "${RAY_AGENT_PORT}"
 
 ray job submit --address="http://127.0.0.1:8265" --runtime-env-json="${RUNTIME_ENV_JSON}" \
    -- python3 "${SLIME_DIR}/train.py" \
