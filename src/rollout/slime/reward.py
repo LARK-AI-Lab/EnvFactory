@@ -56,5 +56,7 @@ def log_rollout_metrics(rollout_id, args, samples, rollout_extra_metrics, rollou
             sample.metadata["num_failed_tool_calls"] for sample in valid
         )
     metrics["rollout/step"] = compute_rollout_step(args, rollout_id)
+    # src/app/slime_training_viewer.py reads this record from training.log.
+    logger.info("reward components %s: %s", rollout_id, metrics)
     logging_utils.log(args, metrics, step_key="rollout/step")
     return False

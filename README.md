@@ -203,6 +203,12 @@ Evaluation runs every `eval_interval` (10) rollouts on two sets (set `VAL_FILE=`
 python -m src.eval.bfcl_v3.bfcl data/bfcl_v3_val.jsonl  # base, miss_func, miss_param, long_context
 ```
 
+Monitor runs with the training viewer (Flask; reads only `training.log`, never rollout dumps). It lists every `<run>/training.log` under the sibling `training_runs/` directory (or `--log-root`), with recorded launch arguments, a stage timeline, and rollout / eval / optimizer metrics; run status comes from the Slurm queue and the log's recorded exit:
+
+```bash
+python src/app/slime_training_viewer.py --port 5005  # then open http://127.0.0.1:5005 (ssh -L 5005:127.0.0.1:5005 on a cluster)
+```
+
 ---
 
 ## ✨ Citation

@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Training Overview</title>
+    <style>
+        :root { color-scheme:light; --ink:#1b293b; --muted:#728095; --line:#e4e9ef; --accent:#09877d; --surface:#fff; }
+        * { box-sizing:border-box; }
+        html { scroll-behavior:smooth; scroll-padding-top:24px; }
+        body { margin:0; background:#f5f7fa; color:var(--ink); font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; -webkit-font-smoothing:antialiased; }
+        .rail { position:fixed; inset:0 auto 0 0; width:204px; padding:30px 22px; background:#142335; color:#b5c2d1; display:flex; flex-direction:column; }
+        .brand { display:flex; align-items:center; gap:11px; color:#fff; font-size:21px; font-weight:650; letter-spacing:-.6px; }
+        .brand-mark { display:grid; place-items:center; width:31px; height:31px; background:#1b9d91; border-radius:10px 10px 10px 3px; color:#fff; font:600 21px Georgia,serif; }
+        .rail-caption { margin:12px 0 40px; font-size:10px; letter-spacing:1.7px;  color:#8295aa; }
+        .rail nav { display:grid; gap:8px; }
+        .rail a { color:inherit; text-decoration:none; padding:11px 12px; border-radius:6px; font-size:12px; }
+        .rail a:hover { background:#213348; color:#fff; }
+        .rail a span { color:#71869e; font:10px ui-monospace,monospace; margin-right:12px; }
+        .rail a:first-child { background:#22374a; color:#fff; }
+        .rail-foot { margin-top:auto; border-top:1px solid #2d3c4f; padding-top:18px; font-size:11px; line-height:1.8; color:#899cb2; }
+        .rail-foot strong { display:block; color:#c0cbd8; font-size:12px; font-weight:500; }
+        main { max-width:1660px; margin:0 auto 0 204px; padding:35px 40px; }
+        .eyebrow { color:var(--muted); font-size:10px; font-weight:650;  letter-spacing:1.6px; }
+        .page-head { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; margin-bottom:27px; }
+        h1 { margin:9px 0 8px; font-size:30px; font-weight:650; letter-spacing:-1px; }
+        h2 { margin:0; font-size:17px; font-weight:620; letter-spacing:-.25px; }
+        p { color:var(--muted); line-height:1.65; margin:6px 0 16px; }
+        .page-head p { margin:0; font-size:12px; }
+        .source-badge { display:inline-flex; align-items:center; gap:7px; padding:7px 10px; background:#e9f2f1; color:#3c756e; border:1px solid #d9e9e6; border-radius:5px; font:11px ui-monospace,monospace; white-space:nowrap; }
+        .run-state { text-align:right; max-width:270px; }
+        .run-state p { margin:7px 0 0; font-size:10px; line-height:1.5; }
+        .source-badge[data-state="failed"] { background:#fff0ee; border-color:#edcbc5; color:#a44237; }
+        .source-badge[data-state="interrupted"] { background:#fff4e5; border-color:#ead6b5; color:#8b5719; }
+        .source-badge[data-state="unknown"],.source-badge[data-state="pending"] { background:#eef1f5; border-color:#dce2ea; color:#5b6b7f; }
+        .source-badge:before { content:''; width:5px; height:5px; border-radius:50%; background:currentColor; }
+        #run-identity { font-size:11px; color:var(--muted); overflow-wrap:anywhere; margin:10px 2px; }
+        #run-phase { font-size:11px; color:var(--muted); margin:7px 0 0; }
+        button,select,input { font:inherit; color:var(--ink); }
+        button,select,input[type=search] { padding:9px 12px; border:1px solid #dce3eb; border-radius:6px; background:white; }
+        select { cursor:pointer; }
+        button { cursor:pointer; font-size:12px; font-weight:550; }
+        button:hover { border-color:#b6c7d5; background:#f8fafb; }
+        button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible,a:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+        input[type=checkbox] { accent-color:var(--accent); }
+        .toolbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:16px 18px; background:white; border:1px solid var(--line); border-radius:9px; }
+        .toolbar>label:first-child { font-size:11px; color:var(--muted); }
+        #runs { flex:1; min-width:160px; width:0; font-size:12px; border-color:transparent; background:#f5f7fa; }
+        .refresh-button { display:flex; align-items:center; gap:7px; }
+        .auto-label { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted); white-space:nowrap; }
+        .muted,#status { color:var(--muted); font-size:11px; overflow-wrap:anywhere; }
+        #status { margin:10px 2px 21px; font-variant-numeric:tabular-nums; }
+        #error,#warnings { padding:14px; background:#fff2ee; color:#a12b22; border:1px solid #efc6c0; border-radius:8px; margin:15px 0; white-space:pre-wrap; }
+        [hidden] { display:none !important; }
+        .cards { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); background:white; border:1px solid var(--line); border-radius:10px; margin-bottom:31px; }
+        .card { padding:21px 23px; position:relative; border-right:1px solid var(--line); }
+        .card:last-child { border-right:0; }
+        .card span { display:block; color:var(--muted); font-size:11px; }
+        .card strong { display:block; margin:10px 0 8px; font-size:30px; font-weight:600; letter-spacing:-.9px; font-variant-numeric:tabular-nums; }
+        .card .card-meta { font:10px ui-monospace,monospace; color:#8c98a7; }
+        .section-head { display:flex; justify-content:space-between; align-items:center; gap:16px; margin:0 0 15px; }
+        .section-heading { display:flex; align-items:center; gap:10px; }
+        .section-number { color:#91a1b2; font:10px ui-monospace,monospace; border:1px solid #dce3eb; padding:4px 5px; border-radius:4px; }
+        .section-head p { margin:4px 0 0; font-size:11px; }
+        .section-head select { font-size:11px; padding:7px 10px; }
+        .timeline-pagination { display:flex; align-items:center; gap:6px; }
+        .timeline-pagination button { padding:6px 10px; font-size:15px; line-height:1; }
+        .timeline-pagination button:disabled { opacity:.35; cursor:default; }
+        .panel { background:white; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+        .section { margin:0 0 32px; }
+        .timeline-note { margin:10px 2px 0; font-size:10px; color:#8592a3; }
+        .timeline-viz { padding:19px 20px 0; overflow:visible; }
+        .timeline-legend { display:flex; gap:15px; flex-wrap:wrap; align-items:center; margin-bottom:22px; color:#7b8999; font-size:10px; }
+        .timeline-legend span { display:inline-flex; align-items:center; gap:6px; }
+        .timeline-legend i { width:8px; height:8px; border-radius:2px; background:var(--segment-color); }
+        .timeline-axis,.timeline-lane { display:grid; grid-template-columns:65px minmax(0,1fr); gap:12px; }
+        .timeline-axis { margin-bottom:9px; }
+        .timeline-axis-label { font-size:9px; color:#96a1af; align-self:end; }
+        .timeline-ticks { height:25px; position:relative; color:#8895a6; font:9px ui-monospace,monospace; }
+        .timeline-ticks span { position:absolute; bottom:0; transform:translateX(-50%); white-space:nowrap; }
+        .timeline-ticks span:first-child { transform:none; } .timeline-ticks span:last-child { transform:translateX(-100%); }
+        .timeline-lane { margin-bottom:13px; align-items:center; }
+        .timeline-lane-label { font-size:11px; color:#5b6f84; font-weight:550; }
+        .timeline-track { height:37px; position:relative; border-radius:5px; background:#f3f6f9; box-shadow:inset 0 0 0 1px #e8edf3; isolation:isolate; }
+        .timeline-track:before { content:''; position:absolute; inset:-36px 0 -13px; background:repeating-linear-gradient(to right,transparent 0,transparent calc(25% - 1px),#dde5ee90 calc(25% - 1px),#dde5ee90 25%); z-index:-1; pointer-events:none; }
+        .timeline-lane.steps .timeline-track { height:28px; }
+        .timeline-lane.steps .timeline-track:before { top:0; bottom:0; }
+        .timeline-segment { position:absolute; height:100%; top:0; border:1px solid #ffffffb3; border-radius:3px; background:var(--segment-color); color:white; padding:0; min-width:3px; font:550 9px ui-monospace,monospace; overflow:hidden; white-space:nowrap; transition:transform .15s,box-shadow .15s,opacity .15s,filter .15s; transform-origin:center; }
+        .timeline-segment:hover,.timeline-segment.is-focused,.timeline-segment:focus-visible { background:var(--segment-color); border-color:#ffffffdb; transform:scaleY(1.17); box-shadow:0 4px 10px #243e5933; z-index:3; outline:1px solid #2c476e66; outline-offset:1px; opacity:1 !important; }
+        .timeline-segment.is-related { filter:saturate(1.25); box-shadow:inset 0 0 0 1px #243e5922; }
+        .timeline-viz.has-focus .timeline-segment:not(.is-related):not(.is-focused) { opacity:.38; }
+        .timeline-segment.short { z-index:2; }
+        .timeline-segment.unfinished { background:repeating-linear-gradient(125deg,var(--segment-color),var(--segment-color) 5px,color-mix(in srgb,var(--segment-color) 55%,white) 5px,color-mix(in srgb,var(--segment-color) 55%,white) 9px); border-right:1px dashed #425a78; }
+        .steps .timeline-segment { color:#537287; border-color:white; background:#e2edf1; }
+        .steps .timeline-segment:hover,.steps .timeline-segment.is-related,.steps .timeline-segment.is-focused { background:#e2edf1; }
+        .steps .timeline-segment.unfinished { background:#e2edf1; border-right:1px dashed #7f9ba8; }
+        .timeline-inspector { margin:19px -20px 0; border-top:1px solid var(--line); background:#fafcfd; border-radius:0 0 10px 10px; }
+        .inspector-head { min-height:46px; padding:12px 20px; display:flex; justify-content:space-between; gap:12px; align-items:center; font-size:11px; color:#8593a4; }
+        .inspector-title { color:#355266; font-weight:550; }
+        .inspector-head button { border:0; background:transparent; padding:2px 5px; color:#79909f; font-size:11px; }
+        .inspector-content { display:grid; grid-template-rows:0fr; opacity:0; transition:grid-template-rows .18s,opacity .18s; }
+        .timeline-inspector.expanded .inspector-content { grid-template-rows:1fr; opacity:1; }
+        .inspector-inner { overflow:hidden; min-height:0; }
+        .inspector-facts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px 20px; padding:0 20px 17px; }
+        .inspector-fact span { display:block; color:#91a0ad; font-size:9px; margin-bottom:5px;  letter-spacing:.6px; }
+        .inspector-fact strong { font:500 11px ui-monospace,monospace; color:#4b6276; overflow-wrap:anywhere; }
+        .inspector-note { padding:0 20px 15px; margin:0; font-size:10px; }
+        .inspector-stages { max-height:230px; overflow:auto; border-top:1px solid var(--line); }
+        .inspector-stages th:first-child,.inspector-stages td:first-child { min-width:170px; background:#fafcfd; }
+        @media(max-width:540px) { .timeline-viz { padding:17px 13px 0; } .timeline-axis,.timeline-lane { grid-template-columns:47px minmax(0,1fr); gap:7px; } .timeline-lane-label { font-size:10px; } .timeline-legend { gap:11px; } .timeline-inspector { margin-left:-13px; margin-right:-13px; } .inspector-facts { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+        @media(prefers-reduced-motion:reduce) { .timeline-segment,.inspector-content { transition:none; } }
+        .tabs { display:inline-flex; gap:3px; padding:4px; background:#e9edf3; border-radius:7px; }
+        .tabs button { background:transparent; border:0; color:#738195; padding:7px 11px; font-size:11px; }
+        .tabs button.active { background:white; color:#223a50; box-shadow:0 1px 3px #23344e14; }
+        .chart-panel { padding:19px 20px 12px; margin-bottom:18px; --chart-color:#09877d; }
+        .chart-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+        .chart-head h3 { color:var(--muted); font-size:10px; font-weight:550; margin:0;  letter-spacing:1px; }
+        .chart-head select { max-width:60%; min-width:220px; padding:6px 8px; font-size:11px; border-color:#edf0f4; }
+        .chart-value { margin:13px 0 0; font:550 23px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; letter-spacing:-.5px; color:var(--ink); }
+        svg { display:block; width:100%; height:auto; margin-top:2px; }
+        svg text { font:10px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; fill:#8995a5; }
+        .grid-line { stroke:#edf1f5; stroke-width:1; stroke-dasharray:3 4; }
+        .trend { fill:none; stroke:var(--chart-color); stroke-width:2.2; stroke-linejoin:round; }
+        .dot { fill:white; stroke:var(--chart-color); stroke-width:1.7; } .dot:hover { r:5; }
+        .table-head { padding:18px 20px 5px; }
+        .table-head h3 { font-size:13px; font-weight:600; margin:0; }
+        .table-head p { font-size:10px; margin:7px 0 10px; max-width:950px; }
+        .scroll { overflow:auto; max-height:530px; }
+        table { border-collapse:separate; border-spacing:0; width:100%; font:11px ui-monospace,SFMono-Regular,monospace; font-variant-numeric:tabular-nums; }
+        th,td { text-align:right; white-space:nowrap; padding:12px 16px; border-bottom:1px solid #eef1f5; }
+        th { position:sticky; top:0; background:#f8fafc; font:500 10px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#7b899c; z-index:1; }
+        th:first-child,td:first-child { text-align:left; position:sticky; left:0; background:white; }
+        th:first-child { z-index:2; background:#f8fafc; }
+        tbody tr:last-child td { border-bottom:0; }
+        tbody tr:hover td { background:#f7fafb; }
+        thead .group-row th { top:0; height:30px; padding:8px 16px; text-align:left; font-weight:600; letter-spacing:.5px; color:#5e7987; border-left:1px solid #e4e9ef; }
+        thead .group-row th:first-child { border-left:0; }
+        thead .col-row th { top:30px; }
+        .empty { padding:35px 20px; color:var(--muted); text-align:center; font-size:12px; }
+        .config-panel { padding:18px 20px; }
+        .config-panel>details+details { border-top:1px solid var(--line); margin-top:16px; padding-top:16px; }
+        summary { cursor:pointer; font-size:12px; font-weight:550; }
+        .config-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; margin:20px 0; }
+        .config-group { padding-right:20px; border-right:1px solid var(--line); }
+        .config-group:last-child { border:0; padding:0; }
+        .config-group h3 { margin:0 0 16px; font-size:10px; font-weight:600; letter-spacing:1px;  color:#5e7987; }
+        .config-group table { table-layout:fixed; }
+        .config-group th,.config-group td { position:static; text-align:left; white-space:normal; overflow-wrap:anywhere; padding:8px 0; vertical-align:top; font-size:10px; }
+        .config-group th { width:56%; background:transparent; color:var(--muted); font-weight:400; padding-right:12px; }
+        .config-group td { line-height:1.5; }
+        #config-filter { width:100%; margin:12px 0; font-size:12px; }
+        #all-config { max-height:320px; overflow:auto; }
+        #all-config td:first-child { width:40%; }
+        #all-config td { text-align:left; white-space:normal; overflow-wrap:anywhere; }
+        .footer { border-top:1px solid var(--line); margin-top:28px; padding:15px 0 0; font-size:10px; color:#8c98a7; line-height:1.8; overflow-wrap:anywhere; }
+        @media(min-width:1860px) { main { margin-left:calc(204px + (100vw - 1860px)/2); } }
+        @media(max-width:1180px) { .rail { width:170px; padding:28px 17px; } main { margin-left:170px; padding:28px; } .cards .card { padding:18px; } .card strong { font-size:26px; } .config-grid { grid-template-columns:1fr; gap:22px; } .config-group { border-right:0; padding-right:0; } }
+        @media(max-width:900px) { .rail { display:none; } main { margin:0; padding:25px; } .cards { grid-template-columns:repeat(2,minmax(0,1fr)); } .card:nth-child(2) { border-right:0; } .card:nth-child(-n+2) { border-bottom:1px solid var(--line); } .section-head { align-items:flex-start; } .source-badge { font-size:10px; } }
+        @media(max-width:540px) { main { padding:20px 16px; } h1 { font-size:26px; } .page-head { gap:8px; } .source-badge { margin-top:4px; } .toolbar { padding:12px; gap:10px; } .toolbar>label:first-child { display:none; } #runs { min-width:150px; } .auto-label { width:100%; } .section-head { flex-wrap:wrap; } .section-head .tabs { width:100%; } .tabs button { flex:1; padding:8px 6px; } .card strong { font-size:26px; } .chart-panel { padding:16px 13px 8px; } }
+        @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+    </style>
+</head>
+<body>
+<aside class="rail" aria-label="Dashboard navigation">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">s</span>slime</div>
+    <div class="rail-caption">Training Observatory</div>
+    <nav><a href="#overview"><span>01</span>Overview</a><a href="#timeline-section"><span>02</span>Timeline</a><a href="#dynamics-section"><span>03</span>Dynamics</a></nav>
+    <div class="rail-foot"><strong>Experiment Workspace</strong>Recorded logs · scalar metrics</div>
+</aside>
+<main id="overview">
+    <header class="page-head"><div><div class="eyebrow">Experiment / Training</div><h1>Training Overview</h1></div><div class="run-state" role="status"><div class="eyebrow" style="margin-bottom:7px">Status</div><span class="source-badge" id="run-state" hidden></span><p id="run-phase"></p><p id="run-state-note">Checking experiment status…</p></div></header>
+    <div class="toolbar">
+        <label for="runs">EXPERIMENT</label><select id="runs"></select>
+        <button id="refresh" class="refresh-button" type="button"><span aria-hidden="true">↻</span>Refresh</button>
+        <label class="auto-label"><input id="auto" type="checkbox"> Auto-refresh · 30s</label>
+    </div>
+    <p id="run-identity"></p>
+    <div id="status" role="status">Looking for training logs…</div>
+    <div id="error" role="alert" hidden></div><div id="warnings" role="alert" hidden></div>
+    <div id="content" hidden>
+        <div class="cards" id="cards"></div>
+        <section id="configuration" class="section">
+            <div class="section-head"><div class="section-heading"><h2>Training Configuration</h2></div><span class="muted">Recorded launch arguments</span></div>
+            <div class="panel config-panel"><details open><summary>Model, Sampling & Optimization</summary><div class="config-grid" id="config-summary"></div></details><details><summary id="config-count">All Arguments</summary><input id="config-filter" type="search" placeholder="Search recorded arguments…" aria-label="Filter configuration arguments"><div id="all-config"></div></details><p class="muted" style="margin:16px 0 0">Missing arguments stay blank. Values are never inferred from the current config files.</p></div>
+        </section>
+        <section id="timeline-section" class="section">
+            <div class="section-head"><div><div class="section-heading"><span class="section-number">02</span><h2>Run Timeline</h2></div><p>Actions and training steps, on one shared clock.</p></div><div class="timeline-pagination"><button id="timeline-prev" type="button" aria-label="Previous 20 steps">‹</button><select id="timeline-window" aria-label="Timeline step range"></select><button id="timeline-next" type="button" aria-label="Next 20 steps">›</button></div></div>
+            <div class="panel timeline-viz" id="timeline-viz">
+                <div class="timeline-legend" id="timeline-legend"></div>
+                <div class="timeline-axis"><span class="timeline-axis-label">Log Clock</span><div class="timeline-ticks" id="timeline-ticks"></div></div>
+                <div class="timeline-lane"><span class="timeline-lane-label">Actions</span><div class="timeline-track" id="timeline-actions" role="group" aria-label="Recorded actions"></div></div>
+                <div class="timeline-lane steps"><span class="timeline-lane-label">Step</span><div class="timeline-track" id="timeline-steps" role="group" aria-label="Training step intervals"></div></div>
+                <div class="timeline-inspector" id="timeline-inspector" role="region" aria-label="Timeline details"><div class="inspector-head"><span id="inspector-heading">Hover to inspect · Click to pin and expand</span><button id="clear-inspector" type="button" hidden>Clear selection ×</button></div><div class="inspector-content"><div class="inspector-inner" id="inspector-body"></div></div></div>
+            </div>
+            <p class="timeline-note">Step = one rollout / training cycle; Step 0 includes the initial evaluation. Hatched actions have no recorded end. Step spans end at the next rollout start, or at the last observed timestamp.</p>
+        </section>
+        <section id="dynamics-section" class="section">
+            <div class="section-head"><div class="section-heading"><span class="section-number">03</span><h2>Training Dynamics</h2></div><div class="tabs" role="group" aria-label="Metric series"><button data-kind="rollout" class="active">Training Rollouts</button><button data-kind="eval">Evaluation</button><button data-kind="train">Optimizer Steps</button></div></div>
+            <section class="panel chart-panel"><div class="chart-head"><h3 id="chart-title">Metric</h3><select id="metric" aria-label="Chart metric"></select></div><div class="chart-value" id="chart-value">—</div><div id="chart"></div></section>
+            <div class="panel"><div class="table-head"><h3 id="table-title">Training Dynamics</h3><p class="muted" id="table-note"></p></div><div class="scroll" id="table"></div></div>
+        </section>
+    </div>
+    <footer class="footer">Log directories: {% for root in roots %}{{ root }}{% if not loop.last %} · {% endif %}{% endfor %}<br>One entry per run directory. Status uses the Slurm queue and recorded terminal outcomes; log age alone never proves a job is running.</footer>
+</main>
+<script>
+    const $ = id => document.getElementById(id);
+    const esc = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const S = (group, key, label, unit='', derive=null) => ({group,key,label,unit,derive});
+    // Sum of the per-reward-value zero-std counters, whose key suffix varies by run.
+    const zeroStd = values => { const found = Object.entries(values).filter(([k,v]) => k.startsWith('rollout/zero_std/count_') && Number.isFinite(v)); return found.length ? found.reduce((a,[,v]) => a+v,0) : null; };
+    // One block of columns per eval dataset (--eval-prompt-data name).
+    const evalSet = (name, group, label, unit) => [S(group,`eval/${name}`,label,unit),S(group,`eval/${name}-truncated_ratio`,'Truncated','%'),
+        S(group,`eval/${name}/response_len/mean`,'Generated tokens (mean)'),S(group,`eval/${name}/response_len/max`,'Generated tokens (max)'),
+        S(group,`eval/${name}/repetition_frac`,'Repetition','%')];
+    const columns = {
+        rollout: [
+            S('Outcome','rollout/raw_reward','Reward'),S('Outcome','rollout/trace_score','Trace score'),S('Outcome','rollout/state_score','State score'),
+            S('Outcome','rollout/penalty','Penalty'),S('Outcome','rollout/truncated','Truncated','%'),S('Outcome','rollout/removed_fraction','Removed samples','%'),
+            S('Behaviour','rollout/num_turns','Turns / sample'),S('Behaviour','rollout/num_tool_calls','Tool calls / sample'),
+            S('Behaviour','rollout/num_failed_tool_calls','Failed tool calls / sample'),
+            S('Length','rollout/response_len/mean','Generated tokens (mean)'),S('Length','rollout/response_len/median','Generated tokens (median)'),
+            S('Length','rollout/response_len/max','Generated tokens (max)'),S('Length','rollout/response_lengths','Response tokens incl. tool output'),
+            S('Length','rollout/total_lengths','Total tokens (input + response)'),
+            S('Groups','zero_std_groups','Zero-variance groups','',zeroStd),
+            S('Throughput','perf/rollout_time','Generation','min'),S('Throughput','perf/tokens_per_gpu_per_sec','Tokens / GPU / s'),
+            S('Throughput','rollout/prefix_cache_hit_rate','Prefix cache hit','%'),S('Throughput','rollout/repetition_frac','Repetition','%')],
+        eval: [...evalSet('bfcl_v3','BFCL v3','Task accuracy','%'),...evalSet('envfactory','EnvFactory held-out','Reward','')],
+        train: [
+            S('Loss','train/loss','Loss'),S('Loss','train/pg_loss','Policy loss'),S('Loss','train/entropy_loss','Entropy loss'),S('Loss','train/kl_loss','KL loss'),
+            S('Stability','train/grad_norm','Gradient Norm (pre-clip)'),S('Stability','train/ess_ratio','ESS ratio'),S('Stability','train/pg_clipfrac','Policy clip fraction','%'),
+            S('Stability','train/ppo_kl','PPO KL'),S('Stability','train/train_rollout_kl','Train / serving KL'),
+            S('Stability','train/train_rollout_logprob_abs_diff','Train / serving log-prob difference'),S('Optimizer','train/lr-pg_0','Learning rate')]
+    };
+    const rawMetric = key => ({group:'Other (raw keys)',key,label:key,unit:'',derive:null});
+    const valueOf = (row, metric) => { const v = metric.derive ? metric.derive(row.values) : row.values[metric.key]; return v === undefined ? null : v; };
+    const hasData = (rows, metric) => rows.some(r => Number.isFinite(valueOf(r, metric)));
+    const groups = {
+        'Model & Run': ['hf_checkpoint','params_dtype','bf16','optimizer_cpu_offload','num_rollout','advantage_estimator'],
+        'Sequence & Sampling': ['rollout_max_prompt_len','rollout_max_context_len','rollout_max_response_len','max_interaction_turns','max_tool_response_length','eval_max_context_len','eval_max_response_len','rollout_temperature','eval_temperature'],
+        'Optimization & Rewards': ['lr','kl_loss_coef','clip_grad','rollout_batch_size','n_samples_per_prompt','global_batch_size','reward_tau']
+    };
+    let data = null, kind = 'rollout', sequence = 0;
+    const choices = {};
+    function format(value, metric) {
+        if (value === null || value === undefined || !Number.isFinite(value)) return '—';
+        if (metric.unit === '%') return (value*100).toFixed(2)+'%';
+        if (metric.unit === 'min') return (value/60).toFixed(2)+' min';
+        return Number.isInteger(value) ? value.toLocaleString() : Number(value.toPrecision(5)).toString();
+    }
+    function lastValue(series, metric) {
+        const row = [...series].reverse().find(r => valueOf(r, metric) !== null);
+        return row ? {value:valueOf(row, metric),id:row.id} : {value:null,id:'—'};
+    }
+    const column = (kind, key) => columns[kind].find(c => c.key === key);
+    function renderConfig() {
+        $('config-summary').innerHTML = Object.entries(groups).map(([name,keys]) => `<div class="config-group"><h3>${esc(name)}</h3><table aria-label="${esc(name)}"><tbody>`+
+            keys.map(key => `<tr><th scope="row">${esc(key.replaceAll('_',' '))}</th><td>${esc(data.config[key] ?? '—')}</td></tr>`).join('')+'</tbody></table></div>').join('');
+        $('config-count').textContent = `All Arguments (${Object.keys(data.config).length})`;
+        filterConfig();
+    }
+    function filterConfig() {
+        if (!data) return;
+        const term = $('config-filter').value.toLowerCase();
+        const entries = Object.entries(data.config).sort(([a],[b]) => a.localeCompare(b)).filter(([k,v]) => `${k} ${v}`.toLowerCase().includes(term));
+        $('all-config').innerHTML = '<table><thead><tr><th>Argument</th><th>Recorded Value</th></tr></thead><tbody>'+entries.map(([k,v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')+'</tbody></table>';
+    }
+    function renderStatus() {
+        const status=data.status;
+        $('run-state').hidden=false;
+        $('run-state').textContent={running:'Running',complete:'Complete',interrupted:'Interrupted',failed:'Failed',pending:'Pending',unknown:'Unknown'}[status.state] || 'Unknown';
+        $('run-state').dataset.state=status.state;
+        $('run-state').title=status.evidence+(status.time ? ' · '+status.time : '');
+        $('run-state-note').textContent=status.evidence;
+        const phase={running:'Between stages',preparing:'Preparing',training:'Training',syncing:'Syncing weights',saving:'Saving checkpoint',evaluating:'Evaluation',rollout:'Rollout generation'}[data.phase?.state];
+        $('run-phase').textContent=phase ? `${status.state==='running' ? 'Stage' : 'Last recorded stage'}: ${phase}` : '';
+        $('run-identity').textContent=data.run.label;
+    }
+    function renderCards() {
+        const items = [['Training Reward','rollout',column('rollout','rollout/raw_reward')],['Truncated Rollouts','rollout',column('rollout','rollout/truncated')],
+            ['BFCL v3 Accuracy','eval',column('eval','eval/bfcl_v3')],['Gradient Norm','train',column('train','train/grad_norm')]];
+        $('cards').innerHTML = items.map(([label,scope,metric]) => {
+            const found = lastValue(data.series[scope],metric);
+            return `<div class="card"><span>${label}</span><strong>${esc(format(found.value,metric))}</strong><span class="card-meta">${scope === 'train' ? 'OPTIMIZER STEP' : 'ROLLOUT'} ${found.id} · LATEST LOGGED</span></div>`;
+        }).join('');
+    }
+    const stageLabels = {rollout:'Rollout Generation',train:'Training',eval:'Evaluation',actor_train:'Actor Optimization',
+        ref_log_probs:'Reference Log Probs',log_probs:'Policy Log Probs',update_weights:'Weight Update',checkpoint:'Checkpoint Save',
+        train_wait:'Training Wait',data_preprocess:'Data Preparation',wake_up:'Model Wake-Up',sleep:'Model Offload',save_model:'Checkpoint Routine'};
+    function duration(seconds) {
+        if (!Number.isFinite(seconds)) return '—';
+        if (seconds<60) return seconds.toFixed(seconds<10 ? 1 : 0)+'s';
+        const whole=Math.round(seconds);
+        return (whole>=3600 ? Math.floor(whole/3600)+'h ' : '')+Math.floor((whole%3600)/60)+'m '+String(whole%60).padStart(2,'0')+'s';
+    }
+    const actionStyles = {prepare:['Prepare','#8b9dac'],train:['Train','#6d82ca'],rollout:['Rollout','#159a8c'],eval:['Eval','#d0a04e'],
+        update_weights:['Update','#a583bd'],checkpoint:['Save','#75899b']};
+    let timelineItems=[], timelinePinned=null;
+    // Treat log wall-clock strings as coordinates, preserving their printed
+    // clock regardless of the browser's timezone. No timezone is inferred.
+    const logTime = stamp => stamp ? Date.parse(stamp.replace(' ','T')+'Z') : NaN;
+    const logClock = ms => new Date(ms).toISOString().slice(11,19);
+    const timelineKey = event => event.stage+':'+event.start+':'+event.source+':'+event.rollout_id;
+    function drawTimeline() {
+        const raw=data.timeline || [];
+        const stamps=[...raw.flatMap(e => [logTime(e.start),logTime(e.end)]),
+            ...Object.values(data.series).flatMap(rows => rows.map(r => logTime(r.time)))].filter(Number.isFinite);
+        const observed=stamps.length ? Math.max(...stamps) : NaN;
+        const rollouts=raw.filter(e => e.stage==='rollout' && Number.isFinite(logTime(e.start))).sort((a,b) => logTime(a.start)-logTime(b.start));
+        const initialEval=raw.find(e => e.stage==='eval' && e.rollout_id===0 && Number.isFinite(logTime(e.start)) && logTime(e.start)<logTime(rollouts[0]?.start));
+        const steps=rollouts.map((event,i) => {
+            const initial=i===0 && event.rollout_id===0 && initialEval;
+            const start=initial ? initialEval.start : event.start;
+            const end=i+1<rollouts.length ? logTime(rollouts[i+1].start) : observed;
+            return {...event,stage:'step',start,_start:logTime(start),_end:end,_step:event.rollout_id,
+                end:i+1<rollouts.length ? rollouts[i+1].start : '',seconds:(end-logTime(start))/1000,
+                derived_start:initial ? false : event.derived_start,_observed:i+1===rollouts.length};
+        });
+        const firstActivity=Math.min(...raw.filter(e => ['rollout','train','eval'].includes(e.stage)).map(e => logTime(e.start)).filter(Number.isFinite));
+        const initialSync=raw.find(e => e.stage==='update_weights' && Number.isFinite(logTime(e.start)));
+        const actions=raw.filter(e => actionStyles[e.stage] && Number.isFinite(logTime(e.start))).map(event => {
+            const start=logTime(event.start), step=steps.find(s => start>=s._start && start<s._end);
+            return {...event,_start:start,_end:event.end ? logTime(event.end) : observed,_step:step?._step ?? null,_prepare:event===initialSync && Number.isFinite(firstActivity) && start<firstActivity};
+        });
+        timelineItems=[...actions,...steps].map(e => ({...e,_key:timelineKey(e)})).filter(e => Number.isFinite(e._end) && e._end>=e._start);
+        const pages=[...new Set(steps.map(s => Math.floor(s._step/20)*20))].sort((a,b) => a-b);
+        if (!pages.length) pages.push(0);
+        const previous=$('timeline-window').value;
+        const page=previous!=='' && pages.includes(Number(previous)) ? Number(previous) : pages.at(-1);
+        $('timeline-window').innerHTML=pages.map(start => `<option value="${start}">Steps ${start}–${start+19}</option>`).join('');
+        $('timeline-window').value=String(page);
+        $('timeline-prev').disabled=page===pages[0]; $('timeline-next').disabled=page===pages.at(-1);
+        const inPage=step => step>=page && step<page+20;
+        const selectedSteps=steps.filter(s => inPage(s._step));
+        const cut=page===0 ? -Infinity : selectedSteps[0]?._start ?? -Infinity;
+        const stop=selectedSteps.at(-1)?._end ?? observed;
+        const visible=timelineItems.filter(e => (e._step===null || inPage(e._step)) && e._start<=stop && (e._end>cut || e._start>=cut));
+        $('timeline-legend').innerHTML=Object.entries(actionStyles).filter(([stage]) => stage!=='prepare' || actions.some(e => e._prepare)).map(([, [label,color]]) => `<span><i style="--segment-color:${color}"></i>${label}</span>`).join('');
+        if (!visible.length) {
+            $('timeline-actions').innerHTML='<div class="empty">No timestamped intervals recorded.</div>';
+            $('timeline-steps').innerHTML=''; $('timeline-ticks').innerHTML=''; clearTimelineSelection(); return;
+        }
+        const begin=Math.max(cut,Math.min(...visible.map(e => e._start))), end=stop, span=Math.max(end-begin,1000);
+        $('timeline-ticks').innerHTML=Array.from({length:5},(_,i) => `<span style="left:${i*25}%">${logClock(begin+span*i/4)}</span>`).join('');
+        for (const [host,isStep] of [['timeline-actions',false],['timeline-steps',true]]) {
+            const width=$(host).clientWidth || 500;
+            $(host).innerHTML=visible.filter(e => (e.stage==='step')===isStep).map(event => {
+                const left=(Math.max(begin,event._start)-begin)/span*100;
+                const percent=(Math.min(end,event._end)-Math.max(begin,event._start))/span*100;
+                const label=isStep ? 'Step '+event._step : actionStyles[event._prepare ? 'prepare' : event.stage][0];
+                const small=percent/100*width<36;
+                const open=isStep ? event._observed : !event.end;
+                const text=isStep ? (small ? (percent/100*width>=10 ? String(event._step) : '') : label) : '';
+                return `<button type="button" class="timeline-segment ${small ? 'short' : ''} ${open ? 'unfinished' : ''}" style="left:${Math.min(left,99.6)}%;width:${percent}%;--segment-color:${isStep ? '#bedbdc' : actionStyles[event._prepare ? 'prepare' : event.stage][1]}" data-timeline-key="${esc(event._key)}" data-step="${event._step ?? ''}" aria-label="${esc(label)}${!isStep && event._step!==null ? ' · Step '+event._step : ''} · ${open ? 'end not recorded' : duration(event.seconds)}" aria-controls="timeline-inspector" aria-expanded="false">${esc(text)}</button>`;
+            }).join('');
+        }
+        if (timelinePinned && visible.some(e => e._key===timelinePinned)) inspectTimeline(timelinePinned,true);
+        else clearTimelineSelection();
+    }
+    function clearTimelineSelection() {
+        timelinePinned=null;
+        $('timeline-inspector').classList.remove('expanded'); $('timeline-viz').classList.remove('has-focus');
+        $('inspector-heading').className=''; $('inspector-heading').textContent='Hover to inspect · Click to pin and expand';
+        $('clear-inspector').hidden=true;
+        document.querySelectorAll('[data-timeline-key]').forEach(b => { b.classList.remove('is-focused','is-related'); b.setAttribute('aria-expanded','false'); });
+    }
+    function inspectTimeline(key,pin=false) {
+        const event=timelineItems.find(e => e._key===key);
+        if (!event) return;
+        if (pin) timelinePinned=key;
+        const isStep=event.stage==='step';
+        const title=isStep ? 'Step '+event._step : (event._prepare ? 'Prepare · Initial Weight Sync' : stageLabels[event.stage])+(event._step!==null ? ' · Step '+event._step : ' · Before Step 0 / unassigned');
+        $('inspector-heading').className='inspector-title'; $('inspector-heading').textContent=title+(pin ? ' · Pinned' : ' · Click to expand');
+        $('clear-inspector').hidden=!pin;
+        const trains=event._step===null ? [] : (data.timeline || []).filter(e => e.stage==='train' && e.rollout_id===event._step);
+        const optimizerSteps=data.series.train.filter(r => trains.some(t => logTime(r.time)>=logTime(t.start) && logTime(r.time)<=(t.end ? logTime(t.end) : event._end))).map(r => r.id);
+        const facts=[['Started',(event.derived_start ? '~ ' : '')+event.start],['Finished',isStep && event._observed ? 'Observed to '+logClock(event._end) : (event.end || 'Not recorded')],
+            [isStep && event._observed ? 'Observed Span' : 'Duration',duration(event.seconds)],['Training Cycle',event._step===null ? 'Not assigned' : 'Step '+event._step],
+            ['Optimizer Steps',optimizerSteps.length ? optimizerSteps.join(', ') : 'Not logged'],['Timing',event.derived_start ? 'Start derived from logged duration' : 'Recorded timestamps']];
+        const children=pin ? (data.timeline || []).filter(e => {
+            if (timelineKey(e)===event._key) return false;
+            const start=logTime(e.start);
+            const stepStage=actionStyles[e.stage] || ['actor_train','ref_log_probs','log_probs','data_preprocess'].includes(e.stage);
+            return start>=event._start && start<event._end && ((isStep && stepStage) || (event.stage==='train' && ['actor_train','ref_log_probs','log_probs'].includes(e.stage) && e.source===event.source));
+        }) : [];
+        $('inspector-body').innerHTML='<div class="inspector-facts">'+facts.map(([label,value]) => `<div class="inspector-fact"><span>${label}</span><strong>${esc(value)}</strong></div>`).join('')+'</div>'+
+            `<p class="inspector-note muted">${event._prepare ? 'Synchronizes the loaded actor weights to the inference engines before evaluation and rollout. No optimizer step is performed.' : isStep ? 'Step 0 includes the initial evaluation. Other steps begin at rollout start; each span ends at the next rollout start, or the Last Logged timestamp.' : !event.end ? 'No end is recorded in this snapshot; the hatched bar stops at the Last Logged timestamp.' : 'Short events use a minimum-width marker; duration is taken from the log.'}${pin ? ' Nested stages may overlap.' : ' Click the segment to pin these details and expand recorded sub-stages.'}</p>`+
+            (children.length ? '<div class="inspector-stages"><table><thead><tr><th>Recorded Stage</th><th>Started</th><th>Duration</th></tr></thead><tbody>'+children.map(e => `<tr><td>${esc(stageLabels[e.stage] || e.stage)}</td><td>${esc(e.start.slice(11,19))}</td><td>${duration(e.seconds)}</td></tr>`).join('')+'</tbody></table></div>' : '');
+        $('timeline-inspector').classList.add('expanded'); $('timeline-viz').classList.add('has-focus');
+        document.querySelectorAll('[data-timeline-key]').forEach(b => {
+            const focused=b.dataset.timelineKey===key, related=event._step!==null && b.dataset.step===String(event._step);
+            b.classList.toggle('is-focused',focused); b.classList.toggle('is-related',related); b.setAttribute('aria-expanded',String(focused));
+        });
+    }
+    function renderTimeline() {
+        if (data) drawTimeline();
+    }
+    function drawChart(metric) {
+        const rows = data.series[kind];
+        const val = r => valueOf(r, metric);
+        const points = rows.filter(r => Number.isFinite(val(r)));
+        $('chart-value').textContent=rows.length ? format(val(rows.at(-1)),metric) : '—';
+        if (!points.length) { $('chart').innerHTML = '<div class="empty">No recorded values for this metric.</div>'; return; }
+        const W=1200,H=300,L=78,R=18,T=22,B=42;
+        const xs=rows.map(r => r.id), vals=points.map(val);
+        const xmin=Math.min(...xs),xmax=Math.max(...xs);
+        const minimum=Math.min(...vals), maximum=Math.max(...vals);
+        const padding=(maximum-minimum || Math.abs(minimum) || 1)*.05;
+        const ymin=minimum-padding, ymax=maximum+padding, range=ymax-ymin;
+        const x=id => L+(id-xmin)/(xmax-xmin || 1)*(W-L-R);
+        const y=v => T+(1-(v-ymin)/range)*(H-T-B);
+        const factor=metric.unit==='%' ? 100 : metric.unit==='min' ? 1/60 : 1;
+        const tickStep=range/4*factor;
+        const digits=Math.min(20,Math.max(0,1-Math.floor(Math.log10(tickStep))));
+        const axisLabel=v => {
+            const scaled=Math.abs(v*factor)<tickStep*1e-7 ? 0 : v*factor;
+            return Number(scaled.toFixed(digits)).toLocaleString(undefined,{maximumFractionDigits:digits})+(metric.unit==='%' ? '%' : metric.unit==='min' ? ' min' : '');
+        };
+        let svg='';
+        for (let i=0;i<=4;i++) {
+            const v=ymin+range*i/4;
+            svg+=`<line class="grid-line" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end">${esc(axisLabel(v))}</text>`;
+        }
+        let path='', connected=false;
+        rows.forEach(row => {
+            const v=val(row);
+            if (!Number.isFinite(v)) { connected=false; return; }
+            path+=`${connected ? 'L' : 'M'}${x(row.id)},${y(v)} `; connected=true;
+        });
+        svg+=`<path class="trend" d="${path}"/>`;
+        points.forEach(row => { svg+=`<circle class="dot" cx="${x(row.id)}" cy="${y(val(row))}" r="3"><title>ID ${row.id}: ${esc(format(val(row),metric))} · ${esc(row.time)}</title></circle>`; });
+        const tickIds=[...new Set([xmin,Math.round((xmin+xmax)/2),xmax])];
+        tickIds.forEach(id => { svg+=`<text x="${x(id)}" y="${H-23}" text-anchor="middle">${id}</text>`; });
+        svg+=`<text x="${W/2}" y="${H-4}" text-anchor="middle">${kind === 'train' ? 'Optimizer step' : 'Logged rollout ID'}</text>`;
+        $('chart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(metric.label)} trend">${svg}</svg>`;
+    }
+    // Catalogued metrics that this run logged, then any other logged key under its raw name.
+    function metricOptions(rows) {
+        const known=columns[kind].filter(c => hasData(rows,c));
+        // rollout/score repeats rollout/raw_reward (score is the reward key).
+        const covered=new Set([...columns[kind].flatMap(c => c.derive ? [] : [c.key]),'rollout/score']);
+        const keys=new Set(rows.flatMap(r => Object.keys(r.values)));
+        return [...known,...[...keys].filter(k => !covered.has(k)).sort().map(rawMetric)];
+    }
+    function renderDynamics() {
+        const rows=data.series[kind], options=metricOptions(rows), shown=columns[kind].filter(c => hasData(rows,c));
+        const groupsInOrder=[...new Set(options.map(m => m.group))];
+        $('metric').innerHTML=groupsInOrder.map(g => `<optgroup label="${esc(g)}">`+options.filter(m => m.group===g).map(m => `<option value="${esc(m.key)}">${esc(m.label)}</option>`).join('')+'</optgroup>').join('');
+        const selected=options.find(m => m.key===choices[kind]) || options[0];
+        if (selected) $('metric').value=selected.key;
+        $('chart-title').textContent=selected ? selected.group : 'Metric';
+        if (selected) drawChart(selected); else { $('chart-value').textContent='—'; $('chart').innerHTML='<div class="empty">No metrics logged yet for this series.</div>'; }
+        document.querySelectorAll('[data-kind]').forEach(b => b.classList.toggle('active',b.dataset.kind===kind));
+        const labels={rollout:'Training Rollouts',eval:'Evaluation Checkpoints',train:'Optimizer Steps'};
+        $('table-title').textContent=labels[kind]+` (${rows.length})`;
+        $('table-note').textContent=(kind==='train' ? 'One row per logged optimizer step. Gradient Norm is measured before clipping; ESS is a diagnostic.' :
+            kind==='eval' ? 'ID 0 is the initial evaluation; ID N follows rollout N (0-based). A BFCL v3 task scores 1 only if every user turn passes BFCL\'s state and response checks; EnvFactory held-out reports the training reward.' :
+            'One row per rollout ID. A rollout record does not confirm optimizer completion. Reward is max(0, τ·trace + (1−τ)·state − penalty); its components and tool-use counters are only present in runs launched after they were added to the log.')+' Columns this run never logged are hidden.';
+        const spans=shown.reduce((acc,c) => (acc.at(-1)?.[0]===c.group ? acc.at(-1)[1]++ : acc.push([c.group,1]), acc),[]);
+        $('table').innerHTML=rows.length && shown.length ? '<table><thead><tr class="group-row"><th colspan="2"></th>'+spans.map(([g,n]) => `<th colspan="${n}">${esc(g)}</th>`).join('')+'</tr><tr class="col-row"><th>ID</th><th>Last Metric Time</th>'+shown.map(c => `<th title="${esc(c.key)}">${esc(c.label)}</th>`).join('')+'</tr></thead><tbody>'+
+            [...rows].reverse().map(row => `<tr><td>${row.id}</td><td>${esc(row.time || '—')}</td>`+shown.map(c => `<td>${esc(format(valueOf(row,c),c))}</td>`).join('')+'</tr>').join('')+'</tbody></table>' : '<div class="empty">No metrics logged yet for this series.</div>';
+    }
+    async function fetchJSON(url) {
+        const response=await fetch(url,{cache:'no-store'}), result=await response.json();
+        if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+        return result;
+    }
+    async function loadRun() {
+        const run=$('runs').value, token=++sequence;
+        if (!run) return;
+        $('error').hidden=true;
+        $('status').textContent='Reading training metrics…';
+        try {
+            const result=await fetchJSON('/api/run?'+new URLSearchParams({run}));
+            if (token!==sequence) return;
+            data=result;
+            const selectedOption=$('runs').selectedOptions[0];
+            if (selectedOption) selectedOption.textContent=`${result.run.label} · ${result.status.state}`;
+            $('content').hidden=false;
+            const age=Math.max(0,(Date.now()/1000-result.modified)/60);
+            $('status').textContent=`Log updated ${new Date(result.modified*1000).toLocaleString()} · ${age.toFixed(1)} min ago · ${result.series.rollout.length} rollout records / ${result.series.train.length} optimizer steps / ${result.series.eval.length} evaluations · ${result.parse_ms} ms read`;
+            $('status').title=result.path;
+            const warnings=result.nonfinite.map(x => `Non-finite metric: ${x.kind} ID ${x.id} · ${x.metric}`);
+            if (result.unparsed_records) warnings.push(`${result.unparsed_records} metric records could not be parsed.`);
+            $('warnings').textContent=warnings.join('\n'); $('warnings').hidden=!warnings.length;
+            renderStatus(); renderCards(); renderTimeline(); renderConfig(); renderDynamics();
+            const url=new URL(location.href); url.searchParams.set('run',run); history.replaceState(null,'',url);
+        } catch(error) {
+            if (token!==sequence) return;
+            $('content').hidden=true; $('warnings').hidden=true; $('run-state').hidden=true; $('run-phase').textContent=''; $('run-state-note').textContent='Could not read run status';
+            $('error').textContent=error.message; $('error').hidden=false; $('status').textContent='Could not load this run.';
+        }
+    }
+    async function loadRuns() {
+        const token=++sequence;
+        try {
+            const previous=$('runs').value || new URLSearchParams(location.search).get('run');
+            const result=await fetchJSON('/api/runs');
+            if (token!==sequence) return;
+            $('error').hidden=true;
+            $('runs').innerHTML=result.runs.map(r => `<option value="${esc(r.id)}">${esc(r.label)} · ${esc(r.status.state)}</option>`).join('');
+            const selected=result.runs.find(r => r.id===previous);
+            if (selected) $('runs').value=selected.id;
+            if (!result.runs.length) { $('status').textContent='No experiments found. Point --log-root at training logs or the parent directory of experiments.'; $('content').hidden=true; $('run-state').hidden=true; $('run-phase').textContent=''; $('run-identity').textContent=''; $('run-state-note').textContent='No experiments available'; return; }
+            await loadRun();
+        } catch(error) { if (token===sequence) { $('error').textContent=error.message; $('error').hidden=false; } }
+    }
+    $('runs').addEventListener('change',() => { $('content').hidden=true; $('run-state').hidden=true; $('run-phase').textContent=''; $('run-state-note').textContent='Checking experiment status…'; $('timeline-window').innerHTML=''; loadRun(); });
+    $('refresh').addEventListener('click',loadRuns);
+    $('config-filter').addEventListener('input',filterConfig);
+    $('timeline-window').addEventListener('change',drawTimeline);
+    for (const [id,direction] of [['timeline-prev',-1],['timeline-next',1]]) {
+        $(id).addEventListener('click',() => {
+            const select=$('timeline-window'), next=select.selectedIndex+direction;
+            if (next>=0 && next<select.options.length) { select.selectedIndex=next; drawTimeline(); }
+        });
+    }
+    $('clear-inspector').addEventListener('click',clearTimelineSelection);
+    $('timeline-viz').addEventListener('pointerover',event => {
+        const segment=event.target.closest('[data-timeline-key]');
+        if (segment && !timelinePinned) inspectTimeline(segment.dataset.timelineKey);
+    });
+    $('timeline-viz').addEventListener('focusin',event => {
+        const segment=event.target.closest('[data-timeline-key]');
+        if (segment && !timelinePinned) inspectTimeline(segment.dataset.timelineKey);
+    });
+    $('timeline-viz').addEventListener('click',event => {
+        const segment=event.target.closest('[data-timeline-key]');
+        if (segment) {
+            if (timelinePinned===segment.dataset.timelineKey) clearTimelineSelection();
+            else inspectTimeline(segment.dataset.timelineKey,true);
+        }
+    });
+    $('timeline-viz').addEventListener('pointerleave',() => { if (!timelinePinned) clearTimelineSelection(); });
+    $('timeline-viz').addEventListener('focusout',event => { if (!timelinePinned && !$('timeline-viz').contains(event.relatedTarget)) clearTimelineSelection(); });
+    $('timeline-viz').addEventListener('keydown',event => { if (event.key==='Escape') clearTimelineSelection(); });
+    let timelineResize;
+    window.addEventListener('resize',() => { clearTimeout(timelineResize); timelineResize=setTimeout(() => { if (data) drawTimeline(); },150); });
+    document.querySelectorAll('[data-kind]').forEach(b => b.addEventListener('click',() => { kind=b.dataset.kind; if (data) renderDynamics(); }));
+    $('metric').addEventListener('change',() => { choices[kind]=$('metric').value; renderDynamics(); });
+    setInterval(() => { if ($('auto').checked && !document.hidden) loadRun(); },30000);
+    loadRuns();
+</script>
+</body>
+</html>
