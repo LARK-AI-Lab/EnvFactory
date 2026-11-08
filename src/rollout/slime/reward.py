@@ -7,6 +7,7 @@ import json
 import logging
 import statistics
 
+from slime.rollout.filter_hub.dynamic_sampling_filters import check_reward_nonzero_std
 from slime.utils.types import Sample
 
 from src.eval.bfcl_v3.bfcl import BENCHMARK, grade as grade_bfcl
@@ -15,6 +16,16 @@ from src.rewards.tool_reward import compute_score
 logger = logging.getLogger(__name__)
 
 ZERO_REWARD = {"score": 0.0, "trace_score": 0.0, "state_score": 0.0, "penalty": 0.0}
+
+# Rewards of every group the dynamic filter saw this rollout, kept or dropped; drained by log_rollout_metrics.
+# Kept groups alone mix easy and hard prompts differently every rollout, so only these track the policy.
+_candidate_rewards: list[dict] = []
+
+
+def filter_reward_spread(args, samples: list[Sample], **kwargs):
+    """slime's nonzero-reward-std group filter (``--dynamic-sampling-filter-path``), recording every group's rewards."""
+    _candidate_rewards.extend(sample.reward for sample in samples)
+    return check_reward_nonzero_std(args, samples, **kwargs)
 
 
 async def reward(args, sample: Sample, **kwargs) -> dict:
@@ -55,6 +66,11 @@ def log_rollout_metrics(rollout_id, args, samples, rollout_extra_metrics, rollou
         metrics["rollout/num_failed_tool_calls"] = statistics.fmean(
             sample.metadata["num_failed_tool_calls"] for sample in valid
         )
+    if _candidate_rewards:
+        # The all-group score is slime's rollout/raw_reward_before_filters.
+        for key in ("trace_score", "state_score", "penalty"):
+            metrics[f"rollout/all_groups/{key}"] = statistics.fmean(float(r[key]) for r in _candidate_rewards)
+        _candidate_rewards.clear()
     metrics["rollout/step"] = compute_rollout_step(args, rollout_id)
     # src/app/slime_training_viewer.py reads this record from training.log.
     logger.info("reward components %s: %s", rollout_id, metrics)

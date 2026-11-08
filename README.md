@@ -150,6 +150,8 @@ python -m src.utils.data_process --verl_rl_path data/env_factory_rl.json data/en
 
 Every RL row is replayed through the environments: `final_state` becomes the state its reference calls produce, so the reference solution always earns full reward. Synthesis stored the state of the whole trajectory before an LLM filter removed calls from the label, so the stored state can hold effects the label lacks. Rows are dropped when a reference call fails and the stored state disagrees, and when listed in [`configs/rl_drop_rows.json`](configs/rl_drop_rows.json) (labels missing steps the user asked for).
 
+Rows using ClinicalTrialsGov, OpenLibrary, or WikipediaServer are dropped (`--rl_exclude_envs`): these environments call live web APIs, which training nodes cannot reach.
+
 To visualize the generation pipeline, run [`src/app/app.py`](src/app/app.py).
 
 ---
@@ -196,7 +198,9 @@ bash scripts/slime/run_grpo.sh  # TRAIN_FILE defaults to data/rl_train_fixed.jso
 
 Environments run in-process without the `mcp` package: `src/tools/tool_manager.py` records each file's `@mcp.tool()` functions with FastMCP-identical schemas and argument validation, so the slime runtime only needs `pydantic`.
 
-Each rollout keeps sampling prompt groups until `rollout_batch_size` of them have a nonzero reward spread (slime's `check_reward_nonzero_std` filter): a group whose samples all earn the same reward carries no GRPO gradient.
+Each rollout keeps sampling prompt groups until `rollout_batch_size` of them have a nonzero reward spread (slime's `check_reward_nonzero_std` filter): a group whose samples all earn the same reward carries no GRPO gradient. The trained groups are therefore a different filtered subset every rollout; track the policy with the reward of all sampled groups (`rollout/raw_reward_before_filters` and `rollout/all_groups/*`, the viewer's headline reward), not `rollout/raw_reward`.
+
+Each SGLang engine admits `SERVER_CONCURRENCY` trajectories at a time (64 for 4B), about what its KV cache holds. Without the cap, thousands of queued requests evict the prefixes of running trajectories, and groups finish only at the end of the sampling round.
 
 Evaluation runs every `eval_interval` (10) rollouts, greedy, on all 800 BFCL v3 multi-turn tasks (`eval/bfcl_v3`, task accuracy; 8k tokens per model call, 40k-token session) when `data/bfcl_v3_val.jsonl` exists (set `BFCL_FILE=` empty to skip). Build it once:
 

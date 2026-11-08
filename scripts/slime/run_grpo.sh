@@ -49,10 +49,13 @@ num_epoch=10
 save_interval=20
 eval_interval=10
 
+# SERVER_CONCURRENCY: trajectories admitted per SGLang engine, about what its KV cache holds at ~6k tokens
+# each. Admitting more only queues them: follow-up turns then wait behind new prompts, their cached prefix
+# is evicted and re-prefilled, and every group finishes at the end of the round.
 case ${MODEL_SIZE} in
-    1.7B) TP_SIZE=1; ROLLOUT_GPUS_PER_ENGINE=1; MEM_FRACTION=0.8 ;;
-    4B)   TP_SIZE=2; ROLLOUT_GPUS_PER_ENGINE=1; MEM_FRACTION=0.75 ;;
-    8B)   TP_SIZE=4; ROLLOUT_GPUS_PER_ENGINE=2; MEM_FRACTION=0.7 ;;
+    1.7B) TP_SIZE=1; ROLLOUT_GPUS_PER_ENGINE=1; MEM_FRACTION=0.8; SERVER_CONCURRENCY=96 ;;
+    4B)   TP_SIZE=2; ROLLOUT_GPUS_PER_ENGINE=1; MEM_FRACTION=0.75; SERVER_CONCURRENCY=64 ;;
+    8B)   TP_SIZE=4; ROLLOUT_GPUS_PER_ENGINE=2; MEM_FRACTION=0.7; SERVER_CONCURRENCY=96 ;;
     *) die "Unknown MODEL_SIZE: ${MODEL_SIZE} (expected 1.7B, 4B or 8B)." ;;
 esac
 ########################### end user-adjustable ###########################
@@ -87,7 +90,7 @@ ROLLOUT_ARGS=(
    --num-epoch ${num_epoch}
    --rollout-batch-size ${rollout_batch_size}
    --over-sampling-batch-size ${over_sampling_batch_size}
-   --dynamic-sampling-filter-path slime.rollout.filter_hub.dynamic_sampling_filters.check_reward_nonzero_std
+   --dynamic-sampling-filter-path src.rollout.slime.reward.filter_reward_spread
    --n-samples-per-prompt ${n_samples_per_prompt}
    --global-batch-size ${global_batch_size}
    --rollout-max-context-len ${max_context_length}
@@ -138,6 +141,7 @@ OPTIMIZER_ARGS=(
 SGLANG_ARGS=(
    --rollout-num-gpus-per-engine ${ROLLOUT_GPUS_PER_ENGINE}
    --sglang-mem-fraction-static ${MEM_FRACTION}
+   --sglang-server-concurrency ${SERVER_CONCURRENCY}
 )
 
 MISC_ARGS=(

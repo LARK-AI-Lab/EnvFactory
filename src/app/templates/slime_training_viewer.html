@@ -208,20 +208,26 @@
     const S = (group, key, label, unit='', derive=null) => ({group,key,label,unit,derive});
     // Sum of the per-reward-value zero-std counters, whose key suffix varies by run.
     const zeroStd = values => { const found = Object.entries(values).filter(([k,v]) => k.startsWith('rollout/zero_std/count_') && Number.isFinite(v)); return found.length ? found.reduce((a,[,v]) => a+v,0) : null; };
+    // Groups the dynamic sampling filter dropped (all samples earned one reward), summed over reward values.
+    const droppedGroups = values => { const found = Object.entries(values).filter(([k,v]) => k.startsWith('rollout/dynamic_filter/drop_') && Number.isFinite(v)); return found.length ? found.reduce((a,[,v]) => a+v,0) : null; };
+    // With dynamic sampling the trained groups are a filtered subset; the reward of every sampled group tracks the policy.
+    const policyReward = values => values['rollout/raw_reward_before_filters'] ?? values['rollout/raw_reward'] ?? null;
     // One block of columns per eval dataset (--eval-prompt-data name).
     const evalSet = (name, group, label, unit) => [S(group,`eval/${name}`,label,unit),S(group,`eval/${name}-truncated_ratio`,'Truncated','%'),
         S(group,`eval/${name}/response_len/mean`,'Generated tokens (mean)'),S(group,`eval/${name}/response_len/max`,'Generated tokens (max)'),
         S(group,`eval/${name}/repetition_frac`,'Repetition','%')];
     const columns = {
         rollout: [
-            S('Outcome','rollout/raw_reward','Reward'),S('Outcome','rollout/trace_score','Trace score'),S('Outcome','rollout/state_score','State score'),
-            S('Outcome','rollout/penalty','Penalty'),S('Outcome','rollout/truncated','Truncated','%'),S('Outcome','rollout/removed_fraction','Removed samples','%'),
+            S('Outcome (all sampled groups)','policy_reward','Reward','',policyReward),S('Outcome (all sampled groups)','rollout/all_groups/trace_score','Trace score'),
+            S('Outcome (all sampled groups)','rollout/all_groups/state_score','State score'),S('Outcome (all sampled groups)','rollout/all_groups/penalty','Penalty'),
+            S('Outcome (trained groups)','rollout/raw_reward','Reward'),S('Outcome (trained groups)','rollout/trace_score','Trace score'),S('Outcome (trained groups)','rollout/state_score','State score'),
+            S('Outcome (trained groups)','rollout/penalty','Penalty'),S('Outcome (trained groups)','rollout/truncated','Truncated','%'),S('Outcome (trained groups)','rollout/removed_fraction','Removed samples','%'),
             S('Behaviour','rollout/num_turns','Turns / sample'),S('Behaviour','rollout/num_tool_calls','Tool calls / sample'),
             S('Behaviour','rollout/num_failed_tool_calls','Failed tool calls / sample'),
             S('Length','rollout/response_len/mean','Generated tokens (mean)'),S('Length','rollout/response_len/median','Generated tokens (median)'),
             S('Length','rollout/response_len/max','Generated tokens (max)'),S('Length','rollout/response_lengths','Response tokens incl. tool output'),
             S('Length','rollout/total_lengths','Total tokens (input + response)'),
-            S('Groups','zero_std_groups','Zero-variance groups','',zeroStd),
+            S('Groups','zero_std_groups','Zero-variance groups','',zeroStd),S('Groups','dropped_groups','Groups dropped by the filter','',droppedGroups),
             S('Throughput','perf/rollout_time','Generation','min'),S('Throughput','perf/tokens_per_gpu_per_sec','Tokens / GPU / s'),
             S('Throughput','rollout/prefix_cache_hit_rate','Prefix cache hit','%'),S('Throughput','rollout/repetition_frac','Repetition','%')],
         eval: evalSet('bfcl_v3','BFCL v3','Task accuracy','%'),
@@ -276,7 +282,7 @@
         $('run-identity').textContent=data.run.label;
     }
     function renderCards() {
-        const items = [['Training Reward','rollout',column('rollout','rollout/raw_reward')],['Truncated Rollouts','rollout',column('rollout','rollout/truncated')],
+        const items = [['Training Reward','rollout',column('rollout','policy_reward')],['Truncated Rollouts','rollout',column('rollout','rollout/truncated')],
             ['BFCL v3 Accuracy','eval',column('eval','eval/bfcl_v3')],['Gradient Norm','train',column('train','train/grad_norm')]];
         $('cards').innerHTML = items.map(([label,scope,metric]) => {
             const found = lastValue(data.series[scope],metric);
@@ -436,8 +442,8 @@
     // Catalogued metrics that this run logged, then any other logged key under its raw name.
     function metricOptions(rows) {
         const known=columns[kind].filter(c => hasData(rows,c));
-        // rollout/score repeats rollout/raw_reward (score is the reward key).
-        const covered=new Set([...columns[kind].flatMap(c => c.derive ? [] : [c.key]),'rollout/score']);
+        // rollout/score repeats rollout/raw_reward (score is the reward key); the all-group reward column reads raw_reward_before_filters.
+        const covered=new Set([...columns[kind].flatMap(c => c.derive ? [] : [c.key]),'rollout/score','rollout/raw_reward_before_filters']);
         const keys=new Set(rows.flatMap(r => Object.keys(r.values)));
         return [...known,...[...keys].filter(k => !covered.has(k)).sort().map(rawMetric)];
     }

@@ -21,7 +21,7 @@ def parse_args():
     parser.add_argument('--sft_output_path', type=str)
     parser.add_argument('--rl_output_path', type=str, help='Slime RL JSONL; every row is training data (evaluation uses BFCL v3).')
     parser.add_argument('--verl_rl_path', type=str, nargs='+', help='Convert verl-format RL json files (e.g. LARK-Lab/EnvFactory-RL train and val) instead of --folders; rows are concatenated.')
-    parser.add_argument('--rl_exclude_envs', type=json.loads, default=["ClinicalTrialsGov"], help='Drop RL rows using these environments (network-bound).')
+    parser.add_argument('--rl_exclude_envs', type=json.loads, default=["ClinicalTrialsGov", "OpenLibrary", "WikipediaServer"], help='Drop RL rows using these environments (they call live web APIs, unreachable from training nodes).')
     parser.add_argument('--rl_drop_rows', type=str, help='JSON file whose "rows" lists rl_row_fingerprint values to drop (e.g. labels missing requested steps).')
     parser.add_argument('--environment_config_path', type=str, default='configs/mcp_server.json', help='Environments used to replay RL reference calls.')
     parser.add_argument('--max_num', type=int)
