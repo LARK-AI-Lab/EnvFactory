@@ -16,7 +16,7 @@ MEGATRON_LM_DIR=${MEGATRON_LM_DIR:?Set MEGATRON_LM_DIR to a Megatron-LM checkout
 MODEL_SIZE=${MODEL_SIZE:-4B}  # 1.7B | 4B | 8B
 MODEL_PATH=${MODEL_PATH:?Set MODEL_PATH to the HF checkpoint (e.g. the EnvFactory SFT model).}
 REF_LOAD=${REF_LOAD:-$MODEL_PATH}  # slime loads the HF checkpoint directly; a torch_dist copy also works.
-TRAIN_FILE=${TRAIN_FILE:-$PROJECT_DIR/data/rl_train.jsonl}
+TRAIN_FILE=${TRAIN_FILE:-$PROJECT_DIR/data/rl_train_fixed.jsonl}  # Replay-verified rows (src/utils/data_process.py).
 # Evaluation set (BFCL v3 multi-turn); set to an empty string to skip evaluation.
 BFCL_FILE=${BFCL_FILE-$PROJECT_DIR/data/bfcl_v3_val.jsonl}  # python -m src.eval.bfcl_v3.bfcl data/bfcl_v3_val.jsonl
 CUSTOM_CONFIG=${CUSTOM_CONFIG:-$PROJECT_DIR/configs/slime/envfactory.yaml}

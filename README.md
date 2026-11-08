@@ -145,8 +145,10 @@ RL rows are slime JSONL (`prompt` messages, `label` = reference tool calls, `met
 
 ```bash
 python -m src.utils.data_process --verl_rl_path data/env_factory_rl.json data/env_factory_rl_val.json \
-  --rl_output_path data/rl_train.jsonl
+  --rl_drop_rows configs/rl_drop_rows.json --rl_output_path data/rl_train_fixed.jsonl
 ```
+
+Every RL row is replayed through the environments: `final_state` becomes the state its reference calls produce, so the reference solution always earns full reward. Synthesis stored the state of the whole trajectory before an LLM filter removed calls from the label, so the stored state can hold effects the label lacks. Rows are dropped when a reference call fails and the stored state disagrees, and when listed in [`configs/rl_drop_rows.json`](configs/rl_drop_rows.json) (labels missing steps the user asked for).
 
 To visualize the generation pipeline, run [`src/app/app.py`](src/app/app.py).
 
@@ -181,7 +183,7 @@ We use [slime](https://github.com/RolandXMR/slime) (our fork, included as the `s
 ```bash
 git submodule update --init slime
 export MEGATRON_LM_DIR=/path/to/Megatron-LM MODEL_SIZE=4B MODEL_PATH=/path/to/EnvFactory-4B
-bash scripts/slime/run_grpo.sh  # TRAIN_FILE defaults to data/rl_train.jsonl
+bash scripts/slime/run_grpo.sh  # TRAIN_FILE defaults to data/rl_train_fixed.jsonl
 ```
 
 | File | Role |

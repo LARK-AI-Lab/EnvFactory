@@ -41,6 +41,20 @@ class ToolManagerTest(unittest.TestCase):
         client = self.manager.create_client("Calendar", {})
         self.assertEqual(client.call_tool("load_scenario", {"scenario": {}}), "Unknown tool 'Calendar-load_scenario'.")
 
+    def test_replaying_calls_reproduces_state_without_reusing_ids(self):
+        # The reward compares final states, so generated ids must not depend on randomness.
+        def run(initial):
+            client = self.manager.create_client("TickTick", initial)
+            client.call_tool("ticktick_create_project", {"name": "Q4"})
+            return client.state()
+
+        first = run({})
+        self.assertEqual(first, run({}))
+        # A later turn starts from the earlier final state; its new project must get a fresh id.
+        second = run(first)
+        self.assertEqual(len(second["projects"]), 2)
+        self.assertLessEqual(first["projects"].keys(), second["projects"].keys())
+
 
 if __name__ == "__main__":
     unittest.main()
