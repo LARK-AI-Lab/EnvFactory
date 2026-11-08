@@ -72,7 +72,7 @@ def _render_observation(
 
 
 class EnvFactoryEnv:
-    """The row's EnvFactory environments: a single user turn, evaluated under the training budgets."""
+    """The row's EnvFactory environments: a single user turn under the training budgets."""
 
     per_call_budget = False  # The response budget spans the trajectory, as in verl.
 

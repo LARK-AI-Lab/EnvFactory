@@ -224,7 +224,7 @@
             S('Groups','zero_std_groups','Zero-variance groups','',zeroStd),
             S('Throughput','perf/rollout_time','Generation','min'),S('Throughput','perf/tokens_per_gpu_per_sec','Tokens / GPU / s'),
             S('Throughput','rollout/prefix_cache_hit_rate','Prefix cache hit','%'),S('Throughput','rollout/repetition_frac','Repetition','%')],
-        eval: [...evalSet('bfcl_v3','BFCL v3','Task accuracy','%'),...evalSet('envfactory','EnvFactory held-out','Reward','')],
+        eval: evalSet('bfcl_v3','BFCL v3','Task accuracy','%'),
         train: [
             S('Loss','train/loss','Loss'),S('Loss','train/pg_loss','Policy loss'),S('Loss','train/entropy_loss','Entropy loss'),S('Loss','train/kl_loss','KL loss'),
             S('Stability','train/grad_norm','Gradient Norm (pre-clip)'),S('Stability','train/ess_ratio','ESS ratio'),S('Stability','train/pg_clipfrac','Policy clip fraction','%'),
@@ -453,7 +453,7 @@
         const labels={rollout:'Training Rollouts',eval:'Evaluation Checkpoints',train:'Optimizer Steps'};
         $('table-title').textContent=labels[kind]+` (${rows.length})`;
         $('table-note').textContent=(kind==='train' ? 'One row per logged optimizer step. Gradient Norm is measured before clipping; ESS is a diagnostic.' :
-            kind==='eval' ? 'ID 0 is the initial evaluation; ID N follows rollout N (0-based). A BFCL v3 task scores 1 only if every user turn passes BFCL\'s state and response checks; EnvFactory held-out reports the training reward.' :
+            kind==='eval' ? 'ID 0 is the initial evaluation; ID N follows rollout N (0-based). A BFCL v3 task scores 1 only if every user turn passes BFCL\'s state and response checks.' :
             'One row per rollout ID. A rollout record does not confirm optimizer completion. Reward is max(0, τ·trace + (1−τ)·state − penalty); its components and tool-use counters are only present in runs launched after they were added to the log.')+' Columns this run never logged are hidden.';
         const spans=shown.reduce((acc,c) => (acc.at(-1)?.[0]===c.group ? acc.at(-1)[1]++ : acc.push([c.group,1]), acc),[]);
         $('table').innerHTML=rows.length && shown.length ? '<table><thead><tr class="group-row"><th colspan="2"></th>'+spans.map(([g,n]) => `<th colspan="${n}">${esc(g)}</th>`).join('')+'</tr><tr class="col-row"><th>ID</th><th>Last Metric Time</th>'+shown.map(c => `<th title="${esc(c.key)}">${esc(c.label)}</th>`).join('')+'</tr></thead><tbody>'+

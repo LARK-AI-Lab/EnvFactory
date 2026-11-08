@@ -6,10 +6,7 @@ python src/utils/data_process.py \
     --enable_think \
     --enable_skip \
 
-# Process rl dataset (slime JSONL, consumed by scripts/slime/run_grpo.sh)
+# Process rl dataset (slime JSONL, consumed by scripts/slime/run_grpo.sh; all rows train, BFCL v3 evaluates)
 python src/utils/data_process.py \
     --folders '["data_1", "data_2", "data_3"]' \
-    --rl_output_train_path data/rl_train.jsonl \
-    --rl_output_val_path data/rl_val.jsonl \
-    --train_val_split_ratio 0.95 \
-    --shuffle \
+    --rl_output_path data/rl_train.jsonl \

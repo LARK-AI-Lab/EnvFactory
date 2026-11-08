@@ -2,7 +2,7 @@ import os
 import json
 import argparse
 import random
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any
 from collections import Counter
 from src.utils.utils import SYSTEM_PROMPT, RL_SYSTEM_PROMPT
 import traceback
@@ -15,13 +15,10 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--folders', type=json.loads, default=["data"])
     parser.add_argument('--sft_output_path', type=str)
-    parser.add_argument('--rl_output_train_path', type=str)
-    parser.add_argument('--rl_output_val_path', type=str)
-    parser.add_argument('--verl_rl_path', type=str, help='Convert a verl-format RL json (e.g. LARK-Lab/EnvFactory-RL) instead of --folders.')
-    parser.add_argument('--verl_rl_val_path', type=str, help='Held-out verl-format RL json; when set, --verl_rl_path is not split and all of it is training data.')
+    parser.add_argument('--rl_output_path', type=str, help='Slime RL JSONL; every row is training data (evaluation uses BFCL v3).')
+    parser.add_argument('--verl_rl_path', type=str, nargs='+', help='Convert verl-format RL json files (e.g. LARK-Lab/EnvFactory-RL train and val) instead of --folders; rows are concatenated.')
     parser.add_argument('--rl_exclude_envs', type=json.loads, default=["ClinicalTrialsGov"], help='Drop RL rows using these environments (network-bound).')
     parser.add_argument('--max_num', type=int)
-    parser.add_argument('--train_val_split_ratio', type=float, default=0.9)
     parser.add_argument('--shuffle', action='store_true', default=False)
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--enable_think', action='store_true', default=False)
@@ -91,27 +88,6 @@ def load_tool_chains(folders: List[str], max_num: int = None, enable_skip: bool 
     print(f"✅ Loaded {len(tool_chains)} valid tool chains")
     print(f"⚠️ Skipped {incomplete_count} incomplete tool chains")
     return tool_chains
-
-def split_tool_chains(tool_chains: List[Dict[str, Any]], split_ratio: float = 0.95, shuffle: bool = False, seed: int = 42) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
-    """Split tool chains into train and validation sets by conversation."""
-    if not tool_chains:
-        return [], []
-    
-    # Apply shuffle if requested
-    if shuffle:
-        random.seed(seed)
-        random.shuffle(tool_chains)
-        print(f"✅ Shuffled {len(tool_chains)} tool chains with seed {seed}")
-    
-    # Calculate split index
-    split_idx = int(len(tool_chains) * split_ratio)
-    
-    # Split the tool chains
-    train_chains = tool_chains[:split_idx]
-    val_chains = tool_chains[split_idx:]
-    
-    print(f"✅ Split {len(tool_chains)} tool chains into {len(train_chains)} train and {len(val_chains)} validation")
-    return train_chains, val_chains
 
 def calculate_tool_chain_stats(tool_chains: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Calculate statistics from loaded tool chains for plotting."""
@@ -371,14 +347,6 @@ def load_verl_rl_data(path: str, exclude_envs: List[str] = ()) -> List[Dict]:
     print(f"✅ Converted {len(samples)} / {len(rows)} verl RL rows from {path}")
     return samples
 
-def split_rl_rows(rows: List[Dict], split_ratio: float, shuffle: bool = False, seed: int = 42) -> Tuple[List[Dict], List[Dict]]:
-    """Split RL rows by conversation: rows of one conversation share their opening user message."""
-    conversations = {}
-    for row in rows:
-        conversations.setdefault(json.dumps(row["prompt"][1], sort_keys=True), []).append(row)
-    train, val = split_tool_chains(list(conversations.values()), split_ratio, shuffle=shuffle, seed=seed)
-    return [row for conv in train for row in conv], [row for conv in val for row in conv]
-
 def _save_json(data: List[Dict], path: str, valid: int, invalid: int, label: str, shuffle: bool = False, seed: int = 42) -> None:
     if shuffle:
         random.seed(seed)
@@ -400,13 +368,8 @@ def main():
     args = parse_args()
     if args.verl_rl_path:
         # Rows are already RL samples; slime reshuffles them every epoch (--rollout-shuffle).
-        rows = load_verl_rl_data(args.verl_rl_path, args.rl_exclude_envs)
-        if args.verl_rl_val_path:
-            train_rows, val_rows = rows, load_verl_rl_data(args.verl_rl_val_path, args.rl_exclude_envs)
-        else:
-            train_rows, val_rows = split_rl_rows(rows, args.train_val_split_ratio, shuffle=args.shuffle, seed=args.seed)
-        _save_jsonl(train_rows, args.rl_output_train_path, len(train_rows), 0, "RL")
-        _save_jsonl(val_rows, args.rl_output_val_path, len(val_rows), 0, "RL")
+        rows = [row for path in args.verl_rl_path for row in load_verl_rl_data(path, args.rl_exclude_envs)]
+        _save_jsonl(rows, args.rl_output_path, len(rows), 0, "RL")
         return
 
     tool_chains = load_tool_chains(args.folders, args.max_num, args.enable_skip)
@@ -421,10 +384,8 @@ def main():
     if args.sft_output_path:
         convert_to_sft_data(tool_chains, args.sft_output_path, shuffle=args.shuffle, seed=args.seed, enable_think=args.enable_think)
 
-    if args.rl_output_train_path and args.rl_output_val_path:
-        train_chains, val_chains = split_tool_chains(tool_chains, args.train_val_split_ratio, shuffle=args.shuffle, seed=args.seed)
-        convert_to_rl_data(train_chains, args.rl_output_train_path, exclude_envs=args.rl_exclude_envs)
-        convert_to_rl_data(val_chains, args.rl_output_val_path, exclude_envs=args.rl_exclude_envs)
+    if args.rl_output_path:
+        convert_to_rl_data(tool_chains, args.rl_output_path, exclude_envs=args.rl_exclude_envs)
 
 if __name__ == "__main__":
     main()

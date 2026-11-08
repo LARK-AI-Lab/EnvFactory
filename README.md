@@ -141,15 +141,12 @@ After generation, convert the data into SFT and RL training formats:
 bash examples/process_data.sh
 ```
 
-RL rows are slime JSONL (`prompt` messages, `label` = reference tool calls, `metadata` = `envs`, `initial_state`, `final_state`). To convert the released [EnvFactory-RL](https://huggingface.co/datasets/LARK-Lab/EnvFactory-RL) (verl format):
+RL rows are slime JSONL (`prompt` messages, `label` = reference tool calls, `metadata` = `envs`, `initial_state`, `final_state`). Every row is training data; evaluation uses BFCL v3 (below). To convert the released [EnvFactory-RL](https://huggingface.co/datasets/LARK-Lab/EnvFactory-RL) (verl format), pass its train and val files together:
 
 ```bash
-python -m src.utils.data_process --verl_rl_path data/env_factory_rl.json \
-  --rl_output_train_path data/rl_train.jsonl --rl_output_val_path data/rl_val.jsonl \
-  --train_val_split_ratio 0.95 --shuffle  # Split by conversation.
+python -m src.utils.data_process --verl_rl_path data/env_factory_rl.json data/env_factory_rl_val.json \
+  --rl_output_path data/rl_train.jsonl
 ```
-
-With a separate held-out verl file, pass `--verl_rl_val_path data/env_factory_rl_val.json` instead of `--train_val_split_ratio`; all of `--verl_rl_path` then becomes training data.
 
 To visualize the generation pipeline, run [`src/app/app.py`](src/app/app.py).
 
@@ -184,7 +181,7 @@ We use [slime](https://github.com/RolandXMR/slime) (our fork, included as the `s
 ```bash
 git submodule update --init slime
 export MEGATRON_LM_DIR=/path/to/Megatron-LM MODEL_SIZE=4B MODEL_PATH=/path/to/EnvFactory-4B
-bash scripts/slime/run_grpo.sh  # TRAIN_FILE / VAL_FILE default to data/rl_{train,val}.jsonl
+bash scripts/slime/run_grpo.sh  # TRAIN_FILE defaults to data/rl_train.jsonl
 ```
 
 | File | Role |
@@ -197,7 +194,7 @@ bash scripts/slime/run_grpo.sh  # TRAIN_FILE / VAL_FILE default to data/rl_{trai
 
 Environments run in-process without the `mcp` package: `src/tools/tool_manager.py` records each file's `@mcp.tool()` functions with FastMCP-identical schemas and argument validation, so the slime runtime only needs `pydantic`.
 
-Evaluation runs every `eval_interval` (10) rollouts on two sets (set `VAL_FILE=` or `BFCL_FILE=` empty to skip one), both greedy: the held-out EnvFactory split (`eval/envfactory`, training reward and budgets) and, when `data/bfcl_v3_val.jsonl` exists, all 800 BFCL v3 multi-turn tasks (`eval/bfcl_v3`, task accuracy; 8k tokens per model call, 40k-token session). Build the BFCL file once:
+Evaluation runs every `eval_interval` (10) rollouts, greedy, on all 800 BFCL v3 multi-turn tasks (`eval/bfcl_v3`, task accuracy; 8k tokens per model call, 40k-token session) when `data/bfcl_v3_val.jsonl` exists (set `BFCL_FILE=` empty to skip). Build it once:
 
 ```bash
 python -m src.eval.bfcl_v3.bfcl data/bfcl_v3_val.jsonl  # base, miss_func, miss_param, long_context

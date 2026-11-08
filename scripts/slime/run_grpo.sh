@@ -17,8 +17,7 @@ MODEL_SIZE=${MODEL_SIZE:-4B}  # 1.7B | 4B | 8B
 MODEL_PATH=${MODEL_PATH:?Set MODEL_PATH to the HF checkpoint (e.g. the EnvFactory SFT model).}
 REF_LOAD=${REF_LOAD:-$MODEL_PATH}  # slime loads the HF checkpoint directly; a torch_dist copy also works.
 TRAIN_FILE=${TRAIN_FILE:-$PROJECT_DIR/data/rl_train.jsonl}
-# Validation sets; set either to an empty string to skip it.
-VAL_FILE=${VAL_FILE-$PROJECT_DIR/data/rl_val.jsonl}
+# Evaluation set (BFCL v3 multi-turn); set to an empty string to skip evaluation.
 BFCL_FILE=${BFCL_FILE-$PROJECT_DIR/data/bfcl_v3_val.jsonl}  # python -m src.eval.bfcl_v3.bfcl data/bfcl_v3_val.jsonl
 CUSTOM_CONFIG=${CUSTOM_CONFIG:-$PROJECT_DIR/configs/slime/envfactory.yaml}
 CKPT_DIR=${CKPT_DIR:-$PROJECT_DIR/checkpoints_slime}
@@ -94,15 +93,12 @@ ROLLOUT_ARGS=(
    --router-policy consistent_hashing
 )
 
-# EnvFactory validation runs under the training budgets; BFCL bounds each model call and the whole session.
-EVAL_DATA=()
-[ -f "$VAL_FILE" ] && EVAL_DATA+=(envfactory "$(realpath "$VAL_FILE")")
-[ -f "$BFCL_FILE" ] && EVAL_DATA+=(bfcl_v3 "$(realpath "$BFCL_FILE")")
+# BFCL bounds each model call and the whole session.
 EVAL_ARGS=()
-if [ ${#EVAL_DATA[@]} -gt 0 ]; then
+if [ -f "$BFCL_FILE" ]; then
    EVAL_ARGS=(
       --eval-interval ${eval_interval}
-      --eval-prompt-data "${EVAL_DATA[@]}"
+      --eval-prompt-data bfcl_v3 "$(realpath "$BFCL_FILE")"
       --eval-temperature 0  # Greedy, as verl's validation.
       --eval-max-response-len ${max_response_length}
       --eval-max-context-len ${eval_max_context_length}
