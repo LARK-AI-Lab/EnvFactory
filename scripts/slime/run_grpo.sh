@@ -30,15 +30,18 @@ project_name=${PROJECT_NAME:-EnvFactory}
 experiment_name=${EXPERIMENT_NAME:-${project_name}-Qwen3-${MODEL_SIZE}-grpo-$(date +%Y%m%d-%H%M)}
 
 ########################### user-adjustable ###########################
-rollout_batch_size=256
+# Groups whose n samples all earn the same reward carry no GRPO gradient (over half of them on
+# EnvFactory data); slime keeps sampling until rollout_batch_size groups with nonzero reward std remain.
+rollout_batch_size=128
+over_sampling_batch_size=256  # Prompt groups submitted per sampling round.
 n_samples_per_prompt=8
-global_batch_size=512  # 4 optimizer steps per rollout.
-max_prompt_length=16384  # Longer prompts are skipped (masked out), as verl's filter_overlong_prompts did.
+global_batch_size=256  # 4 optimizer steps per rollout.
+max_prompt_length=20480  # Longer prompts are skipped (masked out): 14 of the 3,221 rl_train_fixed rows.
 max_response_length=8192  # Generated tokens per trajectory; observations only consume context.
-max_context_length=$((max_prompt_length + max_response_length))
+max_context_length=32768  # Prompt, generated tokens, and tool observations of one trajectory.
 eval_max_context_length=40960  # BFCL sessions span several user turns; Qwen3's full window.
 
-actor_lr=1e-6
+actor_lr=2e-6
 kl_loss_coef=0.001
 rollout_temperature=0.7
 
@@ -83,6 +86,8 @@ ROLLOUT_ARGS=(
    --rollout-shuffle
    --num-epoch ${num_epoch}
    --rollout-batch-size ${rollout_batch_size}
+   --over-sampling-batch-size ${over_sampling_batch_size}
+   --dynamic-sampling-filter-path slime.rollout.filter_hub.dynamic_sampling_filters.check_reward_nonzero_std
    --n-samples-per-prompt ${n_samples_per_prompt}
    --global-batch-size ${global_batch_size}
    --rollout-max-context-len ${max_context_length}

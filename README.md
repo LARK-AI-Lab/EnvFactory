@@ -196,6 +196,8 @@ bash scripts/slime/run_grpo.sh  # TRAIN_FILE defaults to data/rl_train_fixed.jso
 
 Environments run in-process without the `mcp` package: `src/tools/tool_manager.py` records each file's `@mcp.tool()` functions with FastMCP-identical schemas and argument validation, so the slime runtime only needs `pydantic`.
 
+Each rollout keeps sampling prompt groups until `rollout_batch_size` of them have a nonzero reward spread (slime's `check_reward_nonzero_std` filter): a group whose samples all earn the same reward carries no GRPO gradient.
+
 Evaluation runs every `eval_interval` (10) rollouts, greedy, on all 800 BFCL v3 multi-turn tasks (`eval/bfcl_v3`, task accuracy; 8k tokens per model call, 40k-token session) when `data/bfcl_v3_val.jsonl` exists (set `BFCL_FILE=` empty to skip). Build it once:
 
 ```bash
