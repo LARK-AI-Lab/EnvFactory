@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Any
 from mcp.server.fastmcp import FastMCP
+import zlib
 
 # Section 1: Schema
 class PDFDocument(BaseModel):
@@ -126,7 +127,7 @@ class AdobePDFAPI:
 
     def _generate_url(self, resource_type: str, resource_id: str) -> str:
         """Generate presigned URL for resource."""
-        return f"{self.base_url}/{resource_type}/{resource_id}?token=sig{hash(resource_id) % 10000}"
+        return f"{self.base_url}/{resource_type}/{resource_id}?token=sig{zlib.crc32(resource_id.encode()) % 10000}"
 
     def create_pdf_from_html(self, html_content: str, output_filename: Optional[str], page_size: Optional[str]) -> dict:
         """

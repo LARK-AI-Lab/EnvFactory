@@ -178,6 +178,7 @@ class HowToCookAPI:
         self.recipes: Dict[str, Recipe] = {}
         self.categories: List[str] = []
         self.random_seed: Optional[int] = None
+        self._rng = random.Random(0)
         
     def load_scenario(self, scenario: dict) -> None:
         """Load scenario data into the API instance."""
@@ -185,8 +186,8 @@ class HowToCookAPI:
         self.recipes = model.recipes
         self.categories = model.categories
         self.random_seed = model.random_seed
-        if self.random_seed is not None:
-            random.seed(self.random_seed)
+        # A private generator (unseeded scenarios use 0): replaying the same calls reproduces the same choices.
+        self._rng = random.Random(0 if self.random_seed is None else self.random_seed)
 
     def save_scenario(self) -> dict:
         """Save current state as scenario dictionary."""
@@ -273,13 +274,13 @@ class HowToCookAPI:
             # Return any recipe if no matches found
             candidates = list(self.recipes.values())
             
-        selected = random.choice(candidates)
+        selected = self._rng.choice(candidates)
         
         return self._recipe_to_dict(selected, include_full_details=True)
 
     def get_random_dish_recommendation(self, people_count: int) -> dict:
         """Get random dish recommendation."""
-        selected = random.choice(list(self.recipes.values()))
+        selected = self._rng.choice(list(self.recipes.values()))
         
         return self._recipe_to_dict(selected, include_full_details=True)
 

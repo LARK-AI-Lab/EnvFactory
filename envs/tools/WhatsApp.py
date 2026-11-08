@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Union, Any
 from mcp.server.fastmcp import FastMCP
 import uuid
+import hashlib
 import re
 
 # Section 1: Schema
@@ -82,6 +83,7 @@ class WhatsAppAPI:
         self.phone_validity_map: Dict[str, bool] = {}
         self.whatsapp_registered_map: Dict[str, bool] = {}
         self.current_time: str = ""
+        self._id_seq = 0
         
     def validate_phone_format(self, phone: str) -> bool:
         """Validate phone number format."""
@@ -89,6 +91,7 @@ class WhatsAppAPI:
         
     def load_scenario(self, scenario: dict) -> None:
         """Load scenario data into the API instance."""
+        self._id_seq = 0  # Generated ids restart per scenario; see _new_uuid.
         try:
             model = WhatsAppScenario(**scenario)
             self.messages = model.messages
@@ -115,12 +118,21 @@ class WhatsAppAPI:
             "current_time": self.current_time
         }
 
+    def _new_uuid(self, taken, prefix: str = "") -> str:
+        """Deterministic uuid4-shaped id not in ``taken``: replaying the same calls reproduces the same state."""
+        while True:
+            self._id_seq += 1
+            digest = hashlib.sha256(f"{type(self).__name__}|{self._id_seq}".encode()).digest()
+            candidate = prefix + str(uuid.UUID(bytes=digest[:16], version=4))
+            if candidate not in taken:
+                return candidate
+
     def whatsapp_send_text_message(self, phone: str, message: str) -> dict:
         """Send a text message to a WhatsApp chat or group."""
         if not self.validate_phone_format(phone):
             raise ValueError("Invalid phone number format")
             
-        message_id = str(uuid.uuid4())
+        message_id = self._new_uuid(self.messages)
         timestamp = self.current_time
         
         msg = Message(
@@ -155,7 +167,7 @@ class WhatsAppAPI:
         if not self.validate_phone_format(phone):
             raise ValueError("Invalid phone number format")
             
-        message_id = str(uuid.uuid4())
+        message_id = self._new_uuid(self.messages)
         timestamp = self.current_time
         
         content = f"Image: {image_path}"
@@ -194,7 +206,7 @@ class WhatsAppAPI:
         if not self.validate_phone_format(phone):
             raise ValueError("Invalid phone number format")
             
-        message_id = str(uuid.uuid4())
+        message_id = self._new_uuid(self.messages)
         timestamp = self.current_time
         
         content = f"File: {file_path}"
@@ -234,7 +246,7 @@ class WhatsAppAPI:
         if not self.validate_phone_format(phone):
             raise ValueError("Invalid phone number format")
             
-        message_id = str(uuid.uuid4())
+        message_id = self._new_uuid(self.messages)
         timestamp = self.current_time
         
         content = f"Link: {url}"
@@ -274,7 +286,7 @@ class WhatsAppAPI:
         if not self.validate_phone_format(phone):
             raise ValueError("Invalid phone number format")
             
-        message_id = str(uuid.uuid4())
+        message_id = self._new_uuid(self.messages)
         timestamp = self.current_time
         
         content = f"Location: {latitude}, {longitude}"
@@ -317,7 +329,7 @@ class WhatsAppAPI:
         if not self.validate_phone_format(contact_phone):
             raise ValueError("Invalid contact phone number format")
             
-        message_id = str(uuid.uuid4())
+        message_id = self._new_uuid(self.messages)
         timestamp = self.current_time
         
         content = f"Contact: {contact_name} ({contact_phone})"
@@ -431,7 +443,7 @@ class WhatsAppAPI:
 
     def whatsapp_create_group(self, name: str, participants: Optional[List[str]] = None) -> dict:
         """Create a new WhatsApp group with optional initial participants."""
-        group_id = f"group_{str(uuid.uuid4())}"
+        group_id = self._new_uuid(self.groups, prefix="group_")
         timestamp = self.current_time
         
         if participants is None:

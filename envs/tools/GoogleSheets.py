@@ -1,6 +1,9 @@
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Union, Any
 from mcp.server.fastmcp import FastMCP
+import hashlib
+import uuid
+import zlib
 
 # Section 1: Schema
 class Spreadsheet(BaseModel):
@@ -39,9 +42,11 @@ class GoogleSheetsAPI:
         self.created_times: Dict[str, str] = {}
         self.modified_times: Dict[str, str] = {}
         self.current_time: str = ""
+        self._id_seq = 0
         
     def load_scenario(self, scenario: dict) -> None:
         """Load scenario data into the API instance."""
+        self._id_seq = 0  # Generated ids restart per scenario; see _new_uuid.
         model = GoogleSheetsScenario(**scenario)
         self.spreadsheets = model.spreadsheets
         self.sheets = model.sheets
@@ -60,6 +65,24 @@ class GoogleSheetsAPI:
             "modified_times": self.modified_times,
             "current_time": self.current_time
         }
+
+    def _new_uuid(self, taken) -> str:
+        """Deterministic uuid4-shaped id not in ``taken``: replaying the same calls reproduces the same state."""
+        while True:
+            self._id_seq += 1
+            digest = hashlib.sha256(f"{type(self).__name__}|{self._id_seq}".encode()).digest()
+            candidate = str(uuid.UUID(bytes=digest[:16], version=4))
+            if candidate not in taken:
+                return candidate
+
+    def _new_sheet_id(self, spreadsheet_id: str) -> int:
+        """Deterministic sheet id unused in the spreadsheet: replaying the same calls reproduces the same state."""
+        taken = {sheet.sheet_id for sheet in self.sheets.get(spreadsheet_id, [])}
+        while True:
+            self._id_seq += 1
+            candidate = zlib.crc32(f"sheet|{spreadsheet_id}|{self._id_seq}".encode()) % (10 ** 9)
+            if candidate not in taken:
+                return candidate
 
     def list_spreadsheets(self) -> dict:
         """List all spreadsheets in the configured Google Drive folder."""
@@ -120,8 +143,7 @@ class GoogleSheetsAPI:
 
     def create_spreadsheet(self, title: str) -> dict:
         """Create a new Google Spreadsheet with the specified title."""
-        import uuid
-        spreadsheet_id = str(uuid.uuid4())
+        spreadsheet_id = self._new_uuid(self.spreadsheets)
         
         spreadsheet = Spreadsheet(spreadsheet_id=spreadsheet_id, title=title)
         self.spreadsheets[spreadsheet_id] = spreadsheet
@@ -143,8 +165,7 @@ class GoogleSheetsAPI:
         if spreadsheet_id not in self.spreadsheets:
             raise ValueError(f"Spreadsheet {spreadsheet_id} not found")
         
-        import uuid
-        sheet_id = abs(hash(f"{spreadsheet_id}_{title}_{uuid.uuid4()}")) % (10 ** 9)
+        sheet_id = self._new_sheet_id(spreadsheet_id)
         
         sheet = Sheet(sheet_id=sheet_id, title=title)
         if spreadsheet_id not in self.sheets:
@@ -289,8 +310,7 @@ class GoogleSheetsAPI:
         if spreadsheet_id not in self.sheet_data or sheet not in self.sheet_data[spreadsheet_id]:
             raise ValueError(f"Sheet {sheet} not found in spreadsheet {spreadsheet_id}")
         
-        import uuid
-        new_sheet_id = abs(hash(f"{spreadsheet_id}_{new_sheet_name}_{uuid.uuid4()}")) % (10 ** 9)
+        new_sheet_id = self._new_sheet_id(spreadsheet_id)
         
         new_sheet = Sheet(sheet_id=new_sheet_id, title=new_sheet_name)
         if spreadsheet_id not in self.sheets:

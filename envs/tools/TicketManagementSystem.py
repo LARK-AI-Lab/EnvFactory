@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Union, Any
 from mcp.server.fastmcp import FastMCP
 from datetime import datetime
 import time
+import zlib
 
 # Section 1: Schema
 class User(BaseModel):
@@ -106,7 +107,7 @@ class TicketManagementSystem:
             return {"success": False, "session_token": "", "username": ""}
         
         # Generate session token using current_time
-        time_hash = hash(self.current_time) % 100000
+        time_hash = zlib.crc32(self.current_time.encode()) % 100000
         session_token = f"session_{username}_{time_hash}"
         self.sessions[username] = session_token
         return {"success": True, "session_token": session_token, "username": username}

@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Any
 from mcp.server.fastmcp import FastMCP
 import uuid
+import hashlib
 
 # Section 1: Schema
 class User(BaseModel):
@@ -63,6 +64,7 @@ class PostingAPI:
         self.next_comment_id: int = 1
         self.user_stats: Dict[str, Dict[str, int]] = {}
         self.current_time: str = "2024-01-01T00:00:00"
+        self._id_seq = 0
         
     def _ensure_user_stats(self, username: str) -> None:
         """Ensure user has stats initialized with all required fields."""
@@ -88,6 +90,7 @@ class PostingAPI:
         
     def load_scenario(self, scenario: dict) -> None:
         """Load scenario data into the API instance."""
+        self._id_seq = 0  # Generated tokens restart per scenario; see _new_uuid.
         model = PostingScenario(**scenario)
         self.users = model.users
         self.tweets = model.tweets
@@ -113,6 +116,11 @@ class PostingAPI:
             "current_time": self.current_time
         }
 
+    def _new_uuid(self) -> str:
+        """Deterministic uuid4-shaped token: replaying the same calls reproduces the same state."""
+        self._id_seq += 1
+        return str(uuid.UUID(bytes=hashlib.sha256(f"{type(self).__name__}|{self._id_seq}".encode()).digest()[:16], version=4))
+
     def login(self, username: str, password: str) -> dict:
         """Authenticate user with credentials."""
         if username not in self.users:
@@ -122,7 +130,7 @@ class PostingAPI:
         if user.password != password:
             return {"success": False}
         
-        session_token = str(uuid.uuid4())
+        session_token = self._new_uuid()
         self.current_session = {
             "username": username,
             "session_token": session_token

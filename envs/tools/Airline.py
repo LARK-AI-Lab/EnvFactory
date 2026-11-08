@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Any
 from mcp.server.fastmcp import FastMCP
+import hashlib
 
 # Section 1: Schema
 class Airport(BaseModel):
@@ -64,9 +65,11 @@ class AirlineAPI:
         self.reservations: Dict[str, Reservation] = {}
         self.baggage_fees: Dict[str, float] = {}
         self.insurance_fee: float = 0.0
+        self._id_seq = 0
         
     def load_scenario(self, scenario: dict) -> None:
         """Load scenario data into the API instance."""
+        self._id_seq = 0  # Generated ids restart per scenario; see _new_reservation_id.
         model = AirlineScenario(**scenario)
         self.airports = model.airports
         self.flights = model.flights
@@ -87,6 +90,14 @@ class AirlineAPI:
             "baggage_fees": self.baggage_fees,
             "insurance_fee": self.insurance_fee
         }
+
+    def _new_reservation_id(self) -> str:
+        """Deterministic RES-prefixed id not yet reserved: replaying the same calls reproduces the same state."""
+        while True:
+            self._id_seq += 1
+            candidate = "RES" + hashlib.sha256(f"{type(self).__name__}|{self._id_seq}".encode()).hexdigest()[:8].upper()
+            if candidate not in self.reservations:
+                return candidate
 
     def list_airports(self) -> dict:
         """Retrieve list of all available airports."""
@@ -150,8 +161,7 @@ class AirlineAPI:
                         payment_method: str, total_baggages: int, nonfree_baggages: int, 
                         insurance: bool) -> dict:
         """Create new flight reservation."""
-        import uuid
-        reservation_id = f"RES{str(uuid.uuid4())[:8].upper()}"
+        reservation_id = self._new_reservation_id()
         
         # Calculate base flight price from the flights list
         base_price = sum(flight.get("price", 0) for flight in flights)

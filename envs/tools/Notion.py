@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Any
 from mcp.server.fastmcp import FastMCP
 import uuid
+import hashlib
 
 # Section 1: Schema
 class Block(BaseModel):
@@ -82,9 +83,11 @@ class NotionAPI:
         self.databaseItems: Dict[str, List[str]] = {}
         self.commentThreads: Dict[str, List[str]] = {}
         self.current_time: str = ""
+        self._id_seq = 0
 
     def load_scenario(self, scenario: dict) -> None:
         """Load scenario data into the API instance."""
+        self._id_seq = 0  # Generated ids restart per scenario; see _generate_id.
         model = NotionScenario(**scenario)
         self.blocks = model.blocks
         self.pages = model.pages
@@ -117,8 +120,14 @@ class NotionAPI:
         return self.current_time
 
     def _generate_id(self) -> str:
-        """Generate unique ID."""
-        return str(uuid.uuid4())
+        """Deterministic uuid4-shaped id unused by any object: replaying the same calls reproduces the same state."""
+        taken = set().union(self.blocks, self.pages, self.databases, self.users, self.comments, self.commentThreads)
+        while True:
+            self._id_seq += 1
+            digest = hashlib.sha256(f"{type(self).__name__}|{self._id_seq}".encode()).digest()
+            candidate = str(uuid.UUID(bytes=digest[:16], version=4))
+            if candidate not in taken:
+                return candidate
 
     def notion_append_block_children(self, block_id: str, children: List[Dict[str, Any]], format: str = "markdown") -> dict:
         """Append one or more child blocks to an existing parent block."""

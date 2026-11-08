@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Any
 from mcp.server.fastmcp import FastMCP
+import zlib
 
 # Section 1: Schema
 class Repository(BaseModel):
@@ -449,7 +450,7 @@ class GitHubServer:
     def add_issue_comment(self, owner: str, repo: str, issue_number: int, body: str) -> dict:
         """Add a comment to an existing issue."""
         return {
-            "comment_id": hash(f"{owner}/{repo}/{issue_number}/{body}") % 1000000,
+            "comment_id": zlib.crc32(f"{owner}/{repo}/{issue_number}/{body}".encode()) % 1000000,
             "issue_number": issue_number,
             "created_at": self.current_time
         }
@@ -557,7 +558,7 @@ class GitHubServer:
     def create_pull_request_review(self, owner: str, repo: str, pull_number: int, body: str, event: str, commit_id: Optional[str] = None, comments: Optional[str] = None) -> dict:
         """Create a review for a pull request."""
         return {
-            "review_id": hash(f"{owner}/{repo}/{pull_number}/{body}") % 1000000,
+            "review_id": zlib.crc32(f"{owner}/{repo}/{pull_number}/{body}".encode()) % 1000000,
             "pull_number": pull_number,
             "state": event,
             "submitted_at": self.current_time

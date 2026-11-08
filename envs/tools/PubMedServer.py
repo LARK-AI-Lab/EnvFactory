@@ -51,11 +51,9 @@ class PubMedAPI:
         self.current_time = scenario.get("current_time", "2026-04-17T01:46:12")
 
     def save_scenario(self) -> dict:
+        # Search caches stay out of the scenario: they are keyed by query wording, not world state.
         return {
             "articles": self.articles,
-            "search_results": self.search_results,
-            "author_results": self.author_results,
-            "journal_results": self.journal_results,
             "current_time": self.current_time,
         }
 

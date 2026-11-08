@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Any
 from mcp.server.fastmcp import FastMCP
+import zlib
 
 # Section 1: Schema
 class User(BaseModel):
@@ -149,7 +150,7 @@ class TradingBot:
         if username in self.users and self.users[username].password == password:
             self.current_user = username
             # Generate session token using current_time
-            time_hash = hash(self.current_time) % 100000
+            time_hash = zlib.crc32(self.current_time.encode()) % 100000
             self.session_token = f"token_{username}_{time_hash}"
             return {"status": "success", "session_token": self.session_token}
         return {"status": "failed"}

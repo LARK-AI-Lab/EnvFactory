@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Union, Any
 from mcp.server.fastmcp import FastMCP
 import random
 import time
+import zlib
 
 # Section 1: Schema
 class Location(BaseModel):
@@ -129,6 +130,7 @@ class DidiAPI:
         self.route_database: Dict[str, RouteInfo] = {}
         self.random_seed: Optional[int] = None
         self.current_time: str = "2024-01-01T00:00:00"
+        self._rng = random.Random(0)
 
     def load_scenario(self, scenario: dict) -> None:
         """Load scenario data into the API instance."""
@@ -141,8 +143,8 @@ class DidiAPI:
         self.route_database = model.route_database
         self.random_seed = model.random_seed
         self.current_time = model.current_time
-        if self.random_seed is not None:
-            random.seed(self.random_seed)
+        # A private generator (unseeded scenarios use 0): replaying the same calls reproduces the same state.
+        self._rng = random.Random(0 if self.random_seed is None else self.random_seed)
 
     def save_scenario(self) -> dict:
         """Save current state as scenario dictionary."""
@@ -250,8 +252,8 @@ class DidiAPI:
         distance = int(((dest.latitude - origin.latitude)**2 + (dest.longitude - origin.longitude)**2)**0.5 * 111000)
         
         # Generate estimate trace ID using current_time
-        time_hash = hash(self.current_time) % 100000
-        estimate_trace_id = f"EST_{time_hash}_{random.randint(1000, 9999)}"
+        time_hash = zlib.crc32(self.current_time.encode()) % 100000
+        estimate_trace_id = f"EST_{time_hash}_{self._rng.randint(1000, 9999)}"
         
         # Create products with different pricing
         products = [
@@ -272,8 +274,8 @@ class DidiAPI:
             raise ValueError(f"Estimate trace ID {estimate_trace_id} not found")
         
         # Generate order ID using current_time
-        time_hash = hash(self.current_time) % 100000
-        order_id = f"ORDER_{time_hash}_{random.randint(1000, 9999)}"
+        time_hash = zlib.crc32(self.current_time.encode()) % 100000
+        order_id = f"ORDER_{time_hash}_{self._rng.randint(1000, 9999)}"
         
         # Find selected product
         estimate = self.estimates[estimate_trace_id]
@@ -290,7 +292,7 @@ class DidiAPI:
         order = OrderInfo(
             order_id=order_id,
             status="pending",
-            estimated_arrival=random.randint(300, 900)
+            estimated_arrival=self._rng.randint(300, 900)
         )
         
         self.orders[order_id] = order
@@ -316,11 +318,11 @@ class DidiAPI:
             order = unfinished_orders[0]
         
         # Simulate driver assignment if pending
-        if order.status == "pending" and random.random() < 0.7:
+        if order.status == "pending" and self._rng.random() < 0.7:
             order.status = "accepted"
-            order.driver_name = f"Driver {random.randint(100, 999)}"
-            order.driver_phone = f"138{random.randint(10000000, 99999999)}"
-            order.license_plate = f"京A{random.randint(10000, 99999)}"
+            order.driver_name = f"Driver {self._rng.randint(100, 999)}"
+            order.driver_phone = f"138{self._rng.randint(10000000, 99999999)}"
+            order.license_plate = f"京A{self._rng.randint(10000, 99999)}"
         
         return order.dict()
 
@@ -354,8 +356,8 @@ class DidiAPI:
         # Simulate driver movement
         base_lat = 39.9042
         base_lng = 116.4074
-        driver_lat = base_lat + random.uniform(-0.01, 0.01)
-        driver_lng = base_lng + random.uniform(-0.01, 0.01)
+        driver_lat = base_lat + self._rng.uniform(-0.01, 0.01)
+        driver_lng = base_lng + self._rng.uniform(-0.01, 0.01)
         
         return {
             "order_id": order_id,

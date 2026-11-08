@@ -1,7 +1,9 @@
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Union, Any
 from mcp.server.fastmcp import FastMCP
+import hashlib
 import math
+import zlib
 
 # Section 1: Schema
 class Location(BaseModel):
@@ -134,15 +136,14 @@ class MapsAPI:
     def maps_geocode(self, city: str, country: Optional[str] = None) -> dict:
         """Convert a city name into geographic coordinates."""
         city_key = city.title()
-        if city_key not in self.cityCoordinates:
-            # Generate coordinates for unknown cities
-            import hashlib
+        location = self.cityCoordinates.get(city_key)
+        if location is None:
+            # Unknown cities get coordinates derived from the name; they are not stored, so the
+            # scenario never depends on how a query was worded.
             hash_val = int(hashlib.md5(city.encode()).hexdigest(), 16)
             lat = (hash_val % 1800) / 10.0 - 90
             lng = ((hash_val // 1800) % 3600) / 10.0 - 180
-            self.cityCoordinates[city_key] = Location(latitude=lat, longitude=lng)
-        
-        location = self.cityCoordinates[city_key]
+            location = Location(latitude=lat, longitude=lng)
         place_id = f"geocode_{city_key.replace(' ', '_')}"
         formatted_address = f"{city_key}, {country}" if country else city_key
         
@@ -240,9 +241,8 @@ class MapsAPI:
             if coord_key in self.elevationData:
                 elevation = self.elevationData[coord_key]
             else:
-                # Generate elevation for unknown locations
-                elevation = int((hash(coord_key) % 2000) + 1)
-                self.elevationData[coord_key] = elevation
+                # Unknown locations get an elevation derived from the coordinates; it is not stored.
+                elevation = int((zlib.crc32(coord_key.encode()) % 2000) + 1)
             
             elevation_data.append({
                 "location": loc,

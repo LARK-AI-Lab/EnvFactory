@@ -122,8 +122,8 @@ class TravelBookingAPI:
         """Generate deterministic random integer based on random_seed."""
         # Use counter to generate deterministic random number
         seed = cast(int, self.random_seed)
-        random.seed(seed + self.uuid_counter)
-        result = random.randint(min_val, max_val)
+        # A private generator: the module-level one is shared by every concurrent environment instance.
+        result = random.Random(seed + self.uuid_counter).randint(min_val, max_val)
         self.uuid_counter += 1
         return result
 
@@ -145,7 +145,6 @@ class TravelBookingAPI:
         self.current_time = model.current_time
         self.random_seed = model.random_seed
         self.uuid_counter = 0
-        random.seed(self.random_seed)
 
     def save_scenario(self) -> dict:
         """Save current state as scenario dictionary."""

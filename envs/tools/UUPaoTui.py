@@ -2,6 +2,8 @@ from pydantic import BaseModel, Field
 from typing import Dict, List
 from mcp.server.fastmcp import FastMCP
 import uuid
+import hashlib
+import zlib
 
 # Section 1: Schema
 class PriceEstimate(BaseModel):
@@ -57,9 +59,11 @@ class UUPaoTuiAPI:
         self.cityMultipliersMap: Dict[str, float] = {}
         self.orderStates: List[str] = []
         self.current_time: str = "2024-01-01T00:00:00"
+        self._id_seq = 0
         
     def load_scenario(self, scenario: dict) -> None:
         """Load scenario data into the API instance."""
+        self._id_seq = 0  # Generated tokens restart per scenario; see _new_uuid.
         model = UUPaoTuiScenario(**scenario)
         self.orders = model.orders
         self.priceTokens = model.priceTokens
@@ -79,11 +83,20 @@ class UUPaoTuiAPI:
             "current_time": self.current_time
         }
 
+    def _new_uuid(self, taken) -> str:
+        """Deterministic uuid4-shaped id not in ``taken``: replaying the same calls reproduces the same state."""
+        while True:
+            self._id_seq += 1
+            digest = hashlib.sha256(f"{type(self).__name__}|{self._id_seq}".encode()).digest()
+            candidate = str(uuid.UUID(bytes=digest[:16], version=4))
+            if candidate not in taken:
+                return candidate
+
     def _calculate_distance(self, from_addr: str, to_addr: str) -> float:
         """Calculate distance between addresses (simplified)."""
         # Simple hash-based distance calculation for demo
         combined = f"{from_addr}|{to_addr}"
-        return round((hash(combined) % 50) + 1, 1)
+        return round((zlib.crc32(combined.encode()) % 50) + 1, 1)
 
     def _get_multiplier(self, adCode: str) -> float:
         """Get city price multiplier."""
@@ -98,7 +111,7 @@ class UUPaoTuiAPI:
         distance_fee = distance * self.baseRatesMap.get("per_km", 2.5)
         total_fee = round((base_fee + distance_fee) * multiplier, 2)
         
-        price_token = str(uuid.uuid4())
+        price_token = self._new_uuid(self.priceTokens)
         
         # Store token info for later order creation
         self.priceTokens[price_token] = {
@@ -120,8 +133,8 @@ class UUPaoTuiAPI:
         
         token_info = self.priceTokens[priceToken]
         # Generate order code using current_time
-        time_hash = hash(self.current_time) % 100000
-        order_code = f"UU{time_hash}{hash(priceToken) % 10000:04d}"
+        time_hash = zlib.crc32(self.current_time.encode()) % 100000
+        order_code = f"UU{time_hash}{zlib.crc32(priceToken.encode()) % 10000:04d}"
         
         order = Order(
             orderCode=order_code,

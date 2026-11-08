@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Union, Any
 from mcp.server.fastmcp import FastMCP
+import hashlib
+import uuid
 
 # Section 1: Schema
 class Task(BaseModel):
@@ -62,9 +64,11 @@ class TickTickAPI:
         self.oauth_state: Dict[str, str] = {}
         self.colorPaletteMap: Dict[str, str] = {}
         self.priorityLabelsMap: Dict[int, str] = {}
+        self._id_seq = 0
 
     def load_scenario(self, scenario: dict) -> None:
         """Load scenario data into the API instance."""
+        self._id_seq = 0  # Generated ids restart per scenario; see _new_uuid.
         model = TickTickScenario(**scenario)
         self.projects = model.projects
         self.tasks = model.tasks
@@ -87,6 +91,15 @@ class TickTickAPI:
             "colorPaletteMap": self.colorPaletteMap,
             "priorityLabelsMap": self.priorityLabelsMap
         }
+
+    def _new_uuid(self, taken) -> str:
+        """Deterministic uuid4-shaped id not in ``taken``: replaying the same calls reproduces the same state."""
+        while True:
+            self._id_seq += 1
+            digest = hashlib.sha256(f"{type(self).__name__}|{self._id_seq}".encode()).digest()
+            candidate = str(uuid.UUID(bytes=digest[:16], version=4))
+            if candidate not in taken:
+                return candidate
 
     def ticktick_oauth2_authorization_step1(self, scope: str, client_id: str, redirect_uri: str, state: Optional[str] = None) -> dict:
         """Generate OAuth2 authorization URL."""
@@ -119,8 +132,7 @@ class TickTickAPI:
 
     def ticktick_create_project(self, name: str, kind: Optional[str] = "TASK", color: Optional[str] = "#F18181", viewMode: Optional[str] = None, sortOrder: Optional[int] = None) -> dict:
         """Create a new project."""
-        import uuid
-        project_id = str(uuid.uuid4())
+        project_id = self._new_uuid(self.projects)
         
         project = Project(
             project_id=project_id,
@@ -197,8 +209,7 @@ class TickTickAPI:
 
     def ticktick_create_task(self, title: str, project_id: Optional[str] = None, notes: Optional[str] = None, description: Optional[str] = None, due_date: Optional[str] = None, priority: Optional[int] = 0) -> dict:
         """Create a new task."""
-        import uuid
-        task_id = str(uuid.uuid4())
+        task_id = self._new_uuid(self.tasks)
         
         task = Task(
             taskId=task_id,

@@ -1,8 +1,12 @@
 import os
 import json
 import argparse
+import copy
+import hashlib
 import random
-from typing import List, Dict, Any
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
+from typing import List, Dict, Any, Optional, Tuple
 from collections import Counter
 from src.utils.utils import SYSTEM_PROMPT, RL_SYSTEM_PROMPT
 import traceback
@@ -18,6 +22,8 @@ def parse_args():
     parser.add_argument('--rl_output_path', type=str, help='Slime RL JSONL; every row is training data (evaluation uses BFCL v3).')
     parser.add_argument('--verl_rl_path', type=str, nargs='+', help='Convert verl-format RL json files (e.g. LARK-Lab/EnvFactory-RL train and val) instead of --folders; rows are concatenated.')
     parser.add_argument('--rl_exclude_envs', type=json.loads, default=["ClinicalTrialsGov"], help='Drop RL rows using these environments (network-bound).')
+    parser.add_argument('--rl_drop_rows', type=str, help='JSON file whose "rows" lists rl_row_fingerprint values to drop (e.g. labels missing requested steps).')
+    parser.add_argument('--environment_config_path', type=str, default='configs/mcp_server.json', help='Environments used to replay RL reference calls.')
     parser.add_argument('--max_num', type=int)
     parser.add_argument('--shuffle', action='store_true', default=False)
     parser.add_argument('--seed', type=int, default=42)
@@ -282,7 +288,7 @@ def _keep_rl_row(row: Dict, exclude_envs: List[str]) -> bool:
         and not set(metadata["envs"]) & set(exclude_envs)
     )
 
-def convert_to_rl_data(tool_chains: List[Dict[str, Any]], output_path: str, exclude_envs: List[str] = ()) -> None:
+def convert_to_rl_data(tool_chains: List[Dict[str, Any]], exclude_envs: List[str] = ()) -> List[Dict]:
     """Convert tool chains to slime RL rows (one sample per node)."""
     all_samples, valid_count, invalid_count = [], 0, 0
 
@@ -329,7 +335,8 @@ def convert_to_rl_data(tool_chains: List[Dict[str, Any]], output_path: str, excl
             traceback.print_exc()
             print(f"⚠️ RL conversion error (seed {chain.get('seed')}): {e}")
     
-    _save_jsonl(all_samples, output_path, valid_count, invalid_count, "RL")
+    print(f"✅ Converted {len(all_samples)} RL rows (chains valid: {valid_count}, invalid: {invalid_count})")
+    return all_samples
 
 def load_verl_rl_data(path: str, exclude_envs: List[str] = ()) -> List[Dict]:
     """Convert the previous verl RL format (e.g. LARK-Lab/EnvFactory-RL) to slime rows."""
@@ -346,6 +353,58 @@ def load_verl_rl_data(path: str, exclude_envs: List[str] = ()) -> List[Dict]:
             samples.append(sample)
     print(f"✅ Converted {len(samples)} / {len(rows)} verl RL rows from {path}")
     return samples
+
+def rl_row_fingerprint(row: Dict) -> str:
+    """Stable row identity: the conversation after the system prompt plus the reference calls."""
+    return hashlib.sha256(json.dumps([row["prompt"][1:], row["label"]], ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+
+def _replay_reference(row: Dict, config_path: str) -> Tuple[Dict, bool]:
+    """State of the touched environments after the reference calls, and whether any call failed."""
+    from src.tools.tool_manager import get_tool_manager
+    manager, clients, failed = get_tool_manager(config_path), {}, False
+    for call in json.loads(row["label"]):
+        env, _, tool = call["name"].partition("-")
+        if env not in clients:
+            # Environments mutate the scenario they load; the row's initial state must stay intact.
+            clients[env] = manager.create_client(env, copy.deepcopy(row["metadata"]["initial_state"][env]))
+        result = clients[env].call_tool(tool, call["arguments"])
+        # EnvClient.call_tool reports errors and unknown tools as text, as MCP did during synthesis.
+        failed |= result.startswith(f"{call['name']} failed:") or result.startswith("Unknown tool")
+    return {env: client.state() for env, client in clients.items()}, failed
+
+def _verify_rl_row(config_path: str, row: Dict) -> Tuple[Optional[Dict], str]:
+    """Make the reward target reachable: final_state becomes the state the reference calls produce.
+
+    Synthesis stored the state after the full trajectory, before an LLM filter removed calls, so it can
+    hold effects of calls the label lacks. A row is dropped when replay is not reproducible, or when a
+    reference call fails and the stored state disagrees (the label itself is likely wrong).
+    """
+    state, failed = _replay_reference(row, config_path)
+    if state != _replay_reference(row, config_path)[0]:
+        return None, "nondeterministic replay"
+    stored = row["metadata"]["final_state"]
+    consistent = all(stored.get(env) == env_state for env, env_state in state.items())
+    if failed and not consistent:
+        return None, "failed reference call, stored state disagrees"
+    row["metadata"]["final_state"] = {**stored, **state}
+    return row, "kept" if consistent else "rebuilt"
+
+def verify_rl_rows(rows: List[Dict], config_path: str, drop_rows: Optional[str] = None) -> List[Dict]:
+    """Replay every row's reference calls (see _verify_rl_row) and drop listed rows."""
+    dropped = set()
+    if drop_rows:
+        with open(drop_rows, encoding='utf-8') as f:
+            dropped = set(json.load(f)["rows"])
+    listed = [row for row in rows if rl_row_fingerprint(row) in dropped]
+    rows = [row for row in rows if rl_row_fingerprint(row) not in dropped]
+    kept, outcomes = [], Counter({"listed in --rl_drop_rows": len(listed)})
+    with ProcessPoolExecutor(max(1, min(16, os.cpu_count() or 1))) as pool:
+        for row, outcome in pool.map(partial(_verify_rl_row, config_path), rows, chunksize=16):
+            outcomes[outcome] += 1
+            if row is not None:
+                kept.append(row)
+    print(f"✅ Verified RL rows by replay: {dict(outcomes)}")
+    return kept
 
 def _save_json(data: List[Dict], path: str, valid: int, invalid: int, label: str, shuffle: bool = False, seed: int = 42) -> None:
     if shuffle:
@@ -369,6 +428,7 @@ def main():
     if args.verl_rl_path:
         # Rows are already RL samples; slime reshuffles them every epoch (--rollout-shuffle).
         rows = [row for path in args.verl_rl_path for row in load_verl_rl_data(path, args.rl_exclude_envs)]
+        rows = verify_rl_rows(rows, args.environment_config_path, args.rl_drop_rows)
         _save_jsonl(rows, args.rl_output_path, len(rows), 0, "RL")
         return
 
@@ -385,7 +445,9 @@ def main():
         convert_to_sft_data(tool_chains, args.sft_output_path, shuffle=args.shuffle, seed=args.seed, enable_think=args.enable_think)
 
     if args.rl_output_path:
-        convert_to_rl_data(tool_chains, args.rl_output_path, exclude_envs=args.rl_exclude_envs)
+        rows = convert_to_rl_data(tool_chains, exclude_envs=args.rl_exclude_envs)
+        rows = verify_rl_rows(rows, args.environment_config_path, args.rl_drop_rows)
+        _save_jsonl(rows, args.rl_output_path, len(rows), 0, "RL")
 
 if __name__ == "__main__":
     main()
